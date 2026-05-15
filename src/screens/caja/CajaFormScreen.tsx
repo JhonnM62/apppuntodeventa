@@ -341,13 +341,33 @@ export default function CajaFormScreen({ route, navigation }: any) {
         Toast.show({ type: 'success', text1: 'Éxito', text2: 'Caja creada correctamente' });
         navigation.goBack();
       } else {
-        const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre };
-        
         if (isFinalClose) {
-          await cerrarCaja(cajaId, updateData);
+          // ERROR HANDLING PATTERN: Sanitización estricta de Payload (DTO Matching)
+          // Evitamos enviar propiedades como `efectivoDeApertura`, `Idcierreyapertura`, etc. que el backend rechaza con 400 Bad Request en cerrarCaja
+          const closeData: any = {
+            usuario: user?.name || user?.nombre,
+            insumosAEliminar
+          };
+
+          if (cleanData.efectivoDeCierre !== undefined) closeData.efectivoDeCierre = cleanData.efectivoDeCierre;
+          if (cleanData.resumen !== undefined) closeData.resumen = cleanData.resumen;
+          if (cleanData.plataGuardada !== undefined) closeData.plataGuardada = cleanData.plataGuardada;
+          if (cleanData.valorFaltante !== undefined) closeData.valorFaltante = cleanData.valorFaltante;
+          if (cleanData.valorExcedente !== undefined) closeData.valorExcedente = cleanData.valorExcedente;
+          if (cleanData.observaciones !== undefined) closeData.observaciones = cleanData.observaciones;
+          if (cleanData.transferenciasContadas !== undefined) closeData.transferenciasContadas = cleanData.transferenciasContadas;
+          
+          // Enviamos toda la data de los insumos (IDs, Apertura, Cierre, Gastado) para no perder trazabilidad
+          if (cleanData.insumos) {
+            closeData.insumos = cleanData.insumos;
+          }
+
+          await cerrarCaja(cajaId, closeData);
           await AsyncStorage.removeItem(`@caja_congelada_${cajaId}`); // Clear freeze state
           Toast.show({ type: 'success', text1: 'Caja Cerrada', text2: 'La caja se ha cerrado definitivamente' });
         } else {
+          // Guardado Parcial: El endpoint genérico updateCaja sí espera Idcierreyapertura, cantApertura, etc.
+          const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre };
           await updateCaja(cajaId, updateData);
           Toast.show({ type: 'success', text1: 'Arqueo Guardado', text2: 'El arqueo parcial se ha guardado' });
         }
