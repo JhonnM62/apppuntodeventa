@@ -1,0 +1,117 @@
+[RUN_GRADLEW] > Task :expo-modules-core:bundleLibRuntimeToJarRelease
+[RUN_GRADLEW] > Task :expo-dev-launcher:compileReleaseJavaWithJavac
+[RUN_GRADLEW] The Daemon will expire after the build after running out of JVM heap space.
+[RUN_GRADLEW] The project memory settings are likely not configured or are configured 
+to an insufficient value.
+[RUN_GRADLEW] The daemon will restart for the next build, which may increase subsequent build times.
+[RUN_GRADLEW] These settings can be adjusted by setting 'org.gradle.jvmargs' in 'gradle.properties'.
+[RUN_GRADLEW] The currently configured max heap space is '1 GiB' and the configured max metaspace is '512 MiB'.
+[RUN_GRADLEW] For more information on how to set these values, please refer to https://docs.gradle.org/8.14.3/userguide/build_environment.html#sec:configuring_jvm_memory in the Gradle documentation.
+[RUN_GRADLEW] To disable this warning, set 'org.gradle.daemon.performance.disable-logging=true'.
+[RUN_GRADLEW] > Task :expo-modules-core:bundleLibRuntimeToJarRelease FAILED
+[RUN_GRADLEW] > Task :app:mergeExtDexRelease
+[RUN_GRADLEW] ERROR: D8: java.lang.OutOfMemoryError: Java heap space
+[RUN_GRADLEW] com.android.builder.dexing.DexArchiveMergerException: Error while merging dex archives:
+[RUN_GRADLEW]   at com.android.builder.dexing.D8DexArchiveMerger.getMergingExceptionToRethrow(D8DexArchiveMerger.java:230)
+[RUN_GRADLEW]   at com.android.builder.dexing.D8DexArchiveMerger.mergeDexArchives(D8DexArchiveMerger.java:218)
+[RUN_GRADLEW]   at com.android.build.gradle.internal.tasks.DexMergingWorkAction.merge(DexMergingTask.kt:935)
+[RUN_GRADLEW]   at com.android.build.gradle.internal.tasks.DexMergingWorkAction.run(DexMergingTask.kt:884)
+[RUN_GRADLEW]   at com.android.build.gradle.internal.profile.ProfileAwareWorkAction.execute(ProfileAwareWorkAction.kt:74)
+[RUN_GRADLEW]   at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:63)
+[RUN_GRADLEW]   at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:66)
+[RUN_GRADLEW]   at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:62)
+[RUN_GRADLEW]   at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:100)
+[RUN_GRADLEW]   at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:62)
+[RUN_GRADLEW]   at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
+[RUN_GRADLEW]   at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
+[RUN_GRADLEW]   at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+[RUN_GRADLEW]   at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+[RUN_GRADLEW]   at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+[RUN_GRADLEW]   at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+[RUN_GRADLEW]   at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+[RUN_GRADLEW]   at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+[RUN_GRADLEW]   at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+[RUN_GRADLEW]   at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
+[RUN_GRADLEW]   at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:59)
+[RUN_GRADLEW]   at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:174)
+[RUN_GRADLEW]   at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264) 
+[RUN_GRADLEW]   at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:194)
+[RUN_GRADLEW]   at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.access$700(DefaultConditionalExecutionQueue.java:127)
+[RUN_GRADLEW]   at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner$1.run(DefaultConditionalExecutionQueue.java:169)
+[RUN_GRADLEW]   at org.gradle.internal.Factories$1.create(Factories.java:31)
+[RUN_GRADLEW]   at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:263)
+[RUN_GRADLEW]   at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:127)
+[RUN_GRADLEW]   at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:132)
+[RUN_GRADLEW]   at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:164)
+[RUN_GRADLEW]   at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:133)
+[RUN_GRADLEW]   at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:539)
+[RUN_GRADLEW]   at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:264) 
+[RUN_GRADLEW]   at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+[RUN_GRADLEW]   at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:48)
+[RUN_GRADLEW]   at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136)
+[RUN_GRADLEW]   at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635)
+[RUN_GRADLEW]   at java.base/java.lang.Thread.run(Thread.java:840)
+[RUN_GRADLEW] Caused by: com.android.tools.r8.CompilationFailedException: Compilation 
+failed to complete
+[RUN_GRADLEW]   at Version.fakeStackEntry(Version_8.11.18.java:0)
+[RUN_GRADLEW]   at com.android.tools.r8.P.a(R8_8.11.18_94248c9a6fd57686ded562f231d18f14e8923ad1fe977e99b974a9bf901c8a48:1)
+[RUN_GRADLEW]   at com.android.tools.r8.internal.xv.a(R8_8.11.18_94248c9a6fd57686ded562f231d18f14e8923ad1fe977e99b974a9bf901c8a48:82)
+[RUN_GRADLEW]   at com.android.tools.r8.internal.xv.a(R8_8.11.18_94248c9a6fd57686ded562f231d18f14e8923ad1fe977e99b974a9bf901c8a48:32)
+[RUN_GRADLEW]   at com.android.tools.r8.internal.xv.a(R8_8.11.18_94248c9a6fd57686ded562f231d18f14e8923ad1fe977e99b974a9bf901c8a48:31)
+[RUN_GRADLEW]   at com.android.tools.r8.internal.xv.b(R8_8.11.18_94248c9a6fd57686ded562f231d18f14e8923ad1fe977e99b974a9bf901c8a48:2)
+[RUN_GRADLEW]   at com.android.tools.r8.D8.run(R8_8.11.18_94248c9a6fd57686ded562f231d18f14e8923ad1fe977e99b974a9bf901c8a48:11)
+[RUN_GRADLEW]   at com.android.builder.dexing.D8DexArchiveMerger.mergeDexArchives(D8DexArchiveMerger.java:216)
+[RUN_GRADLEW]   ... 37 more
+[RUN_GRADLEW] Caused by: java.lang.OutOfMemoryError: Java heap space
+[RUN_GRADLEW] > Task :app:mergeExtDexRelease FAILED
+[RUN_GRADLEW] [Incubating] Problems report is available at: file:///tmp/root/eas-build-local-nodejs/4e1594f4-dfb2-49ef-8daa-5f092130fe71/build/android/build/reports/problems/problems-report.html
+[RUN_GRADLEW] FAILURE: Build completed with 2 failures.
+[RUN_GRADLEW] 1: Task failed with an exception.
+[RUN_GRADLEW] -----------
+[RUN_GRADLEW] * What went wrong:
+[RUN_GRADLEW] Execution failed for task ':expo-modules-core:bundleLibRuntimeToJarRelease'.
+[RUN_GRADLEW] > A failure occurred while executing com.android.build.gradle.internal.tasks.BundleLibraryClassesWorkAction
+[RUN_GRADLEW]    > Java heap space
+[RUN_GRADLEW] * Try:
+[RUN_GRADLEW] > Run with --stacktrace option to get the stack trace.
+[RUN_GRADLEW] > Run with --info or --debug option to get more log output.
+[RUN_GRADLEW] > Run with --scan to get full insights.
+[RUN_GRADLEW] > Get more help at https://help.gradle.org.
+[RUN_GRADLEW] ==============================================================================
+[RUN_GRADLEW] 2: Task failed with an exception.
+[RUN_GRADLEW] -----------
+[RUN_GRADLEW] * What went wrong:
+[RUN_GRADLEW] Execution failed for task ':app:mergeExtDexRelease'.
+[RUN_GRADLEW] > A failure occurred while executing com.android.build.gradle.internal.tasks.DexMergingTaskDelegate
+[RUN_GRADLEW]    > There was a failure while executing work items
+[RUN_GRADLEW]       > A failure occurred while executing com.android.build.gradle.internal.tasks.DexMergingWorkAction
+[RUN_GRADLEW]          > com.android.builder.dexing.DexArchiveMergerException: Error while merging dex archives:
+[RUN_GRADLEW] * Try:
+[RUN_GRADLEW] > Run with --stacktrace option to get the stack trace.
+[RUN_GRADLEW] > Run with --info or --debug option to get more log output.
+[RUN_GRADLEW] > Run with --scan to get full insights.
+[RUN_GRADLEW] > Get more help at https://help.gradle.org.
+[RUN_GRADLEW] ==============================================================================
+[RUN_GRADLEW] BUILD FAILED in 17m 26s
+[RUN_GRADLEW] Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+[RUN_GRADLEW] You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+[RUN_GRADLEW] For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation. 
+[RUN_GRADLEW] 447 actionable tasks: 447 executed
+[RUN_GRADLEW] Error: Gradle build failed with unknown error. See logs for the "Run gradlew" phase for more information.
+
+Build failed
+Gradle build failed with unknown error. See logs for the "Run gradlew" phase for more 
+information.
+Error: Gradle build failed with unknown error. See logs for the "Run gradlew" phase for more information.
+    at resolveBuildPhaseErrorAsync (/root/.npm/_npx/13ef797e985d7fa6/node_modules/@expo/build-tools/dist/buildErrors/detectError.js:61:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)     
+    at async BuildContext.handleBuildPhaseErrorAsync (/root/.npm/_npx/13ef797e985d7fa6/node_modules/@expo/build-tools/dist/context.js:194:28)
+    at async BuildContext.runBuildPhase (/root/.npm/_npx/13ef797e985d7fa6/node_modules/@expo/build-tools/dist/context.js:139:35)
+    at async buildAsync (/root/.npm/_npx/13ef797e985d7fa6/node_modules/@expo/build-tools/dist/builders/android.js:138:5)
+    at async runBuilderWithHooksAsync (/root/.npm/_npx/13ef797e985d7fa6/node_modules/@expo/build-tools/dist/builders/common.js:12:13)
+    at async Object.androidBuilder (/root/.npm/_npx/13ef797e985d7fa6/node_modules/@expo/build-tools/dist/builders/android.js:28:16)
+    at async buildAndroidAsync (/root/.npm/_npx/13ef797e985d7fa6/node_modules/eas-cli-local-build-plugin/dist/android.js:43:12)
+    at async buildAsync (/root/.npm/_npx/13ef797e985d7fa6/node_modules/eas-cli-local-build-plugin/dist/build.js:54:29)
+    at async main (/root/.npm/_npx/13ef797e985d7fa6/node_modules/eas-cli-local-build-plugin/dist/main.js:16:9)
+npx -y eas-cli-local-build-plugin@18.12.0 eyJqb2IiOnsidHlwZSI6Im1hbmFnZWQiLCJwbGF0Zm9ybSI6ImFuZHJvaWQiLCJwcm9qZWN0Um9vdERpcmVjdG9yeSI6Ii4iLCJwcm9qZWN0QXJjaGl2ZSI6eyJ0eXBlIjoiUEFUSCIsInBhdGgiOiIvdG1wL3Jvb3QvZWFzLWNsaS1ub2RlanMvMGIxNTIzZjktZDRjNC00MTY4LTlhYTEtOGEyYTkwOWFiNDg3LnRhci5neiJ9LCJidWlsZGVyRW52aXJvbm1lbnQiOnsiZW52Ijp7IkVYUE9fUFVCTElDX0FQSV9VUkwiOiJodHRwczovL2JhY2tlbmRuZXN0cHYuYXV0b3N5c3RlbXByb2plY3RzLnNpdGUvYXBpL3YxIn19LCJjYWNoZSI6eyJkaXNhYmxlZCI6ZmFsc2UsInBhdGhzIjpbXSwiY2xlYXIiOmZhbHNlfSwic2VjcmV0cyI6eyJidWlsZENyZWRlbnRpYWxzIjp7ImtleXN0b3JlIjp7ImRhdGFCYXNlNjQiOiIvdTMrN1FBQUFBSUFBQUFCQUFBQUFRQWdPV1ptWTJFNFpqZ3lPR1E1WVRCa05qaGxPRFJrTkRFNFl6VXlNalF6TWpZQUFBR2VKM3JqQ1FBQUJRRXdnZ1Q5TUE0R0Npc0dBUVFCS2dJUkFRRUZBQVNDQk9ueHU3MEQ4MVdGUjQvMzBtb0p1WTJGUGRnR1hLSWFnTWZ5cU8zbDQ4SkVWU3lZUXVXYVI5d3pCMWU1dS9nMkJ1VEFvTUNqQzRtelA5b1puNXRKWG1YVllMVC9BdjQrZVN5M1NFMFA5NjJSclduQVppOFVWVkZ4S05KZERtcTdCL0ExZGpQa2E4YThmYUE3ZExBVDZUS0FqTURPRVNnU0hQSGd3aDJGdDRYdkN5emV2a0R4c1pRdFpaV1hDNDhhbHN2QjVWalB2WDhsWDVIODVWQkRoelYvRXB5STZHdWdCb21TZnk5M29sN1k3UDdMSUh1ZXBWeXVTUjhtS2V2RStXQmN0S3JTYjBTSU04UVF2MjVtcWxwVmFTaXBSWnNBc01KazF5QlJVUlArcDZJbE1kWXJPQlR4VjdzZ2hvVU1wUjVLa2t6SWJtakxFejhka3FPTVdTM0lmWVBJMmtnTHRoZ0l2b1NvMkt4cVNJU0YzaEJZTnJ4dFZjUy9MRGZoOU1vMk1pbEFBV2xBaXNYRWZHajRtckN1UnNmTkR3dGxUSzRIQlVOUWNUL2hpYTRsQ0s2dGdDOU1FN3NMellTanNSRTFreTBjcU53cjNxS0ZINzRhdDhBT2VxaENwNlhmYWdPV3BVQTYybkUrZmFxT2ZvQ01mTU1uNm9KRWpGNEtQMmNLVFVqR2dYQUFtZzV2OVFGZm4xOWVMVWkvdDVpSHFHaDdUQTJsLzNVdEdpT0pCVDNPOHNpQVNxUFppdjBQUkhJQjNWd1JYcWJMNHFISXROWVZoV1RGKzdlZk5qdDM5NzlsbVhIT0VoWmZOb09NTlh6YzJGQUJ4UmRGUTN6VzdtYUdaZElZZFRGU0puVW1kWEo1OW1wSGJKYlJxQ0VwM1VjbnVHQlNaZ3VFRlI4ekl3OURrWlpvVkZFc2d4bTNqaUdlZWVFNzNnNjIxQVZrcm5WOE44czFvd2M4N3hYdDZDVTdJUTJFbDdwZjJ6YjJuU0g5YldwdU5wTFAwVXQ1TDRuWTd2VEx4aDkycTN4a1N6UGtzWC9IYnpXZTRKSmdaZGU3amdOUW0vNjJ0VnVMWmhZeVBkYjJvVFRGQjB3OWZBbVFCcWxzZ3BXTlpRU1VHTUxzcmoyY3ZVUWxkYUlZT1dHcGJYNVVsT0U3SmVGTHhuOGJFMFQ5aUtqWmlXNjZodXIvcUdTVnZLWi84SjZpWFVZMU9kRzBjWE5jamhEUTVwNHhEdGV5NlhNZFhxbXB0SkpXUzMwYzh3amtFTFBCcU4rS2Y0WHpld2xLSWlEOHNzcWlVbFVFWGpDaGdKRVRlR2NyY3ZyUVYvZVNaWW5VTEszcHBlRXpWSllHTGFXSlJlaHRWalJRZU9PSWE5aXZqMU8xVjRyNTNRU0NaMUpuOC90Y1psWCtXclVXd1VBeE5ROGJZNUorNmFKeVE4R2NmK3FTVVRwRE5PY01nY05SYVd4YkI0dEIzU1YrUExBMUErZ1o3OGVoNTIvazkyc29pYlJWbDVQQ1YyYisrU2lIQVVVWFlmaWJwLzRxVFpPZjVObnRqUDM3cFl1M25NeXo0M2svY1BqT0pWeU8yaTBTc3JmWjY4Wkd1Ym85Q3NJTngrUEc5alppQ0J3WWp0RUtEM3o2SzBpencxVGxHWFlRQ3pQWTB1QjEzUVRMQ2kyb0V3YzRpSUFjRmNRZmFUTDNiK0JZb1I0YmhoY3JpeXAzejBLK0djc0J6Y3lMbDQwcnlsaGJtNW9RZ0tsMzVsMlJvSWZySWMwUE1VT0FMc3ExQUhncURLc3Nsd3R4Ym1rQTd0Uy93YktXTEhJYmFzVE1KVGFnYk9RYkdXSGxmaXdtaWtKWStpTi9IWjFYTFV4VGVNNjA0d3VEV1BwV0QxOXhPM3EvS1NwNkNuODBvYm9wSnNoVW1NMVIrdXZxOFBRay94T3BOeVNGVEU3dUJZY2hlRXNVdXpPaEV3eFZzbWM5dGxyZ2VQTmJSTTd3SVZlTFdJZWh2VDNJd0VEdmJuRnU4TjNmbEtidmRWSkI4eDJWVXAzcUNPY3AyTS8rLzE4Y1VpN2IzUEJMRk5UVUhKOFYydFZFem52OEZub0xEWUhJQnhIUmVjRjFBU1B2OCtuTVNjWWZJQmtkRklOY2R1elNjbHBBTWcyb0NOdnY3dVpzbTFjN1Rtc1JTelNacnFiZzQrd2dVamtLMy9CTnB2Y0xCYUM3Kyt6OTR0VC9iZ2NBQUFBQkFBVllMalV3T1FBQUF5NHdnZ01xTUlJQ0VxQURBZ0VDQWdrQW9td25LejM2T3Qwd0RRWUpLb1pJaHZjTkFRRUxCUUF3UWpFSk1BY0dBMVVFQmhNQU1Ra3dCd1lEVlFRSUV3QXhDVEFIQmdOVkJBY1RBREVKTUFjR0ExVUVDaE1BTVFrd0J3WURWUVFMRXdBeENUQUhCZ05WQkFNVEFEQWdGdzB5TmpBMU1UUXhOekV6TkRSYUdBOHlNRFV6TURreU9URTNNVE0wTkZvd1FqRUpNQWNHQTFVRUJoTUFNUWt3QndZRFZRUUlFd0F4Q1RBSEJnTlZCQWNUQURFSk1BY0dBMVVFQ2hNQU1Ra3dCd1lEVlFRTEV3QXhDVEFIQmdOVkJBTVRBRENDQVNJd0RRWUpLb1pJaHZjTkFRRUJCUUFEZ2dFUEFEQ0NBUW9DZ2dFQkFKbmRKNGdEMEhHd0VjT3NSbndlN2pXRTJwZmVSUTVBTWtsa3dkVitBZXZmY0pkZjFDZGk4N1Z3cGRac2JMeEg4OUcvUkRQOE1Xbi80Nis2bHloazNPNlhRaUlLbTF3cVRNNU41NlJIZ0pYcW1nTldreFdUb3NBSWtxVEJmU1FvQng3cEVvRGtVVTNYL2NRc2lvMVVqNDNMMWcyc0hmMjdKaHBVb1ZiMDJqRUx6R1NhcVUyN3pGeFVzNUh4NDd0THBXTHBOYXo0REFvK2pmQTRCZGZHU3MrRkU4OW9XZkxITys2TzVsOEJoZklWNG5kMUxSOE02Yzd5S1drbDFwK0lMOWxSZnkvZ2hIOGNFK09QWURWY3VIL1M2S1VzOVZ1eXZIMWVQU2lwZ2tSRjk4Mk5RS3FLVjNwY3VRQ3oyZ2l3b09ua1YxZk1RTldKTGZ2MFRTR1pkaFVDQXdFQUFhTWhNQjh3SFFZRFZSME9CQllFRk0wSnZvSmNwRVd1ZUEzQlRweThQYklEbXNoVk1BMEdDU3FHU0liM0RRRUJDd1VBQTRJQkFRQVJWQnRWRXhUTEk0cW16SjRkajRJOVk4ZXJ2T0tBU1BucytXL2xiZEpmVDFmOCtPVUFxTlM1R1p4NlBwRzU3QkJtU1B1cFl4ME1POGczcmtjQmJYd1o3Ymp6V2puUElvTWt6aFV3RStDMkJ3emg1QUR3elV2bElLaEhpTWVNQjNEZ1huWWxRcW13ZUM5YlBtTndHeVlMK25XY2hLTjJYdS9GamhuaHd6VlVpSzZQM0VoaWlaallsQmZXVnJxWlBxRmVhZHlycGZBV1VYaS9tWE1qQ0taR00zT1dUUHlGcjB3c3Y2Y3dYb0JRcUxLOEIxYU41Q00zb3VEZ24wQkMzZTJTbTZsN21ZdG5yTmplMkJPZHFaY253blVFNGlIYnZ4SU5aNE5kdDFBOVhhWEExTHM5dlNON3V2RXd6QW1DZGdHTGNMNlZRd0lxZjhFWHlJUW5yZXh0NWxQU0x1M0xjWnVVNDlNR0lla09md1VXWmFrPSIsImtleXN0b3JlUGFzc3dvcmQiOiIyZjUzMTcwMmQ0MGI3MmM0OWNjZWM3ZWNhZjBlNWVhYiIsImtleUFsaWFzIjoiOWZmY2E4ZjgyOGQ5YTBkNjhlODRkNDE4YzUyMjQzMjYiLCJrZXlQYXNzd29yZCI6IjdhNDEzZDE5ZWMwNjIwM2M2MGMxZmZjNDFiM2ZlZjNiIn19fSwidXBkYXRlcyI6e30sImJ1aWxkVHlwZSI6ImFwayIsInVzZXJuYW1lIjoiamhvbm5pZXJtMiIsImV4cGVyaW1lbnRhbCI6e30sIm1vZGUiOiJidWlsZCIsInRyaWdnZXJlZEJ5IjoiRUFTX0NMSSIsImFwcElkIjoiM2NkMjg4MWEtZTE4ZC00NDg5LThkZGItM2NhOTU0Mzg3MmRkIiwiaW5pdGlhdGluZ1VzZXJJZCI6IjlkN2JmZDFkLTE0MTQtNDVhYS04NTY2LWU2ZjE3ZDg3ZTcxNiJ9LCJtZXRhZGF0YSI6eyJ0cmFja2luZ0NvbnRleHQiOnsidHJhY2tpbmdfaWQiOiJmNjgwNjYxOC1kZjMzLTRkNWMtYmQzZC1iNzJkYTkwOTZhNDIiLCJwbGF0Zm9ybSI6ImFuZHJvaWQiLCJzZGtfdmVyc2lvbiI6IjU0LjAuMCIsImFjY291bnRfaWQiOiIxMzhlMjg5Ny0xOTRhLTRlNmEtOGEwMy0wMjUzNzI4ZThhYTkiLCJwcm9qZWN0X2lkIjoiM2NkMjg4MWEtZTE4ZC00NDg5LThkZGItM2NhOTU0Mzg3MmRkIiwicHJvamVjdF90eXBlIjoibWFuYWdlZCIsImRldl9jbGllbnQiOmZhbHNlLCJkZXZfY2xpZW50X3ZlcnNpb24iOiI2LjAuMjEiLCJub193YWl0IjpmYWxzZSwicnVuX2Zyb21fY2kiOmZhbHNlLCJsb2NhbCI6dHJ1ZX0sImFwcEJ1aWxkVmVyc2lvbiI6IjEiLCJhcHBWZXJzaW9uIjoiMS4wLjAiLCJjbGlWZXJzaW9uIjoiMTguMTMuMCIsIndvcmtmbG93IjoibWFuYWdlZCIsImNyZWRlbnRpYWxzU291cmNlIjoicmVtb3RlIiwic2RrVmVyc2lvbiI6IjU0LjAuMCIsImZpbmdlcnByaW50SGFzaCI6ImE0MGYzOTBhNzgzNjU1YTkwOGIyNGY5NGU2YjZkYTk3MzU5ZTcxYWMiLCJyZWFjdE5hdGl2ZVZlcnNpb24iOiIwLjgxLjUiLCJkaXN0cmlidXRpb24iOiJpbnRlcm5hbCIsImFwcE5hbWUiOiJRIEh1Ym8gTW9yIFBPUyIsImFwcElkZW50aWZpZXIiOiJjb20uYW5vbnltb3VzLnFodWJvbW9ycG9zYXBwIiwiYnVpbGRQcm9maWxlIjoicHJldmlldyIsImdpdENvbW1pdEhhc2giOiJmYzVmOTljN2IwNWUzOTYxMzM3YmFiNzFhNDgzMTY4ODEwZDc4YjZiIiwiZ2l0Q29tbWl0TWVzc2FnZSI6IkNvbW1pdCBpbmljaWFsIGxpbXBpbyIsImlzR2l0V29ya2luZ1RyZWVEaXJ0eSI6ZmFsc2UsInVzZXJuYW1lIjoiamhvbm5pZXJtMiIsInJ1bldpdGhOb1dhaXRGbGFnIjpmYWxzZSwicnVuRnJvbUNJIjpmYWxzZSwiZGV2ZWxvcG1lbnRDbGllbnQiOmZhbHNlLCJyZXF1aXJlZFBhY2thZ2VNYW5hZ2VyIjoibnBtIiwic2ltdWxhdG9yIjpmYWxzZX19 exited with non-zero code: 1
+    Error: build command failed.
