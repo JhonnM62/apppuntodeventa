@@ -1,0 +1,42 @@
+Running "npm ci --include=dev" in /home/expo/workingdir/build directory
+npm error code ERESOLVE
+npm error ERESOLVE could not resolve
+npm error
+npm error While resolving: react-native-ping@1.2.8
+npm error Found: react-native@0.81.5
+npm error node_modules/react-native
+npm error   react-native@"0.81.5" from the root project
+npm error   peerOptional react-native@"*" from @expo/devtools@0.1.8
+npm error   node_modules/@expo/devtools
+npm error     @expo/devtools@"0.1.8" from expo@54.0.34
+npm error     node_modules/expo
+npm error       expo@"~54.0.33" from the root project
+npm error       11 more (expo-document-picker, expo-file-system, expo-font, ...)
+npm error   26 more (@expo/vector-icons, ...)
+npm error
+npm error Could not resolve dependency:
+npm error peer react-native@"^0.41.2 || ^0.57.0 || ^0.68.0 || ^0.70.0" from react-native-ping@1.2.8
+npm error node_modules/react-native-ping
+npm error   react-native-ping@"^1.2.8" from the root project
+npm error   peer react-native-ping@"*" from react-native-thermal-receipt-printer-image-qr@0.1.12
+npm error   node_modules/react-native-thermal-receipt-printer-image-qr
+npm error     react-native-thermal-receipt-printer-image-qr@"^0.1.12" from the root project
+npm error
+npm error Conflicting peer dependency: react-native@0.70.15
+npm error node_modules/react-native
+npm error   peer react-native@"^0.41.2 || ^0.57.0 || ^0.68.0 || ^0.70.0" from react-native-ping@1.2.8
+npm error   node_modules/react-native-ping
+npm error     react-native-ping@"^1.2.8" from the root project
+npm error     peer react-native-ping@"*" from react-native-thermal-receipt-printer-image-qr@0.1.12
+npm error     node_modules/react-native-thermal-receipt-printer-image-qr
+npm error       react-native-thermal-receipt-printer-image-qr@"^0.1.12" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error /home/expo/.npm/_logs/2026-05-04T18_37_05_942Z-eresolve-report.txt
+npm error A complete log of this run can be found in: /home/expo/.npm/_logs/2026-05-04T18_37_05_942Z-debug-0.log
+Build failed

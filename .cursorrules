@@ -1,0 +1,57 @@
+# Q Hubo Mor POS - Frontend Documentation & AI Instructions
+
+## 1. Project Overview & Tech Stack
+This is the React Native (Expo) frontend for the Q Hubo Mor POS system, migrating from a legacy AppSheet ERP.
+- **Framework:** React Native + Expo (EAS Build)
+- **Styling:** Tailwind CSS (via `uniwind`)
+- **State Management:** Zustand (`src/store`)
+- **Navigation:** React Navigation (`@react-navigation/native-stack`, `@react-navigation/bottom-tabs`)
+- **Real-time:** `socket.io-client` for real-time state synchronization
+- **Media/Images:** `expo-image` (with React Native `Image` fallback), `expo-image-picker`
+
+## 2. Architecture & File Structure
+- `src/screens/`: Feature-based UI components (e.g., `caja/`, `inventario/`, `orders/`, `settings/`).
+- `src/services/`: Axios-based API wrappers connecting to the NestJS backend.
+- `src/store/`: Zustand stores for global state (e.g., `useCartStore`, `useMesaStore`, `useAuthStore`).
+- `src/components/ui/`: Reusable Tailwind-styled components (`button.tsx`, `input.tsx`, `text.tsx`, `FloatingDock.tsx`).
+- `src/hooks/`: Custom React hooks (`useSocketEvent`, `useScrollDirection`, `usePermissions`).
+- `src/utils/`: Formatters, PDF generators, and Printer utilities.
+- `app.json` / `eas.json`: Expo configuration and EAS deployment settings.
+
+## 3. Deployment
+- Deployed using **Expo Application Services (EAS)**.
+- `eas build` is used for creating Android APKs/AABs and iOS IPAs.
+- The project is configured without a strict `owner` in `app.json` to allow linking to different Expo accounts via `eas login` and `eas init`.
+
+## 4. Business Logic & Conventions
+- **Pricing & Modifiers:** "Comentarios" act as product modifiers (extras/discounts). The total price formula is: `(Quantity * Unit Price) + Sum(Modifiers Prices)`. This impacts global cash drawer totals.
+- **Data Fetching:** Always handle nested API wrappers safely (e.g., `Array.isArray(response) ? response : (response?.data || [])`). Use Skeleton loading (`Animated.Value`) instead of plain ActivityIndicators for lists.
+- **Security & Navigation:** Granular RBAC (Role-Based Access Control). When adding new backend permissions, ALWAYS update `routeToPermissionMap` in `FloatingDock.tsx` to prevent infinite redirect loops to Home.
+
+## 5. 🚨 Core AI Memories & Iterated Fixes (CRITICAL)
+If you are an AI or developer editing this codebase, strictly follow these rules based on past debugging iterations:
+
+### UI & Layout (Android Specifics)
+- **Shadows & Overflow:** NEVER use `overflow-hidden` combined with shadow utilities (`shadow-sm`) and rounded corners on Android. It causes layout collapse and cuts off content. Remove `overflow-hidden` if shadows are needed.
+- **SafeAreaView:** Avoid using NativeWind (`className="flex-1"`) for `SafeAreaView`. Always use inline styles: `style={{ flex: 1, backgroundColor: '...' }}`.
+- **ScrollView Padding:** When adding bottom padding to a `ScrollView`, always include `flexGrow: 1` in `contentContainerStyle` to prevent unreachable bottom elements.
+- **Tablet Letterboxing:** Android tablets in landscape mode will letterbox the app unless `"orientation": "default"` is set in `app.json` AND `ScreenOrientation.unlockAsync()` is called in `App.tsx`.
+- **Nested Layouts:** When building row-centered UI elements (like increment/decrement buttons), avoid custom `<Input>` components that inject margins/paddings. Use standard `<TextInput>` from `react-native`.
+
+### Interaction & Forms
+- **Double Tap Bug in Lists:** Modals or buttons inside `ScrollView`, `FlatList`, or `FlashList` must have `keyboardShouldPersistTaps="handled"` in the container. Otherwise, the first tap only closes the keyboard/focus, requiring a double tap to trigger `onPress`.
+- **Numeric & Currency Inputs:** Always format monetary values by extracting digits first: `Number(t.replace(/[^0-9]/g, ''))`. This prevents `NaN` crashes when users leave inputs empty.
+- **Date Validation:** Empty date strings `""` from placeholders fail backend `@IsDateString` validators. Always parse empty dates to `undefined` before submitting payloads.
+- **Keyboard Avoidance:** Inputs at the bottom of the screen MUST be wrapped in `KeyboardAvoidingView` with platform-specific behavior (`Platform.OS === 'ios' ? 'padding' : undefined`).
+
+### Images & Media
+- **Image Fallbacks:** The app uses a hybrid `expo-image` approach wrapped in a `try-catch` block falling back to `react-native`'s `Image` to prevent native module crashes in unsupported Dev Clients.
+- **Resize Mode:** Use `contentFit="contain"` (or `resizeMode="contain"`) with a solid background for product images to avoid cutting off important visual information.
+- **Image URLs:** Backend images are served with the `/api/v1` prefix. Ensure image URIs correctly prepend the backend URL if they are relative (`/uploads/...`).
+
+### Sockets & Real-time
+- Always implement `useSocketEvent('eventName', callback)` when tracking live state (like `refreshInsumos` or `ordenActualizada`).
+- **Caja Freeze:** `CajaFormScreen` updates `horaCongelada` silently via `PATCH` and `refreshCaja` socket events without overwriting user form inputs.
+
+### Timezones
+- **Sales Grouping:** In `HistorialVentasScreen`, prioritize accounting date (`fecha`) over calendar timestamp (`fechaYHora`). Parse `fecha.substring(0, 10)` manually into `new Date(year, month, day)` to avoid UTC timezone shifts moving midnight sales to the wrong day.

@@ -1,0 +1,46 @@
+http://100.42.185.2:8010/?nombre=Jhonnier%20Mejia&fechaGeneracion=05/05/2026%2014:55:40&receiver=573158208619&fechaInicio=01/11/2026%2011:22:00&fechaFin=01/11/2026%2011:22:00&estadoCaja=NO%20SE%20HA%20REVISADO&valorFaltante=0&valorFaltanteCalculado=-80000&valorExcedente=0&valorExcedenteCalculado=0&efectivoApertura=109000&efectivoCierre=488000&total12Onz=&total24Onz=&totalEfectivoCaja=379000&totalVentas=650000&valorEfectivo=459000&valorTransferencias=191000&valorTarjeta=0&numOrdenes=0&valorEfectivoRepartido=0&valorTransferenciasRepartidas=0&valorTotalEfectivo=459000&valorTotalTransferencias=191000&obsinfo=0%20guardados%20en%20el%20caj%C3%B3n%20de%20la%20casa.%0A%0APr%C3%A9stamos%200%0ASacamos%200%0A%0A0%20vasos%20da%C3%B1ado%20con%20licor%0A0%20vasos%20da%C3%B1ados%20sin%20licor%0A%0A%0ADINERO%20FALTANTE%3A%0ADINERO%20EXEDENTE%3A&nombreProducto=Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Con%20licor%20,%20Paquete%20de%20fruta%20$0%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Paquete%20de%20fruta%20$0%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Paquete%20de%20fruta%20$0%20,%20Paquete%20de%20fruta%20$0%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Con%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Paquete%20de%20fruta%20$0%20,%20Paquete%20de%20fruta%20$0%20,%20Normal%2012%20Onz%20Con%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Paquete%20de%20fruta%20$0%20,%20Adicional%20de%20gomas%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Paquete%20de%20fruta%20$0%20,%20Paquete%20de%20fruta%20con%20Precio%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Paquete%20de%20fruta%20$0%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Paquete%20de%20fruta%20$0%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Paquete%20de%20fruta%20$0%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Shot%20de%20tequila%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2024%20Onz%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Con%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Paquete%20de%20fruta%20$0%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Paquete%20de%20fruta%20$0%20,%20Normal%2012%20Onz%20Con%20licor%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2016%20Onz%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Paquete%20de%20fruta%20$0&cantidadesProducto=4%20,%201%20,%201%20,%201%20,%203%20,%201%20,%202%20,%201%20,%201%20,%201%20,%201%20,%201%20,%202%20,%203%20,%202%20,%203%20,%202%20,%204%20,%201%20,%201%20,%201%20,%201%20,%202%20,%202%20,%202%20,%203%20,%201%20,%202%20,%202%20,%202%20,%203%20,%201%20,%203%20,%201%20,%201%20,%202%20,%201%20,%201%20,%201%20,%201%20,%201%20,%201%20,%201%20,%201%20,%201%20,%202%20,%201%20,%201%20,%201%20,%201%20,%202%20,%201%20,%201%20,%202%20,%202%20,%203%20,%202%20,%201%20,%202%20,%201%20,%201%20,%202%20,%202&insumosnombre=Vaso%20de%2016%20onz%20,%20Vaso%20de%2024%20onz%20,%20Tapas%20Domicilios%20,%20Paquete%20de%20fruta%2050Gr%20,%20Adicional%20de%20dulces%20,%20Paquete%20de%20fruta%2050Gr%20,%20Jeringas%20,%20Vasos%20de%2012%20onz%20,%20Vasos%20de%2012%20onz&insumosproducto=Normal%2016%20Onz%20,%20Normal%2024%20Onz%20,%20Tapas%20domicilio%20,%20Paquete%20de%20fruta%20con%20Precio%20,%20Adicional%20de%20gomas%20,%20Paquete%20de%20fruta%20$0%20,%20Shot%20de%20tequila%20,%20Normal%2012%20Onz%20Sin%20licor%20,%20Normal%2012%20Onz%20Con%20licor&insumosunidad=unidad%20,%20unidad%20,%20unidad%20,%20unidad%20,%20unidad%20,%20unidad%20,%20unidad%20,%20unidad%20,%20unidad&insumoscantidada=13%20,%2015%20,%204%20,%201%20,%203%20,%2024%20,%201%20,%20216%20,%20160&insumoscantidadc=13%20,%2014%20,%204%20,%200%20,%201%20,%204%20,%200%20,%20154%20,%20136&insumosutilizaron=0%20,%201%20,%200%20,%201%20,%202%20,%2020%20,%201%20,%2062%20,%2024&insumosobs=
+
+
+Concatenate("http://100.42.185.2:8010?nombre=",[Nombre],
+"&fechaGeneracion=",Now(),
+"&receiver=","573158208619",
+"&fechaInicio=",Concatenate([Fecha de Apertura]," ",[Hora de Apertura]),
+"&fechaFin=",Concatenate([Fecha de Cierre]," ",[Hora de Cierre]),
+"&estadoCaja=",[Cuadro Caja?],
+"&valorFaltante=",[Valor Faltante],
+"&valorFaltanteCalculado=",If([Resumen]<SUM(SELECT(VENTAS[Efectivo Recibido],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO Y OTROS"))) + SUM(SELECT(VENTAS[TOTAL FACTURA],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO"))),([Resumen])-(SUM(SELECT(VENTAS[Efectivo Recibido],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO Y OTROS"))) + SUM(SELECT(VENTAS[TOTAL FACTURA],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO")))),0),
+"&valorExcedente=",[Valor Excedente],
+"&valorExcedenteCalculado=",If([Resumen]>SUM(SELECT(VENTAS[Efectivo Recibido],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO Y OTROS"))) + SUM(SELECT(VENTAS[TOTAL FACTURA],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO"))),([Resumen])-(SUM(SELECT(VENTAS[Efectivo Recibido],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO Y OTROS"))) + SUM(SELECT(VENTAS[TOTAL FACTURA],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO")))),0),
+"&efectivoApertura=",[Efectivo de Apertura], 
+"&efectivoCierre=",[Efectivo de Cierre],
+"&total12Onz=",[Total 12 Onz],
+"&total24Onz=",[Total 24 Onz],
+"&totalEfectivoCaja=",[Resumen],
+"&totalVentas=",SUM(SELECT(VENTAS[TOTAL FACTURA],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre]))),
+"&valorEfectivo=",SUM(SELECT(VENTAS[TOTAL FACTURA],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO"))),
+"&valorTransferencias=",SUM(SELECT(VENTAS[TOTAL FACTURA],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="TRASNFERENCIA"))),
+"&valorTarjeta=",SUM(SELECT(VENTAS[TOTAL FACTURA],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="TARJETA"))),
+"&numOrdenes=",COUNT(SELECT(VENTAS[TOTAL FACTURA],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO Y OTROS"))),
+"&valorEfectivoRepartido=",SUM(SELECT(VENTAS[Efectivo Recibido],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO Y OTROS"))),
+"&valorTransferenciasRepartidas=",SUM(SELECT(VENTAS[Valor de transferencia],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO Y OTROS"))),
+"&valorTotalEfectivo=",SUM(SELECT(VENTAS[Efectivo Recibido],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO Y OTROS"))) + SUM(SELECT(VENTAS[TOTAL FACTURA],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO"))),
+"&valorTotalTransferencias=",SUM(SELECT(VENTAS[TOTAL FACTURA],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="TRASNFERENCIA"))) + SUM(SELECT(VENTAS[Valor de transferencia],AND([FECHA]>=[Fecha de Apertura],[FECHA]<=[Fecha de Cierre], [Medio de pago]="EFECTIVO Y OTROS"))),
+"&obsinfo=",ENCODEURL([observaciones]),
+"&nombreProducto=",[ventas][Nombre_2],
+"&cantidadesProducto=",[ventas][Cantidad],
+"&insumosnombre=",SELECT(APERTURA Y CIERRE INSUMOS[Nombre Insumo],AND([IDCaja]=[IDCaja],[Fecha de Apertura]=[Fecha])),
+"&insumosproducto=",SELECT(APERTURA Y CIERRE INSUMOS[Nombre del Producto],AND([IDCaja]=[IDCaja],[Fecha de Apertura]=[Fecha])),
+"&insumosunidad=",SELECT(APERTURA Y CIERRE INSUMOS[Unidad de medida],AND([IDCaja]=[IDCaja],[Fecha de Apertura]=[Fecha])),
+"&insumoscantidada=",SELECT(APERTURA Y CIERRE INSUMOS[Cant apertura],AND([IDCaja]=[IDCaja],[Fecha de Apertura]=[Fecha])),
+"&insumoscantidadc=",SELECT(APERTURA Y CIERRE INSUMOS[Cant de cierre],AND([IDCaja]=[IDCaja],[Fecha de Apertura]=[Fecha])),
+"&insumosutilizaron=",SELECT(APERTURA Y CIERRE INSUMOS[se utilizaron],AND([IDCaja]=[IDCaja],[Fecha de Apertura]=[Fecha])),
+"&insumosobs=",SELECT(APERTURA Y CIERRE INSUMOS[Observacion],AND([IDCaja]=[IDCaja],[Fecha de Apertura]=[Fecha])),
+)
+
+SUM(
+    SELECT(ORDERVENTAS[Precio total], [IDventas] = [_THISROW].[IDventas])
+  )-[Descuento]
+
+FLOOR(SUM(
+    SELECT(ORDERVENTAS[Precio total], [IDventas] = [_THISROW].[IDventas])
+  ) * [% de descuento] / 1000) * 1000

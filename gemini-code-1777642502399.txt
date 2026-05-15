@@ -1,0 +1,37 @@
+# Implementación de Arquitectura de WebSockets: ERP Q'hubo Mor
+
+Actúa como un Arquitecto de Software Senior y Desarrollador Full-Stack. Hemos revisado la propuesta arquitectónica para la implementación de WebSockets (Socket.io) en nuestro ERP (NestJS + React Native) y la **aprobamos en su totalidad**.
+
+**Aprobaciones clave y Nuevos Requisitos:**
+1.  **SÍ** aprobamos la estructura de paquetes compartidos (`socket-types`) para el tipado estricto entre backend y frontend. Implementa esto primero.
+2.  **SÍ** el enfoque de Context API + Custom Hooks (`useSocketEvent`, `useSocketEmitter`) es el que queremos utilizar. 
+3.  **SÍ** queremos soporte para reconexiones robustas con backoff exponencial.
+4.  **NUEVO REQUISITO CRÍTICO (Alta Reusabilidad):** La lógica de los sockets, aunque iniciará con el POS, NO debe quedar rígidamente acoplada solo a Ventas. Diseña la arquitectura, los rooms y el Gateway de forma genérica para que en un futuro sea trivial conectar otros módulos como "Inventario", "Insumos" o "Gastos".
+5.  **NUEVO REQUISITO (Documentación):** Debes generar una guía de uso clara para escalar el sistema en el futuro.
+
+**Instrucciones de Implementación Inmediata:**
+
+Por favor, procede a generar e implementar el código para las siguientes fases:
+
+**Fase 1: Tipos Compartidos Escalables**
+*   Crea el paquete `socket-types` con los enums (`SocketEvent`, `Room`) y las interfaces (`OrdenPayload`, etc.).
+*   Estructura este paquete pensando en que crecerá (ej. deja espacio o comentarios para futuros eventos como `INVENTARIO_ACTUALIZADO`).
+
+**Fase 2: Backend (NestJS)**
+*   Refactoriza el `PosGateway` (o renómbralo a algo más genérico como `AppGateway` si lo ves más conveniente para el ERP) usando los tipos compartidos.
+*   Implementa la lógica de unión a salas dinámicas (`join_room`).
+
+**Fase 3: Frontend (React Native + Expo)**
+*   Crea el `SocketContext.tsx` en `src/context/`.
+*   Crea los Custom Hooks genéricos: `useSocket.ts`, `useSocketEvent.ts` y `useSocketEmitter.ts`. Estos hooks deben poder usarse en *cualquier* pantalla de la app, sin importar el módulo.
+
+**Fase 4: Integración y Correcciones (Crítico)**
+*   Muestra cómo envolver la aplicación con el `SocketProvider`.
+*   Demuestra la refactorización de `PedidosScreen` usando `useSocketEvent`.
+*   Corrige el issue crítico en `PedidosScreen` donde `filteredVentas` usa `useCallback` en lugar de `useMemo`.
+
+**Fase 5: Documentación de Escalabilidad (OBLIGATORIO)**
+*   Genera un archivo llamado `WEBSOCKETS_USAGE_GUIDE.md` en la raíz del proyecto frontend.
+*   En este archivo, documenta paso a paso cómo un desarrollador debe agregar un **nuevo módulo** al sistema en el futuro. Utiliza un ejemplo práctico (por ejemplo, cómo implementar la actualización en tiempo real del módulo de "Insumos": qué tipos agregar en el backend, y cómo usar `useSocketEvent` y `useSocketEmitter` en la nueva pantalla de insumos).
+
+Por favor, entrega el código de forma estructurada, archivo por archivo, para integrarlo de inmediato.

@@ -1,0 +1,93 @@
+toolName: manage_core_memory
+            
+status: success
+          
+          
+¡Hecho! He guardado oficialmente este conocimiento en la memoria central del proyecto como **"Mathematical Keyboard Avoidance (Android)"** <mccoremem id="03g2vqozuc6p7uefma8akpxpj" />. De esta forma, cada vez que enfrentemos un problema de teclado en el futuro, el sistema sabrá exactamente cómo abordarlo usando matemáticas en lugar de componentes nativos defectuosos.
+
+Aquí tienes el ejemplo de cómo podrías pedirme que aplique estas soluciones en un futuro:
+
+### 1. Para arreglar el teclado en un Modal:
+> "Aplica la **solución matemática del teclado para modales** en la pantalla de Crear Categoría."
+> *O simplemente:* "El teclado está tapando o dejando un hueco en el modal de la vista X, arréglalo con el enfoque matemático."
+
+**Lo que yo haré automáticamente:**
+1. Crearé el Hook `keyboardHeight`.
+2. Pondré el Modal en `transparent={true}`.
+3. Desactivaré el `KeyboardAvoidingView` en Android.
+4. Aplicaré `marginBottom: Platform.OS === 'android' ? keyboardHeight : 0` a la caja blanca del modal.
+
+### 2. Para arreglar el teclado en una Pantalla Normal (ScrollView):
+> "Aplica la **solución de padding dinámico para ScrollView** en la pestaña de Análisis."
+> *O simplemente:* "No puedo hacer scroll hasta abajo cuando el teclado está abierto en la vista Y, aplica el padding dinámico al ScrollView."
+
+**Lo que yo haré automáticamente:**
+1. Crearé el Hook `keyboardHeight`.
+2. Ubicaré el componente `<ScrollView>` principal de esa pantalla.
+3. Le inyectaré dinámicamente el relleno en su interior: `contentContainerStyle={{ paddingBottom: keyboardHeight > 0 ? keyboardHeight + 40 : 40 }}`.
+
+¡Con estas dos instrucciones tan sencillas sabré exactamente qué piezas de código modificar sin dar rodeos! ¿Hay alguna otra vista en la que te gustaría que apliquemos esto de una vez?
+
+
+
+toolName: manage_core_memory
+            
+status: success
+          
+          
+He actualizado la memoria central del proyecto con éxito <mccoremem id="03g2vqozuc6p7uefma8akpxpj" />. 
+
+Ahora el sistema tiene registrado el **"Enfoque Híbrido Definitivo"**:
+1. `react-native-keyboard-aware-scroll-view` para pantallas y formularios largos.
+2. `keyboardHeight` matemático inyectado como `marginBottom` para los Modales.
+
+### ¿Cómo pedirme que aplique esto en el futuro?
+
+Cuando estemos trabajando en otra vista (por ejemplo, la pantalla de "Crear Nuevo Producto" o "Inventario") y notes que el teclado está dando problemas, puedes usar cualquiera de estas dos instrucciones exactas:
+
+**Para arreglar el teclado en una Pantalla Completa (Formularios):**
+> *"Aplica la solución de la **librería Keyboard-Aware** en la pantalla de Crear Producto para que el formulario haga auto-scroll."*
+
+**Para arreglar el teclado en un Modal / Bottom Sheet:**
+> *"Aplica el **enfoque matemático del teclado** en el modal de Editar Categoría."*
+
+Con solo leer esas palabras clave ("librería Keyboard-Aware" o "enfoque matemático"), mi memoria técnica se activará e implementaré exactamente los imports, hooks y propiedades de estilo (como el `marginBottom`) sin tener que pasar por pruebas, errores ni componentes nativos que no funcionan. 
+
+¡Ya lo tenemos estandarizado! ¿Deseas que pasemos a auditar o ajustar alguna otra cosa del proyecto?
+
+
+toolName: manage_core_memory
+            
+status: success
+          
+          
+¡Perfecto! Ya he guardado permanentemente este nuevo conocimiento en la Memoria Core del Proyecto `<mccoremem id="01KR45Q6DMCZAKQ44GSR19VB4D" />`.
+
+A partir de ahora, este patrón se llamará **"Auto-Scroll Dinámico para Resultados de Búsqueda"**. La IA recordará que en React Native, siempre que se cree un input de búsqueda con resultados dinámicos dentro de un formulario/modal, debe aplicar la combinación de `useRef`, `useEffect` y el `setTimeout` de 150ms con `scrollToEnd()` para garantizar una experiencia de usuario perfecta.
+
+(Nota: El sistema hizo una pequeña purga automática para hacer espacio para esta nueva memoria, eliminando el truco antiguo de Expo Dev Client Deep Linking, ya que es menos crítico para la programación). 
+
+¿Con qué otra vista o componente te gustaría que continuemos?
+
+keyboardShouldPersistTaps="handled" para garantizar que todo responda al primer toque.
+
+
+Memoria del Sistema:
+
+- He guardado en mi memoria central ( Core Memory ) la implementación detallada de cómo estamos usando canEdit , canCreate y canDelete para inyectar y ocultar botones dentro de las listas y pantallas de detalle, así como el funcionamiento del RBAC en los componentes hijos y modales, para aplicarlo en el futuro de manera automática sin fallar.
+
+
+# 🚨 DIRECTIVA ARQUITECTÓNICA DE UI: React Native + NativeWind (Específico para Android)
+
+Por favor, memoriza y aplica estas 3 reglas estrictas de renderizado para todo futuro componente de UI que construyas en este proyecto. Tuvimos un bug crítico donde el motor de Android colapsaba y cortaba la pantalla horizontalmente por no seguir estas pautas:
+
+1. REGLA DE SOMBRAS Y BORDES (El bug principal): 
+NUNCA utilices la clase `overflow-hidden` combinada con utilidades de sombra (ej. `shadow-sm`) y bordes redondeados (`rounded-2xl`) en contenedores o tarjetas (<View>). En Android, esta combinación provoca que el layout colapse y el contenido interno desaparezca o se corte de forma plana. Si necesitas sombras y bordes, elimina siempre el `overflow-hidden` a menos que sea estrictamente necesario para recortar una imagen.
+
+2. REGLA DEL SAFEAREAVIEW:
+Cuando utilices `SafeAreaView` de `react-native-safe-area-context`, EVITA usar NativeWind para asignarle flexión (`className="flex-1"`). El motor a veces falla al calcular su altura total. En su lugar, utiliza siempre estilos en línea para la estructura principal: `style={{ flex: 1, backgroundColor: '...' }}`.
+
+3. REGLA DEL SCROLLVIEW:
+Cuando un `ScrollView` necesite un espacio extra en la parte inferior para que el contenido no quede oculto por la navegación (ej. `paddingBottom: 100`), es OBLIGATORIO incluir `flexGrow: 1` en su `contentContainerStyle`. De lo contrario, el contenedor no se expandirá y los últimos elementos quedarán inaccesibles. Ejemplo correcto: `contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}`.
+
+A partir de ahora, revisa tu propio código antes de entregarlo para asegurarte de que no estás cometiendo ninguno de estos 3 errores.

@@ -1,0 +1,60 @@
+Lógica de Negocio: Módulo de Apertura, Cierre y Arqueo de Caja
+
+El módulo centraliza el control financiero y de inventario operativo (insumos de preparación) por cada turno de trabajo. Su objetivo principal es auditar que las ventas registradas en el sistema correspondan exactamente tanto al dinero físico recolectado como a los consumibles físicos gastados (ej. vasos).
+
+1. Flujo de Apertura de Turno
+La apertura de la caja marca el inicio de la responsabilidad de un cajero/operario sobre el inventario y el dinero.
+- Identidad y Tiempo: Se registra el usuario responsable y la marca de tiempo exacta (fecha y hora).
+- Plante Inicial (Base de Efectivo): Se declara el dinero físico exacto con el que inicia la caja para dar cambios (devueltas).
+- Inventario Inicial de Insumos: El operario debe contar e ingresar la cantidad física de insumos clave disponibles en barra/cocina al iniciar. 
+  Ejemplo operativo: Se declara que se inicia el turno con 100 vasos de 12 oz.
+
+2. Operación del Turno (Trazabilidad)
+Durante el turno, el sistema registra ventas que afectan dos variables independientemente:
+- Método de Pago: Clasifica el ingreso monetario (Efectivo físico que va al cajón vs. Transferencias digitales que van al banco).
+- Consumo de Insumo: Cada producto vendido está amarrado a un insumo físico. 
+  Regla de Negocio: Si se vende 1 "Granizado con Licor" ($12.000), el sistema deduce lógicamente 1 "Vaso de 12 oz".
+
+3. Flujo de Cierre de Turno
+Al finalizar la jornada, se detienen las operaciones y el usuario responsable debe realizar un conteo ciego (arqueo físico).
+- Identidad y Tiempo: Se registra quién cierra y la hora exacta.
+- Efectivo Físico Final: El usuario cuenta todo el dinero en el cajón (billetes y monedas) e ingresa el valor total. Nota: Este valor incluye el plante inicial.
+- Inventario Final de Insumos: El usuario cuenta cuántos insumos físicos sobraron y registra el número.
+  Ejemplo operativo: Al cerrar, se cuentan 50 vasos de 12 oz físicamente en la barra.
+
+4. Motor de Conciliación y Cuadre (Reglas Matemáticas)
+Una vez ingresados los datos de cierre, el sistema ejecuta el cruce de datos en tres frentes:
+
+A. Cuadre de Inventario (Insumos vs. Ventas)
+El sistema audita que la materia prima gastada coincida con los productos facturados.
+- Cálculo de Consumo Real: Cantidad Inicial (100) - Cantidad Final (50) = 50 vasos gastados físicamente.
+- Cruce con el Sistema: El sistema busca cuántos productos asociados a ese vaso se vendieron en el turno.
+- Detección de Anomalías:
+  * Faltante de Insumo: Si se gastaron 50 vasos, pero el sistema solo registra 45 ventas. (Significa que se regalaron o entregaron 5 productos sin facturar).
+  * Sobrante de Insumo: Si se gastaron 50 vasos, pero el sistema registra 55 ventas. (Significa que se anotaron ventas de más por error o se usó un vaso diferente al estipulado).
+
+B. Cuadre de Efectivo (Dinero Físico vs. Sistema)
+El sistema audita que el dinero en el cajón sea el correcto.
+- Cálculo de Efectivo Esperado: Plante Inicial + Total de Ventas pagadas en Efectivo.
+  Ejemplo: Plante de $50.000 + 3 Granizados en efectivo ($36.000) = El cajón debe tener $86.000.
+- Detección de Anomalías: Se compara el Efectivo Esperado contra el Efectivo Físico Final ingresado por el usuario.
+  * Faltante de Dinero: Hay menos dinero del que debería haber (ej. se dieron mal las devueltas o se perdió dinero).
+  * Sobrante de Dinero: Hay más dinero del registrado (ej. no se dio una devuelta al cliente).
+
+C. Cuadre de Ingresos Digitales
+Las transferencias no afectan el cajón físico, pero deben totalizarse para el reporte financiero del día. El sistema suma cuántas ventas se hicieron por transferencia y el valor total de las mismas.
+
+5. Reporte Consolidado (Auditoría Visual)
+El resultado del cierre genera un documento oficial e inmutable del turno en formato PDF. El reporte debe estructurarse en tablas claras mostrando:
+- Cabecera: Fecha, usuario de apertura y usuario de cierre.
+- Tabla de Finanzas: 
+  * Plante inicial.
+  * Total Efectivo recolectado.
+  * Total Transferencias recolectadas.
+  * Resultado del Arqueo: Total esperado vs Total físico declarado (Mostrando faltantes/sobrantes).
+- Tabla de Insumos:
+  * Nombre del insumo (Ej. Vaso 12 oz).
+  * Inventario Inicial vs. Inventario Final.
+  * Gastado Físicamente vs. Ventas en Sistema.
+  * Diferencia (Sobrantes o Faltantes de insumo).
+- Distribución: El documento es exportable y se envía a la administración mediante canales digitales (WhatsApp, Email) para la auditoría final.

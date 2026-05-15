@@ -1,0 +1,41 @@
+import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+
+const api = axios.create({
+  baseURL: API_URL,
+  timeout: 10000, // 10 segundos de tiempo de espera máximo
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Interceptor para agregar el token JWT
+api.interceptors.request.use(
+  async (config: InternalAxiosRequestConfig) => {
+    const token = await AsyncStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error: AxiosError) => Promise.reject(error)
+);
+
+// Interceptor para manejar respuestas (opcional)
+api.interceptors.response.use(
+  (response: AxiosResponse) => {
+    console.log(`[DEBUG api.ts] URL: ${response.config.url} | typeof data: ${typeof response.data} | isArray: ${Array.isArray(response.data)}`);
+    return response.data;
+  },
+  (error: AxiosError<any>) => {
+    // Si la respuesta tiene el formato { success, error: { message, code } }
+    if (error.response && error.response.data && error.response.data.error) {
+      return Promise.reject(error.response.data.error);
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;

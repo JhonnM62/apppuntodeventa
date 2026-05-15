@@ -1,0 +1,63 @@
+diff --git a/node_modules/react-native-thermal-receipt-printer-image-qr/android/src/main/java/com/pinmi/react/printer/adapter/BLEPrinterAdapter.java b/node_modules/react-native-thermal-receipt-printer-image-qr/android/src/main/java/com/pinmi/react/printer/adapter/BLEPrinterAdapter.java
+index 9d77969..9cde46c 100644
+--- a/node_modules/react-native-thermal-receipt-printer-image-qr/android/src/main/java/com/pinmi/react/printer/adapter/BLEPrinterAdapter.java
++++ b/node_modules/react-native-thermal-receipt-printer-image-qr/android/src/main/java/com/pinmi/react/printer/adapter/BLEPrinterAdapter.java
+@@ -200,10 +200,14 @@ public class BLEPrinterAdapter implements PrinterAdapter{
+                 byte [] bytes = Base64.decode(rawData, Base64.DEFAULT);
+                 try{
+                     OutputStream printerOutputStream = socket.getOutputStream();
+-                    printerOutputStream.write(bytes, 0, bytes.length);
+-                    printerOutputStream.flush();
+-                }catch (IOException e){
+-                    Log.e(LOG_TAG, "failed to print data" + rawData);
++                    if (printerOutputStream != null) {
++                        printerOutputStream.write(bytes, 0, bytes.length);
++                        printerOutputStream.flush();
++                    } else {
++                        Log.e(LOG_TAG, "printerOutputStream is null");
++                    }
++                }catch (Exception e){
++                    Log.e(LOG_TAG, "failed to print data " + rawData);
+                     e.printStackTrace();
+                 }
+ 
+@@ -250,6 +254,10 @@ public class BLEPrinterAdapter implements PrinterAdapter{
+             int[][] pixels = getPixelsSlow(bitmapImage, imageWidth, imageHeight);
+ 
+             OutputStream printerOutputStream = socket.getOutputStream();
++            if (printerOutputStream == null) {
++                Log.e(LOG_TAG, "printerOutputStream is null");
++                return;
++            }
+ 
+             printerOutputStream.write(SET_LINE_SPACE_24);
+             printerOutputStream.write(CENTER_ALIGN);
+@@ -273,7 +281,7 @@ public class BLEPrinterAdapter implements PrinterAdapter{
+             printerOutputStream.write(LINE_FEED);
+ 
+             printerOutputStream.flush();
+-        } catch (IOException e) {
++        } catch (Exception e) {
+             Log.e(LOG_TAG, "failed to print data");
+             e.printStackTrace();
+         }
+@@ -297,6 +305,10 @@ public class BLEPrinterAdapter implements PrinterAdapter{
+             int[][] pixels = getPixelsSlow(bitmapImage, imageWidth, imageHeight);
+ 
+             OutputStream printerOutputStream = socket.getOutputStream();
++            if (printerOutputStream == null) {
++                Log.e(LOG_TAG, "printerOutputStream is null");
++                return;
++            }
+ 
+             printerOutputStream.write(SET_LINE_SPACE_24);
+             printerOutputStream.write(CENTER_ALIGN);
+@@ -320,7 +332,7 @@ public class BLEPrinterAdapter implements PrinterAdapter{
+             printerOutputStream.write(LINE_FEED);
+ 
+             printerOutputStream.flush();
+-        } catch (IOException e) {
++        } catch (Exception e) {
+             Log.e(LOG_TAG, "failed to print data");
+             e.printStackTrace();
+         }

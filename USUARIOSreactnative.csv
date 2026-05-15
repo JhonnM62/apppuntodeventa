@@ -1,0 +1,10 @@
+"IDUsuarios","Nombre","email","Cedula","Telefono","Direccion","Propinas","Rol","Foto","Salario","createdAt","isActive","password","updatedAt"
+"33201661","Carolina","carolinabravo055@gmail.com",NULL,NULL,NULL,NULL,"Cajero","",NULL,NULL,NULL,NULL,NULL
+"633783ff","Celular Luisa","jeb51904@gmail.com",NULL,NULL,NULL,NULL,"Admin negocio","",NULL,NULL,NULL,NULL,NULL
+"69df5a30","Admin App","cuentaajm26@gmail.com",NULL,NULL,NULL,NULL,"Jefe","",NULL,NULL,NULL,NULL,NULL
+"6b31a5f7","Jhonnier Mejia","appsheetautosystem@gmail.com",1004578237,"3158208619","cra 6c #26a etapa 1 casa 17",NULL,"Jefe","",NULL,NULL,NULL,NULL,NULL
+"7d3455fe","Luisa Hoyos","luihoyos.12345@gmail.com",NULL,NULL,NULL,NULL,"Admin negocio","",NULL,NULL,NULL,NULL,NULL
+"cmom4whz80000k0qnjs8qb3sc","Prueba","pruebas@gmail.com",NULL,NULL,NULL,NULL,"Admin app",NULL,NULL,NULL,True,"$2b$10$K4Igl.AaNQF1uvbRmsDYleF/saUQhH3/6zsIHnAGYoBVZmwe1JAKy",NULL
+"cmop86a61000085grxksefohq","Admin Jhonnier","jonnymejia62@gmail.com",NULL,"3002167901",NULL,NULL,"Admin app",NULL,NULL,NULL,NULL,"$2b$10$0JrbG9ti2qYa9Tf1/3zf/eQmQwhKYBuCypjR3fhxvSFpyyizbv3E6",NULL
+"e0433412","Tablet Negocio","qhubomor35@gmail.com",NULL,NULL,NULL,NULL,"Cajero","",NULL,NULL,NULL,NULL,NULL
+"ee35309c","Joselyn Mejia","em4397789@gmail.com",NULL,NULL,NULL,NULL,"Cajero","",NULL,NULL,NULL,NULL,NULL
