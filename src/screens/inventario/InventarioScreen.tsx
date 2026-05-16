@@ -813,9 +813,76 @@ const InventarioScreen = ({ navigation }: any) => {
     const isComprado = item.seCompro === 'Si' || item.seCompro === 'si';
     const isSelected = selectedOrdenes.has(item.IDorderinventario);
     
-    // Determine the inventory context (either from parent detail modal, or embedded in item for 'registros' tab)
     const invContext = selectedInventario || item.inventario;
     const isEntrada = invContext?.tipo?.toUpperCase().includes('ENTRADA') ?? false;
+
+    if (inlineEditOrdenId === item.IDorderinventario) {
+      const previewSubtotal = (() => {
+        const p = Number(inlineEditValues.precioActual.replace(/[^0-9.]/g, '')) || 0;
+        const c = Number(inlineEditValues.cantidad.replace(/[^0-9]/g, '')) || 0;
+        return p * c;
+      })();
+
+      return (
+        <View
+          style={{
+            padding: 12,
+            marginBottom: 8,
+            borderRadius: 12,
+            backgroundColor: '#fff',
+            borderWidth: 2,
+            borderColor: '#3b82f6',
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+            <TouchableOpacity onPress={handleCancelInlineEdit} style={{ marginRight: 12 }}>
+              <Ionicons name="close-circle" size={24} color="#6b7280" />
+            </TouchableOpacity>
+            <RNText style={{ fontSize: 13, fontWeight: '700', color: '#111827', flex: 1 }} numberOfLines={1}>
+              {getInsumoName(item.nombreDelAlimento)}
+            </RNText>
+          </View>
+          <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <RNText style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Precio ($)</RNText>
+              <TextInput
+                value={inlineEditValues.precioActual}
+                onChangeText={(v) => setInlineEditValues(prev => ({ ...prev, precioActual: v }))}
+                keyboardType="numeric"
+                style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#111827' }}
+                placeholder="0"
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <RNText style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Cantidad (und)</RNText>
+              <TextInput
+                value={inlineEditValues.cantidad}
+                onChangeText={(v) => setInlineEditValues(prev => ({ ...prev, cantidad: v }))}
+                keyboardType="numeric"
+                style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#111827' }}
+                placeholder="0"
+              />
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <RNText style={{ fontSize: 12, color: '#6b7280' }}>
+              Subtotal: <RNText style={{ fontWeight: '700', color: '#111827' }}>${previewSubtotal.toLocaleString('es-CO')}</RNText>
+            </RNText>
+            <TouchableOpacity
+              onPress={() => handleSaveInlineEdit(item)}
+              disabled={saving}
+              style={{ backgroundColor: saving ? '#9ca3af' : '#3b82f6', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <RNText style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Guardar</RNText>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
 
     return (
       <View
@@ -978,76 +1045,6 @@ const InventarioScreen = ({ navigation }: any) => {
       </View>
     );
   };
-
-  const isInlineEditing = inlineEditOrdenId === item.IDorderinventario;
-
-  if (isInlineEditing) {
-    const previewSubtotal = (() => {
-      const p = Number(inlineEditValues.precioActual.replace(/[^0-9.]/g, '')) || 0;
-      const c = Number(inlineEditValues.cantidad.replace(/[^0-9]/g, '')) || 0;
-      return p * c;
-    })();
-
-    return (
-      <View
-        style={{
-          padding: 12,
-          marginBottom: 8,
-          borderRadius: 12,
-          backgroundColor: '#fff',
-          borderWidth: 2,
-          borderColor: '#3b82f6',
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-          <TouchableOpacity onPress={handleCancelInlineEdit} style={{ marginRight: 12 }}>
-            <Ionicons name="close-circle" size={24} color="#6b7280" />
-          </TouchableOpacity>
-          <RNText style={{ fontSize: 13, fontWeight: '700', color: '#111827', flex: 1 }} numberOfLines={1}>
-            {getInsumoName(item.nombreDelAlimento)}
-          </RNText>
-        </View>
-        <View style={{ flexDirection: 'row', marginBottom: 8 }}>
-          <View style={{ flex: 1, marginRight: 8 }}>
-            <RNText style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Precio ($)</RNText>
-            <TextInput
-              value={inlineEditValues.precioActual}
-              onChangeText={(v) => setInlineEditValues(prev => ({ ...prev, precioActual: v }))}
-              keyboardType="numeric"
-              style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#111827' }}
-              placeholder="0"
-            />
-          </View>
-          <View style={{ flex: 1 }}>
-            <RNText style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Cantidad (und)</RNText>
-            <TextInput
-              value={inlineEditValues.cantidad}
-              onChangeText={(v) => setInlineEditValues(prev => ({ ...prev, cantidad: v }))}
-              keyboardType="numeric"
-              style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#111827' }}
-              placeholder="0"
-            />
-          </View>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-          <RNText style={{ fontSize: 12, color: '#6b7280' }}>
-            Subtotal: <RNText style={{ fontWeight: '700', color: '#111827' }}>${previewSubtotal.toLocaleString('es-CO')}</RNText>
-          </RNText>
-          <TouchableOpacity
-            onPress={() => handleSaveInlineEdit(item)}
-            disabled={saving}
-            style={{ backgroundColor: '#3b82f6', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}
-          >
-            {saving ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <RNText style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Guardar</RNText>
-            )}
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
 
   return (
     <View className="flex-1 bg-gray-50">
