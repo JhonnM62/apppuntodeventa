@@ -998,9 +998,21 @@ const InventarioScreen = ({ navigation }: any) => {
         <View style={{ alignItems: 'flex-end', marginLeft: 8 }}>
           {isEntrada ? (
             <View style={{ alignItems: 'flex-end' }}>
-              <RNText style={{ fontSize: 11, color: '#9ca3af', textDecorationLine: 'line-through' }}>
-                ${(item.precioAnterior !== undefined ? (item.precioAnterior * item.cantidad) : (item.precio || 0)).toLocaleString('es-CO')}
-              </RNText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                <RNText style={{ fontSize: 10, color: '#9ca3af', textDecorationLine: 'line-through' }}>
+                  ${(item.precioAnterior !== undefined ? item.precioAnterior : ((item.precio || 0) / (item.cantidad || 1))).toLocaleString('es-CO')}
+                </RNText>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <RNText style={{ fontSize: 10, color: '#9ca3af', textDecorationLine: 'line-through', marginRight: 4 }}>
+                  S: ${(item.precioAnterior !== undefined ? (item.precioAnterior * item.cantidad) : (item.precio || 0)).toLocaleString('es-CO')}
+                </RNText>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 2 }}>
+                <RNText style={{ fontSize: 12, fontWeight: '600', color: isComprado ? '#22c55e' : '#4b5563', marginRight: 4 }}>
+                  ${(item.precioActual || (item.subtotal ? item.subtotal / (item.cantidad || 1) : 0)).toLocaleString('es-CO')}
+                </RNText>
+              </View>
               <RNText style={{ fontSize: 14, fontWeight: '700', color: isComprado ? '#22c55e' : '#111827' }}>
                 ${(item.subtotal || ((item.precioActual || item.precio || 0) * item.cantidad)).toLocaleString('es-CO')}
               </RNText>
