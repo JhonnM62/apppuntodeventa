@@ -971,14 +971,6 @@ const InventarioScreen = ({ navigation }: any) => {
             ) : (
               <MaterialCommunityIcons name="package-variant-closed" size={24} color="#9ca3af" />
             )}
-            {!selectionMode && isEntrada && canEditEntradas && (
-              <TouchableOpacity
-                style={{ position: 'absolute', top: -4, right: -4, width: 22, height: 22, borderRadius: 11, backgroundColor: '#3b82f6', alignItems: 'center', justifyContent: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 2 }}
-                onPress={(e) => { e.stopPropagation(); handleStartInlineEdit(item); }}
-              >
-                <Ionicons name="pencil" size={12} color="#fff" />
-              </TouchableOpacity>
-            )}
           </View>
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -1033,12 +1025,22 @@ const InventarioScreen = ({ navigation }: any) => {
         </View>
 
         {!selectionMode && ((isEntrada && canDeleteEntradas) || (!isEntrada && canDeleteSalidas)) && (
+          <View style={{ position: 'absolute', top: 8, right: 8, flexDirection: 'row', gap: 4 }}>
+            {isEntrada && (
+              <TouchableOpacity
+                style={{ width: 28, height: 28, borderRadius: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: '#eff6ff' }}
+                onPress={() => handleStartInlineEdit(item)}
+              >
+                <Ionicons name="pencil" size={16} color="#3b82f6" />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
-              style={{ width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}
+              style={{ width: 28, height: 28, borderRadius: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fee2e2' }}
               onPress={() => handleDeleteOrden(item)}
             >
-              <Ionicons name="trash-outline" size={18} color="#ef4444" />
+              <Ionicons name="trash-outline" size={16} color="#ef4444" />
             </TouchableOpacity>
+          </View>
         )}
       </View>
     );
