@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform, TextInput, Image as RNImage } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 
 // Fallback seguro para expo-image
 let ImageComponent: any = RNImage;
@@ -43,6 +44,8 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const [saving, setSaving] = useState(false);
   const [movimiento, setMovimiento] = useState<MovimientoStock>({ tipo: 'entrada', cantidad: 0, motivo: '' });
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showUpdatePriceStockModal, setShowUpdatePriceStockModal] = useState(false);
+  const [updateValues, setUpdateValues] = useState({ precioActual: '', cantidad: '' });
   const [estadoActivo, setEstadoActivo] = useState(true);
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
@@ -89,6 +92,41 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   useSocketEvent(SocketEvent.REFRESH_INSUMOS, () => {
     loadInsumo();
   });
+
+  const handleOpenUpdateModal = () => {
+    if (!insumo) return;
+    setUpdateValues({
+      precioActual: insumo.precioActual?.toString() || '',
+      cantidad: insumo.disponible?.toString() || insumo.cantidad?.toString() || '',
+    });
+    setShowUpdatePriceStockModal(true);
+  };
+
+  const handleSaveUpdate = async () => {
+    if (!insumo) return;
+    try {
+      setSaving(true);
+      const payload: any = {};
+      const precioNum = Number(updateValues.precioActual.replace(/[^0-9.]/g, ''));
+      const cantidadNum = Number(updateValues.cantidad.replace(/[^0-9]/g, ''));
+      if (!isNaN(precioNum) && precioNum >= 0) {
+        payload.precioActual = precioNum;
+      }
+      if (!isNaN(cantidadNum) && cantidadNum >= 0) {
+        payload.disponible = cantidadNum;
+      }
+      if (Object.keys(payload).length > 0) {
+        await insumosService.update(insumo.IDalimentos!, payload);
+        await loadInsumo();
+        Toast.show({ type: 'success', text1: 'Actualizado', text2: 'Precio/cantidad actualizados correctamente' });
+      }
+      setShowUpdatePriceStockModal(false);
+    } catch (error: any) {
+      Alert.alert('Error', error?.response?.data?.message || 'No se pudo actualizar');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleMovimiento = async () => {
     if (!movimiento.cantidad || movimiento.cantidad <= 0) {
@@ -382,6 +420,14 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
 
         {canEdit && (
           <View style={styles.card}>
+            <TouchableOpacity
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#eff6ff', paddingVertical: 14, borderRadius: 12, marginBottom: 16, borderWidth: 1, borderColor: '#bfdbfe' }}
+              onPress={handleOpenUpdateModal}
+            >
+              <Ionicons name="cash-outline" size={20} color="#3b82f6" />
+              <RNText style={{ color: '#3b82f6', fontWeight: '700', fontSize: 15, marginLeft: 8 }}>Actualizar Precio y Stock</RNText>
+            </TouchableOpacity>
+
             <RNText style={styles.cardTitle}>Registrar Movimiento</RNText>
             <View style={styles.movimientoTipo}>
               <TouchableOpacity
@@ -655,6 +701,111 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
               </Button>
             </View>
           </KeyboardAvoidingView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* MODAL PARA ACTUALIZAR PRECIO Y STOCK */}
+      <Modal visible={showUpdatePriceStockModal} animationType="slide" onRequestClose={() => setShowUpdatePriceStockModal(false)}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
+          <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <RNText style={{ fontSize: 18, fontWeight: 'bold', color: '#111827' }}>
+              Actualizar Precio y Stock
+            </RNText>
+            <TouchableOpacity onPress={() => setShowUpdatePriceStockModal(false)} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' }}>
+              <Ionicons name="close" size={22} color="#374151" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ flex: 1, padding: 16 }}>
+            <View style={{ backgroundColor: '#f3f4f6', borderRadius: 12, padding: 16, marginBottom: 20 }}>
+              <RNText style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 12 }}>Información del Insumo</RNText>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ width: 48, height: 48, borderRadius: 10, backgroundColor: '#e5e7eb', marginRight: 12, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+                  {finalImageUrl ? (
+                    <ImageComponent source={{ uri: finalImageUrl }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                  ) : (
+                    <MaterialCommunityIcons name="package-variant-closed" size={24} color="#9ca3af" />
+                  )}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <RNText style={{ fontSize: 16, fontWeight: '700', color: '#111827' }}>{insumo.nombre || insumo.Nombre}</RNText>
+                  <RNText style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+                    {insumo.nombreCategoria || insumo.NombreCategoria || insumo.categoriaNombre || 'Sin categoría'}
+                  </RNText>
+                </View>
+              </View>
+            </View>
+
+            <View style={{ marginBottom: 20 }}>
+              <View style={{ marginBottom: 16 }}>
+                <RNText style={{ fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 }}>Precio Unitario ($)</RNText>
+                <TextInput
+                  style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#d1d5db', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 18, fontWeight: '600', color: '#111827' }}
+                  keyboardType="numeric"
+                  value={updateValues.precioActual}
+                  onChangeText={(v) => setUpdateValues(prev => ({ ...prev, precioActual: v }))}
+                  placeholder="0"
+                  placeholderTextColor="#9ca3af"
+                />
+              </View>
+
+              <View style={{ marginBottom: 20 }}>
+                <RNText style={{ fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 }}>Cantidad Disponible (und)</RNText>
+                <TextInput
+                  style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#d1d5db', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 18, fontWeight: '600', color: '#111827' }}
+                  keyboardType="numeric"
+                  value={updateValues.cantidad}
+                  onChangeText={(v) => setUpdateValues(prev => ({ ...prev, cantidad: v }))}
+                  placeholder="0"
+                  placeholderTextColor="#9ca3af"
+                />
+              </View>
+
+              <View style={{ backgroundColor: '#eff6ff', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#bfdbfe' }}>
+                <RNText style={{ fontSize: 12, fontWeight: '600', color: '#1e40af', marginBottom: 8, textTransform: 'uppercase' }}>Vista Previa</RNText>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <RNText style={{ fontSize: 14, color: '#374151' }}>Precio Unitario:</RNText>
+                  <RNText style={{ fontSize: 14, fontWeight: '600', color: '#111827' }}>
+                    ${(Number(updateValues.precioActual.replace(/[^0-9.]/g, '')) || 0).toLocaleString('es-CO')}
+                  </RNText>
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <RNText style={{ fontSize: 14, color: '#374151' }}>Cantidad:</RNText>
+                  <RNText style={{ fontSize: 14, fontWeight: '600', color: '#111827' }}>
+                    {Number(updateValues.cantidad.replace(/[^0-9]/g, '')) || 0} und
+                  </RNText>
+                </View>
+                <View style={{ height: 1, backgroundColor: '#bfdbfe', marginVertical: 8 }} />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                  <RNText style={{ fontSize: 16, fontWeight: '700', color: '#111827' }}>Subtotal:</RNText>
+                  <RNText style={{ fontSize: 18, fontWeight: '800', color: '#3b82f6' }}>
+                    ${((Number(updateValues.precioActual.replace(/[^0-9.]/g, '')) || 0) * (Number(updateValues.cantidad.replace(/[^0-9]/g, '')) || 0)).toLocaleString('es-CO')}
+                  </RNText>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb', flexDirection: 'row', gap: 12 }}>
+            <TouchableOpacity
+              style={{ flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: '#f3f4f6' }}
+              onPress={() => setShowUpdatePriceStockModal(false)}
+              disabled={saving}
+            >
+              <RNText style={{ fontSize: 15, fontWeight: '600', color: '#4b5563' }}>Cancelar</RNText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ flex: 2, paddingVertical: 14, borderRadius: 12, alignItems: 'center', backgroundColor: saving ? '#9ca3af' : '#3b82f6' }}
+              onPress={handleSaveUpdate}
+              disabled={saving}
+            >
+              {saving ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <RNText style={{ fontSize: 15, fontWeight: '700', color: '#fff' }}>Confirmar Actualización</RNText>
+              )}
+            </TouchableOpacity>
+          </View>
         </SafeAreaView>
       </Modal>
 
