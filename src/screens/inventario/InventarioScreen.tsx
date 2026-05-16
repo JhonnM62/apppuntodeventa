@@ -872,14 +872,8 @@ const InventarioScreen = ({ navigation }: any) => {
             </View>
 
             <RNText style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-              Stock: {isComprado && item.cantInsumos !== undefined 
-                ? (isEntrada 
-                    ? item.cantInsumos - (Number(item.cantidad) || 0) 
-                    : item.cantInsumos + (Number(item.cantidad) || 0))
-                : getInsumoStock(item.nombreDelAlimento)} • {isEntrada ? 'Pide' : 'Saca'}: {item.cantidad}
-            </RNText>
-            <RNText style={{ fontSize: 11, color: '#9ca3af' }}>
-              {getInsumoCategoria(item.nombreDelAlimento) || item.categoria || 'Sin cat.'}
+              {isEntrada ? 'Pide' : 'Saca'}: {item.cantidad} und
+              <RNText style={{ fontSize: 11, color: '#3b82f6', fontWeight: '600' }}> • Stock: {isComprado && item.cantInsumos !== undefined ? item.cantInsumos : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : -(Number(item.cantidad) || 0)))}</RNText>
             </RNText>
           </View>
         </TouchableOpacity>
