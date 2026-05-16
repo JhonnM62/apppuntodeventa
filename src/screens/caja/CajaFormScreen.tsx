@@ -342,12 +342,14 @@ export default function CajaFormScreen({ route, navigation }: any) {
         navigation.goBack();
       } else {
         if (isFinalClose) {
-          // ERROR HANDLING PATTERN: Sanitización estricta de Payload (DTO Matching)
-          // Evitamos enviar propiedades como `efectivoDeApertura`, `Idcierreyapertura`, etc. que el backend rechaza con 400 Bad Request en cerrarCaja
-          const closeData: any = {
-            usuario: user?.name || user?.nombre,
-            insumosAEliminar
-          };
+          // ERROR HANDLING PATTERN: "Double-Step Save" (Systematic Debugging)
+          // Dado que el endpoint de cerrarCaja tiene un ValidationPipe extremadamente estricto en producción que rechaza la trazabilidad compleja,
+          // PRIMERO: Guardamos toda la trazabilidad y datos extras usando el endpoint genérico (updateCaja) que es flexible.
+          const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre };
+          await updateCaja(cajaId, updateData);
+
+          // SEGUNDO: Enviamos el cierre definitivo SOLO con los campos financieros básicos que el DTO viejo y estricto espera.
+          const closeData: any = {};
 
           if (cleanData.efectivoDeCierre !== undefined) closeData.efectivoDeCierre = cleanData.efectivoDeCierre;
           if (cleanData.resumen !== undefined) closeData.resumen = cleanData.resumen;
@@ -357,15 +359,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
           if (cleanData.observaciones !== undefined) closeData.observaciones = cleanData.observaciones;
           if (cleanData.transferenciasContadas !== undefined) closeData.transferenciasContadas = cleanData.transferenciasContadas;
           
-          // Enviamos toda la data de los insumos, pero sanitizada para el backend (quitando imageUrl, historiales, etc)
           if (cleanData.insumos) {
             closeData.insumos = cleanData.insumos.map((i: any) => ({
-              Idcierreyapertura: i.Idcierreyapertura,
               nombreInsumo: i.nombreInsumo,
-              cantApertura: i.cantApertura,
-              cantDeCierre: i.cantDeCierre,
-              observacion: i.observacion,
-              paraQueProducto: i.paraQueProducto
+              cantDeCierre: i.cantDeCierre
             }));
           }
 
