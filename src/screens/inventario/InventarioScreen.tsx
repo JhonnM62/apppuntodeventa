@@ -338,10 +338,17 @@ const InventarioScreen = ({ navigation }: any) => {
   const getInsumoCategoria = (id: string) => {
     if (!id) return '';
     const insumo = insumos.find(i => i.IDalimentos === id || i.IDalimentos?.toString() === id.toString());
-    if (insumo?.categoria) return insumo.categoria;
-    if (insumo?.Categoria) return insumo.Categoria;
-    if (insumo?.nombreCategoria) return insumo.nombreCategoria;
-    if (insumo?.NombreCategoria) return insumo.NombreCategoria;
+    if (insumo) {
+      const catId = insumo.categoriaId || insumo.CategoriaId || insumo.categoriaIdAlimentos || (insumo as any).categoria;
+      if (catId) {
+        const cat = categorias.find(c => c.id === catId || c.IDcategoria?.toString() === catId.toString() || c.id?.toString() === catId.toString());
+        if (cat) return cat.nombreCategoria || cat.NombreCategoria || cat.nombre || cat.Nombre || catId;
+      }
+      if (insumo.categoria && typeof insumo.categoria === 'string') return insumo.categoria;
+      if (insumo.Categoria && typeof insumo.Categoria === 'string') return insumo.Categoria;
+      if (insumo.nombreCategoria) return insumo.nombreCategoria;
+      if (insumo.NombreCategoria) return insumo.NombreCategoria;
+    }
     return '';
   };
 
@@ -797,14 +804,14 @@ const InventarioScreen = ({ navigation }: any) => {
         {isEntrada && (
           <TouchableOpacity
             style={{
-              width: 28,
-              height: 28,
-              borderRadius: 14,
+              width: 24,
+              height: 24,
+              borderRadius: 6,
               alignItems: 'center',
               justifyContent: 'center',
-              marginRight: 10,
+              marginRight: 8,
               backgroundColor: isComprado ? '#22c55e' : 'transparent',
-              borderWidth: 2,
+              borderWidth: 1.5,
               borderColor: isComprado ? '#22c55e' : '#d1d5db',
             }}
             onPress={() => {
@@ -821,8 +828,8 @@ const InventarioScreen = ({ navigation }: any) => {
               }
             }}
           >
-            {isComprado && !selectionMode && <Ionicons name="checkmark" size={16} color="#fff" />}
-            {selectionMode && isSelected && <Ionicons name="checkmark" size={16} color="#3b82f6" />}
+            {isComprado && !selectionMode && <Ionicons name="checkmark" size={12} color="#fff" />}
+            {selectionMode && isSelected && <Ionicons name="checkmark" size={12} color="#3b82f6" />}
           </TouchableOpacity>
         )}
 
@@ -839,7 +846,7 @@ const InventarioScreen = ({ navigation }: any) => {
             }
           }}
         >
-          <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: '#f3f4f6', marginRight: 10, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 48, height: 48, borderRadius: 10, backgroundColor: '#f3f4f6', marginRight: 10, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
             {getInsumoImage(item.nombreDelAlimento || '') ? (
               <Image
                 source={{ uri: getInsumoImage(item.nombreDelAlimento || '') as string }}
@@ -847,7 +854,7 @@ const InventarioScreen = ({ navigation }: any) => {
                 resizeMode="cover"
               />
             ) : (
-              <MaterialCommunityIcons name="package-variant-closed" size={22} color="#9ca3af" />
+              <MaterialCommunityIcons name="package-variant-closed" size={24} color="#9ca3af" />
             )}
           </View>
           <View style={{ flex: 1 }}>
