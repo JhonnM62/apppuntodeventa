@@ -973,10 +973,18 @@ const InventarioScreen = ({ navigation }: any) => {
             )}
           </View>
           <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
               <RNText style={{ fontSize: 13, fontWeight: '700', color: (isEntrada && isComprado) ? '#9ca3af' : '#111827', textDecorationLine: (isEntrada && isComprado) ? 'line-through' : 'none', flexShrink: 1 }} numberOfLines={2}>
                 {getInsumoName(item.nombreDelAlimento)}
               </RNText>
+              {!selectionMode && isEntrada && canDeleteEntradas && (
+                <TouchableOpacity
+                  onPress={() => handleStartInlineEdit(item)}
+                  style={{ marginLeft: 6, padding: 2 }}
+                >
+                  <Ionicons name="pencil" size={14} color="#3b82f6" />
+                </TouchableOpacity>
+              )}
               {!selectedInventario && (
                 <View style={{ marginLeft: 6, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, backgroundColor: isEntrada ? '#dcfce7' : '#fee2e2', alignSelf: 'flex-start' }}>
                   <RNText style={{ fontSize: 9, fontWeight: '700', color: isEntrada ? '#16a34a' : '#ef4444' }}>
@@ -1025,22 +1033,12 @@ const InventarioScreen = ({ navigation }: any) => {
         </View>
 
         {!selectionMode && ((isEntrada && canDeleteEntradas) || (!isEntrada && canDeleteSalidas)) && (
-          <>
-            {isEntrada && (
-              <TouchableOpacity
-                style={{ width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginRight: 4 }}
-                onPress={() => handleStartInlineEdit(item)}
-              >
-                <Ionicons name="pencil" size={18} color="#3b82f6" />
-              </TouchableOpacity>
-            )}
-            <TouchableOpacity
-              style={{ width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}
-              onPress={() => handleDeleteOrden(item)}
-            >
-              <Ionicons name="trash-outline" size={18} color="#ef4444" />
-            </TouchableOpacity>
-          </>
+          <TouchableOpacity
+            style={{ width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center' }}
+            onPress={() => handleDeleteOrden(item)}
+          >
+            <Ionicons name="trash-outline" size={18} color="#ef4444" />
+          </TouchableOpacity>
         )}
       </View>
     );
