@@ -890,7 +890,7 @@ const InventarioScreen = ({ navigation }: any) => {
           flexDirection: 'row',
           alignItems: 'center',
           padding: 12,
-          paddingRight: (!selectionMode && ((isEntrada && canDeleteEntradas) || (!isEntrada && canDeleteSalidas))) ? 80 : 12,
+          paddingRight: (!selectionMode && ((isEntrada && canDeleteEntradas) || (!isEntrada && canDeleteSalidas))) ? 70 : 12,
           marginBottom: 8,
           borderRadius: 12,
           backgroundColor: isEntrada ? (isComprado ? '#f0fdf4' : isSelected ? '#eff6ff' : '#fff') : '#fff',
@@ -962,24 +962,24 @@ const InventarioScreen = ({ navigation }: any) => {
             }
           }}
         >
-          <View style={{ width: 48, height: 48, borderRadius: 10, backgroundColor: '#f3f4f6', marginRight: 10, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 44, height: 44, borderRadius: 8, backgroundColor: '#f3f4f6', marginRight: 10, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
             {getInsumoImage(item.nombreDelAlimento || '') ? (
               <Image
                 source={{ uri: getInsumoImage(item.nombreDelAlimento || '') as string }}
-                style={{ width: '100%', height: '100%', borderRadius: 10 }}
+                style={{ width: '100%', height: '100%', borderRadius: 8 }}
                 resizeMode="cover"
               />
             ) : (
-              <MaterialCommunityIcons name="package-variant-closed" size={24} color="#9ca3af" />
+              <MaterialCommunityIcons name="package-variant-closed" size={20} color="#9ca3af" />
             )}
           </View>
           <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <RNText style={{ fontSize: 13, fontWeight: '700', color: (isEntrada && isComprado) ? '#9ca3af' : '#111827', textDecorationLine: (isEntrada && isComprado) ? 'line-through' : 'none', flexShrink: 1 }} numberOfLines={2}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+              <RNText style={{ fontSize: 13, fontWeight: '700', color: (isEntrada && isComprado) ? '#9ca3af' : '#111827', textDecorationLine: (isEntrada && isComprado) ? 'line-through' : 'none', flex: 1 }} numberOfLines={2}>
                 {getInsumoName(item.nombreDelAlimento)}
               </RNText>
               {!selectedInventario && (
-                <View style={{ marginLeft: 6, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, backgroundColor: isEntrada ? '#dcfce7' : '#fee2e2', alignSelf: 'flex-start' }}>
+                <View style={{ marginLeft: 6, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, backgroundColor: isEntrada ? '#dcfce7' : '#fee2e2' }}>
                   <RNText style={{ fontSize: 9, fontWeight: '700', color: isEntrada ? '#16a34a' : '#ef4444' }}>
                     {isEntrada ? 'ENT' : 'SAL'}
                   </RNText>
