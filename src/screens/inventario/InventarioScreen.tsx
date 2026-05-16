@@ -890,6 +890,7 @@ const InventarioScreen = ({ navigation }: any) => {
           flexDirection: 'row',
           alignItems: 'center',
           padding: 12,
+          paddingRight: (!selectionMode && ((isEntrada && canDeleteEntradas) || (!isEntrada && canDeleteSalidas))) ? 80 : 12,
           marginBottom: 8,
           borderRadius: 12,
           backgroundColor: isEntrada ? (isComprado ? '#f0fdf4' : isSelected ? '#eff6ff' : '#fff') : '#fff',
