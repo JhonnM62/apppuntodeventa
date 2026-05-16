@@ -884,13 +884,15 @@ const InventarioScreen = ({ navigation }: any) => {
       );
     }
 
+    const showActionButtons = !selectionMode && ((isEntrada && canDeleteEntradas) || (!isEntrada && canDeleteSalidas));
+
     return (
       <View
         style={{
           flexDirection: 'row',
           alignItems: 'center',
           padding: 12,
-          paddingRight: (!selectionMode && ((isEntrada && canDeleteEntradas) || (!isEntrada && canDeleteSalidas))) ? 70 : 12,
+          paddingRight: showActionButtons ? 70 : 12,
           marginBottom: 8,
           borderRadius: 12,
           backgroundColor: isEntrada ? (isComprado ? '#f0fdf4' : isSelected ? '#eff6ff' : '#fff') : '#fff',
@@ -906,7 +908,7 @@ const InventarioScreen = ({ navigation }: any) => {
               borderRadius: 6,
               alignItems: 'center',
               justifyContent: 'center',
-              marginRight: 12,
+              marginRight: 8,
               backgroundColor: isSelected ? '#3b82f6' : 'transparent',
               borderWidth: 2,
               borderColor: isSelected ? '#3b82f6' : '#d1d5db',
@@ -917,26 +919,20 @@ const InventarioScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         )}
 
-        {isEntrada && (
+        {isEntrada && !selectionMode && (
           <TouchableOpacity
             style={{
-              width: 24,
-              height: 24,
-              borderRadius: 6,
+              width: 20,
+              height: 20,
+              borderRadius: 5,
               alignItems: 'center',
               justifyContent: 'center',
-              marginRight: 8,
+              marginRight: 6,
               backgroundColor: isComprado ? '#22c55e' : 'transparent',
               borderWidth: 1.5,
               borderColor: isComprado ? '#22c55e' : '#d1d5db',
             }}
-            onPress={() => {
-              if (selectionMode) {
-                handleToggleOrdenSelection(item.IDorderinventario);
-              } else {
-                handleToggleOrdenComprado(item);
-              }
-            }}
+            onPress={() => handleToggleOrdenComprado(item)}
             onLongPress={() => {
               if (!selectionMode && selectedInventario) {
                 setSelectionMode(true);
@@ -944,8 +940,7 @@ const InventarioScreen = ({ navigation }: any) => {
               }
             }}
           >
-            {isComprado && !selectionMode && <Ionicons name="checkmark" size={12} color="#fff" />}
-            {selectionMode && isSelected && <Ionicons name="checkmark" size={12} color="#3b82f6" />}
+            {isComprado && <Ionicons name="checkmark" size={12} color="#fff" />}
           </TouchableOpacity>
         )}
 
@@ -970,11 +965,11 @@ const InventarioScreen = ({ navigation }: any) => {
                 resizeMode="cover"
               />
             ) : (
-              <MaterialCommunityIcons name="package-variant-closed" size={20} color="#9ca3af" />
+              <MaterialCommunityIcons name="package-variant-closed" size={22} color="#9ca3af" />
             )}
           </View>
           <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <RNText style={{ fontSize: 13, fontWeight: '700', color: (isEntrada && isComprado) ? '#9ca3af' : '#111827', textDecorationLine: (isEntrada && isComprado) ? 'line-through' : 'none', flex: 1 }} numberOfLines={2}>
                 {getInsumoName(item.nombreDelAlimento)}
               </RNText>
@@ -988,58 +983,50 @@ const InventarioScreen = ({ navigation }: any) => {
             </View>
 
             <RNText style={{ fontSize: 11, color: '#10b981', fontWeight: 'bold', marginTop: 2 }}>
-              Stock Inicial: {isComprado && item.cantInsumos !== undefined
+              Stock: {isComprado && item.cantInsumos !== undefined
                 ? (isEntrada
                     ? item.cantInsumos - (Number(item.cantidad) || 0)
                     : item.cantInsumos + (Number(item.cantidad) || 0))
                 : getInsumoStock(item.nombreDelAlimento)}
             </RNText>
             <RNText style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-              {isEntrada ? 'Pidiendo' : 'Retirado'}: {item.cantidad} und • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {isComprado ? 'Actual' : 'Proyectado'}: {isComprado && item.cantInsumos !== undefined ? item.cantInsumos : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : -(Number(item.cantidad) || 0)))}</RNText>
+              {isEntrada ? 'Pide' : 'Retira'}: {item.cantidad} • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {isComprado ? 'Actual' : 'Proy'}: {isComprado && item.cantInsumos !== undefined ? item.cantInsumos : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : -(Number(item.cantidad) || 0)))}</RNText>
             </RNText>
           </View>
         </TouchableOpacity>
 
-        <View style={{ alignItems: 'flex-end', marginLeft: 4, minWidth: 80 }}>
+        <View style={{ alignItems: 'flex-end', marginLeft: 8 }}>
           {isEntrada ? (
-            <View style={{ flexDirection: 'column', alignItems: 'flex-end' }}>
-              {/* Fila superior: Precios Anteriores */}
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
-                <RNText style={{ fontSize: 10, color: '#9ca3af', textDecorationLine: 'line-through', marginRight: 4 }}>
-                  ${(item.precioAnterior !== undefined ? item.precioAnterior : ((item.precio || 0) / (item.cantidad || 1))).toLocaleString('es-CO')}
-                </RNText>
-                <RNText style={{ fontSize: 10, color: '#9ca3af', textDecorationLine: 'line-through' }}>
-                  S: ${(item.precioAnterior !== undefined ? (item.precioAnterior * item.cantidad) : (item.precio || 0)).toLocaleString('es-CO')}
-                </RNText>
-              </View>
-              {/* Fila inferior: Precios Actuales */}
-              <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
-                <RNText style={{ fontSize: 11, fontWeight: '600', color: isComprado ? '#22c55e' : '#4b5563', marginRight: 4 }}>
-                  ${(item.precioActual || (item.subtotal ? item.subtotal / (item.cantidad || 1) : 0)).toLocaleString('es-CO')}
-                </RNText>
-                <RNText style={{ fontSize: 13, fontWeight: '700', color: isComprado ? '#22c55e' : '#111827' }}>
-                  ${(item.subtotal || ((item.precioActual || item.precio || 0) * item.cantidad)).toLocaleString('es-CO')}
-                </RNText>
-              </View>
+            <View style={{ alignItems: 'flex-end' }}>
+              <RNText style={{ fontSize: 11, color: '#9ca3af', textDecorationLine: 'line-through' }}>
+                ${(item.precioAnterior !== undefined ? (item.precioAnterior * item.cantidad) : (item.precio || 0)).toLocaleString('es-CO')}
+              </RNText>
+              <RNText style={{ fontSize: 14, fontWeight: '700', color: isComprado ? '#22c55e' : '#111827' }}>
+                ${(item.subtotal || ((item.precioActual || item.precio || 0) * item.cantidad)).toLocaleString('es-CO')}
+              </RNText>
             </View>
-          ) : null}
+          ) : (
+            <RNText style={{ fontSize: 13, fontWeight: '600', color: '#ef4444' }}>
+              -{item.cantidad} und
+            </RNText>
+          )}
         </View>
 
-        {!selectionMode && ((isEntrada && canDeleteEntradas) || (!isEntrada && canDeleteSalidas)) && (
+        {showActionButtons && (
           <View style={{ position: 'absolute', top: 8, right: 8, flexDirection: 'row', gap: 4 }}>
             {isEntrada && (
               <TouchableOpacity
-                style={{ width: 28, height: 28, borderRadius: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: '#eff6ff' }}
+                style={{ width: 26, height: 26, borderRadius: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: '#eff6ff' }}
                 onPress={() => handleStartInlineEdit(item)}
               >
-                <Ionicons name="pencil" size={16} color="#3b82f6" />
+                <Ionicons name="pencil" size={14} color="#3b82f6" />
               </TouchableOpacity>
             )}
             <TouchableOpacity
-              style={{ width: 28, height: 28, borderRadius: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fee2e2' }}
+              style={{ width: 26, height: 26, borderRadius: 6, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fee2e2' }}
               onPress={() => handleDeleteOrden(item)}
             >
-              <Ionicons name="trash-outline" size={16} color="#ef4444" />
+              <Ionicons name="trash-outline" size={14} color="#ef4444" />
             </TouchableOpacity>
           </View>
         )}
