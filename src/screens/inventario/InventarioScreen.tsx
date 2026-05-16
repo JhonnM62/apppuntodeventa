@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Modal, TextInput, Alert, FlatList, KeyboardAvoidingView, Platform, Keyboard, Animated } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Modal, TextInput, Alert, FlatList, KeyboardAvoidingView, Platform, Keyboard, Animated, Dimensions, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -14,12 +14,13 @@ import { inventarioService, InventarioItem, OrderInventarioItem, CreateInventari
 import { insumosService } from '../../services/insumos';
 import categoriasService, { CategoriaItem } from '../../services/categorias';
 import { usePermissions } from '../../hooks/usePermissions';
+import ViewShot from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
 
 type TabType = 'entrada' | 'salida' | 'registros';
 
-import { Image } from 'react-native';
-
 const InventarioScreen = ({ navigation }: any) => {
+  const { width } = Dimensions.get('window');
   const { canRead: canReadEntradas, canCreate: canCreateEntradas, canEdit: canEditEntradas, canDelete: canDeleteEntradas } = usePermissions('entradas_inventario');
   const { canRead: canReadRegistros } = usePermissions('registros_inventario');
   const { canRead: canReadSalidas, canCreate: canCreateSalidas, canEdit: canEditSalidas, canDelete: canDeleteSalidas } = usePermissions('salidas_inventario');
@@ -123,15 +124,6 @@ const InventarioScreen = ({ navigation }: any) => {
   );
 
   const [selectedCategoriaFilter, setSelectedCategoriaFilter] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (showCreateModal && (addItemSearchText.length > 0 || selectedCategoriaFilter)) {
-      const timeout = setTimeout(() => {
-        createModalScrollRef.current?.scrollToEnd({ animated: true });
-      }, 150);
-      return () => clearTimeout(timeout);
-    }
-  }, [addItemSearchText, selectedCategoriaFilter, showCreateModal]);
 
   const [newItem, setNewItem] = useState({
     insumoId: '',
@@ -304,6 +296,45 @@ const InventarioScreen = ({ navigation }: any) => {
     return id;
   };
 
+  const groupByCategory = (items: OrderInventarioItem[]) => {
+    return items.reduce((acc, item) => {
+      const cat = getInsumoCategoria(item.nombreDelAlimento) || item.categoria || 'Sin categoría';
+      if (!acc[cat]) {
+        acc[cat] = {
+          items: [],
+          total: 0
+        };
+      }
+      acc[cat].items.push(item);
+      const itemSubtotal = item.subtotal || ((item.precioActual || item.precio || 0) * (item.cantidad || 0));
+      acc[cat].total += itemSubtotal;
+      return acc;
+    }, {} as Record<string, { items: OrderInventarioItem[], total: number }>);
+  };
+
+  const renderGroupedList = (items: OrderInventarioItem[]) => {
+    const grouped = groupByCategory(items);
+    return Object.entries(grouped)
+      .sort(([catA], [catB]) => catA.localeCompare(catB))
+      .map(([categoria, { items: catItems, total }]) => (
+        <View key={categoria} style={{ marginBottom: 16 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginBottom: 8 }}>
+            <RNText style={{ fontSize: 12, fontWeight: '700', color: '#4b5563', textTransform: 'uppercase' }}>
+              {categoria}
+            </RNText>
+            {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && (
+              <RNText style={{ fontSize: 12, fontWeight: '700', color: '#111827' }}>
+                ${total.toLocaleString('es-CO')}
+              </RNText>
+            )}
+          </View>
+          {catItems.map((orden) => (
+            <View key={orden.IDorderinventario}>{renderOrdenItem({ item: orden })}</View>
+          ))}
+        </View>
+      ));
+  };
+
   const getInsumoCategoria = (id: string) => {
     if (!id) return '';
     const insumo = insumos.find(i => i.IDalimentos === id || i.IDalimentos?.toString() === id.toString());
@@ -321,10 +352,58 @@ const InventarioScreen = ({ navigation }: any) => {
     return 0;
   };
 
+  const getImageUrl = (url?: string) => {
+    if (!url) return null;
+    if (url.startsWith('http')) return url;
+    
+    // Check if the URL is from the old structure (INSUMOS_Images/)
+    if (url.startsWith('INSUMOS_Images/')) {
+      const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+      return `${baseUrl}/uploads/insumos/${url.split('/').pop()}`;
+    }
+
+    const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+    const finalUrl = `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+    return finalUrl;
+  };
+
   const getInsumoImage = (id: string) => {
     if (!id) return null;
     const insumo = insumos.find(i => i.IDalimentos === id || i.IDalimentos?.toString() === id.toString());
-    return insumo?.imagen || insumo?.imageUrl || insumo?.imagencard || null;
+    const rawUrl = insumo?.imagen || insumo?.imageUrl || insumo?.imagencard;
+    return getImageUrl(rawUrl);
+  };
+
+  const viewShotRef = useRef<ViewShot>(null);
+
+  const handleExportImage = async () => {
+    try {
+      setSaving(true);
+      if (viewShotRef.current && viewShotRef.current.capture) {
+        // Un pequeño timeout para asegurar que el contenedor oculto se renderizó completamente
+        setTimeout(async () => {
+          try {
+            const uri = await viewShotRef.current!.capture!();
+            if (await Sharing.isAvailableAsync()) {
+              await Sharing.shareAsync(uri, {
+                mimeType: 'image/png',
+                dialogTitle: 'Compartir inventario',
+                UTI: 'image/png',
+              });
+            } else {
+              Toast.show({ type: 'error', text1: 'Error', text2: 'No se puede compartir en este dispositivo' });
+            }
+          } catch (e) {
+            Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo generar la imagen' });
+          } finally {
+            setSaving(false);
+          }
+        }, 500);
+      }
+    } catch (error) {
+      setSaving(false);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo iniciar la exportación' });
+    }
   };
 
   const getErrorMessage = (error: any, defaultMsg: string) => {
@@ -715,39 +794,39 @@ const InventarioScreen = ({ navigation }: any) => {
           </TouchableOpacity>
         )}
 
-        {isEntrada && !selectionMode && selectedInventario && canEditEntradas && (
-          <TouchableOpacity 
+        {isEntrada && (
+          <TouchableOpacity
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
+              width: 28,
+              height: 28,
+              borderRadius: 14,
               alignItems: 'center',
               justifyContent: 'center',
-              marginRight: 12,
-              backgroundColor: isComprado ? '#22c55e' : '#e5e7eb',
+              marginRight: 10,
+              backgroundColor: isComprado ? '#22c55e' : 'transparent',
+              borderWidth: 2,
+              borderColor: isComprado ? '#22c55e' : '#d1d5db',
             }}
             onPress={() => {
-              Alert.alert('Confirmar', isComprado ? '¿Revertir este ingreso y restar del stock?' : '¿Ingresar este ítem al stock actual?', [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                  text: 'Confirmar',
-                  onPress: () => handleToggleOrdenComprado(item)
-                }
-              ]);
+              if (selectionMode) {
+                handleToggleOrdenSelection(item.IDorderinventario);
+              } else {
+                handleToggleOrdenComprado(item);
+              }
             }}
             onLongPress={() => {
-              // Only allow multi-select when in Detail Modal (where selectedInventario is set)
-              if (selectedInventario) {
+              if (!selectionMode && selectedInventario) {
                 setSelectionMode(true);
                 setSelectedOrdenes(new Set([item.IDorderinventario]));
               }
             }}
           >
-            {isComprado && <Ionicons name="checkmark" size={18} color="#fff" />}
+            {isComprado && !selectionMode && <Ionicons name="checkmark" size={16} color="#fff" />}
+            {selectionMode && isSelected && <Ionicons name="checkmark" size={16} color="#3b82f6" />}
           </TouchableOpacity>
         )}
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
           onPress={() => {
             setSelectedOrdenItem(item);
@@ -760,71 +839,66 @@ const InventarioScreen = ({ navigation }: any) => {
             }
           }}
         >
-          <View style={{ width: 44, height: 44, borderRadius: 8, backgroundColor: '#f3f4f6', marginRight: 12, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: '#f3f4f6', marginRight: 10, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
             {getInsumoImage(item.nombreDelAlimento || '') ? (
               <Image
-                source={{ uri: getInsumoImage(item.nombreDelAlimento || '') }}
-                style={{ width: '100%', height: '100%', borderRadius: 8 }}
+                source={{ uri: getInsumoImage(item.nombreDelAlimento || '') as string }}
+                style={{ width: '100%', height: '100%', borderRadius: 10 }}
                 resizeMode="cover"
               />
             ) : (
-              <MaterialCommunityIcons name="package-variant-closed" size={20} color="#9ca3af" />
+              <MaterialCommunityIcons name="package-variant-closed" size={22} color="#9ca3af" />
             )}
           </View>
           <View style={{ flex: 1 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <RNText style={{ fontSize: 14, fontWeight: '600', color: (isEntrada && isComprado) ? '#9ca3af' : '#111827', textDecorationLine: (isEntrada && isComprado) ? 'line-through' : 'none' }}>
+              <RNText style={{ fontSize: 13, fontWeight: '700', color: (isEntrada && isComprado) ? '#9ca3af' : '#111827', textDecorationLine: (isEntrada && isComprado) ? 'line-through' : 'none', flexShrink: 1 }} numberOfLines={2}>
                 {getInsumoName(item.nombreDelAlimento)}
               </RNText>
               {!selectedInventario && (
-                <View style={{ marginLeft: 8, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, backgroundColor: isEntrada ? '#dcfce7' : '#fee2e2' }}>
-                  <RNText style={{ fontSize: 10, fontWeight: '700', color: isEntrada ? '#16a34a' : '#ef4444' }}>
-                    {isEntrada ? 'ENTRADA' : 'SALIDA'}
+                <View style={{ marginLeft: 6, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, backgroundColor: isEntrada ? '#dcfce7' : '#fee2e2', alignSelf: 'flex-start' }}>
+                  <RNText style={{ fontSize: 9, fontWeight: '700', color: isEntrada ? '#16a34a' : '#ef4444' }}>
+                    {isEntrada ? 'ENT' : 'SAL'}
                   </RNText>
                 </View>
               )}
             </View>
 
-            <RNText style={{ fontSize: 12, color: '#10b981', fontWeight: 'bold', marginBottom: 2, marginTop: 2 }}>
-              Stock Inicial: {isComprado && item.cantInsumos !== undefined 
+            <RNText style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
+              Stock: {isComprado && item.cantInsumos !== undefined 
                 ? (isEntrada 
                     ? item.cantInsumos - (Number(item.cantidad) || 0) 
                     : item.cantInsumos + (Number(item.cantidad) || 0))
-                : getInsumoStock(item.nombreDelAlimento)}
+                : getInsumoStock(item.nombreDelAlimento)} • {isEntrada ? 'Pide' : 'Saca'}: {item.cantidad}
             </RNText>
-            <RNText style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
-              {getInsumoCategoria(item.nombreDelAlimento) || item.categoria || 'Sin categoría'} • {isEntrada ? 'Pidiendo' : 'Retirado'}: {item.cantidad} und • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {isComprado ? 'Actual' : 'Proyectado'}: {isComprado && item.cantInsumos !== undefined ? item.cantInsumos : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : -(Number(item.cantidad) || 0)))}</RNText>
+            <RNText style={{ fontSize: 11, color: '#9ca3af' }}>
+              {getInsumoCategoria(item.nombreDelAlimento) || item.categoria || 'Sin cat.'}
             </RNText>
-            {item.provedor && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                <MaterialCommunityIcons name="truck-outline" size={12} color="#3b82f6" />
-                <RNText style={{ fontSize: 12, color: '#3b82f6', marginLeft: 4 }}>{item.provedor}</RNText>
-              </View>
-            )}
-            {!selectedInventario && item.fechaYHora && (
-               <RNText style={{ fontSize: 11, color: '#9ca3af', marginTop: 4 }}>
-                 {new Date(item.fechaYHora).toLocaleString('es-CO')}
-               </RNText>
-            )}
           </View>
         </TouchableOpacity>
 
-        <View style={{ alignItems: 'flex-end', marginRight: 8 }}>
+        <View style={{ alignItems: 'flex-end', marginLeft: 4, minWidth: 80 }}>
           {isEntrada ? (
-            <>
-              <RNText style={{ fontSize: 11, color: '#6b7280', textDecorationLine: 'line-through' }}>
-                Ant: ${(item.precioAnterior !== undefined ? item.precioAnterior : ((item.precio || 0) / (item.cantidad || 1))).toLocaleString('es-CO')}
-              </RNText>
-              <RNText style={{ fontSize: 11, color: '#6b7280', textDecorationLine: 'line-through', marginBottom: 2 }}>
-                Sub ant: ${(item.precioAnterior !== undefined ? (item.precioAnterior * item.cantidad) : (item.precio || 0)).toLocaleString('es-CO')}
-              </RNText>
-              <RNText style={{ fontSize: 12, fontWeight: '600', color: isComprado ? '#22c55e' : '#111827' }}>
-                Act: ${(item.precioActual || (item.subtotal ? item.subtotal / (item.cantidad || 1) : 0)).toLocaleString('es-CO')}
-              </RNText>
-              <RNText style={{ fontSize: 14, fontWeight: '700', color: isComprado ? '#22c55e' : '#111827' }}>
-                Sub act: ${(item.subtotal || ((item.precioActual || item.precio || 0) * item.cantidad)).toLocaleString('es-CO')}
-              </RNText>
-            </>
+            <View style={{ flexDirection: 'column', alignItems: 'flex-end' }}>
+              {/* Fila superior: Precios Anteriores */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                <RNText style={{ fontSize: 10, color: '#9ca3af', textDecorationLine: 'line-through', marginRight: 4 }}>
+                  ${(item.precioAnterior !== undefined ? item.precioAnterior : ((item.precio || 0) / (item.cantidad || 1))).toLocaleString('es-CO')}
+                </RNText>
+                <RNText style={{ fontSize: 10, color: '#9ca3af', textDecorationLine: 'line-through' }}>
+                  S: ${(item.precioAnterior !== undefined ? (item.precioAnterior * item.cantidad) : (item.precio || 0)).toLocaleString('es-CO')}
+                </RNText>
+              </View>
+              {/* Fila inferior: Precios Actuales */}
+              <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                <RNText style={{ fontSize: 11, fontWeight: '600', color: isComprado ? '#22c55e' : '#4b5563', marginRight: 4 }}>
+                  ${(item.precioActual || (item.subtotal ? item.subtotal / (item.cantidad || 1) : 0)).toLocaleString('es-CO')}
+                </RNText>
+                <RNText style={{ fontSize: 13, fontWeight: '700', color: isComprado ? '#22c55e' : '#111827' }}>
+                  ${(item.subtotal || ((item.precioActual || item.precio || 0) * item.cantidad)).toLocaleString('es-CO')}
+                </RNText>
+              </View>
+            </View>
           ) : null}
         </View>
 
@@ -839,9 +913,6 @@ const InventarioScreen = ({ navigation }: any) => {
       </View>
     );
   };
-
-  // Remove the old full-screen loading component. We want headers and tabs to ALWAYS render!
-  // if (loading) { ... }
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -1050,7 +1121,7 @@ const InventarioScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
-          <ScrollView ref={createModalScrollRef} style={{ flex: 1, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 }}>
+          <ScrollView ref={createModalScrollRef} style={{ flex: 1, paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
             <Input
               label="Nombre del inventario *"
               placeholder="Ej: Compra mayo 2026"
@@ -1312,9 +1383,14 @@ const InventarioScreen = ({ navigation }: any) => {
                     {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') ? ` • Total: $${(selectedInventario.total !== undefined && selectedInventario.total > 0 ? selectedInventario.total : (ordenes.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0))).toLocaleString('es-CO')}` : ''}
                   </RNText>
                 </View>
-                <TouchableOpacity onPress={handleDeleteInventario} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#fef2f2', alignItems: 'center', justifyContent: 'center' }}>
-                  <Ionicons name="trash" size={20} color="#ef4444" />
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity onPress={handleExportImage} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#eff6ff', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
+                    <Ionicons name="share-outline" size={20} color="#3b82f6" />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={handleDeleteInventario} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#fef2f2', alignItems: 'center', justifyContent: 'center' }}>
+                    <Ionicons name="trash" size={20} color="#ef4444" />
+                  </TouchableOpacity>
+                </View>
               </>
             )}
           </View>
@@ -1405,26 +1481,20 @@ const InventarioScreen = ({ navigation }: any) => {
                 {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && ordenesNoComprados.length > 0 && (
                   <View style={{ marginBottom: 16 }}>
                     <RNText style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', marginBottom: 8 }}>Pendientes</RNText>
-                    {ordenesNoComprados.map((orden) => (
-                      <View key={orden.IDorderinventario}>{renderOrdenItem({ item: orden })}</View>
-                    ))}
+                    {renderGroupedList(ordenesNoComprados)}
                   </View>
                 )}
 
                 {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && ordenesComprados.length > 0 && (
                   <View>
                     <RNText style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', marginBottom: 8 }}>Completados</RNText>
-                    {ordenesComprados.map((orden) => (
-                      <View key={orden.IDorderinventario}>{renderOrdenItem({ item: orden })}</View>
-                    ))}
+                    {renderGroupedList(ordenesComprados)}
                   </View>
                 )}
 
                 {(!selectedInventario?.tipo?.toLowerCase().includes('entrada')) && ordenes.length > 0 && (
                   <View style={{ marginBottom: 16 }}>
-                    {ordenes.map((orden) => (
-                      <View key={orden.IDorderinventario}>{renderOrdenItem({ item: orden })}</View>
-                    ))}
+                    {renderGroupedList(ordenes)}
                   </View>
                 )}
 
@@ -1442,6 +1512,85 @@ const InventarioScreen = ({ navigation }: any) => {
           </View>
         </SafeAreaView>
       </Modal>
+
+      {/* Hidden ViewShot container for full receipt export */}
+      {selectedInventario && (
+        <View style={{ position: 'absolute', left: -9999, top: -9999, opacity: 0 }}>
+          <ViewShot ref={viewShotRef} options={{ format: 'png', quality: 1, result: 'tmpfile' }}>
+            <View style={{ backgroundColor: '#ffffff', width: width, padding: 24, paddingBottom: 40 }}>
+              <View style={{ alignItems: 'center', marginBottom: 24, borderBottomWidth: 1, borderBottomColor: '#e5e7eb', paddingBottom: 16 }}>
+                <RNText style={{ fontSize: 24, fontWeight: '800', color: '#111827', textAlign: 'center', marginBottom: 4 }}>{selectedInventario.nombre}</RNText>
+                <RNText style={{ fontSize: 14, color: '#6b7280' }}>
+                  {selectedInventario.fechaYHora ? new Date(selectedInventario.fechaYHora).toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                </RNText>
+                {(selectedInventario.tipo?.toLowerCase() === 'entradas' || selectedInventario.tipo?.toLowerCase() === 'entrada') && (
+                  <RNText style={{ fontSize: 16, fontWeight: '700', color: '#16a34a', marginTop: 8 }}>
+                    Total: ${(selectedInventario.total !== undefined && selectedInventario.total > 0 ? selectedInventario.total : (ordenes.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0))).toLocaleString('es-CO')}
+                  </RNText>
+                )}
+              </View>
+
+              {(selectedInventario.tipo?.toLowerCase() === 'entradas' || selectedInventario.tipo?.toLowerCase() === 'entrada') && (
+                <View style={{ flexDirection: 'row', marginBottom: 24 }}>
+                  <View style={{ flex: 1, backgroundColor: '#fef2f2', borderRadius: 12, padding: 12, marginRight: 8, alignItems: 'center' }}>
+                    <RNText style={{ fontSize: 12, color: '#991b1b', fontWeight: '600' }}>Pendientes</RNText>
+                    <RNText style={{ fontSize: 18, fontWeight: '800', color: '#dc2626' }}>{ordenesNoComprados.length}</RNText>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: '#f0fdf4', borderRadius: 12, padding: 12, marginLeft: 8, alignItems: 'center' }}>
+                    <RNText style={{ fontSize: 12, color: '#166534', fontWeight: '600' }}>Comprados</RNText>
+                    <RNText style={{ fontSize: 18, fontWeight: '800', color: '#16a34a' }}>{ordenesComprados.length}</RNText>
+                  </View>
+                </View>
+              )}
+
+              <View>
+                {Object.entries(groupByCategory(ordenes))
+                  .sort(([catA], [catB]) => catA.localeCompare(catB))
+                  .map(([categoria, { items: catItems, total }]) => (
+                    <View key={categoria} style={{ marginBottom: 20 }}>
+                      <View style={{ backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <RNText style={{ fontSize: 14, fontWeight: '700', color: '#374151', textTransform: 'uppercase' }}>{categoria}</RNText>
+                        {(selectedInventario.tipo?.toLowerCase() === 'entradas' || selectedInventario.tipo?.toLowerCase() === 'entrada') && (
+                          <RNText style={{ fontSize: 14, fontWeight: '700', color: '#111827' }}>${total.toLocaleString('es-CO')}</RNText>
+                        )}
+                      </View>
+                      
+                      {catItems.map((item, idx) => {
+                        const isComprado = item.seCompro === 'Si' || item.seCompro === 'si';
+                        const isEntrada = selectedInventario.tipo?.toLowerCase() === 'entradas' || selectedInventario.tipo?.toLowerCase() === 'entrada';
+                        return (
+                          <View key={item.IDorderinventario} style={{ flexDirection: 'row', paddingVertical: 8, borderBottomWidth: idx === catItems.length - 1 ? 0 : 1, borderBottomColor: '#f3f4f6' }}>
+                            <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: isComprado ? '#dcfce7' : '#f3f4f6', alignItems: 'center', justifyContent: 'center', marginRight: 12, marginTop: 2 }}>
+                              {isComprado ? (
+                                <Ionicons name="checkmark" size={14} color="#16a34a" />
+                              ) : (
+                                <RNText style={{ fontSize: 12, color: '#9ca3af', fontWeight: '600' }}>{idx + 1}</RNText>
+                              )}
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <RNText style={{ fontSize: 14, fontWeight: '600', color: '#111827', textDecorationLine: isComprado ? 'line-through' : 'none' }}>{getInsumoName(item.nombreDelAlimento)}</RNText>
+                              <RNText style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{isEntrada ? 'Pide' : 'Saca'}: {item.cantidad} und</RNText>
+                            </View>
+                            {isEntrada && (
+                              <View style={{ alignItems: 'flex-end', marginLeft: 12 }}>
+                                <RNText style={{ fontSize: 14, fontWeight: '700', color: isComprado ? '#16a34a' : '#111827' }}>
+                                  ${(item.subtotal || ((item.precioActual || item.precio || 0) * item.cantidad)).toLocaleString('es-CO')}
+                                </RNText>
+                                <RNText style={{ fontSize: 11, color: '#9ca3af' }}>
+                                  ${(item.precioActual || (item.subtotal ? item.subtotal / (item.cantidad || 1) : 0)).toLocaleString('es-CO')} c/u
+                                </RNText>
+                              </View>
+                            )}
+                          </View>
+                        );
+                      })}
+                    </View>
+                ))}
+              </View>
+            </View>
+          </ViewShot>
+        </View>
+      )}
 
       <Modal visible={showAddItemModal} animationType="slide" onRequestClose={() => setShowAddItemModal(false)}>
         <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
