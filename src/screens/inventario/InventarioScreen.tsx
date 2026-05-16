@@ -973,18 +973,10 @@ const InventarioScreen = ({ navigation }: any) => {
             )}
           </View>
           <View style={{ flex: 1 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <RNText style={{ fontSize: 13, fontWeight: '700', color: (isEntrada && isComprado) ? '#9ca3af' : '#111827', textDecorationLine: (isEntrada && isComprado) ? 'line-through' : 'none', flexShrink: 1 }} numberOfLines={2}>
                 {getInsumoName(item.nombreDelAlimento)}
               </RNText>
-              {!selectionMode && isEntrada && canDeleteEntradas && (
-                <TouchableOpacity
-                  onPress={() => handleStartInlineEdit(item)}
-                  style={{ marginLeft: 6, padding: 2 }}
-                >
-                  <Ionicons name="pencil" size={14} color="#3b82f6" />
-                </TouchableOpacity>
-              )}
               {!selectedInventario && (
                 <View style={{ marginLeft: 6, paddingHorizontal: 4, paddingVertical: 2, borderRadius: 4, backgroundColor: isEntrada ? '#dcfce7' : '#fee2e2', alignSelf: 'flex-start' }}>
                   <RNText style={{ fontSize: 9, fontWeight: '700', color: isEntrada ? '#16a34a' : '#ef4444' }}>
