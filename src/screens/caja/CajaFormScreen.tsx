@@ -357,9 +357,16 @@ export default function CajaFormScreen({ route, navigation }: any) {
           if (cleanData.observaciones !== undefined) closeData.observaciones = cleanData.observaciones;
           if (cleanData.transferenciasContadas !== undefined) closeData.transferenciasContadas = cleanData.transferenciasContadas;
           
-          // Enviamos toda la data de los insumos (IDs, Apertura, Cierre, Gastado) para no perder trazabilidad
+          // Enviamos toda la data de los insumos, pero sanitizada para el backend (quitando imageUrl, historiales, etc)
           if (cleanData.insumos) {
-            closeData.insumos = cleanData.insumos;
+            closeData.insumos = cleanData.insumos.map((i: any) => ({
+              Idcierreyapertura: i.Idcierreyapertura,
+              nombreInsumo: i.nombreInsumo,
+              cantApertura: i.cantApertura,
+              cantDeCierre: i.cantDeCierre,
+              observacion: i.observacion,
+              paraQueProducto: i.paraQueProducto
+            }));
           }
 
           await cerrarCaja(cajaId, closeData);
