@@ -871,9 +871,15 @@ const InventarioScreen = ({ navigation }: any) => {
               )}
             </View>
 
+            <RNText style={{ fontSize: 11, color: '#10b981', fontWeight: 'bold', marginTop: 2 }}>
+              Stock Inicial: {isComprado && item.cantInsumos !== undefined
+                ? (isEntrada
+                    ? item.cantInsumos - (Number(item.cantidad) || 0)
+                    : item.cantInsumos + (Number(item.cantidad) || 0))
+                : getInsumoStock(item.nombreDelAlimento)}
+            </RNText>
             <RNText style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-              {isEntrada ? 'Pide' : 'Saca'}: {item.cantidad} und
-              <RNText style={{ fontSize: 11, color: '#3b82f6', fontWeight: '600' }}> • Stock: {isComprado && item.cantInsumos !== undefined ? item.cantInsumos : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : -(Number(item.cantidad) || 0)))}</RNText>
+              {getInsumoCategoria(item.nombreDelAlimento) || item.categoria || 'Sin cat.'} • {isEntrada ? 'Pidiendo' : 'Retirado'}: {item.cantidad} und • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {isComprado ? 'Actual' : 'Proyectado'}: {isComprado && item.cantInsumos !== undefined ? item.cantInsumos : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : -(Number(item.cantidad) || 0)))}</RNText>
             </RNText>
           </View>
         </TouchableOpacity>
