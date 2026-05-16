@@ -339,15 +339,11 @@ const InventarioScreen = ({ navigation }: any) => {
     if (!id) return '';
     const insumo = insumos.find(i => i.IDalimentos === id || i.IDalimentos?.toString() === id.toString());
     if (insumo) {
-      const catId = insumo.categoriaId || insumo.CategoriaId || insumo.categoriaIdAlimentos || (insumo as any).categoria;
-      if (catId) {
-        const cat = categorias.find(c => c.id === catId || c.IDcategoria?.toString() === catId.toString() || c.id?.toString() === catId.toString());
-        if (cat) return cat.nombreCategoria || cat.NombreCategoria || cat.nombre || cat.Nombre || catId;
-      }
-      if (insumo.categoria && typeof insumo.categoria === 'string') return insumo.categoria;
-      if (insumo.Categoria && typeof insumo.Categoria === 'string') return insumo.Categoria;
+      if (insumo.categoriaNombre) return insumo.categoriaNombre;
       if (insumo.nombreCategoria) return insumo.nombreCategoria;
       if (insumo.NombreCategoria) return insumo.NombreCategoria;
+      if (insumo.categoria && typeof insumo.categoria === 'string' && !insumo.categoria.match(/^[a-z0-9]{10,}$/)) return insumo.categoria;
+      if (insumo.Categoria && typeof insumo.Categoria === 'string' && !insumo.Categoria.match(/^[a-z0-9]{10,}$/)) return insumo.Categoria;
     }
     return '';
   };
