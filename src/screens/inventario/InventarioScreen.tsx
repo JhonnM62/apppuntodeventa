@@ -1043,9 +1043,14 @@ const InventarioScreen = ({ navigation }: any) => {
                     : item.cantInsumos + (Number(item.cantidad) || 0))
                 : getInsumoStock(item.nombreDelAlimento)}
             </RNText>
-            <RNText style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>
-              {isEntrada ? 'Pide' : 'Retira'}: {item.cantidad} • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {isComprado ? 'Actual' : 'Proy'}: {isComprado && item.cantInsumos !== undefined ? item.cantInsumos : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : -(Number(item.cantidad) || 0)))}</RNText>
-            </RNText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
+                <RNText style={{ fontSize: 14, color: isEntrada ? '#f59e0b' : '#ef4444', fontWeight: 'bold' }}>
+                  {isEntrada ? 'Pide' : 'Retira'}: {item.cantidad}
+                </RNText>
+                <RNText style={{ fontSize: 11, color: '#6b7280', marginLeft: 6 }}>
+                  • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {isComprado ? 'Actual' : 'Proy'}: {isComprado && item.cantInsumos !== undefined ? item.cantInsumos : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : -(Number(item.cantidad) || 0)))}</RNText>
+                </RNText>
+              </View>
           </View>
         </TouchableOpacity>
 
@@ -1761,9 +1766,9 @@ const InventarioScreen = ({ navigation }: any) => {
                               )}
                             </View>
                             <View style={{ flex: 1 }}>
-                              <RNText style={{ fontSize: 14, fontWeight: '600', color: '#111827', textDecorationLine: isComprado ? 'line-through' : 'none' }}>{getInsumoName(item.nombreDelAlimento)}</RNText>
-                              <RNText style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{isEntrada ? 'Pide' : 'Saca'}: {item.cantidad} und</RNText>
-                            </View>
+                                <RNText style={{ fontSize: 14, fontWeight: '600', color: '#111827', textDecorationLine: isComprado ? 'line-through' : 'none' }}>{getInsumoName(item.nombreDelAlimento)}</RNText>
+                                <RNText style={{ fontSize: 14, color: isEntrada ? '#f59e0b' : '#ef4444', marginTop: 2, fontWeight: 'bold' }}>{isEntrada ? 'Pide' : 'Saca'}: {item.cantidad} und</RNText>
+                              </View>
                             {isEntrada && (
                               <View style={{ alignItems: 'flex-end', marginLeft: 12 }}>
                                 <RNText style={{ fontSize: 14, fontWeight: '700', color: isComprado ? '#16a34a' : '#111827' }}>
