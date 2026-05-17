@@ -600,27 +600,43 @@ const InventarioScreen = ({ navigation }: any) => {
 
   const handleSaveInlineEdit = async (orden: OrderInventarioItem) => {
     const insumoId = orden.nombreDelAlimento;
-    if (!insumoId) return;
+    console.log('[DEBUG] handleSaveInlineEdit - orden:', orden);
+    console.log('[DEBUG] handleSaveInlineEdit - insumoId:', insumoId);
+    console.log('[DEBUG] handleSaveInlineEdit - inlineEditValues:', inlineEditValues);
+    if (!insumoId) {
+      console.log('[DEBUG] handleSaveInlineEdit - ERROR: insumoId es null/undefined');
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se encontró el insumo' });
+      return;
+    }
     try {
       setSaving(true);
       const payload: any = {};
       const precioNum = Number(inlineEditValues.precioActual.replace(/[^0-9.]/g, ''));
       const cantidadNum = Number(inlineEditValues.cantidad.replace(/[^0-9]/g, ''));
+      console.log('[DEBUG] handleSaveInlineEdit - precioNum:', precioNum, 'cantidadNum:', cantidadNum);
       if (!isNaN(precioNum) && precioNum >= 0) {
         payload.precioActual = precioNum;
+        console.log('[DEBUG] handleSaveInlineEdit - payload.precioActual:', payload.precioActual);
       }
       if (!isNaN(cantidadNum) && cantidadNum >= 0) {
         payload.disponible = cantidadNum;
+        console.log('[DEBUG] handleSaveInlineEdit - payload.disponible:', payload.disponible);
       }
+      console.log('[DEBUG] handleSaveInlineEdit - payload final:', payload);
       if (Object.keys(payload).length > 0) {
-        await insumosService.update(insumoId, payload);
+        console.log('[DEBUG] handleSaveInlineEdit - calling insumosService.update');
+        const result = await insumosService.update(insumoId, payload);
+        console.log('[DEBUG] handleSaveInlineEdit - result:', result);
         await fetchInsumos();
         if (selectedInventario) {
           await fetchOrdenes(selectedInventario.IDinventario);
         }
         Toast.show({ type: 'success', text1: 'Actualizado', text2: 'Precio/cantidad actualizados correctamente' });
+      } else {
+        console.log('[DEBUG] handleSaveInlineEdit - payload vacío, no se actualiza');
       }
     } catch (error: any) {
+      console.log('[DEBUG] handleSaveInlineEdit - error:', error);
       Toast.show({ type: 'error', text1: 'Error', text2: getErrorMessage(error, 'No se pudo actualizar') });
     } finally {
       setSaving(false);
