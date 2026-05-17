@@ -600,47 +600,48 @@ const InventarioScreen = ({ navigation }: any) => {
 
   const handleSaveInlineEdit = async (orden: OrderInventarioItem) => {
     const insumoId = orden.nombreDelAlimento;
-    console.log('[DEBUG] handleSaveInlineEdit - orden:', orden);
-    console.log('[DEBUG] handleSaveInlineEdit - insumoId:', insumoId);
-    console.log('[DEBUG] handleSaveInlineEdit - inlineEditValues:', inlineEditValues);
+    
     if (!insumoId) {
-      console.log('[DEBUG] handleSaveInlineEdit - ERROR: insumoId es null/undefined');
-      Toast.show({ type: 'error', text1: 'Error', text2: 'No se encontró el insumo' });
+      Alert.alert('Error', 'No se encontró el ID del insumo');
       return;
     }
+    
+    const precioNum = Number(inlineEditValues.precioActual.replace(/[^0-9.]/g, ''));
+    const cantidadNum = Number(inlineEditValues.cantidad.replace(/[^0-9]/g, ''));
+    
+    if (isNaN(precioNum) && isNaN(cantidadNum)) {
+      Alert.alert('Error', 'Ingresa un precio o cantidad válido');
+      return;
+    }
+    
+    const payload: any = {};
+    if (!isNaN(precioNum) && precioNum >= 0) {
+      payload.precioActual = precioNum;
+    }
+    if (!isNaN(cantidadNum) && cantidadNum >= 0) {
+      payload.disponible = cantidadNum;
+    }
+    
+    console.log('[DEBUG] Guardando insumo:', insumoId, 'con payload:', payload);
+    
+    setSaving(true);
     try {
-      setSaving(true);
-      const payload: any = {};
-      const precioNum = Number(inlineEditValues.precioActual.replace(/[^0-9.]/g, ''));
-      const cantidadNum = Number(inlineEditValues.cantidad.replace(/[^0-9]/g, ''));
-      console.log('[DEBUG] handleSaveInlineEdit - precioNum:', precioNum, 'cantidadNum:', cantidadNum);
-      if (!isNaN(precioNum) && precioNum >= 0) {
-        payload.precioActual = precioNum;
-        console.log('[DEBUG] handleSaveInlineEdit - payload.precioActual:', payload.precioActual);
+      const response = await insumosService.update(insumoId, payload);
+      console.log('[DEBUG] Respuesta del servidor:', response);
+      
+      await fetchInsumos();
+      if (selectedInventario) {
+        await fetchOrdenes(selectedInventario.IDinventario);
       }
-      if (!isNaN(cantidadNum) && cantidadNum >= 0) {
-        payload.disponible = cantidadNum;
-        console.log('[DEBUG] handleSaveInlineEdit - payload.disponible:', payload.disponible);
-      }
-      console.log('[DEBUG] handleSaveInlineEdit - payload final:', payload);
-      if (Object.keys(payload).length > 0) {
-        console.log('[DEBUG] handleSaveInlineEdit - calling insumosService.update');
-        const result = await insumosService.update(insumoId, payload);
-        console.log('[DEBUG] handleSaveInlineEdit - result:', result);
-        await fetchInsumos();
-        if (selectedInventario) {
-          await fetchOrdenes(selectedInventario.IDinventario);
-        }
-        Toast.show({ type: 'success', text1: 'Actualizado', text2: 'Precio/cantidad actualizados correctamente' });
-      } else {
-        console.log('[DEBUG] handleSaveInlineEdit - payload vacío, no se actualiza');
-      }
+      
+      Alert.alert('Éxito', 'Precio/cantidad actualizados correctamente');
+      handleCancelInlineEdit();
     } catch (error: any) {
-      console.log('[DEBUG] handleSaveInlineEdit - error:', error);
-      Toast.show({ type: 'error', text1: 'Error', text2: getErrorMessage(error, 'No se pudo actualizar') });
+      console.error('[DEBUG] Error al actualizar:', error);
+      const errorMsg = error?.response?.data?.message || error?.message || 'No se pudo actualizar';
+      Alert.alert('Error', Array.isArray(errorMsg) ? errorMsg.join('\n') : String(errorMsg));
     } finally {
       setSaving(false);
-      handleCancelInlineEdit();
     }
   };
 
