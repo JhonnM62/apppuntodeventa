@@ -96,7 +96,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const handleOpenUpdateModal = () => {
     if (!insumo) return;
     setUpdateValues({
-      precioActual: insumo.precioActual?.toString() || '',
+      precioActual: insumo.precio?.toString() || '',
       cantidad: insumo.disponible?.toString() || insumo.cantidad?.toString() || '',
     });
     setShowUpdatePriceStockModal(true);
@@ -110,7 +110,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
       const precioNum = Number(updateValues.precioActual.replace(/[^0-9.]/g, ''));
       const cantidadNum = Number(updateValues.cantidad.replace(/[^0-9]/g, ''));
       if (!isNaN(precioNum) && precioNum >= 0) {
-        payload.precioActual = precioNum;
+        payload.precio = precioNum;
       }
       if (!isNaN(cantidadNum) && cantidadNum >= 0) {
         payload.disponible = cantidadNum;

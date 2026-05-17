@@ -582,7 +582,7 @@ const InventarioScreen = ({ navigation }: any) => {
     const insumoId = orden.nombreDelAlimento;
     const insumo = insumos.find(i => i.IDalimentos === insumoId || i.IDalimentos?.toString() === insumoId?.toString());
     return {
-      precioActual: insumo?.precioActual?.toString() || orden.precioActual?.toString() || '',
+      precioActual: insumo?.precio?.toString() || orden.precioActual?.toString() || '',
       cantidad: insumo?.disponible?.toString() || orden.cantidad?.toString() || '',
     };
   };
@@ -616,7 +616,7 @@ const InventarioScreen = ({ navigation }: any) => {
     
     const payload: any = {};
     if (!isNaN(precioNum) && precioNum >= 0) {
-      payload.precioActual = precioNum;
+      payload.precio = precioNum;
     }
     if (!isNaN(cantidadNum) && cantidadNum >= 0) {
       payload.disponible = cantidadNum;
