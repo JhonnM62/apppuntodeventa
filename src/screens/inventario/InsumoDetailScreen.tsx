@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform, TextInput, Image as RNImage } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
@@ -749,15 +748,11 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
             </TouchableOpacity>
           </View>
 
-          <KeyboardAwareScrollView
+          <ScrollView
             ref={updateModalScrollRef}
             style={{ flex: 1 }}
-            contentContainerStyle={{ padding: 16 }}
+            contentContainerStyle={{ padding: 16, flexGrow: 1 }}
             keyboardShouldPersistTaps="handled"
-            enableOnAndroid={true}
-            extraScrollHeight={100}
-            extraHeight={100}
-            enableAutomaticScroll={true}
           >
             <View style={{ backgroundColor: '#f3f4f6', borderRadius: 12, padding: 16, marginBottom: 20 }}>
               <RNText style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 12 }}>Información del Insumo</RNText>
@@ -826,7 +821,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                 </View>
               </View>
             </View>
-          </KeyboardAwareScrollView>
+          </ScrollView>
 
           <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb', flexDirection: 'row', gap: 12 }}>
             <TouchableOpacity

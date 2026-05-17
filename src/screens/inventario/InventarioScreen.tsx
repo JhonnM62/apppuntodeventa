@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Modal, TextInput, Alert, FlatList, KeyboardAvoidingView, Platform, Keyboard, Animated, Dimensions, Image } from 'react-native';
-import { KeyboardAwareFlatList, KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -1096,7 +1095,7 @@ const InventarioScreen = ({ navigation }: any) => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+    <View style={{ flex: 1, backgroundColor: '#f9fafb', paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
       <StatusBar style="dark" backgroundColor="transparent" translucent />
       <SafeAreaView style={{ backgroundColor: '#fff' }} edges={['top']}>
         <View className="bg-white px-4 py-3 flex-row items-center justify-between border-b border-gray-200">
@@ -1233,12 +1232,8 @@ const InventarioScreen = ({ navigation }: any) => {
                 {[...Array(6)].map((_, i) => <View key={i}>{renderSkeletonOrden()}</View>)}
               </ScrollView>
             ) : (
-              <KeyboardAwareFlatList
+              <FlatList
                 data={todasLasOrdenes}
-                enableOnAndroid={true}
-                extraScrollHeight={100}
-                extraHeight={100}
-                enableAutomaticScroll={true}
                 keyboardShouldPersistTaps="handled"
                 renderItem={({ item }) => (
                   <View style={{ paddingHorizontal: 16 }}>
@@ -1246,7 +1241,7 @@ const InventarioScreen = ({ navigation }: any) => {
                   </View>
                 )}
                 keyExtractor={(item: any) => item.IDorderinventario}
-                contentContainerStyle={{ paddingTop: 16, paddingBottom: 32 }}
+                contentContainerStyle={{ paddingTop: 16, paddingBottom: 32, flexGrow: 1 }}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />}
                 onEndReached={handleLoadMoreOrdenes}
                 onEndReachedThreshold={0.5}
@@ -1596,15 +1591,12 @@ const InventarioScreen = ({ navigation }: any) => {
                 {[...Array(4)].map((_, i) => <View key={i}>{renderSkeletonOrden()}</View>)}
               </View>
             ) : (
-              <KeyboardAwareScrollView 
-                  ref={detailModalScrollRef}
-                  style={{ flex: 1, padding: 16 }}
-                  enableOnAndroid={true}
-                  extraScrollHeight={100}
-                  extraHeight={100}
-                  enableAutomaticScroll={true}
-                  keyboardShouldPersistTaps="handled"
-                >
+              <ScrollView 
+                ref={detailModalScrollRef}
+                style={{ flex: 1, padding: 16 }}
+                contentContainerStyle={{ flexGrow: 1 }}
+                keyboardShouldPersistTaps="handled"
+              >
                 {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && (
                 <View style={{ flexDirection: 'row', marginBottom: 16 }}>
                   <View style={{ flex: 1, marginRight: 8 }}>
@@ -1700,8 +1692,8 @@ const InventarioScreen = ({ navigation }: any) => {
                 )}
               </View>
 
-              <View style={{ height: 40 }} />
-            </KeyboardAwareScrollView>
+              <View style={{ height: 20 }} />
+            </ScrollView>
             )}
           </View>
         </SafeAreaView>
@@ -1797,11 +1789,10 @@ const InventarioScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
-          <KeyboardAwareScrollView 
+          <ScrollView 
             ref={addItemModalScrollRef}
             style={{ flex: 1, padding: 16 }}
-            enableOnAndroid={true}
-            extraScrollHeight={20}
+            contentContainerStyle={{ flexGrow: 1 }}
             keyboardShouldPersistTaps="handled"
           >
             <View style={{ marginBottom: 12 }}>
@@ -1981,8 +1972,8 @@ const InventarioScreen = ({ navigation }: any) => {
                 </View>
               )}
             </View>
-            <View style={{ height: 40 }} />
-          </KeyboardAwareScrollView>
+            <View style={{ height: 20 }} />
+          </ScrollView>
 
           <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb' }}>
             <Button className="bg-green-500" onPress={handleAddItem} loading={saving} disabled={addItemsList.length === 0}>
