@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Modal, TextInput, Alert, FlatList, KeyboardAvoidingView, Platform, Keyboard, Animated, Dimensions, Image } from 'react-native';
+import { KeyboardAwareFlatList, KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -583,7 +584,7 @@ const InventarioScreen = ({ navigation }: any) => {
     const insumo = insumos.find(i => i.IDalimentos === insumoId || i.IDalimentos?.toString() === insumoId?.toString());
     return {
       precioActual: insumo?.precio?.toString() || orden.precioActual?.toString() || '',
-      cantidad: insumo?.disponible?.toString() || orden.cantidad?.toString() || '',
+      cantidad: '', // Siempre vacío para que el usuario ingrese la nueva cantidad a sumar
     };
   };
 
@@ -849,8 +850,7 @@ const InventarioScreen = ({ navigation }: any) => {
       })();
 
       return (
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        <View
           style={{
             padding: 12,
             marginBottom: 8,
@@ -906,7 +906,7 @@ const InventarioScreen = ({ navigation }: any) => {
               )}
             </TouchableOpacity>
           </View>
-        </KeyboardAvoidingView>
+        </View>
       );
     }
 
@@ -1210,8 +1210,11 @@ const InventarioScreen = ({ navigation }: any) => {
                 {[...Array(6)].map((_, i) => <View key={i}>{renderSkeletonOrden()}</View>)}
               </ScrollView>
             ) : (
-              <FlashList
+              <KeyboardAwareFlatList
                 data={todasLasOrdenes}
+                enableOnAndroid={true}
+                extraScrollHeight={20}
+                keyboardShouldPersistTaps="handled"
                 renderItem={({ item }) => (
                   <View style={{ paddingHorizontal: 16 }}>
                     {renderOrdenItem({ item: item as OrderInventarioItem })}
@@ -1219,7 +1222,6 @@ const InventarioScreen = ({ navigation }: any) => {
                 )}
                 keyExtractor={(item: any) => item.IDorderinventario}
                 contentContainerStyle={{ paddingTop: 16, paddingBottom: 32 }}
-                estimatedItemSize={120}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />}
                 onEndReached={handleLoadMoreOrdenes}
                 onEndReachedThreshold={0.5}
@@ -1568,7 +1570,12 @@ const InventarioScreen = ({ navigation }: any) => {
                 {[...Array(4)].map((_, i) => <View key={i}>{renderSkeletonOrden()}</View>)}
               </View>
             ) : (
-              <ScrollView style={{ flex: 1, padding: 16 }}>
+              <KeyboardAwareScrollView 
+                style={{ flex: 1, padding: 16 }}
+                enableOnAndroid={true}
+                extraScrollHeight={20}
+                keyboardShouldPersistTaps="handled"
+              >
                 {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && (
                 <View style={{ flexDirection: 'row', marginBottom: 16 }}>
                   <View style={{ flex: 1, marginRight: 8 }}>
@@ -1665,7 +1672,7 @@ const InventarioScreen = ({ navigation }: any) => {
               </View>
 
               <View style={{ height: 40 }} />
-            </ScrollView>
+            </KeyboardAwareScrollView>
             )}
           </View>
         </SafeAreaView>

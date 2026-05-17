@@ -98,7 +98,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
     if (!insumo) return;
     setUpdateValues({
       precioActual: insumo.precio?.toString() || '',
-      cantidad: insumo.disponible?.toString() || insumo.cantidad?.toString() || '',
+      cantidad: '', // Siempre vacío para que el usuario ingrese la nueva cantidad a sumar
     });
     setShowUpdatePriceStockModal(true);
   };
