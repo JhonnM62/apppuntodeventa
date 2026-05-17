@@ -108,17 +108,18 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
       setSaving(true);
       const payload: any = {};
       const precioNum = Number(updateValues.precioActual.replace(/[^0-9.]/g, ''));
-      const cantidadNum = Number(updateValues.cantidad.replace(/[^0-9]/g, ''));
+      const cantidadIngresada = Number(updateValues.cantidad.replace(/[^0-9]/g, ''));
+      const stockActual = Number(insumo.disponible) || 0;
       if (!isNaN(precioNum) && precioNum >= 0) {
         payload.precio = precioNum;
       }
-      if (!isNaN(cantidadNum) && cantidadNum >= 0) {
-        payload.disponible = cantidadNum;
+      if (!isNaN(cantidadIngresada) && cantidadIngresada >= 0) {
+        payload.disponible = stockActual + cantidadIngresada;
       }
       if (Object.keys(payload).length > 0) {
         await insumosService.update(insumo.IDalimentos!, payload);
         await loadInsumo();
-        Toast.show({ type: 'success', text1: 'Actualizado', text2: 'Precio/cantidad actualizados correctamente' });
+        Toast.show({ type: 'success', text1: 'Actualizado', text2: `Stock: ${stockActual} + ${cantidadIngresada} = ${stockActual + cantidadIngresada}` });
       }
       setShowUpdatePriceStockModal(false);
     } catch (error: any) {

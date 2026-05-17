@@ -606,10 +606,13 @@ const InventarioScreen = ({ navigation }: any) => {
       return;
     }
     
-    const precioNum = Number(inlineEditValues.precioActual.replace(/[^0-9.]/g, ''));
-    const cantidadNum = Number(inlineEditValues.cantidad.replace(/[^0-9]/g, ''));
+    const insumoActual = insumos.find(i => i.IDalimentos === insumoId || i.IDalimentos?.toString() === insumoId?.toString());
+    const stockActual = Number(insumoActual?.disponible) || 0;
     
-    if (isNaN(precioNum) && isNaN(cantidadNum)) {
+    const precioNum = Number(inlineEditValues.precioActual.replace(/[^0-9.]/g, ''));
+    const cantidadIngresada = Number(inlineEditValues.cantidad.replace(/[^0-9]/g, ''));
+    
+    if (isNaN(precioNum) && isNaN(cantidadIngresada)) {
       Alert.alert('Error', 'Ingresa un precio o cantidad válido');
       return;
     }
@@ -618,11 +621,11 @@ const InventarioScreen = ({ navigation }: any) => {
     if (!isNaN(precioNum) && precioNum >= 0) {
       payload.precio = precioNum;
     }
-    if (!isNaN(cantidadNum) && cantidadNum >= 0) {
-      payload.disponible = cantidadNum;
+    if (!isNaN(cantidadIngresada) && cantidadIngresada >= 0) {
+      payload.disponible = stockActual + cantidadIngresada;
     }
     
-    console.log('[DEBUG] Guardando insumo:', insumoId, 'con payload:', payload);
+    console.log('[DEBUG] Guardando insumo:', insumoId, 'stock actual:', stockActual, '+', cantidadIngresada, '=', stockActual + cantidadIngresada);
     
     setSaving(true);
     try {
@@ -634,7 +637,7 @@ const InventarioScreen = ({ navigation }: any) => {
         await fetchOrdenes(selectedInventario.IDinventario);
       }
       
-      Alert.alert('Éxito', 'Precio/cantidad actualizados correctamente');
+      Alert.alert('Éxito', `Stock actualizado: ${stockActual} + ${cantidadIngresada} = ${stockActual + cantidadIngresada}`);
       handleCancelInlineEdit();
     } catch (error: any) {
       console.error('[DEBUG] Error al actualizar:', error);
@@ -841,7 +844,8 @@ const InventarioScreen = ({ navigation }: any) => {
       })();
 
       return (
-        <View
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={{
             padding: 12,
             marginBottom: 8,
@@ -897,7 +901,7 @@ const InventarioScreen = ({ navigation }: any) => {
               )}
             </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       );
     }
 
