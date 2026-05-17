@@ -622,16 +622,6 @@ const InventarioScreen = ({ navigation }: any) => {
   };
 
   const handleSaveInlineEdit = async (orden: OrderInventarioItem) => {
-    const insumoId = orden.nombreDelAlimento;
-    
-    if (!insumoId) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'No se encontró el ID del insumo' });
-      return;
-    }
-    
-    const insumoActual = insumos.find(i => i.IDalimentos === insumoId || i.IDalimentos?.toString() === insumoId?.toString());
-    const stockActual = Number(insumoActual?.disponible) || 0;
-    
     const precioNum = Number(inlineEditValues.precioActual.replace(/[^0-9.]/g, ''));
     const cantidadIngresada = Number(inlineEditValues.cantidad.replace(/[^0-9]/g, ''));
     
@@ -644,13 +634,15 @@ const InventarioScreen = ({ navigation }: any) => {
     if (!isNaN(precioNum) && precioNum >= 0) {
       payload.precio = precioNum;
     }
-    if (!isNaN(cantidadIngresada) && cantidadIngresada >= 0) {
-      payload.disponible = stockActual + cantidadIngresada;
+    
+    const cantidadActual = Number(orden.cantidad) || 0;
+    if (!isNaN(cantidadIngresada) && cantidadIngresada > 0) {
+      payload.cantidad = cantidadActual + cantidadIngresada;
     }
     
     setSaving(true);
     try {
-      await insumosService.update(insumoId, payload);
+      await inventarioService.updateOrdenInventario(orden.IDorderinventario, payload);
       
       await fetchInsumos();
       if (selectedInventario) {
@@ -660,7 +652,7 @@ const InventarioScreen = ({ navigation }: any) => {
       Toast.show({ 
         type: 'success', 
         text1: '¡Actualizado con éxito!', 
-        text2: `Nuevo stock: ${stockActual + cantidadIngresada} und` 
+        text2: payload.cantidad !== undefined ? `Nueva cantidad (Pide): ${payload.cantidad} und` : 'Precio actualizado correctamente' 
       });
       handleCancelInlineEdit();
     } catch (error: any) {
