@@ -91,12 +91,7 @@ const InventarioScreen = ({ navigation }: any) => {
   useEffect(() => {
     const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => {
       setKeyboardHeight(e.endCoordinates.height);
-      if (showDetailModal) {
-        setTimeout(() => {
-          detailModalScrollRef.current?.scrollToEnd({ animated: true });
-        }, 150);
-      }
-      if (showAddItemModal) {
+      if (showAddItemModal && addItemSearchText.length > 0) {
         setTimeout(() => {
           addItemModalScrollRef.current?.scrollToEnd({ animated: true });
         }, 150);
@@ -104,7 +99,7 @@ const InventarioScreen = ({ navigation }: any) => {
     });
     const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardHeight(0));
     return () => { showSub.remove(); hideSub.remove(); };
-  }, [showDetailModal]);
+  }, [showAddItemModal, addItemSearchText]);
 
   // Animación para el Skeleton
   const skeletonAnim = useRef(new Animated.Value(0.3)).current;

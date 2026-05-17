@@ -55,18 +55,6 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
     return () => { showSub.remove(); hideSub.remove(); };
   }, []);
 
-  useEffect(() => {
-    if (showUpdatePriceStockModal) {
-      const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => {
-        setTimeout(() => {
-          updateModalScrollRef.current?.scrollToEnd({ animated: true });
-        }, 150);
-      });
-      return () => {
-        showSub.remove();
-      };
-    }
-  }, [showUpdatePriceStockModal]);
   const [estadoActivo, setEstadoActivo] = useState(true);
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
