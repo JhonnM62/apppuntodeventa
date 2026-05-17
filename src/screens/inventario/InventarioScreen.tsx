@@ -239,10 +239,12 @@ const InventarioScreen = ({ navigation }: any) => {
     }
   };
 
-  const fetchOrdenes = async (inventarioId: string) => {
-    setLoadingOrdenes(true);
-    setSelectedOrdenes(new Set());
-    setSelectionMode(false);
+  const fetchOrdenes = async (inventarioId: string, silent: boolean = false) => {
+    if (!silent) {
+      setLoadingOrdenes(true);
+      setSelectedOrdenes(new Set());
+      setSelectionMode(false);
+    }
     try {
       console.log('[DEBUG] Fetching ordenes for inventario:', inventarioId);
       const data = await inventarioService.getById(inventarioId);
@@ -250,7 +252,9 @@ const InventarioScreen = ({ navigation }: any) => {
     } catch (error) {
       console.error('[DEBUG] Error fetching ordenes:', error);
     } finally {
-      setLoadingOrdenes(false);
+      if (!silent) {
+        setLoadingOrdenes(false);
+      }
     }
   };
 
@@ -636,17 +640,30 @@ const InventarioScreen = ({ navigation }: any) => {
     }
     
     setSaving(true);
-    try {
-      console.log(`[FRONTEND DEBUG] Intentando actualizar orden: ${orden.IDorderinventario} con payload:`, payload);
-      await inventarioService.updateOrdenInventario(orden.IDorderinventario, payload);
-      console.log(`[FRONTEND DEBUG] Actualizacion exitosa.`);
-      
-      await fetchInsumos();
-      if (selectedInventario) {
-        await fetchOrdenes(selectedInventario.IDinventario);
-      }
-      
-      Toast.show({ 
+      try {
+        console.log(`[FRONTEND DEBUG] Intentando actualizar orden: ${orden.IDorderinventario} con payload:`, payload);
+        await inventarioService.updateOrdenInventario(orden.IDorderinventario, payload);
+        console.log(`[FRONTEND DEBUG] Actualizacion exitosa.`);
+        
+        // Optimistic UI Update: Actualizar la lista localmente al instante
+        setOrdenes(prev => prev.map(o => {
+          if (o.IDorderinventario === orden.IDorderinventario) {
+            return {
+              ...o,
+              precio: payload.precio !== undefined ? payload.precio : o.precio,
+              cantidad: payload.cantidad !== undefined ? payload.cantidad : o.cantidad
+            };
+          }
+          return o;
+        }));
+        
+        // Background silent refresh
+        fetchInsumos();
+        if (selectedInventario) {
+          fetchOrdenes(selectedInventario.IDinventario, true);
+        }
+        
+        Toast.show({ 
         type: 'success', 
         text1: '¡Actualizado con éxito!', 
         text2: payload.cantidad !== undefined ? `Nueva cantidad (Pide): ${payload.cantidad} und` : 'Precio actualizado correctamente' 
