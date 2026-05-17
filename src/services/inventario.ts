@@ -169,7 +169,7 @@ export const inventarioService = {
   },
 
   async updateOrdenInventario(id: string, data: UpdateOrderInventarioDto): Promise<OrderInventarioItem> {
-    const resp = await api.patch(`/inventario/item/${id}`, data);
+    const resp = await api.patch(`/inventario/item/update/${id}`, data);
     const item = extractData(resp);
     return parseOrden(item);
   },
