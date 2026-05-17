@@ -77,12 +77,35 @@ const InventarioScreen = ({ navigation }: any) => {
   const [addItemSearchText, setAddItemSearchText] = useState('');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const createModalScrollRef = useRef<ScrollView>(null);
+  const detailModalScrollRef = useRef<any>(null);
+  const addItemModalScrollRef = useRef<any>(null);
+
+  // Auto-Scroll Dinámico para Resultados de Búsqueda (Patrón de Memoria)
+  useEffect(() => {
+    if (showAddItemModal && addItemSearchText.length > 0) {
+      setTimeout(() => {
+        addItemModalScrollRef.current?.scrollToEnd({ animated: true });
+      }, 150);
+    }
+  }, [addItemSearchText, showAddItemModal]);
 
   useEffect(() => {
-    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => setKeyboardHeight(e.endCoordinates.height));
+    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => {
+      setKeyboardHeight(e.endCoordinates.height);
+      if (showDetailModal) {
+        setTimeout(() => {
+          detailModalScrollRef.current?.scrollToEnd({ animated: true });
+        }, 150);
+      }
+      if (showAddItemModal) {
+        setTimeout(() => {
+          addItemModalScrollRef.current?.scrollToEnd({ animated: true });
+        }, 150);
+      }
+    });
     const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardHeight(0));
     return () => { showSub.remove(); hideSub.remove(); };
-  }, []);
+  }, [showDetailModal]);
 
   // Animación para el Skeleton
   const skeletonAnim = useRef(new Animated.Value(0.3)).current;
@@ -1073,7 +1096,7 @@ const InventarioScreen = ({ navigation }: any) => {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View style={{ flex: 1, backgroundColor: '#f9fafb', paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
       <StatusBar style="dark" backgroundColor="transparent" translucent />
       <SafeAreaView style={{ backgroundColor: '#fff' }} edges={['top']}>
         <View className="bg-white px-4 py-3 flex-row items-center justify-between border-b border-gray-200">
@@ -1571,6 +1594,7 @@ const InventarioScreen = ({ navigation }: any) => {
               </View>
             ) : (
               <KeyboardAwareScrollView 
+                ref={detailModalScrollRef}
                 style={{ flex: 1, padding: 16 }}
                 enableOnAndroid={true}
                 extraScrollHeight={20}
@@ -1766,7 +1790,13 @@ const InventarioScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={{ flex: 1, padding: 16 }}>
+          <KeyboardAwareScrollView 
+            ref={addItemModalScrollRef}
+            style={{ flex: 1, padding: 16 }}
+            enableOnAndroid={true}
+            extraScrollHeight={20}
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={{ marginBottom: 12 }}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                 <TouchableOpacity
@@ -1945,7 +1975,7 @@ const InventarioScreen = ({ navigation }: any) => {
               )}
             </View>
             <View style={{ height: 40 }} />
-          </ScrollView>
+          </KeyboardAwareScrollView>
 
           <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb' }}>
             <Button className="bg-green-500" onPress={handleAddItem} loading={saving} disabled={addItemsList.length === 0}>
