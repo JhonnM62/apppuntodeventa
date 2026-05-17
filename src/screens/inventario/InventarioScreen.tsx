@@ -1037,8 +1037,8 @@ const InventarioScreen = ({ navigation }: any) => {
             </View>
 
             <RNText style={{ fontSize: 11, color: '#10b981', fontWeight: 'bold', marginTop: 2 }}>
-              Stock: {isComprado && item.cantInsumos !== undefined
-                ? (isEntrada
+                Stock act: {isComprado && item.cantInsumos !== undefined
+                  ? (isEntrada
                     ? item.cantInsumos - (Number(item.cantidad) || 0)
                     : item.cantInsumos + (Number(item.cantidad) || 0))
                 : getInsumoStock(item.nombreDelAlimento)}
@@ -1436,10 +1436,10 @@ const InventarioScreen = ({ navigation }: any) => {
                           <RNText style={{ fontSize: 14, color: '#374151', fontWeight: '600' }}>{insumo.nombre || insumo.Nombre}</RNText>
                           <RNText style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
                             {(!newInventario.tipo || newInventario.tipo.toLowerCase().includes('entrada')) && (
-                              <RNText>Último precio: ${(Number(insumo.precio || insumo.Precio) || 0).toLocaleString('es-CO')} • </RNText>
-                            )}
-                            <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock: {getInsumoStock(insumo.IDalimentos)}</RNText>
-                          </RNText>
+                                <RNText>Último precio: ${(Number(insumo.precio || insumo.Precio) || 0).toLocaleString('es-CO')} • </RNText>
+                              )}
+                              <RNText style={{ color: '#10b981', fontWeight: 'bold' }}>Stock act: {getInsumoStock(insumo.IDalimentos)}</RNText>
+                            </RNText>
                         </View>
                       </TouchableOpacity>
                     ))}
@@ -1459,7 +1459,7 @@ const InventarioScreen = ({ navigation }: any) => {
                 {addItemsList.map((item, index) => (
                   <View key={item.insumoId} style={{ backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#e5e7eb' }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <RNText style={{ fontSize: 14, fontWeight: '700', color: '#111827', flex: 1 }}>{item.nombre} <RNText style={{ fontSize: 12, color: '#3b82f6', fontWeight: '600' }}>(Stock: {getInsumoStock(item.insumoId)})</RNText></RNText>
+                    <RNText style={{ fontSize: 14, fontWeight: '700', color: '#111827', flex: 1 }}>{item.nombre} <RNText style={{ fontSize: 12, color: '#10b981', fontWeight: 'bold' }}>(Stock act: {getInsumoStock(item.insumoId)})</RNText></RNText>
                     <TouchableOpacity 
                       onPress={() => setAddItemsList(prev => prev.filter((_, i) => i !== index))}
                         style={{ padding: 4, backgroundColor: '#fee2e2', borderRadius: 6 }}
@@ -1878,10 +1878,10 @@ const InventarioScreen = ({ navigation }: any) => {
                           <RNText style={{ fontSize: 14, color: '#374151', fontWeight: '600' }}>{insumo.nombre || insumo.Nombre}</RNText>
                           <RNText style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
                             {(!selectedInventario?.tipo || selectedInventario.tipo.toLowerCase().includes('entrada')) && (
-                              <RNText>Último precio: ${(Number(insumo.precio || insumo.Precio) || 0).toLocaleString('es-CO')} • </RNText>
-                            )}
-                            <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock: {getInsumoStock(insumo.IDalimentos)}</RNText>
-                          </RNText>
+                                <RNText>Último precio: ${(Number(insumo.precio || insumo.Precio) || 0).toLocaleString('es-CO')} • </RNText>
+                              )}
+                              <RNText style={{ color: '#10b981', fontWeight: 'bold' }}>Stock act: {getInsumoStock(insumo.IDalimentos)}</RNText>
+                            </RNText>
                         </View>
                       </TouchableOpacity>
                     ))}
@@ -1901,7 +1901,7 @@ const InventarioScreen = ({ navigation }: any) => {
               {addItemsList.map((item, index) => (
                 <View key={item.insumoId} style={{ backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#e5e7eb' }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                    <RNText style={{ fontSize: 14, fontWeight: '700', color: '#111827', flex: 1 }}>{item.nombre} <RNText style={{ fontSize: 12, color: '#3b82f6', fontWeight: '600' }}>(Stock: {getInsumoStock(item.insumoId)})</RNText></RNText>
+                    <RNText style={{ fontSize: 14, fontWeight: '700', color: '#111827', flex: 1 }}>{item.nombre} <RNText style={{ fontSize: 12, color: '#10b981', fontWeight: 'bold' }}>(Stock act: {getInsumoStock(item.insumoId)})</RNText></RNText>
                     <TouchableOpacity 
                       onPress={() => setAddItemsList(prev => prev.filter((_, i) => i !== index))}
                       style={{ padding: 4, backgroundColor: '#fee2e2', borderRadius: 6 }}
