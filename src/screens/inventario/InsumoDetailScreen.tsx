@@ -47,6 +47,27 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showUpdatePriceStockModal, setShowUpdatePriceStockModal] = useState(false);
   const [updateValues, setUpdateValues] = useState({ precioActual: '', cantidad: '' });
+  const updateModalScrollRef = useRef<any>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => setKeyboardHeight(e.endCoordinates.height));
+    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardHeight(0));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
+
+  useEffect(() => {
+    if (showUpdatePriceStockModal) {
+      const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', () => {
+        setTimeout(() => {
+          updateModalScrollRef.current?.scrollToEnd({ animated: true });
+        }, 150);
+      });
+      return () => {
+        showSub.remove();
+      };
+    }
+  }, [showUpdatePriceStockModal]);
   const [estadoActivo, setEstadoActivo] = useState(true);
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
@@ -717,7 +738,8 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
 
       {/* MODAL PARA ACTUALIZAR PRECIO Y STOCK */}
       <Modal visible={showUpdatePriceStockModal} animationType="slide" onRequestClose={() => setShowUpdatePriceStockModal(false)}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
+          <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
           <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <RNText style={{ fontSize: 18, fontWeight: 'bold', color: '#111827' }}>
               Actualizar Precio y Stock
@@ -728,11 +750,14 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
           </View>
 
           <KeyboardAwareScrollView
+            ref={updateModalScrollRef}
             style={{ flex: 1 }}
             contentContainerStyle={{ padding: 16 }}
             keyboardShouldPersistTaps="handled"
             enableOnAndroid={true}
-            extraScrollHeight={20}
+            extraScrollHeight={100}
+            extraHeight={100}
+            enableAutomaticScroll={true}
           >
             <View style={{ backgroundColor: '#f3f4f6', borderRadius: 12, padding: 16, marginBottom: 20 }}>
               <RNText style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 12 }}>Información del Insumo</RNText>
@@ -824,6 +849,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
             </TouchableOpacity>
           </View>
         </SafeAreaView>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* MODAL PARA SELECCIONAR IMAGEN */}

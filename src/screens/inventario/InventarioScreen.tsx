@@ -1096,7 +1096,7 @@ const InventarioScreen = ({ navigation }: any) => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#f9fafb', paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
+    <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
       <StatusBar style="dark" backgroundColor="transparent" translucent />
       <SafeAreaView style={{ backgroundColor: '#fff' }} edges={['top']}>
         <View className="bg-white px-4 py-3 flex-row items-center justify-between border-b border-gray-200">
@@ -1236,7 +1236,9 @@ const InventarioScreen = ({ navigation }: any) => {
               <KeyboardAwareFlatList
                 data={todasLasOrdenes}
                 enableOnAndroid={true}
-                extraScrollHeight={20}
+                extraScrollHeight={100}
+                extraHeight={100}
+                enableAutomaticScroll={true}
                 keyboardShouldPersistTaps="handled"
                 renderItem={({ item }) => (
                   <View style={{ paddingHorizontal: 16 }}>
@@ -1540,7 +1542,8 @@ const InventarioScreen = ({ navigation }: any) => {
       </Modal>
 
       <Modal visible={showDetailModal} animationType="slide" onRequestClose={() => setShowDetailModal(false)}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }} edges={['top']}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
+          <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }} edges={['top']}>
           <View className="bg-white px-4 py-4 border-b border-gray-200 flex-row items-center justify-between">
             {selectionMode ? (
               <>
@@ -1594,12 +1597,14 @@ const InventarioScreen = ({ navigation }: any) => {
               </View>
             ) : (
               <KeyboardAwareScrollView 
-                ref={detailModalScrollRef}
-                style={{ flex: 1, padding: 16 }}
-                enableOnAndroid={true}
-                extraScrollHeight={20}
-                keyboardShouldPersistTaps="handled"
-              >
+                  ref={detailModalScrollRef}
+                  style={{ flex: 1, padding: 16 }}
+                  enableOnAndroid={true}
+                  extraScrollHeight={100}
+                  extraHeight={100}
+                  enableAutomaticScroll={true}
+                  keyboardShouldPersistTaps="handled"
+                >
                 {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && (
                 <View style={{ flexDirection: 'row', marginBottom: 16 }}>
                   <View style={{ flex: 1, marginRight: 8 }}>
@@ -1700,6 +1705,7 @@ const InventarioScreen = ({ navigation }: any) => {
             )}
           </View>
         </SafeAreaView>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Hidden ViewShot container for full receipt export */}
@@ -1782,7 +1788,8 @@ const InventarioScreen = ({ navigation }: any) => {
       )}
 
       <Modal visible={showAddItemModal} animationType="slide" onRequestClose={() => setShowAddItemModal(false)}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
+          <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
           <View className="px-4 py-4 border-b border-gray-200 flex-row items-center justify-between">
             <RNText style={{ fontSize: 18, fontWeight: '700', color: '#111827' }}>Agregar Items</RNText>
             <TouchableOpacity onPress={() => setShowAddItemModal(false)} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' }}>
@@ -1983,6 +1990,7 @@ const InventarioScreen = ({ navigation }: any) => {
             </Button>
           </View>
         </SafeAreaView>
+        </KeyboardAvoidingView>
       </Modal>
       {/* Modal para Confirmar Eliminación de Ítem ya Comprado */}
       <Modal visible={showDeleteModal} transparent animationType="fade" onRequestClose={() => setShowDeleteModal(false)}>
