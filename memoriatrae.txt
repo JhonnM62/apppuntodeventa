@@ -91,3 +91,14 @@ Cuando utilices `SafeAreaView` de `react-native-safe-area-context`, EVITA usar N
 Cuando un `ScrollView` necesite un espacio extra en la parte inferior para que el contenido no quede oculto por la navegación (ej. `paddingBottom: 100`), es OBLIGATORIO incluir `flexGrow: 1` en su `contentContainerStyle`. De lo contrario, el contenedor no se expandirá y los últimos elementos quedarán inaccesibles. Ejemplo correcto: `contentContainerStyle={{ flexGrow: 1, paddingBottom: 100 }}`.
 
 A partir de ahora, revisa tu propio código antes de entregarlo para asegurarte de que no estás cometiendo ninguno de estos 3 errores.
+
+# 🚨 DIRECTIVA DE LAYOUT: KEYBOARD-AWARE Y SCROLL EXCESIVO EN ANDROID
+
+Para resolver problemas de márgenes vacíos y scroll excesivo en vistas detalladas y modales en React Native (Android), NO usar librerías externas de teclado como `KeyboardAwareFlatList` si causan padding fantasma (por propiedades como `extraHeight`). En su lugar, aplica este patrón nativo:
+
+1. **Listas y Scroll Nativos:** Usar `FlatList` o `ScrollView` nativos.
+2. **Restricción de Scroll:** Asegurar que tengan `contentContainerStyle={{ flexGrow: 1, paddingBottom: 32 }}`. Nunca permitir que un contenedor de teclado inyecte padding fantasma infinito.
+3. **Contenedor Principal:** Envolver el contenido en un `KeyboardAvoidingView` con `behavior='padding'` para iOS y aplicar un **padding dinámico** basado en la altura del teclado para Android: `paddingBottom: Platform.OS === "android" ? keyboardHeight : 0`.
+4. **SafeArea:** Usar `SafeAreaView` DENTRO del `KeyboardAvoidingView`.
+
+Esto garantiza que el teclado no tape los inputs y elimina completamente el scroll vacío y las pantallas en blanco al final de las listas.

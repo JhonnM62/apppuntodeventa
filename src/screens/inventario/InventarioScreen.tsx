@@ -637,7 +637,9 @@ const InventarioScreen = ({ navigation }: any) => {
     
     setSaving(true);
     try {
+      console.log(`[FRONTEND DEBUG] Intentando actualizar orden: ${orden.IDorderinventario} con payload:`, payload);
       await inventarioService.updateOrdenInventario(orden.IDorderinventario, payload);
+      console.log(`[FRONTEND DEBUG] Actualizacion exitosa.`);
       
       await fetchInsumos();
       if (selectedInventario) {

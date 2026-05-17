@@ -1,5 +1,29 @@
 import api from './api';
 
+const isNotFoundError = (error: any) => {
+  const status =
+    error?.statusCode ??
+    error?.status ??
+    error?.response?.status ??
+    error?.response?.data?.statusCode ??
+    error?.response?.data?.error?.statusCode;
+  const code = error?.code ?? error?.response?.data?.code ?? error?.response?.data?.error?.code;
+  const message = String(
+    error?.message ??
+    error?.response?.data?.message ??
+    error?.response?.data?.error?.message ??
+    ''
+  );
+
+  return status === 404 || code === 'NOT_FOUND' || message.includes('Cannot PATCH');
+};
+
+const logInventarioRouteAttempt = (label: string, path: string, payload?: unknown) => {
+  console.log(
+    `[inventarioService] ${label} | baseURL: ${api.defaults.baseURL} | path: ${path} | payload: ${JSON.stringify(payload)}`
+  );
+};
+
 export type InventarioItem = {
   IDinventario: string;
   nombre: string;
@@ -169,9 +193,57 @@ export const inventarioService = {
   },
 
   async updateOrdenInventario(id: string, data: UpdateOrderInventarioDto): Promise<OrderInventarioItem> {
-    const resp = await api.patch(`/inventario/item/update/${id}`, data);
-    const item = extractData(resp);
-    return parseOrden(item);
+    const primaryPath = `/inventario/item/${id}/update`;
+    const legacyPath = `/inventario/item/update/${id}`;
+
+    try {
+      logInventarioRouteAttempt('PATCH primary', primaryPath, data);
+      const resp = await api.patch(primaryPath, data);
+      const item = extractData(resp);
+      return parseOrden(item);
+    } catch (error: any) {
+      if (!isNotFoundError(error)) {
+        console.error('[inventarioService] PATCH primary failed without fallback:', error);
+        throw error;
+      }
+
+      console.warn('[inventarioService] Primary route returned 404, trying legacy route.', {
+        baseURL: api.defaults.baseURL,
+        primaryPath,
+        legacyPath,
+      });
+
+      try {
+        logInventarioRouteAttempt('PATCH legacy', legacyPath, data);
+        const resp = await api.patch(legacyPath, data);
+        const item = extractData(resp);
+        return parseOrden(item);
+      } catch (legacyError: any) {
+        console.error('[inventarioService] Both update routes failed.', {
+          baseURL: api.defaults.baseURL,
+          primaryPath,
+          legacyPath,
+          primaryError: error,
+          legacyError,
+        });
+
+        if (isNotFoundError(legacyError)) {
+          throw {
+            code: 'BACKEND_ROUTE_MISSING',
+            statusCode: 404,
+            message:
+              'El backend publicado no tiene habilitado el endpoint para actualizar items de inventario. Debes desplegar la version nueva del modulo de inventario.',
+            details: {
+              baseURL: api.defaults.baseURL,
+              primaryPath,
+              legacyPath,
+            },
+          };
+        }
+
+        throw legacyError;
+      }
+    }
   },
 
   async deleteOrdenInventario(id: string, restoreStock: boolean = true): Promise<void> {

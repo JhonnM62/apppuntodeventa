@@ -9,8 +9,54 @@ Configurar el VPS (Ubuntu/Linux) para soportar la pesada carga de compilar un `.
 
 ## 🛠️ 1. Requisitos Previos (VPS)
 Asegúrate de que tu VPS cuenta con las siguientes herramientas instaladas:
-- **Node.js v20+** (Recomendado gestionarlo vía `nvm`).
+- **Node.js v20+**
+  > ⚠️ **IMPORTANTE:** Si usas Node 18 o inferior, el empaquetador de Expo (Metro) arrojará el error `configs.toReversed is not a function`.
+  > 
+  > **Opción A: Actualizar vía NVM (Recomendado)**
+  > ```bash
+  > nvm install 20
+  > nvm use 20
+  > nvm alias default 20
+  > ```
+  > **Opción B: Instalación directa en Ubuntu (Si no tienes NVM)**
+  > ```bash
+  > curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+  > sudo apt-get install -y nodejs
+  > ```
 - **EAS CLI** instalado globalmente: `npm install -g eas-cli`
+- **Android SDK** configurado correctamente.
+  > ⚠️ **IMPORTANTE:** Si al compilar obtienes el error `SDK location not found`, significa que Linux "olvidó" la ruta del SDK. Asegúrate de hacer las variables permanentes ejecutando:
+  > ```bash
+  > export ANDROID_HOME="/opt/build-farm/android-sdk"
+  > export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+  > echo 'export ANDROID_HOME="/opt/build-farm/android-sdk"' >> ~/.bashrc
+  > echo 'export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"' >> ~/.bashrc
+  > ```
+  > 
+  > 🆕 **¿Qué hacer si el SDK NO está instalado? (Instalación desde cero)**
+  > Si corres `find / -type d -name "android-sdk"` y no arroja nada, instálalo así:
+  > ```bash
+  > # 1. Instalar Java 17
+  > sudo apt update && sudo apt install -y openjdk-17-jdk unzip
+  > 
+  > # 2. Crear carpetas y descargar Command Line Tools
+  > mkdir -p /opt/build-farm/android-sdk/cmdline-tools
+  > cd /opt/build-farm/android-sdk
+  > wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline.zip
+  > unzip cmdline.zip -d cmdline-tools/
+  > rm cmdline.zip
+  > mv cmdline-tools/cmdline-tools cmdline-tools/latest
+  > 
+  > # 3. Configurar variables (mismo paso de arriba)
+  > export ANDROID_HOME="/opt/build-farm/android-sdk"
+  > export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"
+  > echo 'export ANDROID_HOME="/opt/build-farm/android-sdk"' >> ~/.bashrc
+  > echo 'export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$PATH"' >> ~/.bashrc
+  > 
+  > # 4. Aceptar licencias e instalar SDK 34 (Requerido por Expo 50+)
+  > yes | sdkmanager --licenses
+  > sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+  > ```
 - El repositorio del proyecto ya clonado (ej. `/opt/build-farm/apppuntodeventa`).
 
 ---
