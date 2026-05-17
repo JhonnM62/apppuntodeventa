@@ -602,7 +602,7 @@ const InventarioScreen = ({ navigation }: any) => {
     const insumoId = orden.nombreDelAlimento;
     
     if (!insumoId) {
-      Alert.alert('Error', 'No se encontró el ID del insumo');
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se encontró el ID del insumo' });
       return;
     }
     
@@ -613,7 +613,7 @@ const InventarioScreen = ({ navigation }: any) => {
     const cantidadIngresada = Number(inlineEditValues.cantidad.replace(/[^0-9]/g, ''));
     
     if (isNaN(precioNum) && isNaN(cantidadIngresada)) {
-      Alert.alert('Error', 'Ingresa un precio o cantidad válido');
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Ingresa un precio o cantidad válido' });
       return;
     }
     
@@ -625,24 +625,29 @@ const InventarioScreen = ({ navigation }: any) => {
       payload.disponible = stockActual + cantidadIngresada;
     }
     
-    console.log('[DEBUG] Guardando insumo:', insumoId, 'stock actual:', stockActual, '+', cantidadIngresada, '=', stockActual + cantidadIngresada);
-    
     setSaving(true);
     try {
-      const response = await insumosService.update(insumoId, payload);
-      console.log('[DEBUG] Respuesta del servidor:', response);
+      await insumosService.update(insumoId, payload);
       
       await fetchInsumos();
       if (selectedInventario) {
         await fetchOrdenes(selectedInventario.IDinventario);
       }
       
-      Alert.alert('Éxito', `Stock actualizado: ${stockActual} + ${cantidadIngresada} = ${stockActual + cantidadIngresada}`);
+      Toast.show({ 
+        type: 'success', 
+        text1: '¡Actualizado con éxito!', 
+        text2: `Nuevo stock: ${stockActual + cantidadIngresada} und` 
+      });
       handleCancelInlineEdit();
     } catch (error: any) {
       console.error('[DEBUG] Error al actualizar:', error);
       const errorMsg = error?.response?.data?.message || error?.message || 'No se pudo actualizar';
-      Alert.alert('Error', Array.isArray(errorMsg) ? errorMsg.join('\n') : String(errorMsg));
+      Toast.show({ 
+        type: 'error', 
+        text1: 'Error al guardar', 
+        text2: Array.isArray(errorMsg) ? errorMsg.join(', ') : String(errorMsg) 
+      });
     } finally {
       setSaving(false);
     }

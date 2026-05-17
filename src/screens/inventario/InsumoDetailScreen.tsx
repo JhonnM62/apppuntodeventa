@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform, TextInput, Image as RNImage } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
@@ -119,11 +120,20 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
       if (Object.keys(payload).length > 0) {
         await insumosService.update(insumo.IDalimentos!, payload);
         await loadInsumo();
-        Toast.show({ type: 'success', text1: 'Actualizado', text2: `Stock: ${stockActual} + ${cantidadIngresada} = ${stockActual + cantidadIngresada}` });
+        Toast.show({ 
+          type: 'success', 
+          text1: '¡Actualizado con éxito!', 
+          text2: `Nuevo stock: ${stockActual + cantidadIngresada} und` 
+        });
       }
       setShowUpdatePriceStockModal(false);
     } catch (error: any) {
-      Alert.alert('Error', error?.response?.data?.message || 'No se pudo actualizar');
+      const errorMsg = error?.response?.data?.message || error?.message || 'No se pudo actualizar';
+      Toast.show({ 
+        type: 'error', 
+        text1: 'Error al guardar', 
+        text2: Array.isArray(errorMsg) ? errorMsg.join(', ') : String(errorMsg) 
+      });
     } finally {
       setSaving(false);
     }
@@ -717,7 +727,13 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
             </TouchableOpacity>
           </View>
 
-          <View style={{ flex: 1, padding: 16 }}>
+          <KeyboardAwareScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ padding: 16 }}
+            keyboardShouldPersistTaps="handled"
+            enableOnAndroid={true}
+            extraScrollHeight={20}
+          >
             <View style={{ backgroundColor: '#f3f4f6', borderRadius: 12, padding: 16, marginBottom: 20 }}>
               <RNText style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 12 }}>Información del Insumo</RNText>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -785,7 +801,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                 </View>
               </View>
             </View>
-          </View>
+          </KeyboardAwareScrollView>
 
           <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb', flexDirection: 'row', gap: 12 }}>
             <TouchableOpacity
