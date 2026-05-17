@@ -1044,7 +1044,7 @@ const InventarioScreen = ({ navigation }: any) => {
                 : getInsumoStock(item.nombreDelAlimento)}
             </RNText>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
-                <RNText style={{ fontSize: 14, color: isEntrada ? '#f59e0b' : '#ef4444', fontWeight: 'bold' }}>
+                <RNText style={{ fontSize: 12.5, color: isEntrada ? '#f59e0b' : '#ef4444', fontWeight: 'bold' }}>
                   {isEntrada ? 'Pide' : 'Retira'}: {item.cantidad}
                 </RNText>
                 <RNText style={{ fontSize: 11, color: '#6b7280', marginLeft: 6 }}>
@@ -1767,7 +1767,7 @@ const InventarioScreen = ({ navigation }: any) => {
                             </View>
                             <View style={{ flex: 1 }}>
                                 <RNText style={{ fontSize: 14, fontWeight: '600', color: '#111827', textDecorationLine: isComprado ? 'line-through' : 'none' }}>{getInsumoName(item.nombreDelAlimento)}</RNText>
-                                <RNText style={{ fontSize: 14, color: isEntrada ? '#f59e0b' : '#ef4444', marginTop: 2, fontWeight: 'bold' }}>{isEntrada ? 'Pide' : 'Saca'}: {item.cantidad} und</RNText>
+                                <RNText style={{ fontSize: 12.5, color: isEntrada ? '#f59e0b' : '#ef4444', marginTop: 2, fontWeight: 'bold' }}>{isEntrada ? 'Pide' : 'Saca'}: {item.cantidad} und</RNText>
                               </View>
                             {isEntrada && (
                               <View style={{ alignItems: 'flex-end', marginLeft: 12 }}>
