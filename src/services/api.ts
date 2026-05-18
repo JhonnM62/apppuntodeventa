@@ -38,4 +38,12 @@ api.interceptors.response.use(
   }
 );
 
+export const getConfiguracionIA = () => api.get('/configuracion/ia');
+export const updateConfiguracionIA = (data: any) => api.put('/configuracion/ia', data);
+export const extractDataWithIA = (formData: FormData) => api.post('/ai/extract-data', formData, {
+  headers: {
+    'Content-Type': 'multipart/form-data',
+  },
+});
+
 export default api;

@@ -68,8 +68,11 @@ const InventarioScreen = ({ navigation }: any) => {
   const [selectionMode, setSelectionMode] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<{id: string, isComprado: boolean, isParent?: boolean} | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
   const [inlineEditOrdenId, setInlineEditOrdenId] = useState<string | null>(null);
   const [inlineEditValues, setInlineEditValues] = useState<{ precioActual: string; cantidad: string }>({ precioActual: '', cantidad: '' });
+  const [isBulkEditing, setIsBulkEditing] = useState(false);
+  const [bulkEditValues, setBulkEditValues] = useState<Record<string, { precioActual: string; cantidad: string }>>({});
 
   const [newInventario, setNewInventario] = useState<CreateInventarioDto>({ nombre: '', tipo: 'entrada' });
   const [addItemsList, setAddItemsList] = useState<any[]>([]);
@@ -78,28 +81,45 @@ const InventarioScreen = ({ navigation }: any) => {
   const createModalScrollRef = useRef<ScrollView>(null);
   const detailModalScrollRef = useRef<any>(null);
   const addItemModalScrollRef = useRef<any>(null);
+  const [activeInputIndex, setActiveInputIndex] = useState<number | null>(null);
 
-  // Auto-Scroll Dinámico para Resultados de Búsqueda (Patrón de Memoria)
+  // Auto-Scroll Dinámico para Resultados de Búsqueda y Formularios (Patrón de Memoria)
   useEffect(() => {
-    if (showAddItemModal && addItemSearchText.length > 0) {
+    if ((showAddItemModal || showCreateModal) && (addItemSearchText.length > 0 || selectedCategoriaFilter)) {
       setTimeout(() => {
-        addItemModalScrollRef.current?.scrollToEnd({ animated: true });
-      }, 150);
+        // En lugar de ir al final (donde pueden estar los items ya agregados), 
+        // scrolleamos justo debajo del buscador (aproximadamente a los 100-200px)
+        const scrollRef = showCreateModal ? createModalScrollRef : addItemModalScrollRef;
+        scrollRef.current?.scrollTo({ y: 150, animated: true });
+      }, 300);
     }
-  }, [addItemSearchText, showAddItemModal]);
+  }, [addItemSearchText, selectedCategoriaFilter, showAddItemModal, showCreateModal]);
 
   useEffect(() => {
     const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => {
       setKeyboardHeight(e.endCoordinates.height);
-      if (showAddItemModal && addItemSearchText.length > 0) {
-        setTimeout(() => {
-          addItemModalScrollRef.current?.scrollToEnd({ animated: true });
-        }, 150);
+      if (showAddItemModal || showCreateModal) {
+        if (addItemSearchText.length > 0) {
+          setTimeout(() => {
+            const scrollRef = showCreateModal ? createModalScrollRef : addItemModalScrollRef;
+            scrollRef.current?.scrollTo({ y: 150, animated: true });
+          }, 300);
+        } else if (activeInputIndex !== null) {
+          setTimeout(() => {
+            const scrollRef = showCreateModal ? createModalScrollRef : addItemModalScrollRef;
+            // Calculamos una posición más abajo para los inputs dinámicos de los items
+            // 350 es un offset base para saltar el buscador y los filtros
+            scrollRef.current?.scrollTo({ y: 350 + (activeInputIndex * 150), animated: true });
+          }, 300);
+        }
       }
     });
-    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardHeight(0));
+    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => {
+      setKeyboardHeight(0);
+      setActiveInputIndex(null);
+    });
     return () => { showSub.remove(); hideSub.remove(); };
-  }, [showAddItemModal, addItemSearchText]);
+  }, [showAddItemModal, addItemSearchText, activeInputIndex]);
 
   // Animación para el Skeleton
   const skeletonAnim = useRef(new Animated.Value(0.3)).current;
@@ -167,6 +187,15 @@ const InventarioScreen = ({ navigation }: any) => {
       fetchTodasLasOrdenes(1, false);
     }
   });
+
+  useEffect(() => {
+    if (selectedInventario && inventarios.length > 0) {
+      const updated = inventarios.find(i => i.IDinventario === selectedInventario.IDinventario);
+      if (updated && (updated.total !== selectedInventario.total || updated.nombre !== selectedInventario.nombre)) {
+        setSelectedInventario(updated);
+      }
+    }
+  }, [inventarios]);
 
   const fetchInventarios = useCallback(async () => {
     try {
@@ -397,7 +426,7 @@ const InventarioScreen = ({ navigation }: any) => {
   const getInsumoImage = (id: string) => {
     if (!id) return null;
     const insumo = insumos.find(i => i.IDalimentos === id || i.IDalimentos?.toString() === id.toString());
-    const rawUrl = insumo?.imagen || insumo?.imageUrl || insumo?.imagencard;
+    const rawUrl = insumo?.imagen || insumo?.imageUrl || insumo?.imagencard || insumo?.Imagen || insumo?.['Image Url'];
     return getImageUrl(rawUrl);
   };
 
@@ -494,6 +523,30 @@ const InventarioScreen = ({ navigation }: any) => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleCloseDetailModal = () => {
+    if (isBulkEditing) {
+      // Check if there are actual changes
+      let hasChanges = false;
+      for (const [id, values] of Object.entries(bulkEditValues)) {
+        if (values.precioActual !== '' || values.cantidad !== '') {
+          hasChanges = true;
+          break;
+        }
+      }
+      
+      if (hasChanges) {
+        setShowUnsavedChangesModal(true);
+        return;
+      }
+    }
+    
+    // Default close logic
+    setIsBulkEditing(false);
+    setBulkEditValues({});
+    setShowDetailModal(false);
+    setSelectedInventario(null);
   };
 
   const handleOpenDetail = async (item: InventarioItem) => {
@@ -620,6 +673,91 @@ const InventarioScreen = ({ navigation }: any) => {
     setInlineEditValues({ precioActual: '', cantidad: '' });
   };
 
+  const handleToggleBulkEdit = () => {
+    if (isBulkEditing) {
+      setIsBulkEditing(false);
+      setBulkEditValues({});
+    } else {
+      const initialValues: Record<string, { precioActual: string; cantidad: string }> = {};
+      ordenes.forEach(o => {
+        initialValues[o.IDorderinventario] = getCurrentInsumoValues(o);
+      });
+      setBulkEditValues(initialValues);
+      setIsBulkEditing(true);
+      setInlineEditOrdenId(null);
+    }
+  };
+
+  const handleSaveBulkEdit = async () => {
+    const promises: Promise<any>[] = [];
+    const updatedOrdenes = [...ordenes];
+    let hasUpdates = false;
+
+    for (const [id, values] of Object.entries(bulkEditValues)) {
+      const precioNum = Number(values.precioActual.replace(/[^0-9.]/g, ''));
+      const cantidadIngresada = Number(values.cantidad.replace(/[^0-9]/g, ''));
+      
+      if (!isNaN(precioNum) || !isNaN(cantidadIngresada)) {
+        const ordenIndex = updatedOrdenes.findIndex(o => o.IDorderinventario === id);
+        if (ordenIndex === -1) continue;
+        
+        const orden = updatedOrdenes[ordenIndex];
+        const payload: any = {};
+        
+        const currentPrecio = Number(orden.precioActual) || Number(orden.precio) || 0;
+        if (!isNaN(precioNum) && precioNum >= 0 && values.precioActual !== '' && precioNum !== currentPrecio) {
+          payload.precio = precioNum;
+        }
+        
+        const cantidadActual = Number(orden.cantidad) || 0;
+        if (!isNaN(cantidadIngresada) && cantidadIngresada > 0 && values.cantidad !== '') {
+          payload.cantidad = cantidadActual + cantidadIngresada;
+        }
+        
+        if (Object.keys(payload).length > 0) {
+          hasUpdates = true;
+          promises.push(
+            inventarioService.updateOrdenInventario(id, payload).then(() => {
+              updatedOrdenes[ordenIndex] = {
+                ...orden,
+                precio: payload.precio !== undefined ? payload.precio : orden.precio,
+                cantidad: payload.cantidad !== undefined ? payload.cantidad : orden.cantidad
+              };
+            })
+          );
+        }
+      }
+    }
+
+    if (!hasUpdates) {
+      setIsBulkEditing(false);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await Promise.all(promises);
+      
+      // Optimistic Update
+      setOrdenes(updatedOrdenes);
+      
+      // Background silent refresh
+      fetchInventarios();
+      fetchInsumos();
+      if (selectedInventario) {
+        fetchOrdenes(selectedInventario.IDinventario, true);
+      }
+      
+      Toast.show({ type: 'success', text1: 'Actualización masiva', text2: 'Se actualizaron los items correctamente' });
+      setIsBulkEditing(false);
+    } catch (error: any) {
+      console.error('[DEBUG] Error en actualización masiva:', error);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Hubo un error al guardar algunos items' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSaveInlineEdit = async (orden: OrderInventarioItem) => {
     const precioNum = Number(inlineEditValues.precioActual.replace(/[^0-9.]/g, ''));
     const cantidadIngresada = Number(inlineEditValues.cantidad.replace(/[^0-9]/g, ''));
@@ -658,6 +796,7 @@ const InventarioScreen = ({ navigation }: any) => {
         }));
         
         // Background silent refresh
+        fetchInventarios();
         fetchInsumos();
         if (selectedInventario) {
           fetchOrdenes(selectedInventario.IDinventario, true);
@@ -815,7 +954,7 @@ const InventarioScreen = ({ navigation }: any) => {
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <RNText style={{ fontSize: 15, fontWeight: '700', color: '#111827' }} numberOfLines={1}>
+                  <RNText style={{ fontSize: 15, fontWeight: '700', color: '#111827' }}>
                     {item.nombre}
                   </RNText>
                   <RNText style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
@@ -870,10 +1009,24 @@ const InventarioScreen = ({ navigation }: any) => {
     const invContext = selectedInventario || item.inventario;
     const isEntrada = invContext?.tipo?.toUpperCase().includes('ENTRADA') ?? false;
 
-    if (inlineEditOrdenId === item.IDorderinventario) {
+    const isEditing = inlineEditOrdenId === item.IDorderinventario || (isBulkEditing && bulkEditValues[item.IDorderinventario] !== undefined);
+
+    if (isEditing) {
+      const editValues = isBulkEditing ? bulkEditValues[item.IDorderinventario] : inlineEditValues;
+      const setEditValues = (field: 'precioActual' | 'cantidad', value: string) => {
+        if (isBulkEditing) {
+          setBulkEditValues(prev => ({
+            ...prev,
+            [item.IDorderinventario]: { ...prev[item.IDorderinventario], [field]: value }
+          }));
+        } else {
+          setInlineEditValues(prev => ({ ...prev, [field]: value }));
+        }
+      };
+
       const previewSubtotal = (() => {
-        const p = Number(inlineEditValues.precioActual.replace(/[^0-9.]/g, '')) || 0;
-        const c = Number(inlineEditValues.cantidad.replace(/[^0-9]/g, '')) || 0;
+        const p = Number(editValues.precioActual.replace(/[^0-9.]/g, '')) || 0;
+        const c = Number(editValues.cantidad.replace(/[^0-9]/g, '')) || 0;
         return p * c;
       })();
 
@@ -885,14 +1038,16 @@ const InventarioScreen = ({ navigation }: any) => {
             borderRadius: 12,
             backgroundColor: '#fff',
             borderWidth: 2,
-            borderColor: '#3b82f6',
+            borderColor: isBulkEditing ? '#8b5cf6' : '#3b82f6',
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-            <TouchableOpacity onPress={handleCancelInlineEdit} style={{ marginRight: 12 }}>
-              <Ionicons name="close-circle" size={24} color="#6b7280" />
-            </TouchableOpacity>
-            <RNText style={{ fontSize: 13, fontWeight: '700', color: '#111827', flex: 1 }} numberOfLines={1}>
+            {!isBulkEditing && (
+              <TouchableOpacity onPress={handleCancelInlineEdit} style={{ marginRight: 12 }}>
+                <Ionicons name="close-circle" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            )}
+            <RNText style={{ fontSize: 13, fontWeight: '700', color: '#111827', flex: 1 }} numberOfLines={2}>
               {getInsumoName(item.nombreDelAlimento)}
             </RNText>
           </View>
@@ -900,8 +1055,8 @@ const InventarioScreen = ({ navigation }: any) => {
             <View style={{ flex: 1, marginRight: 8 }}>
               <RNText style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Precio ($)</RNText>
               <TextInput
-                value={inlineEditValues.precioActual}
-                onChangeText={(v) => setInlineEditValues(prev => ({ ...prev, precioActual: v }))}
+                value={editValues.precioActual}
+                onChangeText={(v) => setEditValues('precioActual', v)}
                 keyboardType="numeric"
                 style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#111827' }}
                 placeholder="0"
@@ -910,8 +1065,8 @@ const InventarioScreen = ({ navigation }: any) => {
             <View style={{ flex: 1 }}>
               <RNText style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Cantidad (und)</RNText>
               <TextInput
-                value={inlineEditValues.cantidad}
-                onChangeText={(v) => setInlineEditValues(prev => ({ ...prev, cantidad: v }))}
+                value={editValues.cantidad}
+                onChangeText={(v) => setEditValues('cantidad', v)}
                 keyboardType="numeric"
                 style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#111827' }}
                 placeholder="0"
@@ -920,19 +1075,21 @@ const InventarioScreen = ({ navigation }: any) => {
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <RNText style={{ fontSize: 12, color: '#6b7280' }}>
-              Subtotal: <RNText style={{ fontWeight: '700', color: '#111827' }}>${previewSubtotal.toLocaleString('es-CO')}</RNText>
+              Subtotal adic: <RNText style={{ fontWeight: '700', color: '#111827' }}>${previewSubtotal.toLocaleString('es-CO')}</RNText>
             </RNText>
-            <TouchableOpacity
-              onPress={() => handleSaveInlineEdit(item)}
-              disabled={saving}
-              style={{ backgroundColor: saving ? '#9ca3af' : '#3b82f6', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}
-            >
-              {saving ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <RNText style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Guardar</RNText>
-              )}
-            </TouchableOpacity>
+            {!isBulkEditing && (
+              <TouchableOpacity
+                onPress={() => handleSaveInlineEdit(item)}
+                disabled={saving}
+                style={{ backgroundColor: saving ? '#9ca3af' : '#3b82f6', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 }}
+              >
+                {saving ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <RNText style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Guardar</RNText>
+                )}
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       );
@@ -1422,9 +1579,9 @@ const InventarioScreen = ({ navigation }: any) => {
                         }}
                       >
                         <View style={{ width: 44, height: 44, borderRadius: 8, backgroundColor: '#f3f4f6', marginRight: 12, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
-                          {insumo.imagen || insumo.imageUrl || insumo.imagencard ? (
+                          {getInsumoImage(insumo.IDalimentos) ? (
                             <Image
-                              source={{ uri: insumo.imagen || insumo.imageUrl || insumo.imagencard }}
+                              source={{ uri: getInsumoImage(insumo.IDalimentos) as string }}
                               style={{ width: '100%', height: '100%', borderRadius: 8 }}
                               resizeMode="cover"
                             />
@@ -1547,7 +1704,7 @@ const InventarioScreen = ({ navigation }: any) => {
         </KeyboardAvoidingView>
       </Modal>
 
-      <Modal visible={showDetailModal} animationType="slide" onRequestClose={() => setShowDetailModal(false)}>
+      <Modal visible={showDetailModal} animationType="slide" onRequestClose={handleCloseDetailModal}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
           <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }} edges={['top']}>
           <View className="bg-white px-4 py-4 border-b border-gray-200 flex-row items-center justify-between">
@@ -1565,12 +1722,12 @@ const InventarioScreen = ({ navigation }: any) => {
               </>
             ) : (
               <>
-                <TouchableOpacity onPress={() => { setShowDetailModal(false); setSelectedInventario(null); }} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' }}>
+                <TouchableOpacity onPress={handleCloseDetailModal} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' }}>
                   <Ionicons name="arrow-back" size={22} color="#374151" />
                 </TouchableOpacity>
-                <View style={{ flex: 1, alignItems: 'center' }}>
-                  <RNText style={{ fontSize: 16, fontWeight: '700', color: '#111827' }}>{selectedInventario?.nombre}</RNText>
-                  <RNText style={{ fontSize: 12, color: '#6b7280' }}>
+                <View style={{ flex: 1, alignItems: 'center', paddingHorizontal: 8 }}>
+                  <RNText style={{ fontSize: 16, fontWeight: '700', color: '#111827', textAlign: 'center' }}>{selectedInventario?.nombre}</RNText>
+                  <RNText style={{ fontSize: 12, color: '#6b7280', textAlign: 'center' }}>
                     {selectedInventario?.fechaYHora ? new Date(selectedInventario.fechaYHora).toLocaleDateString('es-CO') : ''}
                     {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') ? ` • Total: $${(selectedInventario.total !== undefined && selectedInventario.total > 0 ? selectedInventario.total : (ordenes.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0))).toLocaleString('es-CO')}` : ''}
                   </RNText>
@@ -1641,39 +1798,74 @@ const InventarioScreen = ({ navigation }: any) => {
               )}
 
               <View style={{ marginBottom: 16 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                  <RNText style={{ fontSize: 14, fontWeight: '600', color: '#374151' }}>Items ({ordenes.length})</RNText>
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && ordenes.length > 0 && canEditEntradas && (
-                      <TouchableOpacity
-                        style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: selectionMode ? '#ef4444' : '#f3f4f6', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8 }}
-                        onPress={() => {
-                          setSelectionMode(!selectionMode);
-                          if (selectionMode) setSelectedOrdenes(new Set());
-                        }}
-                      >
-                        <Ionicons name={selectionMode ? "close" : "checkbox-outline"} size={16} color={selectionMode ? '#fff' : '#4b5563'} />
-                        <RNText style={{ color: selectionMode ? '#fff' : '#4b5563', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>{selectionMode ? 'Cancelar ingreso' : 'Ingresar al stock'}</RNText>
-                      </TouchableOpacity>
-                    )}
-                    {((selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') ? canCreateEntradas : canCreateSalidas) && (
-                      <TouchableOpacity
-                        style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#22c55e', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}
-                        onPress={() => {
-                          console.log('[DEBUG] Opening add item modal, insumos count:', insumos.length);
-                          if (insumos.length === 0) {
-                            console.log('[DEBUG] Insumos empty, triggering fetch...');
-                            fetchInsumos();
-                          }
-                          setShowAddItemModal(true);
-                        }}
-                      >
-                        <Ionicons name="add" size={16} color="#fff" />
-                        <RNText style={{ color: '#fff', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>Agregar</RNText>
-                      </TouchableOpacity>
-                    )}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <RNText style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginRight: 8 }}>Items ({ordenes.length})</RNText>
+                      {ordenes.length > 0 && !isBulkEditing && (
+                        <TouchableOpacity 
+                          onPress={handleToggleBulkEdit}
+                          style={{ padding: 6, backgroundColor: '#f3f4f6', borderRadius: 6, marginRight: 8 }}
+                        >
+                          <Ionicons name="create-outline" size={16} color="#6b7280" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                      {isBulkEditing ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <TouchableOpacity 
+                            onPress={handleToggleBulkEdit}
+                            disabled={saving}
+                            style={{ paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#fee2e2', borderRadius: 6, flexDirection: 'row', alignItems: 'center' }}
+                          >
+                            <Ionicons name="close" size={16} color="#ef4444" style={{ marginRight: 4 }} />
+                            <RNText style={{ color: '#ef4444', fontSize: 12, fontWeight: '600' }}>Cancelar</RNText>
+                          </TouchableOpacity>
+                          <TouchableOpacity 
+                            onPress={handleSaveBulkEdit}
+                            disabled={saving}
+                            style={{ paddingHorizontal: 10, paddingVertical: 6, backgroundColor: saving ? '#9ca3af' : '#22c55e', borderRadius: 6, flexDirection: 'row', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1.41 }}
+                          >
+                            {saving ? <ActivityIndicator size="small" color="#fff" /> : <>
+                              <Ionicons name="save-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+                              <RNText style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Guardar Masivo</RNText>
+                            </>}
+                          </TouchableOpacity>
+                        </View>
+                      ) : (
+                        <>
+                          {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && ordenes.length > 0 && canEditEntradas && (
+                            <TouchableOpacity
+                              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: selectionMode ? '#ef4444' : '#f3f4f6', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}
+                              onPress={() => {
+                                setSelectionMode(!selectionMode);
+                                if (selectionMode) setSelectedOrdenes(new Set());
+                              }}
+                            >
+                              <Ionicons name={selectionMode ? "close" : "checkbox-outline"} size={16} color={selectionMode ? '#fff' : '#4b5563'} />
+                              <RNText style={{ color: selectionMode ? '#fff' : '#4b5563', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>{selectionMode ? 'Cancelar ingreso' : 'Ingresar al stock'}</RNText>
+                            </TouchableOpacity>
+                          )}
+                          {((selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') ? canCreateEntradas : canCreateSalidas) && (
+                            <TouchableOpacity
+                              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#22c55e', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}
+                              onPress={() => {
+                                console.log('[DEBUG] Opening add item modal, insumos count:', insumos.length);
+                                if (insumos.length === 0) {
+                                  console.log('[DEBUG] Insumos empty, triggering fetch...');
+                                  fetchInsumos();
+                                }
+                                setShowAddItemModal(true);
+                              }}
+                            >
+                              <Ionicons name="add" size={16} color="#fff" />
+                              <RNText style={{ color: '#fff', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>Agregar</RNText>
+                            </TouchableOpacity>
+                          )}
+                        </>
+                      )}
+                    </View>
                   </View>
-                </View>
 
                 {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && ordenesNoComprados.length > 0 && (
                   <View style={{ marginBottom: 16 }}>
@@ -1864,9 +2056,9 @@ const InventarioScreen = ({ navigation }: any) => {
                         }}
                       >
                         <View style={{ width: 44, height: 44, borderRadius: 8, backgroundColor: '#f3f4f6', marginRight: 12, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
-                          {insumo.imagen || insumo.imageUrl || insumo.imagencard ? (
+                          {getInsumoImage(insumo.IDalimentos) ? (
                             <Image
-                              source={{ uri: insumo.imagen || insumo.imageUrl || insumo.imagencard }}
+                              source={{ uri: getInsumoImage(insumo.IDalimentos) as string }}
                               style={{ width: '100%', height: '100%', borderRadius: 8 }}
                               resizeMode="cover"
                             />
@@ -1917,6 +2109,7 @@ const InventarioScreen = ({ navigation }: any) => {
                         style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: '#111827' }}
                         keyboardType="numeric"
                         value={String(item.cantidad)}
+                        onFocus={() => setActiveInputIndex(index)}
                         onChangeText={(t) => {
                           const newItems = [...addItemsList];
                           newItems[index].cantidad = Number(t.replace(/[^0-9]/g, '')) || 0;
@@ -1932,6 +2125,7 @@ const InventarioScreen = ({ navigation }: any) => {
                           style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: '#111827' }}
                           keyboardType="numeric"
                           value={String(item.precioActual)}
+                          onFocus={() => setActiveInputIndex(index)}
                           onChangeText={(t) => {
                             const newItems = [...addItemsList];
                             newItems[index].precioActual = Number(t.replace(/[^0-9]/g, '')) || 0;
@@ -2035,6 +2229,47 @@ const InventarioScreen = ({ navigation }: any) => {
                 }}
               >
                 <RNText style={{ fontSize: 16, color: '#4b5563', fontWeight: '600' }}>Cancelar</RNText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal de confirmación para cambios sin guardar */}
+      <Modal visible={showUnsavedChangesModal} transparent animationType="fade" onRequestClose={() => setShowUnsavedChangesModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
+          <View style={{ backgroundColor: '#fff', width: '85%', borderRadius: 16, overflow: 'hidden', elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 }}>
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: '#fef3c7', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <Ionicons name="warning-outline" size={24} color="#d97706" />
+              </View>
+              <RNText style={{ fontSize: 18, fontWeight: 'bold', color: '#111827', marginBottom: 8, textAlign: 'center' }}>
+                Cambios sin guardar
+              </RNText>
+              <RNText style={{ fontSize: 14, color: '#4b5563', textAlign: 'center', marginBottom: 20 }}>
+                Tienes ediciones masivas pendientes. ¿Estás seguro de que deseas salir sin guardar? Los cambios se perderán.
+              </RNText>
+            </View>
+
+            <View style={{ borderTopWidth: 1, borderTopColor: '#f3f4f6', flexDirection: 'row' }}>
+              <TouchableOpacity
+                style={{ flex: 1, paddingVertical: 16, alignItems: 'center', borderRightWidth: 1, borderRightColor: '#f3f4f6', backgroundColor: '#f9fafb' }}
+                onPress={() => setShowUnsavedChangesModal(false)}
+              >
+                <RNText style={{ fontSize: 16, color: '#4b5563', fontWeight: '600' }}>Cancelar</RNText>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={{ flex: 1, paddingVertical: 16, alignItems: 'center' }}
+                onPress={() => {
+                  setShowUnsavedChangesModal(false);
+                  setIsBulkEditing(false);
+                  setBulkEditValues({});
+                  setShowDetailModal(false);
+                  setSelectedInventario(null);
+                }}
+              >
+                <RNText style={{ fontSize: 16, color: '#ef4444', fontWeight: '600' }}>Salir sin guardar</RNText>
               </TouchableOpacity>
             </View>
           </View>

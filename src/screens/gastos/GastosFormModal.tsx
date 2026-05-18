@@ -15,6 +15,7 @@ try {
   console.log('expo-image native module no encontrado, usando Image de react-native como fallback');
 }
 import { Gasto, uploadGastoImage } from '../../services/gastos';
+import { extractDataWithIA } from '../../services/api';
 import { useGastosStore } from '../../store/useGastosStore';
 import Toast from 'react-native-toast-message';
 
@@ -144,7 +145,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
     }
   };
 
-  const pickImage = async (useCamera: boolean) => {
+  const pickImage = async (useCamera: boolean, scanWithIA: boolean = false) => {
     if (!ImagePicker) {
       Alert.alert('Módulo Faltante', 'La cámara/galería no está disponible. Debes recompilar la app (eas build).');
       return;
@@ -175,10 +176,53 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
       }
 
       if (!result.canceled && result.assets[0].uri) {
-        setFotoUri(result.assets[0].uri);
+        const uri = result.assets[0].uri;
+        setFotoUri(uri);
+
+        if (scanWithIA) {
+          await processImageWithIA(uri);
+        }
       }
     } catch (error) {
       console.log(error);
+    }
+  };
+
+  const processImageWithIA = async (uri: string) => {
+    try {
+      setLoading(true);
+      Toast.show({ type: 'info', text1: 'Analizando con IA', text2: 'Extrayendo datos del recibo...' });
+      
+      const formData = new FormData();
+      const filename = uri.split('/').pop() || 'receipt.jpg';
+      
+      // Inferir tipo mime simple
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+      formData.append('file', {
+        uri,
+        name: filename,
+        type,
+      } as any);
+      formData.append('context', 'gastos');
+
+      const response = await extractDataWithIA(formData);
+      const data = response.data || response; // manejar si hay interceptor
+
+      if (data) {
+        if (data.concepto) setConcepto(data.concepto);
+        if (data.valor) setValor(data.valor.toString());
+        if (data.tipo && (data.tipo === 'NEGOCIO' || data.tipo === 'PERSONAL')) setTipo(data.tipo);
+        if (data.medioDePago) setMedioDePago(data.medioDePago);
+
+        Toast.show({ type: 'success', text1: '¡Éxito!', text2: 'Datos extraídos correctamente.' });
+      }
+    } catch (error: any) {
+      console.error('[IA Extract Error]', error);
+      Toast.show({ type: 'error', text1: 'Error de IA', text2: error?.response?.data?.message || error?.message || 'No se pudo leer el recibo.' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -319,6 +363,19 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
                 </TouchableOpacity>
               </View>
             </View>
+
+            {/* Boton Escanear con IA */}
+            {!gastoToEdit && !fotoUri && (
+              <TouchableOpacity
+                className="bg-indigo-50 border border-indigo-200 rounded-xl py-3 items-center justify-center flex-row mb-6 shadow-sm"
+                onPress={() => { setShowAttachmentOptions(false); pickImage(true, true); }}
+              >
+                <Ionicons name="sparkles" size={20} color="#4f46e5" />
+                <Text className="ml-2 text-sm font-bold text-indigo-700">
+                  Autocompletar con IA (Cámara)
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {/* Vista Previa de Imagen */}
             {fotoUri && (

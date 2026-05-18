@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, Modal, TextInput, Alert, ActivityIndicator, FlatList, RefreshControl, Image as RNImage, Platform } from 'react-native';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, Modal, TextInput, Alert, ActivityIndicator, FlatList, RefreshControl, Image as RNImage, Platform, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -435,6 +435,58 @@ const InsumosScreen = ({ navigation }: Props) => {
     return finalUrl;
   };
 
+  // Animación para el Skeleton
+  const skeletonAnim = useRef(new Animated.Value(0.3)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(skeletonAnim, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+        Animated.timing(skeletonAnim, { toValue: 0.3, duration: 800, useNativeDriver: true })
+      ])
+    ).start();
+  }, []);
+
+  const renderSkeletonInsumo = () => (
+    <Card className="mb-3 overflow-hidden">
+      <View className="p-4">
+        <View className="flex-row items-center justify-between mb-3">
+          <View className="flex-1 flex-row items-center">
+            <Animated.View style={{ width: 64, height: 64, borderRadius: 16, backgroundColor: '#e5e7eb', opacity: skeletonAnim, marginRight: 12 }} />
+            <View className="flex-1 pr-2">
+              <Animated.View style={{ height: 18, width: '80%', backgroundColor: '#e5e7eb', borderRadius: 4, opacity: skeletonAnim, marginBottom: 8 }} />
+              <Animated.View style={{ height: 14, width: '50%', backgroundColor: '#e5e7eb', borderRadius: 4, opacity: skeletonAnim }} />
+            </View>
+          </View>
+          <View className="items-end">
+            <Animated.View style={{ height: 22, width: 60, backgroundColor: '#e5e7eb', borderRadius: 8, opacity: skeletonAnim, marginBottom: 4 }} />
+          </View>
+        </View>
+
+        <View className="bg-gray-50 rounded-xl p-3">
+          <View className="flex-row justify-between items-center mb-2">
+            <Animated.View style={{ height: 14, width: 80, backgroundColor: '#e5e7eb', borderRadius: 4, opacity: skeletonAnim }} />
+            <Animated.View style={{ height: 24, width: 40, backgroundColor: '#e5e7eb', borderRadius: 4, opacity: skeletonAnim }} />
+          </View>
+          <Animated.View style={{ height: 8, width: '100%', backgroundColor: '#e5e7eb', borderRadius: 4, opacity: skeletonAnim, marginBottom: 8 }} />
+          <View className="flex-row justify-between">
+            <Animated.View style={{ height: 12, width: 40, backgroundColor: '#e5e7eb', borderRadius: 4, opacity: skeletonAnim }} />
+            <Animated.View style={{ height: 12, width: 40, backgroundColor: '#e5e7eb', borderRadius: 4, opacity: skeletonAnim }} />
+          </View>
+        </View>
+
+        <View className="flex-row items-center justify-between mt-3 pt-3 border-t border-gray-100">
+          <Animated.View style={{ height: 18, width: 70, backgroundColor: '#e5e7eb', borderRadius: 4, opacity: skeletonAnim }} />
+          <View className="flex-row">
+            <Animated.View style={{ height: 30, width: 30, backgroundColor: '#e5e7eb', borderRadius: 8, opacity: skeletonAnim, marginRight: 8 }} />
+            <Animated.View style={{ height: 30, width: 30, backgroundColor: '#e5e7eb', borderRadius: 8, opacity: skeletonAnim, marginRight: 8 }} />
+            <Animated.View style={{ height: 30, width: 30, backgroundColor: '#e5e7eb', borderRadius: 8, opacity: skeletonAnim }} />
+          </View>
+        </View>
+      </View>
+    </Card>
+  );
+
   const renderInsumoItem = ({ item }: { item: InsumoItem }) => {
     const estado = getEstadoStock(item);
     const categoria = getCategoriaDisplay(item);
@@ -707,12 +759,50 @@ const InsumosScreen = ({ navigation }: Props) => {
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }} edges={['top']}>
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator size="large" color="#3b82f6" />
-          <RNText style={{ marginTop: 12, color: '#6b7280' }}>Cargando insumos...</RNText>
-        </View>
-      </SafeAreaView>
+      <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
+        <StatusBar style="dark" backgroundColor="transparent" translucent />
+        <SafeAreaView style={{ backgroundColor: '#ffffff' }} edges={['top']}>
+          <View className="bg-white px-4 py-3 flex-row items-center justify-between border-b border-gray-200">
+            <View className="flex-row items-center">
+              <TouchableOpacity className="mr-3" onPress={() => navigation.goBack()}>
+                <Ionicons name="arrow-back" size={24} color="#111827" />
+              </TouchableOpacity>
+              <View>
+                <RNText className="text-xl font-bold text-gray-900">Insumos</RNText>
+                <Animated.View style={{ height: 14, width: 100, backgroundColor: '#e5e7eb', borderRadius: 4, opacity: skeletonAnim, marginTop: 4 }} />
+              </View>
+            </View>
+            <View className="flex-row items-center">
+              <Animated.View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#e5e7eb', opacity: skeletonAnim, marginRight: 8 }} />
+              <Animated.View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#e5e7eb', opacity: skeletonAnim }} />
+            </View>
+          </View>
+        </SafeAreaView>
+        
+        <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} contentContainerStyle={{ paddingTop: 16 }}>
+          {/* Falso Header Skeleton */}
+          <View style={{ marginBottom: 16, flexDirection: 'row' }}>
+            <Animated.View style={{ height: 36, width: 100, backgroundColor: '#e5e7eb', borderRadius: 12, opacity: skeletonAnim, marginRight: 8 }} />
+            <Animated.View style={{ height: 36, width: 100, backgroundColor: '#e5e7eb', borderRadius: 12, opacity: skeletonAnim, marginRight: 8 }} />
+            <Animated.View style={{ height: 36, width: 100, backgroundColor: '#e5e7eb', borderRadius: 12, opacity: skeletonAnim }} />
+          </View>
+          <View className="bg-white rounded-xl shadow-sm mb-4">
+            <View className="px-4 py-3 border-b border-gray-100">
+              <Animated.View style={{ height: 20, width: '100%', backgroundColor: '#e5e7eb', borderRadius: 4, opacity: skeletonAnim }} />
+            </View>
+            <View className="px-4 py-3">
+              <Animated.View style={{ height: 14, width: 120, backgroundColor: '#e5e7eb', borderRadius: 4, opacity: skeletonAnim, marginBottom: 8 }} />
+              <View style={{ flexDirection: 'row' }}>
+                <Animated.View style={{ height: 28, width: 80, backgroundColor: '#e5e7eb', borderRadius: 16, opacity: skeletonAnim, marginRight: 8 }} />
+                <Animated.View style={{ height: 28, width: 80, backgroundColor: '#e5e7eb', borderRadius: 16, opacity: skeletonAnim, marginRight: 8 }} />
+                <Animated.View style={{ height: 28, width: 80, backgroundColor: '#e5e7eb', borderRadius: 16, opacity: skeletonAnim }} />
+              </View>
+            </View>
+          </View>
+          
+          {[...Array(5)].map((_, i) => <View key={i}>{renderSkeletonInsumo()}</View>)}
+        </ScrollView>
+      </View>
     );
   }
 
