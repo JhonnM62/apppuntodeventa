@@ -280,6 +280,9 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     // Prevent multiple unloads
     if (!activeRecording) return;
     
+    // Remove listener immediately to prevent any async updates while unloading
+    activeRecording.setOnRecordingStatusUpdate(null);
+    
     // Check if we already cleared the recording state to avoid double processing
     if (activeRecording !== recording && isProcessingVoice) return;
     
@@ -288,11 +291,9 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     setIsProcessingVoice(true);
     
     try {
-      // Safely check status before unloading
+      // Safely check status before unloading to avoid "Recorder does not exist"
       const status = await activeRecording.getStatusAsync();
-      if (!status.isDoneRecording && status.canRecord) {
-        // Remove listener to prevent memory leaks or delayed fires
-        activeRecording.setOnRecordingStatusUpdate(null);
+      if (status && !status.isDoneRecording && status.canRecord) {
         await activeRecording.stopAndUnloadAsync();
       }
       

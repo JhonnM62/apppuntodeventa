@@ -44,11 +44,13 @@ export const extractDataWithIA = (formData: FormData) => api.post('/ai/extract-d
   headers: {
     'Content-Type': 'multipart/form-data',
   },
+  timeout: 30000, // 30 seconds timeout for AI processing
 });
 export const processVoiceOrderWithIA = (formData: FormData) => api.post('/ai/voice-order', formData, {
   headers: {
     'Content-Type': 'multipart/form-data',
   },
+  timeout: 30000, // 30 seconds timeout for AI voice processing to prevent Network Error on slow connections
 });
 
 export default api;
