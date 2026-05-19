@@ -574,14 +574,26 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
               <View style={{ flexDirection: 'row', marginTop: 16 }}>
                 <View style={{ flex: 1, marginRight: 8 }}>
                   <Input
-                    label="Cantidad"
+                    label="Stock Actual"
+                    placeholder="0"
+                    keyboardType="numeric"
+                    value={String(formData.disponible ?? 0)}
+                    onChangeText={(t) => setFormData(p => ({ ...p, disponible: t.replace(/[^0-9-]/g, '') }))}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Input
+                    label="Stock Histórico"
                     placeholder="0"
                     keyboardType="numeric"
                     value={String(formData.cantidad || 0)}
                     onChangeText={(t) => setFormData(p => ({ ...p, cantidad: Number(t.replace(/[^0-9]/g, '')) || 0 }))}
                   />
                 </View>
-                <View style={{ flex: 1 }}>
+              </View>
+
+              <View style={{ flexDirection: 'row', marginTop: 16 }}>
+                <View style={{ flex: 1, marginRight: 8 }}>
                   <Input
                     label="Precio"
                     placeholder="$0"
@@ -644,8 +656,16 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                         resizeMode="contain" 
                         transition={200}
                       />
-                      <View style={{ position: 'absolute', bottom: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.6)', padding: 8, borderRadius: 20 }}>
-                        <Ionicons name="camera" size={20} color="#fff" />
+                      <View style={{ position: 'absolute', bottom: 8, right: 8, flexDirection: 'row', gap: 8 }}>
+                        <TouchableOpacity 
+                          style={{ backgroundColor: 'rgba(0,0,0,0.6)', padding: 8, borderRadius: 20 }}
+                          onPress={() => setLocalImageUri(null)}
+                        >
+                          <Ionicons name="trash" size={20} color="#ef4444" />
+                        </TouchableOpacity>
+                        <View style={{ backgroundColor: 'rgba(0,0,0,0.6)', padding: 8, borderRadius: 20 }}>
+                          <Ionicons name="camera" size={20} color="#fff" />
+                        </View>
                       </View>
                     </View>
                   ) : (

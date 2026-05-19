@@ -909,7 +909,19 @@ const InsumosScreen = ({ navigation }: Props) => {
                   <Ionicons name="pencil" size={14} color="white" />
                 </View>
               </TouchableOpacity>
-              <RNText className="text-xs text-gray-500 mt-2 font-medium">Foto del insumo</RNText>
+              
+              {(localImageUri || formData.imageUrl || formData.imagen) && (
+                <TouchableOpacity 
+                  onPress={() => {
+                    setLocalImageUri(null);
+                    setFormData(p => ({ ...p, imageUrl: null, imagen: null }));
+                  }} 
+                  className="mt-3 flex-row items-center bg-red-50 px-3 py-1.5 rounded-full"
+                >
+                  <Ionicons name="trash" size={16} color="#ef4444" />
+                  <RNText className="text-xs text-red-500 font-medium ml-1">Eliminar foto</RNText>
+                </TouchableOpacity>
+              )}
             </View>
 
             <Input
@@ -942,14 +954,26 @@ const InsumosScreen = ({ navigation }: Props) => {
             <View className="flex-row mt-4">
               <View className="flex-1 mr-2">
                 <Input
-                  label="Cantidad"
+                  label="Stock Actual"
+                  placeholder="0"
+                  keyboardType="numeric"
+                  value={String(formData.disponible ?? 0)}
+                  onChangeText={(t) => setFormData(p => ({ ...p, disponible: t.replace(/[^0-9-]/g, '') }))}
+                />
+              </View>
+              <View className="flex-1">
+                <Input
+                  label="Stock Histórico"
                   placeholder="0"
                   keyboardType="numeric"
                   value={String(formData.cantidad || 0)}
                   onChangeText={(t) => setFormData(p => ({ ...p, cantidad: Number(t.replace(/[^0-9]/g, '')) || 0 }))}
                 />
               </View>
-              <View className="flex-1">
+            </View>
+
+            <View className="flex-row mt-4">
+              <View className="flex-1 mr-2">
                 <Input
                   label="Precio"
                   placeholder="$0"

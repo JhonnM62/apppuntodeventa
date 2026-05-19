@@ -278,8 +278,15 @@ const InventarioScreen = ({ navigation }: any) => {
       console.log('[DEBUG] Fetching ordenes for inventario:', inventarioId);
       const data = await inventarioService.getById(inventarioId);
       setOrdenes(data?.ordenInventario || []);
-    } catch (error) {
-      console.error('[DEBUG] Error fetching ordenes:', error);
+    } catch (error: any) {
+      if (error?.code === 'NOT_FOUND' || error?.response?.status === 404) {
+        console.log('[DEBUG] Inventario no encontrado (probablemente eliminado), cerrando detalle.');
+        setOrdenes([]);
+        setSelectedInventario(null);
+        setShowDetailModal(false);
+      } else {
+        console.error('[DEBUG] Error fetching ordenes:', error);
+      }
     } finally {
       if (!silent) {
         setLoadingOrdenes(false);
