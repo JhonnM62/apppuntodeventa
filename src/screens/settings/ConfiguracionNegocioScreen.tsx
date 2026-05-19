@@ -170,17 +170,29 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         </View>
 
         {/* INTELIGENCIA ARTIFICIAL */}
-        <View style={[styles.card, { marginTop: 20 }]}>
+        <View style={[styles.card, { marginTop: 20, borderColor: '#e0e7ff', borderWidth: 1 }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-            <Text style={styles.sectionTitle}>
-              <Ionicons name="sparkles-outline" size={20} /> Inteligencia Artificial
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={styles.iaIconContainer}>
+                <Ionicons name="sparkles" size={20} color="#4f46e5" />
+              </View>
+              <Text style={styles.sectionTitleIA}>
+                Inteligencia Artificial
+              </Text>
+            </View>
             <Switch
               value={iaConfig.isActive}
               onValueChange={(val) => setIaConfig({...iaConfig, isActive: val})}
               trackColor={{ false: '#d1d5db', true: '#c7d2fe' }}
               thumbColor={iaConfig.isActive ? '#4f46e5' : '#f3f4f6'}
             />
+          </View>
+          
+          <View style={styles.infoCardIA}>
+            <Ionicons name="bulb" size={24} color="#4f46e5" />
+            <Text style={styles.infoTextIA}>
+              Activa la IA para autocompletar formularios leyendo fotos de recibos o facturas automáticamente usando Gemini.
+            </Text>
           </View>
           
           <Text style={styles.label}>API Key (Gemini)</Text>
@@ -193,7 +205,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             autoCapitalize="none"
           />
 
-          <Text style={styles.label}>Modelo</Text>
+          <Text style={styles.label}>Modelo de Visión</Text>
           <View style={styles.modelButtons}>
             {['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-3-flash-preview'].map((modelo) => (
               <TouchableOpacity
@@ -208,9 +220,9 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             ))}
           </View>
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
             <View style={{ flex: 1, marginRight: 8 }}>
-              <Text style={styles.label}>Temperatura</Text>
+              <Text style={styles.label}>Creatividad (Temp)</Text>
               <TextInput
                 style={styles.input}
                 value={iaConfig.temperatura}
@@ -281,7 +293,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#bfdbfe'
   },
-  infoText: { flex: 1, marginLeft: 12, fontSize: 13, color: '#1e40af', lineHeight: 18 },
+  infoText: { flex: 1, marginLeft: 12, fontSize: 13, color: '#1e40af', lineHeight: 20 },
+  infoCardIA: {
+    backgroundColor: '#eef2ff',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  infoTextIA: { flex: 1, marginLeft: 12, fontSize: 13, color: '#4338ca', lineHeight: 20 },
+  iaIconContainer: {
+    backgroundColor: '#e0e7ff',
+    padding: 8,
+    borderRadius: 8,
+    marginRight: 10
+  },
+  sectionTitleIA: { fontSize: 18, fontWeight: 'bold', color: '#4f46e5' },
   card: {
     backgroundColor: '#fff',
     borderRadius: 16,

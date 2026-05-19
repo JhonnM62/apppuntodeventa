@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Keyboard, ActivityIndicator, Alert, ScrollView, Image as RNImage } from 'react-native';
+import { View, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Keyboard, ActivityIndicator, Alert, ScrollView, Image as RNImage, Animated } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '../../components/ui/text';
@@ -60,6 +60,10 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [iaConfigured, setIaConfigured] = useState<boolean | null>(null);
+  
+  // Animación IA
+  const [isScanningIA, setIsScanningIA] = useState(false);
+  const scanLineAnim = useRef(new Animated.Value(0)).current;
 
   const navigation = useNavigation<any>();
 
@@ -160,6 +164,30 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
     }
   };
 
+  const startScanningAnimation = () => {
+    setIsScanningIA(true);
+    scanLineAnim.setValue(0);
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(scanLineAnim, {
+          toValue: 1,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scanLineAnim, {
+          toValue: 0,
+          duration: 1500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  };
+
+  const stopScanningAnimation = () => {
+    setIsScanningIA(false);
+    scanLineAnim.stopAnimation();
+  };
+
   const pickImage = async (useCamera: boolean, scanWithIA: boolean = false) => {
     if (!ImagePicker) {
       Alert.alert('Módulo Faltante', 'La cámara/galería no está disponible. Debes recompilar la app (eas build).');
@@ -228,8 +256,8 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
 
   const processImageWithIA = async (uri: string) => {
     try {
-      setLoading(true);
-      Toast.show({ type: 'info', text1: 'Analizando con IA', text2: 'Extrayendo datos del recibo...' });
+      startScanningAnimation();
+      Toast.show({ type: 'info', text1: '✨ Analizando con IA', text2: 'Extrayendo datos mágicamente...' });
       
       const formData = new FormData();
       const filename = uri.split('/').pop() || 'receipt.jpg';
@@ -254,13 +282,13 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         if (data.tipo && (data.tipo === 'NEGOCIO' || data.tipo === 'PERSONAL')) setTipo(data.tipo);
         if (data.medioDePago) setMedioDePago(data.medioDePago);
 
-        Toast.show({ type: 'success', text1: '¡Éxito!', text2: 'Datos extraídos correctamente.' });
+        Toast.show({ type: 'success', text1: '¡Magia completada!', text2: 'El recibo ha sido procesado.' });
       }
     } catch (error: any) {
       console.error('[IA Extract Error]', error);
-      Toast.show({ type: 'error', text1: 'Error de IA', text2: error?.response?.data?.message || error?.message || 'No se pudo leer el recibo.' });
+      Toast.show({ type: 'error', text1: 'Oops...', text2: error?.response?.data?.message || error?.message || 'No se pudo leer el recibo.' });
     } finally {
-      setLoading(false);
+      stopScanningAnimation();
     }
   };
 
@@ -430,12 +458,45 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
                     resizeMode="contain" 
                     transition={200}
                   />
+                  
+                  {/* Animación de Escaneo IA */}
+                  {isScanningIA && (
+                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 8, overflow: 'hidden' }}>
+                      <Animated.View
+                        style={{
+                          position: 'absolute',
+                          left: 0,
+                          right: 0,
+                          height: 4,
+                          backgroundColor: '#10b981',
+                          shadowColor: '#10b981',
+                          shadowOffset: { width: 0, height: 0 },
+                          shadowOpacity: 1,
+                          shadowRadius: 10,
+                          elevation: 5,
+                          transform: [{
+                            translateY: scanLineAnim.interpolate({
+                              inputRange: [0, 1],
+                              outputRange: [0, 180]
+                            })
+                          }]
+                        }}
+                      />
+                      <View style={{ position: 'absolute', bottom: 10, left: 0, right: 0, alignItems: 'center' }}>
+                        <Text style={{ color: 'white', fontWeight: 'bold', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 }}>
+                          Analizando con IA...
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+
                   <View className="absolute bottom-4 right-4 bg-black/50 rounded-full p-2">
                     <Ionicons name="expand" size={16} color="white" />
                   </View>
                   <TouchableOpacity 
                     className="absolute top-3 right-3 bg-white rounded-full p-1.5 shadow-sm border border-gray-100"
                     onPress={() => setFotoUri(null)}
+                    disabled={isScanningIA}
                   >
                     <Ionicons name="trash-outline" size={20} color="#ef4444" />
                   </TouchableOpacity>
