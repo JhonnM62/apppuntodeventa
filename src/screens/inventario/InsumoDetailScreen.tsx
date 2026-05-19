@@ -318,8 +318,12 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const finalImageUrl = getImageUrl();
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+      style={{ flex: 1, paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}
+    >
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#111827" />
         </TouchableOpacity>
@@ -334,14 +338,10 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
         </View>
       </View>
 
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
-        style={{ flex: 1, paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}
-      >
         <ScrollView 
           ref={mainScrollRef}
           style={styles.content} 
-          contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }} 
+          contentContainerStyle={{ paddingBottom: 32, flexGrow: 1 }} 
           showsVerticalScrollIndicator={false}
           onScroll={handleScroll}
           scrollEventThrottle={16}
@@ -538,12 +538,10 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
               )}
             </TouchableOpacity>
           </View>
-        )}
+          )}
 
-        <View style={{ height: 40 }} />
-      </ScrollView>
-      </KeyboardAvoidingView>
-
+          <View style={{ height: 16 }} />
+        </ScrollView>
       <Modal visible={showEditModal} animationType="slide" onRequestClose={() => setShowEditModal(false)} presentationStyle="pageSheet">
         <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
           <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -952,7 +950,8 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
         </View>
       </Modal>
 
-    </SafeAreaView>
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 };
 
