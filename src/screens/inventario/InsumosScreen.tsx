@@ -448,7 +448,7 @@ const InsumosScreen = ({ navigation }: Props) => {
   }, []);
 
   const renderSkeletonInsumo = () => (
-    <Card className="mb-3 overflow-hidden">
+    <Card className="mb-3">
       <View className="p-4">
         <View className="flex-row items-center justify-between mb-3">
           <View className="flex-1 flex-row items-center">
@@ -494,7 +494,7 @@ const InsumosScreen = ({ navigation }: Props) => {
     const imageUrl = getImageUrl(item);
 
     return (
-      <Card className="mb-3 overflow-hidden">
+      <Card className="mb-3">
         <TouchableOpacity
           onPress={() => navigation.navigate('InsumoDetail', { id: item.IDalimentos })}
           activeOpacity={0.8}
@@ -502,11 +502,11 @@ const InsumosScreen = ({ navigation }: Props) => {
           <View className="p-4">
             <View className="flex-row items-center justify-between mb-3">
               <View className="flex-1 flex-row items-center">
-                <View className="w-16 h-16 rounded-2xl bg-white items-center justify-center mr-3 overflow-hidden border border-gray-200" style={{ elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
+                <View className="w-16 h-16 rounded-2xl bg-white items-center justify-center mr-3 border border-gray-200" style={{ elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2 }}>
                   {imageUrl ? (
                     <ImageComponent 
                       source={{ uri: imageUrl }} 
-                      style={{ width: 56, height: 56 }} 
+                      style={{ width: 56, height: 56, borderRadius: 12 }} 
                       contentFit="contain"
                       resizeMode="contain" 
                       transition={200}
@@ -545,7 +545,7 @@ const InsumosScreen = ({ navigation }: Props) => {
               <View className="flex-row justify-between items-center mb-2">
                 <RNText className="text-sm font-medium text-gray-600">Stock Actual</RNText>
                 <RNText className="text-2xl font-extrabold" style={{ color: estado.color }}>
-                  {item.cantidad || item.Cantidad || 0}
+                  {Number(item.disponible ?? item.Disponible ?? 0)}
                 </RNText>
               </View>
 

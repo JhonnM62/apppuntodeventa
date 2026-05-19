@@ -382,8 +382,8 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
 
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
-                <RNText style={styles.statLabel}>Cantidad</RNText>
-                <RNText style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{(insumo.cantidad || insumo.Cantidad || 0).toLocaleString('es-CO')}</RNText>
+                <RNText style={styles.statLabel}>Stock Actual</RNText>
+                <RNText style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>{Number(insumo.disponible ?? insumo.Disponible ?? 0).toLocaleString('es-CO')}</RNText>
               </View>
               <View style={styles.statItem}>
                 <RNText style={styles.statLabel}>Precio</RNText>
@@ -394,7 +394,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
               <View style={styles.statItem}>
                 <RNText style={styles.statLabel}>Total</RNText>
                 <RNText style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
-                  ${(Number(insumo.cantidad || insumo.Cantidad || 0) * Number(insumo.precio || insumo.Precio || 0)).toLocaleString('es-CO')}
+                  ${(Number(insumo.disponible ?? insumo.Disponible ?? 0) * Number(insumo.precio || insumo.Precio || 0)).toLocaleString('es-CO')}
                 </RNText>
               </View>
             </View>
@@ -439,8 +439,8 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
             <RNText style={styles.infoValue}>{insumo.llevarControlEnCaja || insumo.llevar_control_en_caja || 'NO'}</RNText>
           </View>
           <View style={styles.infoRow}>
-            <RNText style={styles.infoLabel}>Disponible</RNText>
-            <RNText style={styles.infoValue}>{insumo.disponible || insumo.Disponible || 'Si'}</RNText>
+            <RNText style={styles.infoLabel}>Stock Histórico (Total Entradas)</RNText>
+            <RNText style={styles.infoValue}>{Number(insumo.cantidad ?? insumo.Cantidad ?? 0)}</RNText>
           </View>
         </View>
 
