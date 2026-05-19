@@ -340,16 +340,16 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
         onScroll={handleScroll}
         scrollEventThrottle={16}
       >
-        <View style={[styles.card, { padding: 0, overflow: 'hidden' }]}>
+        <View style={[styles.card, { padding: 0 }]}>
           {finalImageUrl && (
             <TouchableOpacity 
               activeOpacity={0.9}
               onPress={() => setIsFullScreen(true)}
-              style={{ width: '100%', height: 280, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center', paddingTop: 20 }}
+              style={{ width: '100%', height: 280, backgroundColor: '#ffffff', alignItems: 'center', justifyContent: 'center', paddingTop: 20, borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
             >
               <ImageComponent 
                 source={{ uri: finalImageUrl }} 
-                style={{ width: '90%', height: '100%' }} 
+                style={{ width: '90%', height: '100%', borderTopLeftRadius: 16, borderTopRightRadius: 16 }} 
                 contentFit="contain"
                 resizeMode="contain" 
                 transition={200}
@@ -535,8 +535,12 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
             </TouchableOpacity>
           </View>
 
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
-            <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} contentContainerStyle={{ paddingVertical: 16 }}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
+            <ScrollView 
+              style={{ flex: 1, paddingHorizontal: 16 }} 
+              contentContainerStyle={{ paddingVertical: 16, flexGrow: 1 }}
+              keyboardShouldPersistTaps="handled"
+            >
               <Input
                 label="Nombre *"
                 placeholder="Nombre del insumo"
@@ -725,7 +729,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
 
       {/* MODAL PARA ACTUALIZAR PRECIO Y STOCK */}
       <Modal visible={showUpdatePriceStockModal} animationType="slide" onRequestClose={() => setShowUpdatePriceStockModal(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
           <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
           <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <RNText style={{ fontSize: 18, fontWeight: 'bold', color: '#111827' }}>
