@@ -49,6 +49,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const updateModalScrollRef = useRef<any>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const mainScrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => setKeyboardHeight(e.endCoordinates.height));
@@ -338,6 +339,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
         style={{ flex: 1, paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}
       >
         <ScrollView 
+          ref={mainScrollRef}
           style={styles.content} 
           contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }} 
           showsVerticalScrollIndicator={false}
@@ -490,6 +492,11 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                   keyboardType="numeric"
                   value={String(movimiento.cantidad)}
                   onChangeText={(t) => setMovimiento({ ...movimiento, cantidad: Number(t.replace(/[^0-9]/g, '')) || 0 })}
+                  onFocus={() => {
+                    setTimeout(() => {
+                      mainScrollRef.current?.scrollToEnd({ animated: true });
+                    }, 150);
+                  }}
                 />
                 <TouchableOpacity
                   style={{ width: 44, height: 44, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}
@@ -508,6 +515,11 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                 placeholderTextColor="#9ca3af"
                 value={movimiento.motivo}
                 onChangeText={(t) => setMovimiento({ ...movimiento, motivo: t })}
+                onFocus={() => {
+                  setTimeout(() => {
+                    mainScrollRef.current?.scrollToEnd({ animated: true });
+                  }, 150);
+                }}
               />
             </View>
 
