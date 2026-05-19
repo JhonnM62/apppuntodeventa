@@ -214,6 +214,9 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   const startRecording = async () => {
     try {
+      // Prevent multiple recordings
+      if (isRecording || isProcessingVoice || recording) return;
+
       const permission = await Audio.requestPermissionsAsync();
       if (permission.status === 'granted') {
         await Audio.setAudioModeAsync({
@@ -221,28 +224,36 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           playsInSilentModeIOS: true,
         });
 
-        // Configuración de Alta Calidad Mono (AAC) para mejor reconocimiento IA
-        const { recording } = await Audio.Recording.createAsync(
+        const { recording: newRecording } = await Audio.Recording.createAsync(
           Audio.RecordingOptionsPresets.HIGH_QUALITY
         );
         
-        setRecording(recording);
+        setRecording(newRecording);
         setIsRecording(true);
+
+        // Auto-stop after 10 seconds to prevent huge files or getting stuck
+        setTimeout(() => {
+          if (newRecording) {
+            stopRecording(newRecording);
+          }
+        }, 10000);
+
       } else {
         Alert.alert('Permiso Denegado', 'Debes otorgar permisos de micrófono para usar esta función.');
       }
     } catch (err) {
       console.error('Error iniciando grabación', err);
+      setIsRecording(false);
     }
   };
 
-  const stopRecording = async () => {
-    if (!recording) return;
+  const stopRecording = async (activeRecording = recording) => {
+    if (!activeRecording) return;
     setIsRecording(false);
     
     try {
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
+      await activeRecording.stopAndUnloadAsync();
+      const uri = activeRecording.getURI();
       setRecording(null);
       
       if (uri) {
@@ -1144,7 +1155,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             paddingHorizontal: 12
           }]}
           onPressIn={startRecording}
-          onPressOut={stopRecording}
+          onPressOut={() => stopRecording()}
           disabled={isProcessingVoice}
         >
           {isProcessingVoice ? (
