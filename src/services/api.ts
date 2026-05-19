@@ -45,5 +45,10 @@ export const extractDataWithIA = (formData: FormData) => api.post('/ai/extract-d
     'Content-Type': 'multipart/form-data',
   },
 });
+export const processVoiceOrderWithIA = (formData: FormData) => api.post('/ai/voice-order', formData, {
+  headers: {
+    'Content-Type': 'multipart/form-data',
+  },
+});
 
 export default api;

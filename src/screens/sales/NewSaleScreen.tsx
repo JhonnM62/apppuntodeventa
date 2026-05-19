@@ -2,11 +2,13 @@ import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { View, TouchableOpacity, ActivityIndicator, Image, RefreshControl, Platform, TextInput, FlatList, StyleSheet, Modal as RNModal, ScrollView, Alert, Text as RNText, KeyboardAvoidingView, Keyboard } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Audio } from 'expo-av';
 import { getProducts } from '../../services/products';
 import { getMesas, Mesa } from '../../services/mesas';
 import { getComentarios, Comentario } from '../../services/comentarios';
 import { getClientes, Cliente } from '../../services/clientes.service';
 import { createSale, addProductosToVenta, SalePayload } from '../../services/sales';
+import { processVoiceOrderWithIA } from '../../services/api';
 import { useSocket, useSocketEmitter, useSocketEvent } from '../../hooks';
 import { Room } from '../../types/socket.types';
 import Toast from 'react-native-toast-message';
@@ -57,6 +59,10 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const [modifiersModalVisible, setModifiersModalVisible] = useState(false);
   const [clienteModalVisible, setClienteModalVisible] = useState(false);
   
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessingVoice, setIsProcessingVoice] = useState(false);
+
   const [modifierSearchQuery, setModifierSearchQuery] = useState('');
   const [selectedCartItemId, setSelectedCartItemId] = useState<string | null>(null);
   const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
@@ -205,6 +211,124 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
     return filtered;
   }, [cachedProductos, searchQuery, activeCategory]);
+
+  const startRecording = async () => {
+    try {
+      const permission = await Audio.requestPermissionsAsync();
+      if (permission.status === 'granted') {
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+        });
+
+        // Configuración de Alta Calidad Mono (AAC) para mejor reconocimiento IA
+        const { recording } = await Audio.Recording.createAsync(
+          Audio.RecordingOptionsPresets.HIGH_QUALITY
+        );
+        
+        setRecording(recording);
+        setIsRecording(true);
+      } else {
+        Alert.alert('Permiso Denegado', 'Debes otorgar permisos de micrófono para usar esta función.');
+      }
+    } catch (err) {
+      console.error('Error iniciando grabación', err);
+    }
+  };
+
+  const stopRecording = async () => {
+    if (!recording) return;
+    setIsRecording(false);
+    
+    try {
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+      setRecording(null);
+      
+      if (uri) {
+        setIsProcessingVoice(true);
+        Toast.show({
+          type: 'info',
+          text1: '✨ Analizando audio con IA...',
+          text2: 'Procesando tu pedido, por favor espera.',
+          position: 'top',
+        });
+
+        const formData = new FormData();
+        const fileExt = uri.split('.').pop() || 'm4a';
+        formData.append('audio', {
+          uri: Platform.OS === 'ios' ? uri.replace('file://', '') : uri,
+          name: `audio.${fileExt}`,
+          type: `audio/${fileExt === 'm4a' ? 'mp4' : 'wav'}`,
+        } as any);
+
+        const response = await processVoiceOrderWithIA(formData);
+        
+        if (response && response.items && response.items.length > 0) {
+          let countAdded = 0;
+          response.items.forEach((item: any) => {
+            const product = cachedProductos.find(p => p.IDproductos === item.productoId);
+            if (product) {
+              const orderItem: CartItem = {
+                ...product,
+                quantity: item.cantidad || 1,
+                modifiers: [],
+              };
+              
+              if (item.comentariosIds && item.comentariosIds.length > 0) {
+                item.comentariosIds.forEach((modId: string) => {
+                  const mod = comentariosDb.find(c => c.IDcomentario === modId);
+                  if (mod) {
+                    orderItem.modifiers!.push({
+                      name: mod.comentarios,
+                      price: Number(mod.precio || 0),
+                      quantity: 1,
+                    });
+                  }
+                });
+              }
+              
+              addToCart(orderItem);
+              countAdded += orderItem.quantity;
+            }
+          });
+          
+          if (countAdded > 0) {
+            Toast.show({
+              type: 'success',
+              text1: '¡Pedido Agregado!',
+              text2: `Se agregaron ${countAdded} productos con IA.`,
+              position: 'top',
+            });
+          } else {
+            Toast.show({
+              type: 'error',
+              text1: 'Error',
+              text2: 'La IA no pudo encontrar productos válidos en el catálogo.',
+              position: 'top',
+            });
+          }
+        } else {
+          Toast.show({
+            type: 'error',
+            text1: 'Error',
+            text2: 'No se reconoció ningún pedido válido.',
+            position: 'top',
+          });
+        }
+      }
+    } catch (err: any) {
+      console.error('Error procesando audio', err);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: err?.response?.data?.message || err?.message || 'Hubo un problema al procesar el audio.',
+        position: 'top',
+      });
+    } finally {
+      setIsProcessingVoice(false);
+    }
+  };
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
@@ -1010,6 +1134,25 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         <View style={styles.totalContainer}>
           <Text style={styles.totalText}>TOTAL ({getTotalItems()})</Text>
         </View>
+        
+        {/* Botón de Comando de Voz IA */}
+        <TouchableOpacity
+          style={[styles.mesaButton, { 
+            marginRight: 8, 
+            borderColor: isRecording ? '#ef4444' : '#10b981', 
+            backgroundColor: isRecording ? 'rgba(239, 68, 68, 0.8)' : (isProcessingVoice ? 'rgba(16, 185, 129, 0.5)' : 'rgba(16, 185, 129, 0.2)'),
+            paddingHorizontal: 12
+          }]}
+          onPressIn={startRecording}
+          onPressOut={stopRecording}
+          disabled={isProcessingVoice}
+        >
+          {isProcessingVoice ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Ionicons name={isRecording ? "radio-button-on" : "mic"} size={20} color="#fff" />
+          )}
+        </TouchableOpacity>
         
         {/* Client Selection Button Relocated to Header */}
         <TouchableOpacity
