@@ -333,14 +333,19 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
         </View>
       </View>
 
-      <ScrollView 
-        style={styles.content} 
-        contentContainerStyle={{ paddingBottom: 20 }} 
-        showsVerticalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined} 
+        style={{ flex: 1, paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}
       >
-        <View style={[styles.card, { padding: 0 }]}>
+        <ScrollView 
+          style={styles.content} 
+          contentContainerStyle={{ paddingBottom: 40, flexGrow: 1 }} 
+          showsVerticalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={[styles.card, { padding: 0 }]}>
           {finalImageUrl && (
             <TouchableOpacity 
               activeOpacity={0.9}
@@ -447,7 +452,9 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
               <RNText style={{ color: '#3b82f6', fontWeight: '700', fontSize: 15, marginLeft: 8 }}>Actualizar Precio y Stock</RNText>
             </TouchableOpacity>
 
-            <RNText style={styles.cardTitle}>Registrar Movimiento</RNText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+              <RNText style={[styles.cardTitle, { marginBottom: 0 }]}>Registrar Movimiento</RNText>
+            </View>
             <View style={styles.movimientoTipo}>
               <TouchableOpacity
                 style={[styles.tipoBtn, movimiento.tipo === 'entrada' && styles.tipoBtnActive]}
@@ -469,26 +476,26 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.inputGroup}>
+            <View style={{ marginBottom: 20 }}>
               <RNText style={styles.inputLabel}>Cantidad</RNText>
-              <View style={styles.cantidadInput}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f3f4f6', borderRadius: 12, padding: 8 }}>
                 <TouchableOpacity
-                  style={styles.cantidadBtn}
+                  style={{ width: 44, height: 44, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}
                   onPress={() => setMovimiento({ ...movimiento, cantidad: Math.max(0, movimiento.cantidad - 1) })}
                 >
-                  <Ionicons name="remove" size={24} color="#6b7280" />
+                  <Ionicons name="remove" size={24} color="#4b5563" />
                 </TouchableOpacity>
                 <TextInput
-                  style={{ flex: 1, fontSize: 24, fontWeight: '700', color: '#111827', textAlign: 'center', padding: 0, margin: 0 }}
+                  style={{ flex: 1, fontSize: 24, fontWeight: '800', color: '#111827', textAlign: 'center', padding: 0, margin: 0 }}
                   keyboardType="numeric"
                   value={String(movimiento.cantidad)}
                   onChangeText={(t) => setMovimiento({ ...movimiento, cantidad: Number(t.replace(/[^0-9]/g, '')) || 0 })}
                 />
                 <TouchableOpacity
-                  style={styles.cantidadBtn}
+                  style={{ width: 44, height: 44, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}
                   onPress={() => setMovimiento({ ...movimiento, cantidad: movimiento.cantidad + 1 })}
                 >
-                  <Ionicons name="add" size={24} color="#6b7280" />
+                  <Ionicons name="add" size={24} color="#4b5563" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -523,6 +530,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
 
         <View style={{ height: 40 }} />
       </ScrollView>
+      </KeyboardAvoidingView>
 
       <Modal visible={showEditModal} animationType="slide" onRequestClose={() => setShowEditModal(false)} presentationStyle="pageSheet">
         <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
@@ -535,12 +543,8 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
             </TouchableOpacity>
           </View>
 
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
-            <ScrollView 
-              style={{ flex: 1, paddingHorizontal: 16 }} 
-              contentContainerStyle={{ paddingVertical: 16, flexGrow: 1 }}
-              keyboardShouldPersistTaps="handled"
-            >
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+            <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} contentContainerStyle={{ paddingVertical: 16 }}>
               <Input
                 label="Nombre *"
                 placeholder="Nombre del insumo"
@@ -729,7 +733,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
 
       {/* MODAL PARA ACTUALIZAR PRECIO Y STOCK */}
       <Modal visible={showUpdatePriceStockModal} animationType="slide" onRequestClose={() => setShowUpdatePriceStockModal(false)}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
           <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
           <View style={{ paddingHorizontal: 16, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <RNText style={{ fontSize: 18, fontWeight: 'bold', color: '#111827' }}>
