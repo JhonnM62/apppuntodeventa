@@ -63,6 +63,10 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
 
+  // VAD (Voice Activity Detection) Refs
+  const hasSpoken = useRef(false);
+  const silenceStart = useRef<number | null>(null);
+
   const [modifierSearchQuery, setModifierSearchQuery] = useState('');
   const [selectedCartItemId, setSelectedCartItemId] = useState<string | null>(null);
   const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
@@ -224,19 +228,44 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           playsInSilentModeIOS: true,
         });
 
-        const { recording: newRecording } = await Audio.Recording.createAsync(
-          Audio.RecordingOptionsPresets.HIGH_QUALITY
-        );
+        const { recording: newRecording } = await Audio.Recording.createAsync({
+          ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
+          isMeteringEnabled: true,
+        });
         
+        // Reset VAD state
+        hasSpoken.current = false;
+        silenceStart.current = null;
+
+        newRecording.setOnRecordingStatusUpdate((status) => {
+          if (status.isRecording && status.metering !== undefined) {
+            const now = Date.now();
+            
+            // -35 dB is a good threshold for speaking vs background noise in expo-av
+            if (status.metering > -35) {
+              hasSpoken.current = true;
+              silenceStart.current = null;
+            } else {
+              if (!silenceStart.current) {
+                silenceStart.current = now;
+              } else {
+                const silenceDuration = now - silenceStart.current;
+                
+                // If user spoke and then paused for 1.5 seconds -> Auto Stop
+                if (hasSpoken.current && silenceDuration > 1500) {
+                  stopRecording(newRecording);
+                } 
+                // If user never spoke, wait up to 5 seconds before giving up
+                else if (!hasSpoken.current && silenceDuration > 5000) {
+                  stopRecording(newRecording);
+                }
+              }
+            }
+          }
+        });
+
         setRecording(newRecording);
         setIsRecording(true);
-
-        // Auto-stop after 10 seconds to prevent huge files or getting stuck
-        setTimeout(() => {
-          if (newRecording) {
-            stopRecording(newRecording);
-          }
-        }, 10000);
 
       } else {
         Alert.alert('Permiso Denegado', 'Debes otorgar permisos de micrófono para usar esta función.');
@@ -262,6 +291,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       // Safely check status before unloading
       const status = await activeRecording.getStatusAsync();
       if (!status.isDoneRecording && status.canRecord) {
+        // Remove listener to prevent memory leaks or delayed fires
+        activeRecording.setOnRecordingStatusUpdate(null);
         await activeRecording.stopAndUnloadAsync();
       }
       
@@ -306,6 +337,17 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                       quantity: 1,
                     });
                   }
+                });
+              }
+
+              // Feature: Add fallback plain-text notes from AI for things not in catalog (like "carro rojo")
+              if (item.notasAdicionales && Array.isArray(item.notasAdicionales) && item.notasAdicionales.length > 0) {
+                item.notasAdicionales.forEach((nota: string) => {
+                  orderItem.modifiers!.push({
+                    name: nota,
+                    price: 0,
+                    quantity: 1,
+                  });
                 });
               }
               
@@ -1164,8 +1206,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             backgroundColor: isRecording ? 'rgba(239, 68, 68, 0.8)' : (isProcessingVoice ? 'rgba(16, 185, 129, 0.5)' : 'rgba(16, 185, 129, 0.2)'),
             paddingHorizontal: 12
           }]}
-          onPressIn={startRecording}
-          onPressOut={() => stopRecording()}
+          onPress={isRecording ? () => stopRecording() : startRecording}
           disabled={isProcessingVoice}
         >
           {isProcessingVoice ? (
