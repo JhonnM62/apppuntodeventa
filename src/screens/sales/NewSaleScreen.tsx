@@ -248,16 +248,26 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   };
 
   const stopRecording = async (activeRecording = recording) => {
+    // Prevent multiple unloads
     if (!activeRecording) return;
+    
+    // Check if we already cleared the recording state to avoid double processing
+    if (activeRecording !== recording && isProcessingVoice) return;
+    
     setIsRecording(false);
+    setRecording(null);
+    setIsProcessingVoice(true);
     
     try {
-      await activeRecording.stopAndUnloadAsync();
+      // Safely check status before unloading
+      const status = await activeRecording.getStatusAsync();
+      if (!status.isDoneRecording && status.canRecord) {
+        await activeRecording.stopAndUnloadAsync();
+      }
+      
       const uri = activeRecording.getURI();
-      setRecording(null);
       
       if (uri) {
-        setIsProcessingVoice(true);
         Toast.show({
           type: 'info',
           text1: '✨ Analizando audio con IA...',
@@ -275,9 +285,9 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
         const response = await processVoiceOrderWithIA(formData);
         
-        if (response && response.items && response.items.length > 0) {
+        if (response && response.data && response.data.items && response.data.items.length > 0) {
           let countAdded = 0;
-          response.items.forEach((item: any) => {
+          response.data.items.forEach((item: any) => {
             const product = cachedProductos.find(p => p.IDproductos === item.productoId);
             if (product) {
               const orderItem: CartItem = {
@@ -288,7 +298,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               
               if (item.comentariosIds && item.comentariosIds.length > 0) {
                 item.comentariosIds.forEach((modId: string) => {
-                  const mod = comentariosDb.find(c => c.IDcomentario === modId);
+                  const mod = comentariosDb.find(c => c.ID === modId);
                   if (mod) {
                     orderItem.modifiers!.push({
                       name: mod.comentarios,
@@ -314,16 +324,16 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           } else {
             Toast.show({
               type: 'error',
-              text1: 'Error',
-              text2: 'La IA no pudo encontrar productos válidos en el catálogo.',
+              text1: 'Atención',
+              text2: 'La IA no pudo emparejar los productos con el catálogo actual.',
               position: 'top',
             });
           }
         } else {
           Toast.show({
             type: 'error',
-            text1: 'Error',
-            text2: 'No se reconoció ningún pedido válido.',
+            text1: 'Atención',
+            text2: 'No se reconoció ningún pedido válido en el audio.',
             position: 'top',
           });
         }
