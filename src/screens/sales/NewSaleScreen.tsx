@@ -229,8 +229,30 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         });
 
         const { recording: newRecording } = await Audio.Recording.createAsync({
-          ...Audio.RecordingOptionsPresets.HIGH_QUALITY,
           isMeteringEnabled: true,
+          android: {
+            extension: '.m4a',
+            outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+            audioEncoder: Audio.AndroidAudioEncoder.AAC,
+            sampleRate: 16000, // Reduced from 44.1kHz to 16kHz for smaller file size (still perfectly fine for voice)
+            numberOfChannels: 1,
+            bitRate: 32000, // Reduced from 128kbps to 32kbps
+          },
+          ios: {
+            extension: '.m4a',
+            outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
+            audioQuality: Audio.IOSAudioQuality.LOW,
+            sampleRate: 16000,
+            numberOfChannels: 1,
+            bitRate: 32000,
+            linearPCMBitDepth: 16,
+            linearPCMIsBigEndian: false,
+            linearPCMIsFloat: false,
+          },
+          web: {
+            mimeType: 'audio/webm',
+            bitsPerSecond: 32000,
+          },
         });
         
         // Reset VAD state

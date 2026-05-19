@@ -48,6 +48,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const [updateValues, setUpdateValues] = useState({ precioActual: '', cantidad: '' });
   const updateModalScrollRef = useRef<any>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
   useEffect(() => {
     const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => setKeyboardHeight(e.endCoordinates.height));
@@ -314,7 +315,6 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   };
 
   const finalImageUrl = getImageUrl();
-  const [isFullScreen, setIsFullScreen] = useState(false);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

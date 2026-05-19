@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, TouchableOpacity, ActivityIndicator, Dimensions, TextInput, Modal, Platform } from 'react-native';
+import { View, FlatList, TouchableOpacity, ActivityIndicator, Dimensions, TextInput, Modal, Platform, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
