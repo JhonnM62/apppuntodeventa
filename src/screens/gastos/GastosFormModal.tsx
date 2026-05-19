@@ -15,9 +15,10 @@ try {
   console.log('expo-image native module no encontrado, usando Image de react-native como fallback');
 }
 import { Gasto, uploadGastoImage } from '../../services/gastos';
-import { extractDataWithIA } from '../../services/api';
+import { extractDataWithIA, getConfiguracionIA } from '../../services/api';
 import { useGastosStore } from '../../store/useGastosStore';
 import Toast from 'react-native-toast-message';
+import { useNavigation } from '@react-navigation/native';
 
 // Carga dinámica de módulos nativos para evitar crasheos si no están en el Dev Client
 let ImagePicker: any = null;
@@ -58,9 +59,13 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
   const [loading, setLoading] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [iaConfigured, setIaConfigured] = useState<boolean | null>(null);
+
+  const navigation = useNavigation<any>();
 
   useEffect(() => {
     if (visible) {
+      checkIaConfig();
       if (gastoToEdit) {
         setTipo(gastoToEdit.tipo);
         setConcepto(gastoToEdit.concepto);
@@ -76,6 +81,16 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
       }
     }
   }, [visible, gastoToEdit]);
+
+  const checkIaConfig = async () => {
+    try {
+      const res = await getConfiguracionIA();
+      const data = res.data || res;
+      setIaConfigured(data && data.isActive && data.apiKey ? true : false);
+    } catch (error) {
+      setIaConfigured(false);
+    }
+  };
 
   useEffect(() => {
     const showSubscription = Keyboard.addListener(
@@ -186,6 +201,29 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const handleIAScanPress = () => {
+    if (iaConfigured === false) {
+      Alert.alert(
+        "Inteligencia Artificial Inactiva",
+        "La IA no está configurada o está apagada. Por favor, configura tu API Key de Gemini en el módulo de Configuraciones.",
+        [
+          { text: "Cancelar", style: "cancel" },
+          { 
+            text: "Ir a Configurar", 
+            onPress: () => {
+              onClose();
+              navigation.navigate('ConfiguracionNegocio');
+            }
+          }
+        ]
+      );
+      return;
+    }
+
+    setShowAttachmentOptions(false);
+    pickImage(true, true);
   };
 
   const processImageWithIA = async (uri: string) => {
@@ -368,7 +406,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
             {!gastoToEdit && !fotoUri && (
               <TouchableOpacity
                 className="bg-indigo-50 border border-indigo-200 rounded-xl py-3 items-center justify-center flex-row mb-6 shadow-sm"
-                onPress={() => { setShowAttachmentOptions(false); pickImage(true, true); }}
+                onPress={handleIAScanPress}
               >
                 <Ionicons name="sparkles" size={20} color="#4f46e5" />
                 <Text className="ml-2 text-sm font-bold text-indigo-700">
