@@ -433,7 +433,7 @@ const InventarioScreen = ({ navigation }: any) => {
   const getInsumoImage = (id: string) => {
     if (!id) return null;
     const insumo = insumos.find(i => i.IDalimentos === id || i.IDalimentos?.toString() === id.toString());
-    const rawUrl = insumo?.imagen || insumo?.imageUrl || insumo?.imagencard || insumo?.Imagen || insumo?.['Image Url'];
+    const rawUrl = insumo?.imagen || insumo?.Imagen || insumo?.['Image Url'];
     return getImageUrl(rawUrl);
   };
 

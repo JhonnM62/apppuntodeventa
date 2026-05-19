@@ -299,7 +299,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const estadoColors: Record<string, string> = { critico: '#ef4444', normal: '#22c55e', sobrante: '#3b82f6' };
 
   const getImageUrl = () => {
-    const url = insumo.imagen || insumo.imageUrl || insumo.imagencard || insumo.Image;
+    const url = insumo.imagen || insumo.Image;
     if (!url) return null;
     if (url.startsWith('http')) return url;
     

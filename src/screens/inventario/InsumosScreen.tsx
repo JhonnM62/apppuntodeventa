@@ -321,7 +321,6 @@ const InsumosScreen = ({ navigation }: Props) => {
 
       const dataToSave = {
         ...formData,
-        imageUrl: finalImageUrl,
         imagen: finalImageUrl,
         estado: estadoActivo ? 'ACTIVO' : 'INACTIVO',
         cantidad: Math.max(0, formData.cantidad || 0),
@@ -419,7 +418,7 @@ const InsumosScreen = ({ navigation }: Props) => {
   }), [insumos]);
 
   const getImageUrl = (item: InsumoItem) => {
-    const url = item.imagen || item.imageUrl || item.imagencard || item.Image;
+    const url = item.imagen || item.Image;
     if (!url) return null;
     if (url.startsWith('http')) return url;
     
