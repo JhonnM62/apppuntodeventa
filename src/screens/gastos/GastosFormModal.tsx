@@ -329,15 +329,18 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          style={{ width: '100%', marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}
+          style={{ 
+            width: '100%', 
+            maxHeight: '90%', 
+            paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 
+          }}
         >
-          <TouchableOpacity
-            activeOpacity={1}
+          <View
             style={{
               backgroundColor: 'white',
               borderTopLeftRadius: 24,
               borderTopRightRadius: 24,
-              padding: 20,
+              flexShrink: 1,
               shadowColor: '#000',
               shadowOffset: { width: 0, height: -2 },
               shadowOpacity: 0.1,
@@ -345,7 +348,8 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
               elevation: 10,
             }}
           >
-            <View className="flex-row justify-between items-center mb-6">
+            {/* Header Fijo */}
+            <View className="flex-row justify-between items-center p-5 pb-2">
               <Text className="text-xl font-bold text-gray-800">
                 {gastoToEdit ? 'Editar Gasto' : 'Nuevo Gasto'}
               </Text>
@@ -354,174 +358,180 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
               </TouchableOpacity>
             </View>
 
-            {/* Switch Tipo */}
-            <View className="flex-row bg-gray-100 rounded-lg p-1 mb-5">
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-md items-center ${tipo === 'NEGOCIO' ? 'bg-blue-500 shadow-sm' : ''}`}
-                onPress={() => setTipo('NEGOCIO')}
-              >
-                <Text className={`font-bold ${tipo === 'NEGOCIO' ? 'text-white' : 'text-gray-500'}`}>Negocio</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className={`flex-1 py-2 rounded-md items-center ${tipo === 'PERSONAL' ? 'bg-purple-500 shadow-sm' : ''}`}
-                onPress={() => setTipo('PERSONAL')}
-              >
-                <Text className={`font-bold ${tipo === 'PERSONAL' ? 'text-white' : 'text-gray-500'}`}>Personal</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Concepto */}
-            <View className="mb-4">
-              <Text className="text-sm font-bold text-gray-600 mb-1 ml-1">Concepto</Text>
-              <TextInput
-                className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-800"
-                placeholder="Ej. Pago de arriendo, Almuerzo..."
-                value={concepto}
-                onChangeText={setConcepto}
-              />
-            </View>
-
-            {/* Valor */}
-            <View className="mb-4">
-              <Text className="text-sm font-bold text-gray-600 mb-1 ml-1">Monto</Text>
-              <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
-                <Text className="text-lg font-bold text-gray-500 mr-2">$</Text>
-                <TextInput
-                  className="flex-1 text-lg text-gray-800 font-bold"
-                  placeholder="0"
-                  value={valor ? new Intl.NumberFormat('es-CO').format(Number(valor)) : ''}
-                  onChangeText={formatValor}
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-
-            {/* Medio de Pago y Adjunto */}
-            <View className="flex-row mb-6">
-              <View className="flex-1 mr-2">
-                <Text className="text-sm font-bold text-gray-600 mb-1 ml-1">Medio de Pago</Text>
-                <View className="flex-row border border-gray-200 rounded-xl overflow-hidden">
+            <ScrollView
+              contentContainerStyle={{ padding: 20, flexGrow: 1, paddingBottom: 32 }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <TouchableOpacity activeOpacity={1}>
+                {/* Switch Tipo */}
+                <View className="flex-row bg-gray-100 rounded-lg p-1 mb-5">
                   <TouchableOpacity
-                    className={`flex-1 py-3 items-center ${medioDePago === 'Efectivo' ? 'bg-green-100' : 'bg-gray-50'}`}
-                    onPress={() => setMedioDePago('Efectivo')}
+                    className={`flex-1 py-2 rounded-md items-center ${tipo === 'NEGOCIO' ? 'bg-blue-500 shadow-sm' : ''}`}
+                    onPress={() => setTipo('NEGOCIO')}
                   >
-                    <Text className={`text-sm font-bold ${medioDePago === 'Efectivo' ? 'text-green-600' : 'text-gray-500'}`}>Efectivo</Text>
+                    <Text className={`font-bold ${tipo === 'NEGOCIO' ? 'text-white' : 'text-gray-500'}`}>Negocio</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    className={`flex-1 py-3 items-center ${medioDePago === 'Transferencia' ? 'bg-green-100' : 'bg-gray-50'}`}
-                    onPress={() => setMedioDePago('Transferencia')}
+                    className={`flex-1 py-2 rounded-md items-center ${tipo === 'PERSONAL' ? 'bg-purple-500 shadow-sm' : ''}`}
+                    onPress={() => setTipo('PERSONAL')}
                   >
-                    <Text className={`text-sm font-bold ${medioDePago === 'Transferencia' ? 'text-green-600' : 'text-gray-500'}`}>Transf.</Text>
+                    <Text className={`font-bold ${tipo === 'PERSONAL' ? 'text-white' : 'text-gray-500'}`}>Personal</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
 
-              <View className="w-1/3">
-                <Text className="text-sm font-bold text-gray-600 mb-1 ml-1">Soporte</Text>
-                <TouchableOpacity
-                  className="bg-gray-50 border border-gray-200 rounded-xl py-3 items-center justify-center flex-row"
-                  onPress={handleAttachment}
-                >
-                  <Ionicons name={fotoUri ? "image" : "camera"} size={20} color={fotoUri ? "#10b981" : "#6b7280"} />
-                  <Text className={`ml-1 text-sm font-bold ${fotoUri ? 'text-green-500' : 'text-gray-500'}`}>
-                    {fotoUri ? 'Cambiar' : 'Adjuntar'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* Boton Escanear con IA */}
-            {!gastoToEdit && !fotoUri && (
-              <TouchableOpacity
-                className="bg-indigo-50 border border-indigo-200 rounded-xl py-3 items-center justify-center flex-row mb-6 shadow-sm"
-                onPress={handleIAScanPress}
-              >
-                <Ionicons name="sparkles" size={20} color="#4f46e5" />
-                <Text className="ml-2 text-sm font-bold text-indigo-700">
-                  Autocompletar con IA (Cámara)
-                </Text>
-              </TouchableOpacity>
-            )}
-
-            {/* Vista Previa de Imagen */}
-            {fotoUri && (
-              <View className="mb-6 items-center">
-                <TouchableOpacity 
-                  activeOpacity={0.9} 
-                  onPress={() => setIsFullScreen(true)}
-                  className="border border-gray-200 rounded-xl overflow-hidden bg-gray-50 p-2 w-full items-center"
-                >
-                  <ImageComponent 
-                    source={{ uri: fotoUri.startsWith('http') ? fotoUri : `https://backendnestpv.autosystemprojects.site/api/v1${fotoUri.startsWith('/') ? fotoUri : '/' + fotoUri}` }} 
-                    style={{ width: '100%', height: 180, borderRadius: 8 }} 
-                    contentFit="contain"
-                    resizeMode="contain" 
-                    transition={200}
+                {/* Concepto */}
+                <View className="mb-4">
+                  <Text className="text-sm font-bold text-gray-600 mb-1 ml-1">Concepto</Text>
+                  <TextInput
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-800"
+                    placeholder="Ej. Pago de arriendo, Almuerzo..."
+                    value={concepto}
+                    onChangeText={setConcepto}
                   />
-                  
-                  {/* Animación de Escaneo IA */}
-                  {isScanningIA && (
-                    <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 8, overflow: 'hidden' }}>
-                      <Animated.View
-                        style={{
-                          position: 'absolute',
-                          left: 0,
-                          right: 0,
-                          height: 4,
-                          backgroundColor: '#10b981',
-                          shadowColor: '#10b981',
-                          shadowOffset: { width: 0, height: 0 },
-                          shadowOpacity: 1,
-                          shadowRadius: 10,
-                          elevation: 5,
-                          transform: [{
-                            translateY: scanLineAnim.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [0, 180]
-                            })
-                          }]
-                        }}
-                      />
-                      <View style={{ position: 'absolute', bottom: 10, left: 0, right: 0, alignItems: 'center' }}>
-                        <Text style={{ color: 'white', fontWeight: 'bold', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 }}>
-                          Analizando con IA...
-                        </Text>
-                      </View>
-                    </View>
-                  )}
+                </View>
 
-                  <View className="absolute bottom-4 right-4 bg-black/50 rounded-full p-2">
-                    <Ionicons name="expand" size={16} color="white" />
+                {/* Valor */}
+                <View className="mb-4">
+                  <Text className="text-sm font-bold text-gray-600 mb-1 ml-1">Monto</Text>
+                  <View className="flex-row items-center bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                    <Text className="text-lg font-bold text-gray-500 mr-2">$</Text>
+                    <TextInput
+                      className="flex-1 text-lg text-gray-800 font-bold"
+                      placeholder="0"
+                      value={valor ? new Intl.NumberFormat('es-CO').format(Number(valor)) : ''}
+                      onChangeText={formatValor}
+                      keyboardType="numeric"
+                    />
                   </View>
-                  <TouchableOpacity 
-                    className="absolute top-3 right-3 bg-white rounded-full p-1.5 shadow-sm border border-gray-100"
-                    onPress={() => setFotoUri(null)}
-                    disabled={isScanningIA}
-                  >
-                    <Ionicons name="trash-outline" size={20} color="#ef4444" />
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              </View>
-            )}
+                </View>
 
-            {/* Botón Guardar */}
-            <TouchableOpacity
-              className="bg-green-600 rounded-xl py-4 items-center justify-center shadow-sm flex-row"
-              style={{ marginBottom: 40 }}
-              onPress={handleSave}
-              disabled={loading}
-            >
-              {loading ? (
-                <ActivityIndicator color="white" />
-              ) : (
-                <>
-                  <Ionicons name="save-outline" size={22} color="white" />
-                  <Text className="text-white font-bold text-lg ml-2">Guardar Gasto</Text>
-                </>
-              )}
-            </TouchableOpacity>
-            
-          </TouchableOpacity>
+                {/* Medio de Pago y Adjunto */}
+                <View className="flex-row mb-6">
+                  <View className="flex-1 mr-2">
+                    <Text className="text-sm font-bold text-gray-600 mb-1 ml-1">Medio de Pago</Text>
+                    <View className="flex-row border border-gray-200 rounded-xl overflow-hidden">
+                      <TouchableOpacity
+                        className={`flex-1 py-3 items-center ${medioDePago === 'Efectivo' ? 'bg-green-100' : 'bg-gray-50'}`}
+                        onPress={() => setMedioDePago('Efectivo')}
+                      >
+                        <Text className={`text-sm font-bold ${medioDePago === 'Efectivo' ? 'text-green-600' : 'text-gray-500'}`}>Efectivo</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        className={`flex-1 py-3 items-center ${medioDePago === 'Transferencia' ? 'bg-green-100' : 'bg-gray-50'}`}
+                        onPress={() => setMedioDePago('Transferencia')}
+                      >
+                        <Text className={`text-sm font-bold ${medioDePago === 'Transferencia' ? 'text-green-600' : 'text-gray-500'}`}>Transf.</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+
+                  <View className="w-1/3">
+                    <Text className="text-sm font-bold text-gray-600 mb-1 ml-1">Soporte</Text>
+                    <TouchableOpacity
+                      className="bg-gray-50 border border-gray-200 rounded-xl py-3 items-center justify-center flex-row"
+                      onPress={handleAttachment}
+                    >
+                      <Ionicons name={fotoUri ? "image" : "camera"} size={20} color={fotoUri ? "#10b981" : "#6b7280"} />
+                      <Text className={`ml-1 text-sm font-bold ${fotoUri ? 'text-green-500' : 'text-gray-500'}`}>
+                        {fotoUri ? 'Cambiar' : 'Adjuntar'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Boton Escanear con IA */}
+                {!gastoToEdit && !fotoUri && (
+                  <TouchableOpacity
+                    className="bg-indigo-50 border border-indigo-200 rounded-xl py-3 items-center justify-center flex-row mb-6 shadow-sm"
+                    onPress={handleIAScanPress}
+                  >
+                    <Ionicons name="sparkles" size={20} color="#4f46e5" />
+                    <Text className="ml-2 text-sm font-bold text-indigo-700">
+                      Autocompletar con IA (Cámara)
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
+                {/* Vista Previa de Imagen */}
+                {fotoUri && (
+                  <View className="mb-6 items-center">
+                    <TouchableOpacity 
+                      activeOpacity={0.9} 
+                      onPress={() => setIsFullScreen(true)}
+                      className="border border-gray-200 rounded-xl overflow-hidden bg-gray-50 p-2 w-full items-center"
+                    >
+                      <ImageComponent 
+                        source={{ uri: fotoUri.startsWith('http') ? fotoUri : `https://backendnestpv.autosystemprojects.site/api/v1${fotoUri.startsWith('/') ? fotoUri : '/' + fotoUri}` }} 
+                        style={{ width: '100%', height: 180, borderRadius: 8 }} 
+                        contentFit="contain"
+                        resizeMode="contain" 
+                        transition={200}
+                      />
+                      
+                      {/* Animación de Escaneo IA */}
+                      {isScanningIA && (
+                        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 8, overflow: 'hidden' }}>
+                          <Animated.View
+                            style={{
+                              position: 'absolute',
+                              left: 0,
+                              right: 0,
+                              height: 4,
+                              backgroundColor: '#10b981',
+                              shadowColor: '#10b981',
+                              shadowOffset: { width: 0, height: 0 },
+                              shadowOpacity: 1,
+                              shadowRadius: 10,
+                              elevation: 5,
+                              transform: [{
+                                translateY: scanLineAnim.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [0, 180]
+                                })
+                              }]
+                            }}
+                          />
+                          <View style={{ position: 'absolute', bottom: 10, left: 0, right: 0, alignItems: 'center' }}>
+                            <Text style={{ color: 'white', fontWeight: 'bold', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 1, height: 1 }, textShadowRadius: 3 }}>
+                              Analizando con IA...
+                            </Text>
+                          </View>
+                        </View>
+                      )}
+
+                      <View className="absolute bottom-4 right-4 bg-black/50 rounded-full p-2">
+                        <Ionicons name="expand" size={16} color="white" />
+                      </View>
+                      <TouchableOpacity 
+                        className="absolute top-3 right-3 bg-white rounded-full p-1.5 shadow-sm border border-gray-100"
+                        onPress={() => setFotoUri(null)}
+                        disabled={isScanningIA}
+                      >
+                        <Ionicons name="trash-outline" size={20} color="#ef4444" />
+                      </TouchableOpacity>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {/* Botón Guardar */}
+                <TouchableOpacity
+                  className="bg-green-600 rounded-xl py-4 items-center justify-center shadow-sm flex-row"
+                  onPress={handleSave}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <ActivityIndicator color="white" />
+                  ) : (
+                    <>
+                      <Ionicons name="save-outline" size={22} color="white" />
+                      <Text className="text-white font-bold text-lg ml-2">Guardar Gasto</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
         </KeyboardAvoidingView>
       </TouchableOpacity>
 
