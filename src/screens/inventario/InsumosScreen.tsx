@@ -419,7 +419,7 @@ const InsumosScreen = ({ navigation }: Props) => {
   }), [insumos]);
 
   const getImageUrl = (item: InsumoItem) => {
-    const url = item.imagen || item.imageUrl || item.imagencard;
+    const url = item.imagen || item.imageUrl || item.imagencard || item.Image;
     if (!url) return null;
     if (url.startsWith('http')) return url;
     
@@ -431,7 +431,7 @@ const InsumosScreen = ({ navigation }: Props) => {
 
     const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
     const finalUrl = `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
-    console.log('[DEBUG InsumosScreen] URL Generada:', finalUrl);
+    // console.log('[DEBUG InsumosScreen] URL Generada:', finalUrl);
     return finalUrl;
   };
 

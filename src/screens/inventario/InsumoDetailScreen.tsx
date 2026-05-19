@@ -298,7 +298,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const estadoColors: Record<string, string> = { critico: '#ef4444', normal: '#22c55e', sobrante: '#3b82f6' };
 
   const getImageUrl = () => {
-    const url = insumo.imagen || insumo.imageUrl || insumo.imagencard;
+    const url = insumo.imagen || insumo.imageUrl || insumo.imagencard || insumo.Image;
     if (!url) return null;
     if (url.startsWith('http')) return url;
     
@@ -310,7 +310,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
 
     const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
     const finalUrl = `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
-    console.log('[DEBUG InsumoDetailScreen] URL Generada:', finalUrl);
+    // console.log('[DEBUG InsumoDetailScreen] URL Generada:', finalUrl);
     return finalUrl;
   };
 
