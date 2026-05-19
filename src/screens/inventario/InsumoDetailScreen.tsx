@@ -659,7 +659,10 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                       <View style={{ position: 'absolute', bottom: 8, right: 8, flexDirection: 'row', gap: 8 }}>
                         <TouchableOpacity 
                           style={{ backgroundColor: 'rgba(0,0,0,0.6)', padding: 8, borderRadius: 20 }}
-                          onPress={() => setLocalImageUri(null)}
+                          onPress={() => {
+                            setLocalImageUri(null);
+                            setFormData(p => ({ ...p, imageUrl: null as any, imagen: null as any }));
+                          }}
                         >
                           <Ionicons name="trash" size={20} color="#ef4444" />
                         </TouchableOpacity>
