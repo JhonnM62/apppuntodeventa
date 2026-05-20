@@ -125,7 +125,11 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const handleVerificationPassed = () => {
     setVerifyModalVisible(false);
     setVerificacionCompletada(true);
-    setIsFreezeModalVisible(true);
+    if (!horaCongelada) {
+      setIsFreezeModalVisible(true);
+    } else {
+      setActiveTab(pendingTab);
+    }
   };
 
   const handleVerificationCancelled = () => {
