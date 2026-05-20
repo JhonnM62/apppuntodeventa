@@ -124,6 +124,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
   const handleVerificationPassed = () => {
     setVerifyModalVisible(false);
+    setVerificacionCompletada(true);
     setIsFreezeModalVisible(true);
   };
 
@@ -139,6 +140,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
   // State for VerifyInsumosModal
   const [verifyModalVisible, setVerifyModalVisible] = useState(false);
+  const [verificacionCompletada, setVerificacionCompletada] = useState(false);
 
   const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
 
@@ -646,13 +648,23 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 className={`flex-1 py-2 items-center rounded-lg ${activeTab === 'cuadre' ? 'bg-white shadow-sm' : ''}`}
                 onPress={() => handleTabChange('cuadre')}
               >
-                <Text className={`font-bold text-[11px] uppercase tracking-wide ${activeTab === 'cuadre' ? 'text-green-600' : 'text-gray-500'}`}>Cuadre Caja</Text>
+                <View className="flex-row items-center gap-1">
+                  <Text className={`font-bold text-[11px] uppercase tracking-wide ${activeTab === 'cuadre' ? 'text-green-600' : 'text-gray-500'}`}>Cuadre Caja</Text>
+                  {!verificacionCompletada && !isNew && (
+                    <View className="w-2 h-2 rounded-full bg-orange-500" />
+                  )}
+                </View>
               </TouchableOpacity>
               <TouchableOpacity
                 className={`flex-1 py-2 items-center rounded-lg ${activeTab === 'analysis' ? 'bg-white shadow-sm' : ''}`}
                 onPress={() => handleTabChange('analysis')}
               >
-                <Text className={`font-bold text-[11px] uppercase tracking-wide ${activeTab === 'analysis' ? 'text-green-600' : 'text-gray-500'}`}>Análisis</Text>
+                <View className="flex-row items-center gap-1">
+                  <Text className={`font-bold text-[11px] uppercase tracking-wide ${activeTab === 'analysis' ? 'text-green-600' : 'text-gray-500'}`}>Análisis</Text>
+                  {!verificacionCompletada && !isNew && (
+                    <View className="w-2 h-2 rounded-full bg-orange-500" />
+                  )}
+                </View>
               </TouchableOpacity>
             </View>
         </View>
