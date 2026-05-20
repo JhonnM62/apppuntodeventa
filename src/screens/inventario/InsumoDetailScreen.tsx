@@ -74,7 +74,8 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
     fecha_de_vencimiento: '',
     descontar_cant_de_ventas: 'NO',
     notificar_a_whatsapp: 'NO',
-    llevar_control_en_caja: 'NO'
+    llevar_control_en_caja: 'NO',
+    cuadrarInsumos: false
   });
 
   const insumoId = route.params?.id;
@@ -210,7 +211,8 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
       fecha_de_vencimiento: insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento || '',
       descontar_cant_de_ventas: insumo.descontarCantDeVentas || insumo.descontar_cant_de_ventas || 'NO',
       notificar_a_whatsapp: insumo.notificarAWhatsapp || insumo.notificar_a_whatsapp || 'NO',
-      llevar_control_en_caja: insumo.llevarControlEnCaja || insumo.llevar_control_en_caja || 'NO'
+      llevar_control_en_caja: insumo.llevarControlEnCaja || insumo.llevar_control_en_caja || 'NO',
+      cuadrarInsumos: insumo.cuadrarInsumos || false
     });
     setEstadoActivo((insumo.estado || insumo.Estado || 'ACTIVO').toUpperCase() === 'ACTIVO');
     setShowEditModal(true);
@@ -257,6 +259,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
         descontar_cant_de_ventas: formData.descontar_cant_de_ventas,
         notificar_a_whatsapp: formData.notificar_a_whatsapp,
         llevar_control_en_caja: formData.llevar_control_en_caja,
+        cuadrarInsumos: formData.cuadrarInsumos,
         disponible: formData.disponible,
         estado: estadoActivo ? 'ACTIVO' : 'INACTIVO',
         imageUrl: finalImageUrl,
@@ -738,6 +741,19 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                     onPress={() => setFormData(p => ({ ...p, llevar_control_en_caja: p.llevar_control_en_caja === 'SI' ? 'NO' : 'SI' }))}
                   >
                     <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#fff', transform: [{ translateX: formData.llevar_control_en_caja === 'SI' ? 20 : 0 }] }} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <View style={{ flex: 1 }}>
+                    <RNText style={{ fontSize: 14, color: '#4b5563' }}>Verificar en cierre caja</RNText>
+                    <RNText style={{ fontSize: 11, color: '#9ca3af' }}>Requiere conteo físico diario</RNText>
+                  </View>
+                  <TouchableOpacity
+                    style={{ width: 48, height: 28, borderRadius: 14, backgroundColor: formData.cuadrarInsumos ? '#22c55e' : '#d1d5db', padding: 2 }}
+                    onPress={() => setFormData(p => ({ ...p, cuadrarInsumos: !p.cuadrarInsumos }))}
+                  >
+                    <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#fff', transform: [{ translateX: formData.cuadrarInsumos ? 20 : 0 }] }} />
                   </TouchableOpacity>
                 </View>
               </View>
