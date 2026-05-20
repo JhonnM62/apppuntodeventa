@@ -73,10 +73,8 @@ export interface InsumoVerificacion {
   nombre: string;
   unidadDeMedida: string;
   disponibleEnSistema: number;
-  cantApertura?: number;
   ultimoConteoAt: string | null;
   conteoVerificadoHoy: boolean;
-  diferenciaDetectada: boolean;
 }
 
 export interface VerificacionPendienteResponse {
@@ -87,11 +85,9 @@ export interface VerificacionPendienteResponse {
 }
 
 export interface InsumoConteoPayload {
-  idcierreyapertura: string;
+  idInsumo: string;
   cantContada: number;
-  diferenciaDetectada?: boolean;
-  razonDiferencia?: string;
-  pinConfirmacion?: string;
+  disponibleEnSistema: number;
 }
 
 export const getVerificacionPendiente = async (cajaId: string): Promise<VerificacionPendienteResponse> => {
@@ -102,7 +98,7 @@ export const getVerificacionPendiente = async (cajaId: string): Promise<Verifica
   if (response?.data) {
     return response.data as VerificacionPendienteResponse;
   }
-  return response as VerificacionPendienteResponse;
+  return response as unknown as VerificacionPendienteResponse;
 };
 
 export const registrarConteo = async (cajaId: string, insumos: InsumoConteoPayload[]) => {

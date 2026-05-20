@@ -35,19 +35,15 @@ interface InsumoState {
   unidadDeMedida: string;
   disponibleEnSistema: number;
   cantContada: number;
-  diferenciaDetectada: boolean;
-  razonDiferencia: string;
-  pinConfirmacion: string;
-  checked: boolean;
+  diferencia: number;
 }
 
-type ModalState = 'CHECKING' | 'PENDING_VERIFICATION' | 'LOADING' | 'DIFFERENCE_DETECTED' | 'ERROR' | 'ALREADY_VERIFIED';
+type ModalState = 'CHECKING' | 'PENDING_VERIFICATION' | 'LOADING' | 'ERROR' | 'ALREADY_VERIFIED';
 
 const estadoLabels: Record<ModalState, { titulo: string; icono: string; color: string }> = {
   CHECKING: { titulo: 'Verificando insumos...', icono: 'hourglass-outline', color: COLORS.info },
   PENDING_VERIFICATION: { titulo: 'Verificación de Insumos', icono: 'alert-circle', color: COLORS.warning },
   LOADING: { titulo: 'Guardando conteo...', icono: 'hourglass-outline', color: COLORS.info },
-  DIFFERENCE_DETECTED: { titulo: 'Diferencia Detectada', icono: 'warning', color: COLORS.error },
   ERROR: { titulo: 'Error', icono: 'close-circle', color: COLORS.error },
   ALREADY_VERIFIED: { titulo: 'Insumos Verificados', icono: 'checkmark-circle', color: COLORS.success },
 };
@@ -93,11 +89,8 @@ export default function VerifyInsumosModal({
           nombre: p.nombre,
           unidadDeMedida: p.unidadDeMedida,
           disponibleEnSistema: p.disponibleEnSistema,
-          cantContada: p.cantApertura || p.disponibleEnSistema,
-          diferenciaDetectada: false,
-          razonDiferencia: '',
-          pinConfirmacion: '',
-          checked: false,
+          cantContada: p.disponibleEnSistema,
+          diferencia: 0,
         }));
       
       setInsumos(insumosInit);
@@ -120,12 +113,11 @@ export default function VerifyInsumosModal({
       prev.map(insumo => {
         if (insumo.id !== id) return insumo;
         const nuevaCant = Math.max(0, insumo.cantContada + delta);
-        const diff = nuevaCant !== insumo.disponibleEnSistema;
+        const diff = nuevaCant - insumo.disponibleEnSistema;
         return {
           ...insumo,
           cantContada: nuevaCant,
-          diferenciaDetectada: diff,
-          checked: false,
+          diferencia: diff,
         };
       })
     );
@@ -139,59 +131,27 @@ export default function VerifyInsumosModal({
       prev.map(insumo => {
         if (insumo.id !== id) return insumo;
         const nuevaCant = isNaN(numValue) ? 0 : Math.max(0, numValue);
-        const diff = nuevaCant !== insumo.disponibleEnSistema;
+        const diff = nuevaCant - insumo.disponibleEnSistema;
         return {
           ...insumo,
           cantContada: nuevaCant,
-          diferenciaDetectada: diff,
-          checked: false,
+          diferencia: diff,
         };
       })
     );
   };
 
-  const handleCheckedChange = (id: string, checked: boolean) => {
-    setInsumos(prev =>
-      prev.map(insumo => {
-        if (insumo.id !== id) return insumo;
-        return { ...insumo, checked };
-      })
-    );
-  };
-
   const handleConfirmar = async () => {
-    const todosChecked = insumos.filter(i => i.diferenciaDetectada).every(i => i.checked);
-    if (!todosChecked && insumos.some(i => i.diferenciaDetectada)) {
-      Alert.alert(
-        'Confirmación requerida',
-        'Debes marcar cada insumo con diferencia para confirmar que haz verificado el conteo físico.',
-        [{ text: 'Entendido', style: 'default' }]
-      );
-      return;
-    }
-
     setModalState('LOADING');
 
     try {
-      const insumosConDiferencia = insumos
-        .filter(i => i.diferenciaDetectada && i.checked)
-        .map(i => ({
-          idcierreyapertura: i.id,
-          cantContada: i.cantContada,
-          diferenciaDetectada: i.diferenciaDetectada,
-          razonDiferencia: i.razonDiferencia || undefined,
-          pinConfirmacion: i.pinConfirmacion || undefined,
-        }));
+      const payload = insumos.map(i => ({
+        idInsumo: i.id,
+        cantContada: i.cantContada,
+        disponibleEnSistema: i.disponibleEnSistema,
+      }));
 
-      const insumosSinDiferencia = insumos
-        .filter(i => !i.diferenciaDetectada)
-        .map(i => ({
-          idcierreyapertura: i.id,
-          cantContada: i.cantContada,
-          diferenciaDetectada: false,
-        }));
-
-      await registrarConteo(cajaId, [...insumosSinDiferencia, ...insumosConDiferencia]);
+      await registrarConteo(cajaId, payload);
       onVerified();
     } catch (error: any) {
       console.error('Error registrando conteo:', error);
@@ -206,7 +166,6 @@ export default function VerifyInsumosModal({
   };
 
   const { titulo, icono, color } = estadoLabels[modalState];
-  const hasDiferencias = insumos.some(i => i.diferenciaDetectada);
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={handleCancel}>
@@ -279,24 +238,6 @@ export default function VerifyInsumosModal({
                 keyboardShouldPersistTaps="handled"
               >
                 <View className="px-5 py-4">
-                  {modalState === 'DIFFERENCE_DETECTED' && (
-                    <View className="mb-4 p-3 rounded-xl" style={{ backgroundColor: `${COLORS.error}10` }}>
-                      <Text className="text-sm text-gray-700 text-center">
-                        Se detectaron diferencias entre el stock del sistema y el conteo físico.
-                        Revisa cada insumo y confirma con tu PIN.
-                      </Text>
-                    </View>
-                  )}
-
-                  {hasDiferencias && (
-                    <View className="mb-4 p-3 rounded-xl" style={{ backgroundColor: `${COLORS.warning}10` }}>
-                      <Text className="text-sm text-gray-700 text-center">
-                        Los insumos marcados en rojo tienen diferencia. Debes marcar cada uno
-                        para confirmar que verificaste el conteo físico.
-                      </Text>
-                    </View>
-                  )}
-
                   <Text className="text-sm font-medium text-gray-700 mb-3">
                     Insumos que requieren verificación:
                   </Text>
@@ -306,9 +247,7 @@ export default function VerifyInsumosModal({
                       key={insumo.id}
                       className={cn(
                         'mb-3 p-4 rounded-xl border',
-                        insumo.diferenciaDetectada && insumo.checked
-                          ? 'border-green-300 bg-green-50'
-                          : insumo.diferenciaDetectada
+                        insumo.diferencia !== 0
                           ? 'border-red-200 bg-red-50'
                           : 'border-gray-200 bg-gray-50'
                       )}
@@ -317,15 +256,17 @@ export default function VerifyInsumosModal({
                         <Text className="text-base font-semibold text-gray-900 flex-1">
                           {insumo.nombre}
                         </Text>
-                        {insumo.diferenciaDetectada ? (
+                        {insumo.diferencia !== 0 ? (
                           <View className="flex-row items-center">
                             <Ionicons name="warning" size={16} color={COLORS.error} />
-                            <Text className="text-xs font-medium text-red-500 ml-1">Diferencia</Text>
+                            <Text className="text-xs font-medium text-red-500 ml-1">
+                              {insumo.diferencia > 0 ? '+' : ''}{insumo.diferencia}
+                            </Text>
                           </View>
                         ) : (
                           <View className="flex-row items-center">
                             <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
-                            <Text className="text-xs font-medium text-green-500 ml-1">Sin diferencia</Text>
+                            <Text className="text-xs font-medium text-green-500 ml-1">Cuadrado</Text>
                           </View>
                         )}
                       </View>
@@ -339,7 +280,6 @@ export default function VerifyInsumosModal({
                         </Text>
                       </View>
 
-                      {/* Cantidad input con botones */}
                       <View className="flex-row items-center justify-center">
                         <Pressable
                           onPress={() => handleCantidadChange(insumo.id, -1)}
@@ -356,7 +296,7 @@ export default function VerifyInsumosModal({
                           className="mx-3 w-20 h-12 text-center text-lg font-bold"
                           style={{
                             backgroundColor: COLORS.surface,
-                            borderColor: insumo.diferenciaDetectada ? COLORS.error : COLORS.primary,
+                            borderColor: insumo.diferencia !== 0 ? COLORS.error : COLORS.primary,
                             borderWidth: 2,
                           }}
                         />
@@ -369,33 +309,6 @@ export default function VerifyInsumosModal({
                           <Ionicons name="add" size={22} color={COLORS.primary} />
                         </Pressable>
                       </View>
-
-                      {/* Checkbox para confirmar */}
-                      {insumo.diferenciaDetectada && (
-                        <Pressable
-                          onPress={() => handleCheckedChange(insumo.id, !insumo.checked)}
-                          className={cn(
-                            'mt-3 flex-row items-center p-3 rounded-xl border',
-                            insumo.checked
-                              ? 'border-green-300 bg-green-100'
-                              : 'border-gray-200 bg-white'
-                          )}
-                        >
-                          <View
-                            className={cn(
-                              'w-5 h-5 rounded-md items-center justify-center mr-3',
-                              insumo.checked ? 'bg-green-500' : 'bg-gray-200'
-                            )}
-                          >
-                            {insumo.checked && (
-                              <Ionicons name="checkmark" size={14} color="white" />
-                            )}
-                          </View>
-                          <Text className="text-sm text-gray-700 flex-1">
-                            Declaro que la cantidad física conteida es correcta según mi conteo
-                          </Text>
-                        </Pressable>
-                      )}
                     </View>
                   ))}
                 </View>
