@@ -71,8 +71,13 @@ export default function VerifyInsumosModal({
     
     try {
       const response = await getVerificacionPendiente(cajaId);
+      console.log('[VerifyInsumosModal] Response:', JSON.stringify(response, null, 2));
+      
       const pendientes = response?.pendientes ?? [];
+      console.log('[VerifyInsumosModal] Pendientes:', pendientes.length, pendientes.map(p => ({ nombre: p.nombre, conteoVerificadoHoy: p.conteoVerificadoHoy })));
+      
       const todasVerificadas = response?.todasVerificadas ?? false;
+      console.log('[VerifyInsumosModal] TodasVerificadas:', todasVerificadas);
       
       const insumosPendientes = pendientes.filter((p: InsumoVerificacion) => !p.conteoVerificadoHoy);
       
