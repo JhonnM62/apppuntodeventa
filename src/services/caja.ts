@@ -99,10 +99,13 @@ export interface InsumoConteoPayload {
 
 export const getVerificacionPendiente = async (cajaId: string): Promise<VerificacionPendienteResponse> => {
   const response = await api.get(`/caja/${cajaId}/verificacion-pendiente`);
-  return response.data;
+  if (!response) {
+    throw new Error('No se recibió respuesta del servidor');
+  }
+  return response.data || response;
 };
 
 export const registrarConteo = async (cajaId: string, insumos: InsumoConteoPayload[]) => {
   const response = await api.post(`/caja/${cajaId}/registrar-conteo`, { insumos });
-  return response.data;
+  return response.data || response;
 };

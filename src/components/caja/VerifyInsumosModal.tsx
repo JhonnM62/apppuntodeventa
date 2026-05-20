@@ -69,7 +69,8 @@ export default function VerifyInsumosModal({
     
     try {
       const response = await getVerificacionPendiente(cajaId);
-      const { pendientes, todasVerificadas } = response.data;
+      const pendientes = response?.pendientes ?? response?.data?.pendientes ?? [];
+      const todasVerificadas = response?.todasVerificadas ?? response?.data?.todasVerificadas ?? false;
       
       if (todasVerificadas) {
         onVerified();
