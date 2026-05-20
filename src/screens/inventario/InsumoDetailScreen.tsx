@@ -442,6 +442,19 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
             <RNText style={styles.infoValue}>{insumo.llevarControlEnCaja || insumo.llevar_control_en_caja || 'NO'}</RNText>
           </View>
           <View style={styles.infoRow}>
+            <RNText style={styles.infoLabel}>Verificar en Cierre</RNText>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons 
+                name={insumo.cuadrarInsumos ? 'checkbox' : 'square-outline'} 
+                size={18} 
+                color={insumo.cuadrarInsumos ? '#22c55e' : '#9ca3af'} 
+              />
+              <RNText style={[styles.infoValue, { marginLeft: 4, color: insumo.cuadrarInsumos ? '#22c55e' : '#6b7280' }]}>
+                {insumo.cuadrarInsumos ? 'SI' : 'NO'}
+              </RNText>
+            </View>
+          </View>
+          <View style={styles.infoRow}>
             <RNText style={styles.infoLabel}>Stock Histórico (Total Entradas)</RNText>
             <RNText style={styles.infoValue}>{Number(insumo.cantidad ?? insumo.Cantidad ?? 0)}</RNText>
           </View>
