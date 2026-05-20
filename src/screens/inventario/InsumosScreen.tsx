@@ -211,7 +211,8 @@ const InsumosScreen = ({ navigation }: Props) => {
       fecha_de_vencimiento: '',
       descontar_cant_de_ventas: 'NO',
       notificar_a_whatsapp: 'NO',
-      llevar_control_en_caja: 'NO'
+      llevar_control_en_caja: 'NO',
+      cuadrarInsumos: false
     });
     setLocalImageUri(null);
     setIsEditing(false);
