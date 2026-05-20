@@ -35,6 +35,7 @@ export type InsumoItem = {
   disponible?: string;
   llevarControlEnCaja?: string;
   llevar_control_en_caja?: string;
+  cuadrarInsumos?: boolean;
   estadoStock?: 'critico' | 'normal' | 'sobrante';
   estado?: string;
 };
