@@ -66,11 +66,22 @@ const InsumosScreen = ({ navigation }: Props) => {
   // Advanced filters
   const [filterNombre, setFilterNombre] = useState('');
   const [filterCategoria, setFilterCategoria] = useState<string | null>(null);
+  const [filterUnidades, setFilterUnidades] = useState('');
   const [filterEstado, setFilterEstado] = useState<'all' | 'ACTIVO' | 'INACTIVO'>('all');
   const [filterLlevarControl, setFilterLlevarControl] = useState<'all' | 'SI' | 'NO'>('all');
   const [filterCuadrarInsumos, setFilterCuadrarInsumos] = useState<'all' | 'SI' | 'NO'>('all');
+  const [filterDescontar, setFilterDescontar] = useState<'all' | 'SI' | 'NO'>('all');
+  const [filterNotificar, setFilterNotificar] = useState<'all' | 'SI' | 'NO'>('all');
+  const [filterEnviar, setFilterEnviar] = useState<'all' | 'SI' | 'NO'>('all');
   const [filterMinStock, setFilterMinStock] = useState<string>('');
   const [filterMaxStock, setFilterMaxStock] = useState<string>('');
+  const [filterMinPrecio, setFilterMinPrecio] = useState<string>('');
+  const [filterMaxPrecio, setFilterMaxPrecio] = useState<string>('');
+  const [filterMinTotal, setFilterMinTotal] = useState<string>('');
+  const [filterMaxTotal, setFilterMaxTotal] = useState<string>('');
+  const [filterFecha, setFilterFecha] = useState('');
+  const [filterStockMin, setFilterStockMin] = useState<string>('');
+  const [filterStockMax, setFilterStockMax] = useState<string>('');
 
   const [estadoActivo, setEstadoActivo] = useState(true);
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
@@ -200,31 +211,106 @@ const InsumosScreen = ({ navigation }: Props) => {
       });
     }
 
-    if (filterCuadrarInsumos !== 'all') {
+if (filterCuadrarInsumos !== 'all') {
       result = result.filter(insumo => {
         const cuadrar = insumo.cuadrarInsumos ? 'SI' : 'NO';
         return cuadrar === filterCuadrarInsumos;
       });
     }
 
-    if (filterMinStock) {
-      const min = Number(filterMinStock);
+    if (filterUnidades) {
+      const search = filterUnidades.toLowerCase();
+      result = result.filter(insumo =>
+        (insumo.unidades || insumo.Unidades || '').toLowerCase().includes(search)
+      );
+    }
+
+    if (filterDescontar !== 'all') {
+      result = result.filter(insumo => {
+        const val = insumo.descontarCantDeVentas || insumo.descontar_cant_de_ventas || 'NO';
+        return val === filterDescontar;
+      });
+    }
+
+    if (filterNotificar !== 'all') {
+      result = result.filter(insumo => {
+        const val = insumo.notificarAWhatsapp || insumo.notificar_a_whatsapp || 'NO';
+        return val === filterNotificar;
+      });
+    }
+
+    if (filterEnviar !== 'all') {
+      result = result.filter(insumo => {
+        const val = insumo.enviarSiONo || insumo.enviar_si_o_no || 'NO';
+        return val === filterEnviar;
+      });
+    }
+
+    if (filterStockMin) {
+      const min = Number(filterStockMin);
       if (!isNaN(min)) {
         result = result.filter(insumo => {
-          const stock = Number(insumo.cantidad || insumo.Cantidad || 0);
-          return stock >= min;
+          const disponible = Number(insumo.disponible || insumo.Disponible || 0);
+          return disponible >= min;
         });
       }
     }
 
-    if (filterMaxStock) {
-      const max = Number(filterMaxStock);
+    if (filterStockMax) {
+      const max = Number(filterStockMax);
       if (!isNaN(max)) {
         result = result.filter(insumo => {
-          const stock = Number(insumo.cantidad || insumo.Cantidad || 0);
-          return stock <= max;
+          const disponible = Number(insumo.disponible || insumo.Disponible || 0);
+          return disponible <= max;
         });
       }
+    }
+
+    if (filterMinPrecio) {
+      const min = Number(filterMinPrecio);
+      if (!isNaN(min)) {
+        result = result.filter(insumo => {
+          const precio = Number(insumo.precio || insumo.Precio || 0);
+          return precio >= min;
+        });
+      }
+    }
+
+    if (filterMaxPrecio) {
+      const max = Number(filterMaxPrecio);
+      if (!isNaN(max)) {
+        result = result.filter(insumo => {
+          const precio = Number(insumo.precio || insumo.Precio || 0);
+          return precio <= max;
+        });
+      }
+    }
+
+    if (filterMinTotal) {
+      const min = Number(filterMinTotal);
+      if (!isNaN(min)) {
+        result = result.filter(insumo => {
+          const total = Number(insumo.total || insumo.Total || 0);
+          return total >= min;
+        });
+      }
+    }
+
+    if (filterMaxTotal) {
+      const max = Number(filterMaxTotal);
+      if (!isNaN(max)) {
+        result = result.filter(insumo => {
+          const total = Number(insumo.total || insumo.Total || 0);
+          return total <= max;
+        });
+      }
+    }
+
+    if (filterFecha) {
+      const search = filterFecha.toLowerCase();
+      result = result.filter(insumo =>
+        (insumo.fecha_de_vencimiento || insumo.fechaDeVencimiento || '').toLowerCase().includes(search)
+      );
     }
 
     return result.sort((a, b) => {
@@ -1374,13 +1460,220 @@ const InsumosScreen = ({ navigation }: Props) => {
           </View>
 
           <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} contentContainerStyle={{ paddingVertical: 16 }}>
-            <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Nombre</RNText>
+<RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Nombre</RNText>
             <TextInput
               className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 mb-4"
               placeholder="Filtrar por nombre..."
               placeholderTextColor="#9ca3af"
               value={filterNombre}
               onChangeText={setFilterNombre}
+            />
+
+            <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Categoría</RNText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
+              <TouchableOpacity
+                style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: filterCategoria === null ? '#3b82f6' : '#f3f4f6', marginRight: 8 }}
+                onPress={() => setFilterCategoria(null)}
+              >
+                <RNText style={{ fontSize: 12, fontWeight: '600', color: filterCategoria === null ? '#fff' : '#4b5563' }}>Todas</RNText>
+              </TouchableOpacity>
+              {categoriasConStock.map(cat => (
+                <TouchableOpacity
+                  key={cat.nombre}
+                  style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: filterCategoria === cat.nombre ? '#3b82f6' : '#f3f4f6', marginRight: 8 }}
+                  onPress={() => setFilterCategoria(cat.nombre)}
+                >
+                  <RNText style={{ fontSize: 12, fontWeight: '600', color: filterCategoria === cat.nombre ? '#fff' : '#4b5563' }}>{cat.nombre}</RNText>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Unidades</RNText>
+            <TextInput
+              className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 mb-4"
+              placeholder="Filtrar por unidades (kg, Lt, etc)..."
+              placeholderTextColor="#9ca3af"
+              value={filterUnidades}
+              onChangeText={setFilterUnidades}
+            />
+
+            <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Estado</RNText>
+            <View className="flex-row mb-4">
+              {(['all', 'ACTIVO', 'INACTIVO'] as const).map(est => (
+                <TouchableOpacity
+                  key={est}
+                  style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: filterEstado === est ? '#3b82f6' : '#f3f4f6', marginRight: 8 }}
+                  onPress={() => setFilterEstado(est)}
+                >
+                  <RNText style={{ fontSize: 12, fontWeight: '600', color: filterEstado === est ? '#fff' : '#4b5563' }}>
+                    {est === 'all' ? 'Todos' : est === 'ACTIVO' ? 'Activos' : 'Inactivos'}
+                  </RNText>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Llevar Control en Caja</RNText>
+            <View className="flex-row mb-4">
+              {(['all', 'SI', 'NO'] as const).map(val => (
+                <TouchableOpacity
+                  key={val}
+                  style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: filterLlevarControl === val ? '#3b82f6' : '#f3f4f6', marginRight: 8 }}
+                  onPress={() => setFilterLlevarControl(val)}
+                >
+                  <RNText style={{ fontSize: 12, fontWeight: '600', color: filterLlevarControl === val ? '#fff' : '#4b5563' }}>
+                    {val === 'all' ? 'Todos' : val}
+                  </RNText>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Verificar en Cierre</RNText>
+            <View className="flex-row mb-4">
+              {(['all', 'SI', 'NO'] as const).map(val => (
+                <TouchableOpacity
+                  key={val}
+                  style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: filterCuadrarInsumos === val ? '#3b82f6' : '#f3f4f6', marginRight: 8 }}
+                  onPress={() => setFilterCuadrarInsumos(val)}
+                >
+                  <RNText style={{ fontSize: 12, fontWeight: '600', color: filterCuadrarInsumos === val ? '#fff' : '#4b5563' }}>
+                    {val === 'all' ? 'Todos' : val}
+                  </RNText>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Descontar de Ventas</RNText>
+            <View className="flex-row mb-4">
+              {(['all', 'SI', 'NO'] as const).map(val => (
+                <TouchableOpacity
+                  key={val}
+                  style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: filterDescontar === val ? '#3b82f6' : '#f3f4f6', marginRight: 8 }}
+                  onPress={() => setFilterDescontar(val)}
+                >
+                  <RNText style={{ fontSize: 12, fontWeight: '600', color: filterDescontar === val ? '#fff' : '#4b5563' }}>
+                    {val === 'all' ? 'Todos' : val}
+                  </RNText>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Notificar WhatsApp</RNText>
+            <View className="flex-row mb-4">
+              {(['all', 'SI', 'NO'] as const).map(val => (
+                <TouchableOpacity
+                  key={val}
+                  style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: filterNotificar === val ? '#3b82f6' : '#f3f4f6', marginRight: 8 }}
+                  onPress={() => setFilterNotificar(val)}
+                >
+                  <RNText style={{ fontSize: 12, fontWeight: '600', color: filterNotificar === val ? '#fff' : '#4b5563' }}>
+                    {val === 'all' ? 'Todos' : val}
+                  </RNText>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Enviar Si/No</RNText>
+            <View className="flex-row mb-4">
+              {(['all', 'SI', 'NO'] as const).map(val => (
+                <TouchableOpacity
+                  key={val}
+                  style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: filterEnviar === val ? '#3b82f6' : '#f3f4f6', marginRight: 8 }}
+                  onPress={() => setFilterEnviar(val)}
+                >
+                  <RNText style={{ fontSize: 12, fontWeight: '600', color: filterEnviar === val ? '#fff' : '#4b5563' }}>
+                    {val === 'all' ? 'Todos' : val}
+                  </RNText>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Stock Histórico (Rango)</RNText>
+            <View className="flex-row mb-4">
+              <TextInput
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 mr-2"
+                placeholder="Min..."
+                placeholderTextColor="#9ca3af"
+                keyboardType="numeric"
+                value={filterStockMin}
+                onChangeText={setFilterStockMin}
+              />
+              <TextInput
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900"
+                placeholder="Max..."
+                placeholderTextColor="#9ca3af"
+                keyboardType="numeric"
+                value={filterStockMax}
+                onChangeText={setFilterStockMax}
+              />
+            </View>
+
+            <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Stock Disponible (Rango)</RNText>
+            <View className="flex-row mb-4">
+              <TextInput
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 mr-2"
+                placeholder="Min..."
+                placeholderTextColor="#9ca3af"
+                keyboardType="numeric"
+                value={filterMinStock}
+                onChangeText={setFilterMinStock}
+              />
+              <TextInput
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900"
+                placeholder="Max..."
+                placeholderTextColor="#9ca3af"
+                keyboardType="numeric"
+                value={filterMaxStock}
+                onChangeText={setFilterMaxStock}
+              />
+            </View>
+
+            <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Precio (Rango)</RNText>
+            <View className="flex-row mb-4">
+              <TextInput
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 mr-2"
+                placeholder="Min..."
+                placeholderTextColor="#9ca3af"
+                keyboardType="numeric"
+                value={filterMinPrecio}
+                onChangeText={setFilterMinPrecio}
+              />
+              <TextInput
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900"
+                placeholder="Max..."
+                placeholderTextColor="#9ca3af"
+                keyboardType="numeric"
+                value={filterMaxPrecio}
+                onChangeText={setFilterMaxPrecio}
+              />
+            </View>
+
+            <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Total (Rango)</RNText>
+            <View className="flex-row mb-4">
+              <TextInput
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 mr-2"
+                placeholder="Min..."
+                placeholderTextColor="#9ca3af"
+                keyboardType="numeric"
+                value={filterMinTotal}
+                onChangeText={setFilterMinTotal}
+              />
+              <TextInput
+                className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900"
+                placeholder="Max..."
+                placeholderTextColor="#9ca3af"
+                keyboardType="numeric"
+                value={filterMaxTotal}
+                onChangeText={setFilterMaxTotal}
+              />
+            </View>
+
+            <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Fecha de Vencimiento</RNText>
+            <TextInput
+              className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 mb-4"
+              placeholder="Buscar por fecha..."
+              placeholderTextColor="#9ca3af"
+              value={filterFecha}
+              onChangeText={setFilterFecha}
             />
 
             <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Categoría</RNText>
@@ -1474,11 +1767,22 @@ const InsumosScreen = ({ navigation }: Props) => {
               onPress={() => {
                 setFilterNombre('');
                 setFilterCategoria(null);
+                setFilterUnidades('');
                 setFilterEstado('all');
                 setFilterLlevarControl('all');
                 setFilterCuadrarInsumos('all');
+                setFilterDescontar('all');
+                setFilterNotificar('all');
+                setFilterEnviar('all');
+                setFilterStockMin('');
+                setFilterStockMax('');
                 setFilterMinStock('');
                 setFilterMaxStock('');
+                setFilterMinPrecio('');
+                setFilterMaxPrecio('');
+                setFilterMinTotal('');
+                setFilterMaxTotal('');
+                setFilterFecha('');
               }}
             >
               <RNText className="text-base font-semibold text-gray-600">Limpiar</RNText>
