@@ -116,6 +116,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const handleTabChange = (tab: 'form' | 'analysis' | 'cuadre') => {
     if ((tab === 'cuadre' || tab === 'analysis') && !isNew) {
       setPendingTab(tab);
+      console.log('[DEBUG handleTabChange] Setting verifyModalVisible=true, current horaCongelada:', horaCongelada);
       setVerifyModalVisible(true);
     } else {
       setActiveTab(tab);
@@ -123,11 +124,14 @@ export default function CajaFormScreen({ route, navigation }: any) {
   };
 
   const handleVerificationPassed = () => {
+    console.log('[DEBUG handleVerificationPassed] horaCongelada:', horaCongelada, 'pendingTab:', pendingTab);
     setVerifyModalVisible(false);
     setVerificacionCompletada(true);
     if (!horaCongelada) {
+      console.log('[DEBUG] Showing freeze modal because horaCongelada is null');
       setIsFreezeModalVisible(true);
     } else {
+      console.log('[DEBUG] Directly setting activeTab to pendingTab');
       setActiveTab(pendingTab);
     }
   };
