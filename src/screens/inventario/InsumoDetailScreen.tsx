@@ -92,7 +92,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
     try {
       const data = await insumosService.getById(insumoId!);
       setInsumo(data);
-      setLocalImageUri(data.imagen || data.imagencard || null);
+      setLocalImageUri(data.imagen || null);
     } catch (error: any) {
       Alert.alert('Error', 'No se pudo cargar el insumo');
       navigation.goBack();
@@ -302,7 +302,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const estadoColors: Record<string, string> = { critico: '#ef4444', normal: '#22c55e', sobrante: '#3b82f6' };
 
   const getImageUrl = () => {
-    const url = insumo.imagen || insumo.Image;
+    const url = insumo.imagen;
     if (!url) return null;
     if (url.startsWith('http')) return url;
     
@@ -408,7 +408,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <RNText style={styles.cardTitle}>Información Adicional</RNText>
             {canEdit && (
-              <TouchableOpacity onPress={() => { setFormData(insumo as any); setLocalImageUri(insumo?.imagen || insumo?.imagencard || null); setShowEditModal(true); }}>
+              <TouchableOpacity onPress={() => { setFormData(insumo as any); setLocalImageUri(insumo?.imagen || null); setShowEditModal(true); }}>
                 <Ionicons name="pencil" size={20} color="#3b82f6" />
               </TouchableOpacity>
             )}

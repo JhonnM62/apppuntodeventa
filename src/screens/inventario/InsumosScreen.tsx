@@ -382,7 +382,7 @@ if (filterCuadrarInsumos !== 'all') {
       unidades: insumo.unidades || insumo.Unidades || '',
       cantidad: insumo.cantidad || insumo.Cantidad || 0,
       precio: insumo.precio || insumo.Precio || 0,
-      imageUrl: insumo.imageUrl || insumo['Image Url'] || '',
+      imageUrl: insumo.imagen || '',
       disponible: Number(insumo.disponible) || Number(insumo.Disponible) || 0,
       estado: insumo.estado || insumo.Estado || 'ACTIVO',
       apartir_de_cantidad: insumo.apartirDeCantidad || insumo.apartir_de_cantidad || 0,
@@ -571,7 +571,7 @@ if (filterCuadrarInsumos !== 'all') {
   }), [insumos]);
 
   const getImageUrl = (item: InsumoItem) => {
-    const url = item.imagen || item.Image;
+    const url = item.imagen;
     if (!url) return null;
     if (url.startsWith('http')) return url;
     
@@ -1052,7 +1052,7 @@ if (filterCuadrarInsumos !== 'all') {
             <View className="items-center mb-6">
               <TouchableOpacity onPress={handleSelectImage} activeOpacity={0.8}>
                 <View className="w-24 h-24 rounded-full bg-white items-center justify-center border-2 border-dashed border-gray-300 overflow-hidden">
-                  {(localImageUri || formData.imageUrl || formData.imagen) ? (
+                  {(localImageUri || formData.imagen) ? (
                     <ImageComponent 
                       source={{ uri: localImageUri || getImageUrl(formData as any) }} 
                       style={{ width: '100%', height: '100%' }} 
@@ -1069,11 +1069,11 @@ if (filterCuadrarInsumos !== 'all') {
                 </View>
               </TouchableOpacity>
               
-              {(localImageUri || formData.imageUrl || formData.imagen) && (
+              {(localImageUri || formData.imagen) && (
                 <TouchableOpacity 
                   onPress={() => {
                     setLocalImageUri(null);
-                    setFormData(p => ({ ...p, imageUrl: null, imagen: null }));
+                    setFormData(p => ({ ...p, imagen: null }));
                   }} 
                   className="mt-3 flex-row items-center bg-red-50 px-3 py-1.5 rounded-full"
                 >
