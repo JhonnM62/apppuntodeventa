@@ -80,13 +80,10 @@ export interface InsumoVerificacion {
 }
 
 export interface VerificacionPendienteResponse {
-  success: boolean;
-  data: {
-    pendientes: InsumoVerificacion[];
-    totalPendientes: number;
-    yaVerificadoHoy: boolean;
-    todasVerificadas: boolean;
-  };
+  pendientes: InsumoVerificacion[];
+  totalPendientes: number;
+  yaVerificadoHoy: boolean;
+  todasVerificadas: boolean;
 }
 
 export interface InsumoConteoPayload {
@@ -102,7 +99,10 @@ export const getVerificacionPendiente = async (cajaId: string): Promise<Verifica
   if (!response) {
     throw new Error('No se recibió respuesta del servidor');
   }
-  return response.data || response;
+  if (response?.data) {
+    return response.data as VerificacionPendienteResponse;
+  }
+  return response as VerificacionPendienteResponse;
 };
 
 export const registrarConteo = async (cajaId: string, insumos: InsumoConteoPayload[]) => {

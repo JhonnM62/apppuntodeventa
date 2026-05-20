@@ -41,7 +41,7 @@ interface InsumoState {
   checked: boolean;
 }
 
-type ModalState = 'CHECKING' | 'PENDING_VERIFICATION' | 'LOADING' | 'DIFFERENCE_DETECTED' | 'ERROR';
+type ModalState = 'CHECKING' | 'PENDING_VERIFICATION' | 'LOADING' | 'DIFFERENCE_DETECTED' | 'ERROR' | 'ALREADY_VERIFIED';
 
 const estadoLabels: Record<ModalState, { titulo: string; icono: string; color: string }> = {
   CHECKING: { titulo: 'Verificando insumos...', icono: 'hourglass-outline', color: COLORS.info },
@@ -49,6 +49,7 @@ const estadoLabels: Record<ModalState, { titulo: string; icono: string; color: s
   LOADING: { titulo: 'Guardando conteo...', icono: 'hourglass-outline', color: COLORS.info },
   DIFFERENCE_DETECTED: { titulo: 'Diferencia Detectada', icono: 'warning', color: COLORS.error },
   ERROR: { titulo: 'Error', icono: 'close-circle', color: COLORS.error },
+  ALREADY_VERIFIED: { titulo: 'Insumos Verificados', icono: 'checkmark-circle', color: COLORS.success },
 };
 
 export default function VerifyInsumosModal({
@@ -66,19 +67,22 @@ export default function VerifyInsumosModal({
     
     setModalState('CHECKING');
     setErrorMessage('');
+    setInsumos([]);
     
     try {
       const response = await getVerificacionPendiente(cajaId);
-      const pendientes = response?.pendientes ?? response?.data?.pendientes ?? [];
-      const todasVerificadas = response?.todasVerificadas ?? response?.data?.todasVerificadas ?? false;
+      const pendientes = response?.pendientes ?? [];
+      const todasVerificadas = response?.todasVerificadas ?? false;
       
-      if (todasVerificadas) {
-        onVerified();
+      const insumosPendientes = pendientes.filter((p: InsumoVerificacion) => !p.conteoVerificadoHoy);
+      
+      if (insumosPendientes.length === 0) {
+        setInsumos([]);
+        setModalState('ALREADY_VERIFIED');
         return;
       }
       
-      const insumosInit = pendientes
-        .filter((p: InsumoVerificacion) => !p.conteoVerificadoHoy)
+      const insumosInit = insumosPendientes
         .map((p: InsumoVerificacion): InsumoState => ({
           id: p.id,
           nombre: p.nombre,
@@ -92,7 +96,7 @@ export default function VerifyInsumosModal({
         }));
       
       setInsumos(insumosInit);
-      setModalState(insumosInit.length > 0 ? 'PENDING_VERIFICATION' : 'CHECKING');
+      setModalState('PENDING_VERIFICATION');
     } catch (error: any) {
       console.error('Error cargando verificación:', error);
       setErrorMessage(error?.response?.data?.message || 'Error al cargar verificación');
@@ -245,6 +249,21 @@ export default function VerifyInsumosModal({
                 <View className="mt-4">
                   <Button variant="outline" onPress={loadVerificacion}>
                     Reintentar
+                  </Button>
+                </View>
+              </View>
+            ) : modalState === 'ALREADY_VERIFIED' ? (
+              <View className="items-center justify-center py-12 px-5">
+                <Ionicons name="checkmark-circle" size={64} color={COLORS.success} />
+                <Text className="text-lg font-bold text-gray-900 mt-4 text-center">
+                  ¡Todos los insumos verificados!
+                </Text>
+                <Text className="text-sm text-gray-500 mt-2 text-center">
+                  No hay insumos pendientes de conteo para esta caja.
+                </Text>
+                <View className="mt-6">
+                  <Button onPress={onVerified}>
+                    Continuar
                   </Button>
                 </View>
               </View>
