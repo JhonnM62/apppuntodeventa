@@ -1070,7 +1070,7 @@ const InsumosScreen = ({ navigation }: Props) => {
                 </TouchableOpacity>
               </View>
 
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 12 }}>
                 <View style={{ flex: 1 }}>
                   <RNText style={{ fontSize: 14, color: '#4b5563' }}>Verificar en cierre caja</RNText>
                   <RNText style={{ fontSize: 11, color: '#9ca3af' }}>Requiere conteo físico diario</RNText>
