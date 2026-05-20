@@ -22,6 +22,7 @@ import useSocketEvent from '../../hooks/useSocketEvent';
 import { useSocket } from '../../context/SocketContext';
 import { usePermissions } from '../../hooks/usePermissions';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import VerifyInsumosModal from '../../components/caja/VerifyInsumosModal';
 
 let DateTimePicker: any;
 try {
@@ -115,10 +116,19 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const handleTabChange = (tab: 'form' | 'analysis' | 'cuadre') => {
     if ((tab === 'cuadre' || tab === 'analysis') && !isNew) {
       setPendingTab(tab);
-      setIsFreezeModalVisible(true);
+      setVerifyModalVisible(true);
     } else {
       setActiveTab(tab);
     }
+  };
+
+  const handleVerificationPassed = () => {
+    setVerifyModalVisible(false);
+    setIsFreezeModalVisible(true);
+  };
+
+  const handleVerificationCancelled = () => {
+    setVerifyModalVisible(false);
   };
 
   // State to manage smooth scrolling for the multiline Observations field
@@ -126,6 +136,9 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
   // States for Cuadre de Caja
   const [transferenciasContadas, setTransferenciasContadas] = useState<string>('');
+
+  // State for VerifyInsumosModal
+  const [verifyModalVisible, setVerifyModalVisible] = useState(false);
 
   const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
 
@@ -1582,6 +1595,13 @@ export default function CajaFormScreen({ route, navigation }: any) {
           </KeyboardAvoidingView>
         </View>
       </Modal>
+
+      <VerifyInsumosModal
+        visible={verifyModalVisible}
+        cajaId={cajaId}
+        onVerified={handleVerificationPassed}
+        onCancel={handleVerificationCancelled}
+      />
     </View>
   );
 }

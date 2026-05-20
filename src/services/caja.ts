@@ -67,3 +67,42 @@ export const deleteCaja = async (id: string) => {
   const response = await api.delete(`/caja/${id}`);
   return response.data;
 };
+
+export interface InsumoVerificacion {
+  id: string;
+  nombre: string;
+  unidadDeMedida: string;
+  disponibleEnSistema: number;
+  cantApertura?: number;
+  ultimoConteoAt: string | null;
+  conteoVerificadoHoy: boolean;
+  diferenciaDetectada: boolean;
+}
+
+export interface VerificacionPendienteResponse {
+  success: boolean;
+  data: {
+    pendientes: InsumoVerificacion[];
+    totalPendientes: number;
+    yaVerificadoHoy: boolean;
+    todasVerificadas: boolean;
+  };
+}
+
+export interface InsumoConteoPayload {
+  idcierreyapertura: string;
+  cantContada: number;
+  diferenciaDetectada?: boolean;
+  razonDiferencia?: string;
+  pinConfirmacion?: string;
+}
+
+export const getVerificacionPendiente = async (cajaId: string): Promise<VerificacionPendienteResponse> => {
+  const response = await api.get(`/caja/${cajaId}/verificacion-pendiente`);
+  return response.data;
+};
+
+export const registrarConteo = async (cajaId: string, insumos: InsumoConteoPayload[]) => {
+  const response = await api.post(`/caja/${cajaId}/registrar-conteo`, { insumos });
+  return response.data;
+};
