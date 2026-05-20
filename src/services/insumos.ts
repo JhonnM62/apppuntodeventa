@@ -56,6 +56,7 @@ export type CreateInsumoDto = {
   descontar_cant_de_ventas?: string;
   notificar_a_whatsapp?: string;
   llevar_control_en_caja?: string;
+  cuadrarInsumos?: boolean;
   contador?: number;
   contador2?: number;
   imagencard?: string;

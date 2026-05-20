@@ -80,7 +80,8 @@ const InsumosScreen = ({ navigation }: Props) => {
     fecha_de_vencimiento: '',
     descontar_cant_de_ventas: 'NO',
     notificar_a_whatsapp: 'NO',
-    llevar_control_en_caja: 'NO'
+    llevar_control_en_caja: 'NO',
+    cuadrarInsumos: false
   });
 
   const fetchInsumos = useCallback(async () => {
@@ -238,7 +239,8 @@ const InsumosScreen = ({ navigation }: Props) => {
       fecha_de_vencimiento: insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento || '',
       descontar_cant_de_ventas: insumo.descontarCantDeVentas || insumo.descontar_cant_de_ventas || 'NO',
       notificar_a_whatsapp: insumo.notificarAWhatsapp || insumo.notificar_a_whatsapp || 'NO',
-      llevar_control_en_caja: insumo.llevarControlEnCaja || insumo.llevar_control_en_caja || 'NO'
+      llevar_control_en_caja: insumo.llevarControlEnCaja || insumo.llevar_control_en_caja || 'NO',
+      cuadrarInsumos: insumo.cuadrarInsumos || false
     });
     setLocalImageUri(null); // Reset local image when opening edit, rely on imageUrl if exists
     setIsEditing(true);
@@ -1057,13 +1059,26 @@ const InsumosScreen = ({ navigation }: Props) => {
                 </TouchableOpacity>
               </View>
 
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <RNText style={{ fontSize: 14, color: '#4b5563' }}>Llevar control en caja</RNText>
                 <TouchableOpacity
                   style={{ width: 48, height: 28, borderRadius: 14, backgroundColor: formData.llevar_control_en_caja === 'SI' ? '#22c55e' : '#d1d5db', padding: 2 }}
                   onPress={() => setFormData(p => ({ ...p, llevar_control_en_caja: p.llevar_control_en_caja === 'SI' ? 'NO' : 'SI' }))}
                 >
                   <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#fff', transform: [{ translateX: formData.llevar_control_en_caja === 'SI' ? 20 : 0 }] }} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flex: 1 }}>
+                  <RNText style={{ fontSize: 14, color: '#4b5563' }}>Verificar en cierre caja</RNText>
+                  <RNText style={{ fontSize: 11, color: '#9ca3af' }}>Requiere conteo físico diario</RNText>
+                </View>
+                <TouchableOpacity
+                  style={{ width: 48, height: 28, borderRadius: 14, backgroundColor: formData.cuadrarInsumos ? '#22c55e' : '#d1d5db', padding: 2 }}
+                  onPress={() => setFormData(p => ({ ...p, cuadrarInsumos: !p.cuadrarInsumos }))}
+                >
+                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#fff', transform: [{ translateX: formData.cuadrarInsumos ? 20 : 0 }] }} />
                 </TouchableOpacity>
               </View>
             </View>
