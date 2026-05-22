@@ -992,20 +992,12 @@ if (filterCuadrarInsumos !== 'all') {
               </TouchableOpacity>
             )}
             {canCreate && (
-              <>
-                <TouchableOpacity
-                  className="w-11 h-11 rounded-xl bg-primary items-center justify-center mr-2"
-                  onPress={() => navigation.navigate('BulkImport')}
-                >
-                  <Ionicons name="cloud-upload" size={22} color="#fff" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className="w-11 h-11 rounded-xl bg-green-500 items-center justify-center"
-                  onPress={openCreateModal}
-                >
-                  <Ionicons name="add" size={24} color="#fff" />
-                </TouchableOpacity>
-              </>
+              <TouchableOpacity
+                className="w-11 h-11 rounded-xl bg-green-500 items-center justify-center"
+                onPress={openCreateModal}
+              >
+                <Ionicons name="add" size={24} color="#fff" />
+              </TouchableOpacity>
             )}
           </View>
         </View>

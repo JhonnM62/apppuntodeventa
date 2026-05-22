@@ -29,6 +29,7 @@ import CategoriasScreen from '../screens/inventario/CategoriasScreen';
 import CategoriasInsumosScreen from '../screens/inventario/CategoriasInsumosScreen';
 import InventarioScreen from '../screens/inventario/InventarioScreen';
 import InsumoDetailScreen from '../screens/inventario/InsumoDetailScreen';
+import AuditoriaConteoScreen from '../screens/inventario/AuditoriaConteoScreen';
 import CajaListScreen from '../screens/caja/CajaListScreen';
 import CajaFormScreen from '../screens/caja/CajaFormScreen';
 
@@ -63,6 +64,7 @@ export type RootStackParamList = {
   ConfiguracionNegocio: undefined;
   Insumos: undefined;
   InsumoDetail: { id: string };
+  AuditoriaConteo: { insumoId?: string; insumoNombre?: string };
   Analytics: undefined;
   BulkImport: undefined;
   Categorias: undefined;
@@ -245,6 +247,7 @@ const RootNavigator = () => {
             <Stack.Screen name="CategoriasInsumos" component={CategoriasInsumosScreen as any} />
             <Stack.Screen name="Inventario" component={InventarioScreen as any} />
             <Stack.Screen name="InsumoDetail" component={InsumoDetailScreen as any} />
+            <Stack.Screen name="AuditoriaConteo" component={AuditoriaConteoScreen as any} />
             <Stack.Screen name="Caja" component={CajaListScreen as any} />
             <Stack.Screen name="CajaForm" component={CajaFormScreen as any} />
             <Stack.Screen name="HistorialVentas" component={HistorialVentasScreen as any} />

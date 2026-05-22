@@ -82,6 +82,9 @@ export interface VerificacionPendienteResponse {
   totalPendientes: number;
   yaVerificadoHoy: boolean;
   todasVerificadas: boolean;
+  contadorPosposiciones: number;
+  posposicionesRestantes: number;
+  puedePosponer: boolean;
 }
 
 export interface InsumoConteoPayload {
@@ -103,5 +106,15 @@ export const getVerificacionPendiente = async (cajaId: string): Promise<Verifica
 
 export const registrarConteo = async (cajaId: string, insumos: InsumoConteoPayload[]) => {
   const response = await api.post(`/caja/${cajaId}/registrar-conteo`, { insumos });
+  return response.data || response;
+};
+
+export const posponerVerificacion = async (cajaId: string) => {
+  const response = await api.post(`/caja/${cajaId}/posponer-verificacion`);
+  return response.data || response;
+};
+
+export const eliminarConteo = async (cajaId: string, insumoId: string, conteoIndex: number) => {
+  const response = await api.delete(`/caja/${cajaId}/insumo/${insumoId}/conteo/${conteoIndex}`);
   return response.data || response;
 };
