@@ -114,7 +114,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [pendingTab, setPendingTab] = useState<'form' | 'analysis' | 'cuadre' | null>(null);
 
   const handleTabChange = (tab: 'form' | 'analysis' | 'cuadre') => {
-    if ((tab === 'cuadre' || tab === 'analysis') && !isNew) {
+    if ((tab === 'cuadre' || tab === 'analysis') && !isNew && !verificacionCompletada) {
       setPendingTab(tab);
       console.log('[DEBUG handleTabChange] Setting verifyModalVisible=true, current horaCongelada:', horaCongelada);
       setVerifyModalVisible(true);
