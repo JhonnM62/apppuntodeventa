@@ -986,7 +986,7 @@ const InventarioScreen = ({ navigation }: any) => {
               <View style={{ alignItems: 'flex-end' }}>
                 {isEntrada && (
                   <>
-                    <RNText style={{ fontSize: 18, fontWeight: '700', color: '#111827' }}>
+                    <RNText style={{ fontSize: 18, fontWeight: '700', color: '#111827', marginLeft: 12 }}>
                       ${(item.total !== undefined && item.total > 0 ? item.total : (item.ordenInventario?.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0) || 0)).toLocaleString('es-CO')}
                     </RNText>
                     {item.descuento ? (
@@ -1753,7 +1753,7 @@ const InventarioScreen = ({ navigation }: any) => {
                   <RNText style={{ fontSize: 16, fontWeight: '700', color: '#111827', textAlign: 'center' }}>{selectedInventario?.nombre}</RNText>
                   <RNText style={{ fontSize: 12, color: '#6b7280', textAlign: 'center' }}>
                     {selectedInventario?.fechaYHora ? new Date(selectedInventario.fechaYHora).toLocaleDateString('es-CO') : ''}
-                    {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') ? `  •  Total: $${(selectedInventario.total !== undefined && selectedInventario.total > 0 ? selectedInventario.total : (ordenes.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0))).toLocaleString('es-CO')}` : ''}
+                    {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') ? ` • Total: $${(selectedInventario.total !== undefined && selectedInventario.total > 0 ? selectedInventario.total : (ordenes.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0))).toLocaleString('es-CO')}` : ''}
                   </RNText>
                 </View>
                 <View style={{ flexDirection: 'row' }}>
