@@ -2304,7 +2304,11 @@ const InventarioScreen = ({ navigation }: any) => {
           </View>
 
           {selectedOrdenItem && (
-            <ScrollView style={{ flex: 1, padding: 16 }}>
+            <ScrollView style={{ flex: 1, padding: 16 }}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />
+              }
+            >
               <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#e5e7eb', marginBottom: 16 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                   <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}>
