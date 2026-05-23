@@ -312,12 +312,18 @@ const InventarioScreen = ({ navigation }: any) => {
     }
   }, [showAddItemModal]);
 
-  const onRefresh = () => {
+  const onRefresh = async () => {
     setRefreshing(true);
-    fetchInventarios();
-    if (activeTab === 'registros') {
-      fetchTodasLasOrdenes(1, false);
+    try {
+      await inventarioService.recalcularStock();
+    } catch (e) {
+      console.log('Error recalculating stock:', e);
     }
+    await fetchInventarios();
+    if (activeTab === 'registros') {
+      await fetchTodasLasOrdenes(1, false);
+    }
+    setRefreshing(false);
   };
 
   const getCategoriasInsumos = () => {
@@ -1403,7 +1409,9 @@ const InventarioScreen = ({ navigation }: any) => {
           </View>
           <View style={{ flex: 1, minHeight: 2 }}>
             {loadingMoreOrdenes && todasLasOrdenes.length === 0 ? (
-              <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16 }}>
+              <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16 }}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />}
+              >
                 {[...Array(6)].map((_, i) => <View key={i}>{renderSkeletonOrden()}</View>)}
               </ScrollView>
             ) : (
