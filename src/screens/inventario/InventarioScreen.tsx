@@ -1564,6 +1564,11 @@ const InventarioScreen = ({ navigation }: any) => {
                       const matchCat = selectedCategoriaFilter ? cat === selectedCategoriaFilter : true;
                       return matchText && matchCat;
                     })
+                    .sort((a, b) => {
+                      const stockA = Number(a.disponible || a.Disponible || a.cantidad || a.Cantidad || 0);
+                      const stockB = Number(b.disponible || b.Disponible || b.cantidad || b.Cantidad || 0);
+                      return stockB - stockA;
+                    })
                     .slice(0, 20)
                     .map(insumo => (
                       <TouchableOpacity
@@ -2040,6 +2045,11 @@ const InventarioScreen = ({ navigation }: any) => {
                       const cat = i.nombreCategoria || i.NombreCategoria || i.categoriaNombre || i.Categoria;
                       const matchCat = selectedCategoriaFilter ? cat === selectedCategoriaFilter : true;
                       return matchText && matchCat;
+                    })
+                    .sort((a, b) => {
+                      const stockA = Number(a.disponible || a.Disponible || a.cantidad || a.Cantidad || 0);
+                      const stockB = Number(b.disponible || b.Disponible || b.cantidad || b.Cantidad || 0);
+                      return stockB - stockA;
                     })
                     .slice(0, 20)
                     .map(insumo => (
