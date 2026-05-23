@@ -192,6 +192,10 @@ const InventarioScreen = ({ navigation }: any) => {
     }
   });
 
+  useSocketEvent(SocketEvent.REFRESH_INSUMOS, () => {
+    fetchInsumos();
+  });
+
   useEffect(() => {
     if (selectedInventario && inventarios.length > 0) {
       const updated = inventarios.find(i => i.IDinventario === selectedInventario.IDinventario);
