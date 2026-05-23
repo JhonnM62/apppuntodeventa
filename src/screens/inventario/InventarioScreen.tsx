@@ -14,12 +14,16 @@ import { inventarioService, InventarioItem, OrderInventarioItem, CreateInventari
 import { insumosService } from '../../services/insumos';
 import categoriasService, { CategoriaItem } from '../../services/categorias';
 import { usePermissions } from '../../hooks/usePermissions';
+import useAuthStore from '../../store/useAuthStore';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 
 type TabType = 'entrada' | 'salida' | 'registros';
 
 const InventarioScreen = ({ navigation }: any) => {
+  const { user } = useAuthStore();
+  const isAdmin = user?.rol === 'Admin app' || user?.rol === 'Admin negocio';
+  
   const { width } = Dimensions.get('window');
   const { canRead: canReadEntradas, canCreate: canCreateEntradas, canEdit: canEditEntradas, canDelete: canDeleteEntradas } = usePermissions('entradas_inventario');
   const { canRead: canReadRegistros } = usePermissions('registros_inventario');
@@ -2320,9 +2324,9 @@ const InventarioScreen = ({ navigation }: any) => {
                       <RNText style={{ fontSize: 14, color: '#6b7280', marginTop: 4 }}>{selectedOrdenItem.categoria || getInsumoCategoria(selectedOrdenItem.nombreDelAlimento)}</RNText>
                     </View>
                   </View>
-                  <View style={{ backgroundColor: selectedOrdenItem.inventario?.tipo?.toUpperCase().includes('ENTRADA') ? '#dcfce7' : '#fee2e2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
-                    <RNText style={{ fontSize: 12, fontWeight: 'bold', color: selectedOrdenItem.inventario?.tipo?.toUpperCase().includes('ENTRADA') ? '#16a34a' : '#ef4444' }}>
-                      {selectedOrdenItem.inventario?.tipo?.toUpperCase().includes('ENTRADA') ? 'ENTRADA' : 'SALIDA'}
+                  <View style={{ backgroundColor: selectedInventario?.tipo?.toUpperCase().includes('ENTRADA') || selectedOrdenItem?.inventario?.tipo?.toUpperCase().includes('ENTRADA') ? '#dcfce7' : '#fee2e2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+                    <RNText style={{ fontSize: 12, fontWeight: 'bold', color: selectedInventario?.tipo?.toUpperCase().includes('ENTRADA') || selectedOrdenItem?.inventario?.tipo?.toUpperCase().includes('ENTRADA') ? '#16a34a' : '#ef4444' }}>
+                      {selectedInventario?.tipo?.toUpperCase().includes('ENTRADA') || selectedOrdenItem?.inventario?.tipo?.toUpperCase().includes('ENTRADA') ? 'ENTRADA' : 'SALIDA'}
                     </RNText>
                   </View>
                 </View>
@@ -2356,10 +2360,10 @@ const InventarioScreen = ({ navigation }: any) => {
                 <View style={{ height: 1, backgroundColor: '#f3f4f6', marginVertical: 12 }} />
 
                 <RNText style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 12 }}>
-                  {selectedOrdenItem.inventario?.tipo?.toUpperCase().includes('ENTRADA') ? 'Detalles Financieros' : 'Detalles de Salida'}
+                  {selectedInventario?.tipo?.toUpperCase().includes('ENTRADA') || selectedOrdenItem?.inventario?.tipo?.toUpperCase().includes('ENTRADA') ? 'Detalles Financieros' : 'Detalles de Salida'}
                 </RNText>
                 
-                {selectedOrdenItem.inventario?.tipo?.toUpperCase().includes('ENTRADA') ? (
+                {selectedInventario?.tipo?.toUpperCase().includes('ENTRADA') || selectedOrdenItem?.inventario?.tipo?.toUpperCase().includes('ENTRADA') ? (
                   <View style={{ backgroundColor: '#f9fafb', borderRadius: 12, padding: 16 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                       <RNText style={{ fontSize: 13, color: '#6b7280' }}>Precio Unitario Ant:</RNText>
@@ -2402,6 +2406,19 @@ const InventarioScreen = ({ navigation }: any) => {
                   </View>
                 ) : null}
               </View>
+
+              {isAdmin && (
+                <TouchableOpacity
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#eff6ff', paddingVertical: 14, borderRadius: 12, marginBottom: 12 }}
+                  onPress={() => {
+                    setShowOrdenDetailModal(false);
+                    navigation.navigate('InsumoDetail', { id: selectedOrdenItem.nombreDelAlimento });
+                  }}
+                >
+                  <Ionicons name="open-outline" size={18} color="#3b82f6" />
+                  <RNText style={{ fontSize: 15, fontWeight: '600', color: '#3b82f6', marginLeft: 8 }}>Ir al detalle del Insumo</RNText>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity
                 style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fee2e2', paddingVertical: 14, borderRadius: 12 }}

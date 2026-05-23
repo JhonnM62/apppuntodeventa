@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform, TextInput, Image as RNImage, Keyboard } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform, TextInput, Image as RNImage, Keyboard, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
@@ -20,6 +20,7 @@ import { Text } from '../../components/ui/text';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { insumosService, InsumoItem, MovimientoStock, CreateInsumoDto } from '../../services/insumos';
+import { inventarioService } from '../../services/inventario';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 
@@ -50,6 +51,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const mainScrollRef = useRef<ScrollView>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => setKeyboardHeight(e.endCoordinates.height));
@@ -98,6 +100,19 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
       navigation.goBack();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await inventarioService.recalcularStock();
+      await loadInsumo();
+      Toast.show({ type: 'success', text1: 'Stock recalculado', text2: 'El stock ha sido actualizado' });
+    } catch (error) {
+      await loadInsumo();
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -349,6 +364,14 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
           onScroll={handleScroll}
           scrollEventThrottle={16}
           keyboardShouldPersistTaps="handled"
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#3b82f6"
+              colors={['#3b82f6']}
+            />
+          }
         >
           <View style={[styles.card, { padding: 0 }]}>
           {finalImageUrl && (

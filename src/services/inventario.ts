@@ -260,6 +260,11 @@ export const inventarioService = {
     const resp = await api.patch(`/inventario/items/comprar`, { ids });
     return extractData(resp);
   },
+
+  async recalcularStock(): Promise<any> {
+    const resp = await api.post('/inventario/recalcular-stock');
+    return extractData(resp);
+  },
 };
 
 export default inventarioService;
