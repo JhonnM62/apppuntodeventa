@@ -314,17 +314,9 @@ if (filterCuadrarInsumos !== 'all') {
     }
 
     return result.sort((a, b) => {
-      const estadoOrden = { critico: 0, normal: 1, sobrante: 2 };
-      const orderA = estadoOrden[a.estadoStock || 'normal'] || 1;
-      const orderB = estadoOrden[b.estadoStock || 'normal'] || 1;
-      
-      if (orderA !== orderB) {
-        return orderA - orderB;
-      }
-      
-      const qtyA = Number(a.cantidad || a.Cantidad || 0);
-      const qtyB = Number(b.cantidad || b.Cantidad || 0);
-      return qtyB - qtyA;
+      const stockA = Number(a.disponible || a.Disponible || a.cantidad || a.Cantidad || 0);
+      const stockB = Number(b.disponible || b.Disponible || b.cantidad || b.Cantidad || 0);
+      return stockB - stockA;
     });
   }, [insumos, searchText, filterStock, selectedCategoriaFilter, filterNombre, filterCategoria, filterEstado, filterLlevarControl, filterCuadrarInsumos, filterMinStock, filterMaxStock]);
 
@@ -992,12 +984,20 @@ if (filterCuadrarInsumos !== 'all') {
               </TouchableOpacity>
             )}
             {canCreate && (
-              <TouchableOpacity
-                className="w-11 h-11 rounded-xl bg-green-500 items-center justify-center"
-                onPress={openCreateModal}
-              >
-                <Ionicons name="add" size={24} color="#fff" />
-              </TouchableOpacity>
+              <>
+                <TouchableOpacity
+                  className="w-11 h-11 rounded-xl bg-gray-500 items-center justify-center mr-2"
+                  onPress={() => navigation.navigate('AuditoriaConteo' as never)}
+                >
+                  <Ionicons name="reader-outline" size={22} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="w-11 h-11 rounded-xl bg-green-500 items-center justify-center"
+                  onPress={openCreateModal}
+                >
+                  <Ionicons name="add" size={24} color="#fff" />
+                </TouchableOpacity>
+              </>
             )}
           </View>
         </View>
