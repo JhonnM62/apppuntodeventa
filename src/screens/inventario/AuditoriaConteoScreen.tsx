@@ -7,9 +7,10 @@ import {
   Alert,
   RefreshControl,
   ActivityIndicator,
-  SafeAreaView,
   FlatList,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS, SPACING, FONT_SIZE } from '../../lib/theme';
 import { eliminarConteo } from '../../services/caja';
@@ -222,16 +223,18 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
   }
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: COLORS.background }}>
-      <View className="flex-row items-center justify-between p-4 border-b" style={{ borderColor: COLORS.border }}>
-        <TouchableOpacity onPress={() => navigation.goBack()} className="w-10 h-10 rounded-full items-center justify-center">
-          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
-        </TouchableOpacity>
-        <Text className="text-lg font-bold text-gray-900">Auditoría de Conteos</Text>
-        <View className="w-10" />
-      </View>
+    <>
+      <StatusBar style="dark" backgroundColor="transparent" translucent />
+      <SafeAreaView className="flex-1" style={{ backgroundColor: COLORS.background }} edges={['top']}>
+        <View className="flex-row items-center justify-between p-4 border-b bg-white" style={{ borderColor: COLORS.border }}>
+          <TouchableOpacity onPress={() => navigation.goBack()} className="w-10 h-10 rounded-full items-center justify-center">
+            <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+          </TouchableOpacity>
+          <Text className="text-lg font-bold text-gray-900">Auditoría de Conteos</Text>
+          <View className="w-10" />
+        </View>
 
-      {insumos.length === 0 ? (
+        {insumos.length === 0 ? (
         <View className="flex-1 items-center justify-center px-6">
           <Ionicons name="document-text-outline" size={64} color={COLORS.textSecondary} />
           <Text className="text-gray-500 mt-4 text-center">No hay conteos registrados aún</Text>
@@ -255,5 +258,6 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
         />
       )}
     </SafeAreaView>
+    </>
   );
 }
