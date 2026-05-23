@@ -1240,11 +1240,7 @@ const InventarioScreen = ({ navigation }: any) => {
                 ${(item.subtotal || ((item.precioActual || item.precio || 0) * item.cantidad)).toLocaleString('es-CO')}
               </RNText>
             </View>
-          ) : (
-            <RNText style={{ fontSize: 13, fontWeight: '600', color: '#ef4444' }}>
-              -{item.cantidad} und
-            </RNText>
-          )}
+          ) : null}
         </View>
 
         {showActionButtons && (
