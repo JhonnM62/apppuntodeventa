@@ -20,12 +20,14 @@ import {
   InsumoVerificacion,
   getVerificacionPendiente,
   registrarConteo,
+  posponerVerificacion,
 } from '../../services/caja';
 
 interface VerifyInsumosModalProps {
   visible: boolean;
   cajaId: string;
   onVerified: () => void;
+  onPostponed?: () => void;
   onCancel: () => void;
 }
 
@@ -52,11 +54,14 @@ export default function VerifyInsumosModal({
   visible,
   cajaId,
   onVerified,
+  onPostponed,
   onCancel,
 }: VerifyInsumosModalProps) {
   const [modalState, setModalState] = useState<ModalState>('CHECKING');
   const [insumos, setInsumos] = useState<InsumoState[]>([]);
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [puedePosponer, setPuedePosponer] = useState(false);
+  const [posposicionesRestantes, setPosposicionesRestantes] = useState(0);
 
   const loadVerificacion = useCallback(async () => {
     if (!visible || !cajaId) return;
@@ -74,6 +79,9 @@ export default function VerifyInsumosModal({
       
       const todasVerificadas = response?.todasVerificadas ?? false;
       console.log('[VerifyInsumosModal] TodasVerificadas:', todasVerificadas);
+      
+      setPuedePosponer(response?.puedePosponer ?? false);
+      setPosposicionesRestantes(response?.posposicionesRestantes ?? 0);
       
       const insumosPendientes = pendientes.filter((p: InsumoVerificacion) => !p.conteoVerificadoHoy);
       
@@ -156,6 +164,23 @@ export default function VerifyInsumosModal({
     } catch (error: any) {
       console.error('Error registrando conteo:', error);
       setErrorMessage(error?.response?.data?.message || 'Error al guardar el conteo');
+      setModalState('ERROR');
+    }
+  };
+
+  const handlePosponer = async () => {
+    if (!puedePosponer) return;
+    setModalState('LOADING');
+    try {
+      await posponerVerificacion(cajaId);
+      if (onPostponed) {
+        onPostponed();
+      } else {
+        onCancel();
+      }
+    } catch (error: any) {
+      console.error('Error posponiendo verificación:', error);
+      setErrorMessage(error?.response?.data?.message || 'Error al posponer la verificación');
       setModalState('ERROR');
     }
   };
@@ -321,6 +346,20 @@ export default function VerifyInsumosModal({
                 <Button onPress={handleConfirmar} className="w-full">
                   Confirmar Conteo
                 </Button>
+                
+                {puedePosponer && (
+                  <Button 
+                    onPress={handlePosponer} 
+                    variant="outline" 
+                    className="w-full mt-3"
+                    style={{ borderColor: COLORS.warning }}
+                  >
+                    <Text style={{ color: COLORS.warning, fontWeight: 'bold' }}>
+                      Posponer ({posposicionesRestantes} restante{posposicionesRestantes !== 1 ? 's' : ''})
+                    </Text>
+                  </Button>
+                )}
+
                 <Pressable onPress={handleCancel} className="mt-3 py-3">
                   <Text className="text-sm text-gray-500 text-center">
                     Cancelar y volver

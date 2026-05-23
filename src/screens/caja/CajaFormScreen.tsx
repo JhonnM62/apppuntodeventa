@@ -1616,12 +1616,13 @@ export default function CajaFormScreen({ route, navigation }: any) {
         </View>
       </Modal>
 
-      <VerifyInsumosModal
-        visible={verifyModalVisible}
-        cajaId={cajaId}
-        onVerified={handleVerificationPassed}
-        onCancel={handleVerificationCancelled}
-      />
+        <VerifyInsumosModal
+          visible={verifyModalVisible}
+          cajaId={cajaId || ''}
+          onVerified={handleVerificationPassed}
+          onPostponed={handleVerificationPassed}
+          onCancel={handleVerificationCancelled}
+        />
     </View>
   );
 }
