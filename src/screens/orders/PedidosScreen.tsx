@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, Alert, TextInput } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -16,6 +16,7 @@ import { RootStackParamList } from '../../navigation/RootNavigator';
 import useCartStore from '../../store/useCartStore';
 import useAuthStore from '../../store/useAuthStore';
 import { usePermissions } from '../../hooks/usePermissions';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 const TABS = [
   { key: 'todos', label: 'TODOS', color: '#6366f1' },
@@ -102,6 +103,7 @@ type SectionData = {
 
 const PedidosScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { showAlert } = useCustomAlert();
   const { canCreate: canCreatePedido } = usePermissions('pedidos');
   const { canCreate: canCreateVenta } = usePermissions('ventas');
   const [activeTab, setActiveTab] = useState('todos');
@@ -412,23 +414,21 @@ const PedidosScreen = () => {
 
   const handleDeleteSingle = (venta: VentaItem) => {
     if (venta.estado === 'PAGADO' || venta.estado === 'ENTREGADO') {
-      Alert.alert(
-        'Dependencias Activas',
-        'Este pedido ya ha sido pagado o entregado. ¿Estás seguro de que deseas eliminarlo? Esto afectará los registros financieros.',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Eliminar de todos modos', style: 'destructive', onPress: () => executeDelete(venta.IDventas) }
-        ]
-      );
+      showAlert({
+        type: 'confirm',
+        title: 'Dependencias Activas',
+        message: 'Este pedido ya ha sido pagado o entregado. ¿Estás seguro de que deseas eliminarlo? Esto afectará los registros financieros.',
+        confirmText: 'Eliminar',
+        onConfirm: () => executeDelete(venta.IDventas),
+      });
     } else {
-      Alert.alert(
-        'Eliminar Pedido',
-        `¿Estás seguro de que deseas eliminar el pedido ${venta.pedido}?`,
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Eliminar', style: 'destructive', onPress: () => executeDelete(venta.IDventas) }
-        ]
-      );
+      showAlert({
+        type: 'confirm',
+        title: 'Eliminar Pedido',
+        message: `¿Estás seguro de que deseas eliminar el pedido ${venta.pedido}?`,
+        confirmText: 'Eliminar',
+        onConfirm: () => executeDelete(venta.IDventas),
+      });
     }
   };
 
@@ -460,32 +460,27 @@ const PedidosScreen = () => {
       ? 'Algunos de los pedidos seleccionados ya han sido pagados o entregados. ¿Deseas continuar con la eliminación masiva?'
       : `¿Estás seguro de que deseas eliminar los ${selectedToDelete.length} pedidos seleccionados?`;
 
-    Alert.alert(
-      'Eliminación Masiva',
-      message,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Eliminar', 
-          style: 'destructive', 
-          onPress: async () => {
-            setLoading(true);
-            try {
-              await deleteSalesBulk(selectedToDelete);
-              Toast.show({ type: 'success', text1: 'Eliminados', text2: `${selectedToDelete.length} pedidos fueron eliminados` });
-              setSelectedToDelete([]);
-              setIsSelectionMode(false);
-              fetchVentas(true);
-            } catch (error) {
-              console.error('Error en eliminación masiva:', error);
-              Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo realizar la eliminación masiva' });
-            } finally {
-              setLoading(false);
-            }
-          }
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminación Masiva',
+      message: message,
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          await deleteSalesBulk(selectedToDelete);
+          Toast.show({ type: 'success', text1: 'Eliminados', text2: `${selectedToDelete.length} pedidos fueron eliminados` });
+          setSelectedToDelete([]);
+          setIsSelectionMode(false);
+          fetchVentas(true);
+        } catch (error) {
+          console.error('Error en eliminación masiva:', error);
+          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo realizar la eliminación masiva' });
+        } finally {
+          setLoading(false);
         }
-      ]
-    );
+      },
+    });
   };
 
   const toggleSelection = (id: string) => {
@@ -1465,25 +1460,15 @@ const PedidosScreen = () => {
 
   const handleVolverCarrito = () => {
     if (!selectedVenta) return;
-    Alert.alert(
-      'Volver a Carrito',
-      'El pedido se moverá a EN EL CARRITO. ¿Deseas continuar editando ahora?',
-      [
-        { text: 'Solo Cambiar', onPress: async () => {
-          await handleChangeEstado('EN_EL_CARRITO');
-        }},
-        { text: 'Editar Ahora', onPress: async () => {
-          useCartStore.getState().setEditingSale(selectedVenta.IDventas, selectedVenta);
-          if (selectedVenta.ordenVentas && selectedVenta.ordenVentas.length > 0) {
-            useCartStore.getState().loadCartFromVenta(selectedVenta.ordenVentas);
-          }
-          await handleChangeEstado('EN_EL_CARRITO');
-          closeModal();
-          navigation.navigate('Sales', { screen: 'NewSale' } as any);
-        }},
-        { text: 'Cancelar', style: 'cancel' }
-      ]
-    );
+    showAlert({
+      type: 'confirm',
+      title: 'Volver a Carrito',
+      message: 'El pedido se moverá a EN EL CARRITO. ¿Deseas continuar editando ahora?',
+      confirmText: 'Solo Cambiar',
+      onConfirm: async () => {
+        await handleChangeEstado('EN_EL_CARRITO');
+      },
+    });
   };
 
   const handleOpenCobrar = () => {

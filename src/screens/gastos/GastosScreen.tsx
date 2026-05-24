@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, SectionList, TouchableOpacity, ActivityIndicator, Alert, TextInput } from 'react-native';
+import { View, FlatList, SectionList, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components/ui/text';
@@ -11,8 +11,10 @@ import { es } from 'date-fns/locale';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useSocketEvent } from '../../hooks/useSocketEvent';
 import { SocketEvent } from '../../types/socket.types';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 export default function GastosScreen({ navigation }: any) {
+  const { showAlert } = useCustomAlert();
   const { gastos, isLoading, fetchGastos, removeGasto } = useGastosStore();
   const { canCreate, canEdit, canDelete } = usePermissions('gastos');
   const [modalVisible, setModalVisible] = useState(false);
@@ -39,10 +41,13 @@ export default function GastosScreen({ navigation }: any) {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert('Eliminar Gasto', '¿Estás seguro de eliminar este gasto?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: () => removeGasto(id) }
-    ]);
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar Gasto',
+      message: '¿Estás seguro de eliminar este gasto?',
+      confirmText: 'Eliminar',
+      onConfirm: () => removeGasto(id),
+    });
   };
 
   const renderItem = ({ item }: { item: Gasto }) => (

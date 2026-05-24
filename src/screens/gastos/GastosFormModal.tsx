@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Keyboard, ActivityIndicator, Alert, ScrollView, Image as RNImage, Animated } from 'react-native';
+import { View, Modal, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, Keyboard, ActivityIndicator, ScrollView, Image as RNImage, Animated } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '../../components/ui/text';
@@ -19,6 +19,7 @@ import { extractDataWithIA, getConfiguracionIA } from '../../services/api';
 import { useGastosStore } from '../../store/useGastosStore';
 import Toast from 'react-native-toast-message';
 import { useNavigation } from '@react-navigation/native';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 // Carga dinámica de módulos nativos para evitar crasheos si no están en el Dev Client
 let ImagePicker: any = null;
@@ -66,6 +67,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
   const scanLineAnim = useRef(new Animated.Value(0)).current;
 
   const navigation = useNavigation<any>();
+  const { showAlert } = useCustomAlert();
 
   useEffect(() => {
     if (visible) {
@@ -190,7 +192,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
 
   const pickImage = async (useCamera: boolean, scanWithIA: boolean = false) => {
     if (!ImagePicker) {
-      Alert.alert('Módulo Faltante', 'La cámara/galería no está disponible. Debes recompilar la app (eas build).');
+      showAlert({ type: 'error', title: 'Módulo Faltante', message: 'La cámara/galería no está disponible. Debes recompilar la app (eas build).' });
       return;
     }
     
@@ -199,7 +201,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
       if (useCamera) {
         const permission = await ImagePicker.requestCameraPermissionsAsync();
         if (!permission.granted) {
-          Alert.alert('Permiso denegado', 'Se requiere acceso a la cámara');
+          showAlert({ type: 'warning', title: 'Permiso denegado', message: 'Se requiere acceso a la cámara' });
           return;
         }
         result = await ImagePicker.launchCameraAsync({
@@ -209,7 +211,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
       } else {
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
-          Alert.alert('Permiso denegado', 'Se requiere acceso a la galería');
+          showAlert({ type: 'warning', title: 'Permiso denegado', message: 'Se requiere acceso a la galería' });
           return;
         }
         result = await ImagePicker.launchImageLibraryAsync({
@@ -233,20 +235,18 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
 
   const handleIAScanPress = () => {
     if (iaConfigured === false) {
-      Alert.alert(
-        "Inteligencia Artificial Inactiva",
-        "La IA no está configurada o está apagada. Por favor, configura tu API Key de Gemini en el módulo de Configuraciones.",
-        [
-          { text: "Cancelar", style: "cancel" },
-          { 
-            text: "Ir a Configurar", 
-            onPress: () => {
-              onClose();
-              navigation.navigate('ConfiguracionNegocio');
-            }
-          }
-        ]
-      );
+      showAlert({
+        type: 'confirm',
+        title: 'Inteligencia Artificial Inactiva',
+        message: 'La IA no está configurada o está apagada. Por favor, configura tu API Key de Gemini en el módulo de Configuraciones.',
+        confirmText: 'Ir a Configurar',
+        cancelText: 'Cancelar',
+        onConfirm: () => {
+          onClose();
+          navigation.navigate('ConfiguracionNegocio');
+        },
+        onCancel: () => {}
+      });
       return;
     }
 
@@ -294,7 +294,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
 
   const pickDocument = async () => {
     if (!DocumentPicker || !FileSystem) {
-      Alert.alert('Módulo Faltante', 'La carga de documentos no está disponible. Debes recompilar la app (eas build).');
+      showAlert({ type: 'error', title: 'Módulo Faltante', message: 'La carga de documentos no está disponible. Debes recompilar la app (eas build).' });
       return;
     }
     

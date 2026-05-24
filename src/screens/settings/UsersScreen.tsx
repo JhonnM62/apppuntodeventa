@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, ActivityIndicator, Alert, Modal, TextInput, Platform, Switch } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, ActivityIndicator, Modal, TextInput, Platform, Switch } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import useAuthStore from '../../store/useAuthStore';
 import { Text } from '../../components/ui/text';
 import api from '../../services/api';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 const ROLES_DISPONIBLES = [
   { key: 'Admin app', label: 'Admin App', description: 'Administrador de la aplicación' },
@@ -90,6 +91,7 @@ type EditFormData = {
 
 const UsersScreen = ({ navigation }: any) => {
   const { user, logout } = useAuthStore();
+  const { showAlert } = useCustomAlert();
   const isAdminApp = user?.rol === 'Admin app';
 
   const [users, setUsers] = useState<UsuarioItem[]>([]);
@@ -237,7 +239,7 @@ const UsersScreen = ({ navigation }: any) => {
         fetchUsers();
       }
     } catch (error: any) {
-      Alert.alert('Error', getErrorMessage(error, 'Error al crear usuario'));
+      showAlert({ type: 'error', title: 'Error', message: getErrorMessage(error, 'Error al crear usuario') });
     } finally {
       setLoading(false);
     }
@@ -246,74 +248,69 @@ const UsersScreen = ({ navigation }: any) => {
   const handleEditUser = async () => {
     if (!validateEditForm()) return;
 
-    Alert.alert(
-      'Confirmar cambios',
-      '¿Estás seguro de que deseas guardar los cambios realizados a este usuario?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Guardar',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              await api.patch(`/usuarios/${selectedUser?.IDusuarios}`, {
-                nombre: editFormData.nombre.trim(),
-                email: editFormData.email.trim().toLowerCase(),
-                telefono: editFormData.telefono.trim() || undefined,
-                cedula: editFormData.cedula ? parseInt(editFormData.cedula) : undefined,
-                direccion: editFormData.direccion.trim() || undefined,
-                rol: editFormData.rol,
-                isActive: editFormData.isActive,
-                permisos: editFormData.modulos,
-              });
+    showAlert({
+      type: 'confirm',
+      title: 'Confirmar cambios',
+      message: '¿Estás seguro de que deseas guardar los cambios realizados a este usuario?',
+      confirmText: 'Guardar',
+      cancelText: 'Cancelar',
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          await api.patch(`/usuarios/${selectedUser?.IDusuarios}`, {
+            nombre: editFormData.nombre.trim(),
+            email: editFormData.email.trim().toLowerCase(),
+            telefono: editFormData.telefono.trim() || undefined,
+            cedula: editFormData.cedula ? parseInt(editFormData.cedula) : undefined,
+            direccion: editFormData.direccion.trim() || undefined,
+            rol: editFormData.rol,
+            isActive: editFormData.isActive,
+            permisos: editFormData.modulos,
+          });
 
-              Alert.alert('Éxito', 'Usuario actualizado correctamente');
-              setShowEditModal(false);
-              setSelectedUser(null);
-              resetEditForm();
-              fetchUsers();
-            } catch (error: any) {
-              Alert.alert('Error', getErrorMessage(error, 'Error al actualizar usuario'));
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
-    );
+          showAlert({ type: 'success', title: 'Éxito', message: 'Usuario actualizado correctamente' });
+          setShowEditModal(false);
+          setSelectedUser(null);
+          resetEditForm();
+          fetchUsers();
+        } catch (error: any) {
+          showAlert({ type: 'error', title: 'Error', message: getErrorMessage(error, 'Error al actualizar usuario') });
+        } finally {
+          setLoading(false);
+        }
+      },
+      onCancel: () => {}
+    });
   };
 
   const handleDeleteUser = async (userToDelete: UsuarioItem) => {
     if (userToDelete.IDusuarios === user?.IDusuarios) {
-      Alert.alert('Error', 'No puedes eliminar tu propio usuario');
+      showAlert({ type: 'error', title: 'Error', message: 'No puedes eliminar tu propio usuario' });
       return;
     }
 
-    Alert.alert(
-      'Eliminar Usuario',
-      `¿Estás seguro de que deseas eliminar al usuario "${userToDelete.nombre}"? Esta acción no se puede deshacer.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            setLoading(true);
-            try {
-              await api.delete(`/usuarios/${userToDelete.IDusuarios}`);
-              Alert.alert('Éxito', 'Usuario eliminado correctamente');
-              setShowEditModal(false);
-              setSelectedUser(null);
-              fetchUsers();
-            } catch (error: any) {
-              Alert.alert('Error', getErrorMessage(error, 'Error al eliminar usuario'));
-            } finally {
-              setLoading(false);
-            }
-          },
-        },
-      ]
-    );
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar Usuario',
+      message: `¿Estás seguro de que deseas eliminar al usuario "${userToDelete.nombre}"? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          await api.delete(`/usuarios/${userToDelete.IDusuarios}`);
+          showAlert({ type: 'success', title: 'Éxito', message: 'Usuario eliminado correctamente' });
+          setShowEditModal(false);
+          setSelectedUser(null);
+          fetchUsers();
+        } catch (error: any) {
+          showAlert({ type: 'error', title: 'Error', message: getErrorMessage(error, 'Error al eliminar usuario') });
+        } finally {
+          setLoading(false);
+        }
+      },
+      onCancel: () => {}
+    });
   };
 
   const openEditModal = (userItem: UsuarioItem) => {
@@ -397,14 +394,15 @@ const UsersScreen = ({ navigation }: any) => {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás seguro de que deseas cerrar sesión?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Cerrar Sesión', style: 'destructive', onPress: logout },
-      ]
-    );
+    showAlert({
+      type: 'confirm',
+      title: 'Cerrar Sesión',
+      message: '¿Estás seguro de que deseas cerrar sesión?',
+      confirmText: 'Cerrar Sesión',
+      cancelText: 'Cancelar',
+      onConfirm: logout,
+      onCancel: () => {}
+    });
   };
 
   const copyToClipboard = async (text: string) => {
@@ -413,9 +411,9 @@ const UsersScreen = ({ navigation }: any) => {
       if (Clipboard) {
         Clipboard.setString(text);
       }
-      Alert.alert('Copiado', `Credenciales copiadas al portapapeles:\n${text}`);
+      showAlert({ type: 'success', title: 'Copiado', message: `Credenciales copiadas al portapapeles:\n${text}` });
     } catch (e) {
-      Alert.alert('Copiado', `Credenciales copiadas al portapapeles:\n${text}`);
+      showAlert({ type: 'success', title: 'Copiado', message: `Credenciales copiadas al portapapeles:\n${text}` });
     }
   };
 

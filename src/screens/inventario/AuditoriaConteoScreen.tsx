@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Alert,
   RefreshControl,
   ActivityIndicator,
   FlatList,
@@ -21,6 +20,7 @@ import { eliminarConteo, editarConteo } from '../../services/caja';
 import { insumosService } from '../../services/insumos';
 import { useSocketEvent } from '../../hooks/useSocketEvent';
 import { SocketEvent } from '../../types/socket.types';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 interface ConteoItem {
   fecha: string;
@@ -54,6 +54,7 @@ interface AuditoriaConteoScreenProps {
 }
 
 export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaConteoScreenProps) {
+  const { showAlert } = useCustomAlert();
   const [todosLosInsumos, setTodosLosInsumos] = useState<InsumoAuditItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -145,33 +146,28 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
   }, [loadAuditoria]);
 
   const handleEliminarConteo = async (insumoId: string, insumoNombre: string, originalIndex: number, cajaId: string) => {
-    Alert.alert(
-      'Eliminar Conteo',
-      `¿Estás seguro de eliminar este conteo de "${insumoNombre}" en la caja ${cajaId.slice(0,8)}...?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await eliminarConteo(cajaId, insumoId, originalIndex);
-              loadAuditoria();
-            } catch (error: any) {
-              Alert.alert('Error', error?.response?.data?.message || 'No se pudo eliminar el conteo');
-            }
-          },
-        },
-      ]
-    );
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar Conteo',
+      message: `¿Estás seguro de eliminar este conteo de "${insumoNombre}" en la caja ${cajaId.slice(0,8)}...?`,
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        try {
+          await eliminarConteo(cajaId, insumoId, originalIndex);
+          loadAuditoria();
+        } catch (error: any) {
+          showAlert({ type: 'error', title: 'Error', message: error?.response?.data?.message || 'No se pudo eliminar el conteo' });
+        }
+      },
+    });
   };
 
   const handleEditSave = async () => {
     if (!editingItem) return;
-    
+
     const numValue = Number(editValue);
     if (isNaN(numValue) || numValue < 0) {
-      Alert.alert('Error', 'Ingresa una cantidad válida mayor o igual a 0');
+      showAlert({ type: 'error', title: 'Error', message: 'Ingresa una cantidad válida mayor o igual a 0' });
       return;
     }
 
@@ -181,7 +177,7 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
       setEditingItem(null);
       loadAuditoria();
     } catch (error: any) {
-      Alert.alert('Error', error?.response?.data?.message || 'No se pudo actualizar el conteo');
+      showAlert({ type: 'error', title: 'Error', message: error?.response?.data?.message || 'No se pudo actualizar el conteo' });
     } finally {
       setSavingEdit(false);
     }

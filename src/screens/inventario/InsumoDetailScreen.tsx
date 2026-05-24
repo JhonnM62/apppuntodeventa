@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, ActivityIndicator, Alert, Modal, KeyboardAvoidingView, Platform, TextInput, Image as RNImage, Keyboard, RefreshControl } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, TextInput, Image as RNImage, Keyboard, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
+
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 // Fallback seguro para expo-image
 let ImageComponent: any = RNImage;
@@ -38,6 +40,7 @@ type Props = {
 
 const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const { canEdit, canDelete } = usePermissions('insumos');
+  const { showAlert } = useCustomAlert();
   const handleScroll = useScrollDirection();
 
   const [insumo, setInsumo] = useState<InsumoItem | null>(null);
@@ -96,7 +99,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
       setInsumo(data);
       setLocalImageUri(data.imagen || null);
     } catch (error: any) {
-      Alert.alert('Error', 'No se pudo cargar el insumo');
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo cargar el insumo' });
       navigation.goBack();
     } finally {
       setLoading(false);
@@ -167,7 +170,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
 
   const handleMovimiento = async () => {
     if (!movimiento.cantidad || movimiento.cantidad <= 0) {
-      Alert.alert('Error', 'Ingresa una cantidad válida');
+      showAlert({ type: 'error', title: 'Error', message: 'Ingresa una cantidad válida' });
       return;
     }
 
@@ -175,38 +178,33 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
     try {
       console.log('[DEBUG] Enviando handleMovimiento:', movimiento);
       await insumosService.movimientoStock(insumoId!, movimiento);
-      Alert.alert('Éxito', 'Movimiento registrado');
+      showAlert({ type: 'success', title: 'Éxito', message: 'Movimiento registrado' });
       loadInsumo();
       setMovimiento({ tipo: 'entrada', cantidad: 0, motivo: '' });
     } catch (error: any) {
       console.log('[DEBUG] Error en handleMovimiento:', error?.response?.data || error);
-      Alert.alert('Error', error?.response?.data?.message || error?.message || 'No se pudo registrar el movimiento');
+      showAlert({ type: 'error', title: 'Error', message: error?.response?.data?.message || error?.message || 'No se pudo registrar el movimiento' });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Eliminar Insumo',
-      `¿Estás seguro de eliminar "${insumo?.nombre || insumo?.Nombre}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await insumosService.delete(insumoId!);
-              Alert.alert('Éxito', 'Insumo eliminado');
-              navigation.goBack();
-            } catch (error) {
-              Alert.alert('Error', 'No se pudo eliminar');
-            }
-          },
-        },
-      ]
-    );
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar Insumo',
+      message: `¿Estás seguro de eliminar "${insumo?.nombre || insumo?.Nombre}"?`,
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        try {
+          await insumosService.delete(insumoId!);
+          showAlert({ type: 'success', title: 'Éxito', message: 'Insumo eliminado' });
+          navigation.goBack();
+        } catch (error) {
+          showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar' });
+        }
+      },
+    });
   };
 
   const openEditModal = () => {
@@ -242,7 +240,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
 
   const handleSaveEdit = async () => {
     if (!formData.nombre?.trim()) {
-      Alert.alert('Error', 'El nombre es obligatorio');
+      showAlert({ type: 'error', title: 'Error', message: 'El nombre es obligatorio' });
       return;
     }
 
@@ -257,7 +255,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
           }
         } catch (uploadError) {
           console.error('[InsumoDetailScreen] Error subiendo imagen:', uploadError);
-          Alert.alert('Aviso', 'Se guardará el insumo, pero falló la subida de la imagen.');
+          showAlert({ type: 'warning', title: 'Aviso', message: 'Se guardará el insumo, pero falló la subida de la imagen.' });
         }
       }
 
@@ -282,12 +280,12 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
       };
       console.log('[DEBUG] Enviando actualización Insumo:', dataToSave);
       await insumosService.update(insumo.IDalimentos, dataToSave);
-      Alert.alert('Éxito', 'Insumo actualizado correctamente');
+      showAlert({ type: 'success', title: 'Éxito', message: 'Insumo actualizado correctamente' });
       setShowEditModal(false);
       loadInsumo();
     } catch (error: any) {
       console.log('[DEBUG] Error actualizando insumo:', error?.response?.data || error);
-      Alert.alert('Error', getErrorMessage(error, 'No se pudo actualizar el insumo'));
+      showAlert({ type: 'error', title: 'Error', message: getErrorMessage(error, 'No se pudo actualizar el insumo') });
     } finally {
       setSaving(false);
     }

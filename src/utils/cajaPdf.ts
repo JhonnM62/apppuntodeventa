@@ -1,4 +1,4 @@
-import { Alert, Platform, Linking } from 'react-native';
+import { Platform, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
 
@@ -13,10 +13,7 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
     FileSystem = require('expo-file-system/legacy');
     if (!Print.printToFileAsync) throw new Error('Native missing');
   } catch (error) {
-    Alert.alert(
-      'Actualización Requerida',
-      'El generador de PDFs (expo-print) contiene código nativo nuevo.\n\nPor favor, detén tu servidor de Expo y ejecuta:\n\nnpx expo run:android\n\npara incrustar el nuevo módulo en tu teléfono.'
-    );
+    Toast.show({ type: 'error', text1: 'Actualización Requerida', text2: 'El generador de PDFs (expo-print) contiene código nativo nuevo. Por favor, detén tu servidor de Expo y ejecuta: npx expo run:android para incrustar el nuevo módulo en tu teléfono.' });
     return;
   }
 
@@ -228,10 +225,7 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
       let directoryUri = await AsyncStorage.getItem(SAF_DIRECTORY_KEY);
 
       if (!directoryUri) {
-        Alert.alert(
-          'Configurar Descargas',
-          'Por seguridad de Android, por favor selecciona tu carpeta "Descargas" o "Downloads" en la siguiente pantalla.\n\nSolo tendrás que hacerlo esta vez y luego se guardarán automáticamente allí.'
-        );
+        Toast.show({ type: 'info', text1: 'Configurar Descargas', text2: 'Por seguridad de Android, por favor selecciona tu carpeta "Descargas" o "Downloads" en la siguiente pantalla. Solo tendrás que hacerlo esta vez y luego se guardarán automáticamente allí.' });
         const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
         if (permissions.granted) {
           directoryUri = permissions.directoryUri;
@@ -268,10 +262,7 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
           
           // Si el error es porque falta el módulo nativo, le avisamos al usuario
           if (openError?.message?.includes('native module') || openError?.message?.includes('ExpoIntentLauncher')) {
-            Alert.alert(
-              'Módulo Nativo Faltante',
-              'Para que el PDF se abra automáticamente en Google Drive (y no se quede en negro o muestre el menú de compartir), detén tu servidor de Expo y ejecuta:\n\nnpx expo run:android\n\nPor ahora, usaremos el menú de compartir como respaldo.'
-            );
+            Toast.show({ type: 'error', text1: 'Módulo Nativo Faltante', text2: 'Para que el PDF se abra automáticamente en Google Drive, detén tu servidor de Expo y ejecuta: npx expo run:android. Por ahora, usaremos el menú de compartir como respaldo.' });
           }
 
           // Fallback seguro al menú de compartir si falla la apertura directa
@@ -286,7 +277,7 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
       } catch (error) {
         // Si el permiso expiró o la carpeta fue borrada, limpiamos para que vuelva a preguntar la próxima vez
         await AsyncStorage.removeItem(SAF_DIRECTORY_KEY);
-        Alert.alert('Permiso Expirado', 'El acceso a la carpeta de descargas expiró. Por favor, intenta de nuevo para reasignar la carpeta.');
+        Toast.show({ type: 'error', text1: 'Permiso Expirado', text2: 'El acceso a la carpeta de descargas expiró. Por favor, intenta de nuevo para reasignar la carpeta.' });
       }
     } else {
       const newUri = FileSystem.documentDirectory + fileName;

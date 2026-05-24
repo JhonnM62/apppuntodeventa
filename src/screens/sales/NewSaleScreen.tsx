@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Image, RefreshControl, Platform, TextInput, FlatList, StyleSheet, Modal as RNModal, ScrollView, Alert, Text as RNText, KeyboardAvoidingView, Keyboard } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Image, RefreshControl, Platform, TextInput, FlatList, StyleSheet, Modal as RNModal, ScrollView, Text as RNText, KeyboardAvoidingView, Keyboard } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
@@ -11,6 +11,7 @@ import { getClientes, Cliente } from '../../services/clientes.service';
 import { createSale, addProductosToVenta, SalePayload } from '../../services/sales';
 import { processVoiceOrderWithIA } from '../../services/api';
 import { useSocket, useSocketEmitter, useSocketEvent } from '../../hooks';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 import { Room } from '../../types/socket.types';
 import Toast from 'react-native-toast-message';
 import { useProductStore } from '../../store/useProductStore';
@@ -44,6 +45,7 @@ type ProductItem = {
 const CATEGORIES_ORDER = ['LO MAS VENDIDO', 'GRANIZADOS', 'BEBIDAS', 'COMIDAS', 'COMBOS', 'OTROS'];
 
 const NewSaleScreen = ({ navigation, route }: Props) => {
+  const { showAlert } = useCustomAlert();
   const insets = useSafeAreaInsets();
   const cachedMesas = useMesaStore((state) => state.mesas);
   const setCachedMesas = useMesaStore((state) => state.setMesas);
@@ -291,7 +293,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         setIsRecording(true);
 
       } else {
-        Alert.alert('Permiso Denegado', 'Debes otorgar permisos de micrófono para usar esta función.');
+        showAlert('Permiso Denegado', 'Debes otorgar permisos de micrófono para usar esta función.');
       }
     } catch (err) {
       console.error('Error iniciando grabación', err);

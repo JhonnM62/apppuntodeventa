@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { getClienteById, deleteCliente, Cliente } from '../../services/clientes.service';
@@ -7,8 +7,10 @@ import { usePermissions } from '../../hooks/usePermissions';
 import Toast from 'react-native-toast-message';
 
 import { useScrollDirection } from '../../hooks/useScrollDirection';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 export default function ClienteDetailScreen({ route, navigation }: any) {
+  const { showAlert } = useCustomAlert();
   const { id } = route.params;
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,26 +41,21 @@ export default function ClienteDetailScreen({ route, navigation }: any) {
   }, [navigation, id]);
 
   const handleDelete = () => {
-    Alert.alert(
-      'Eliminar Cliente',
-      '¿Estás seguro de que deseas eliminar este cliente? Se mantendrá el historial de ventas pero el cliente ya no aparecerá en la lista.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Eliminar', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteCliente(id);
-              Toast.show({ type: 'success', text1: 'Cliente eliminado' });
-              navigation.goBack();
-            } catch (error) {
-              Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo eliminar el cliente' });
-            }
-          }
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar Cliente',
+      message: '¿Estás seguro de que deseas eliminar este cliente? Se mantendrá el historial de ventas pero el cliente ya no aparecerá en la lista.',
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        try {
+          await deleteCliente(id);
+          Toast.show({ type: 'success', text1: 'Cliente eliminado' });
+          navigation.goBack();
+        } catch (error) {
+          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo eliminar el cliente' });
         }
-      ]
-    );
+      },
+    });
   };
 
   if (loading || !cliente) {

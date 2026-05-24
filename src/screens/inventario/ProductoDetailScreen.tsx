@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Text as RNText, Alert, Image, ActivityIndicator, Platform, TextInput } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Text as RNText, Image, ActivityIndicator, Platform, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,6 +18,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { useSocketEvent } from '../../hooks/useSocketEvent';
 import { SocketEvent } from '../../types/socket.types';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'ProductoDetail'>;
@@ -25,6 +26,7 @@ type Props = {
 };
 
 const ProductoDetailScreen = ({ navigation, route }: Props) => {
+  const { showAlert } = useCustomAlert();
   const { id } = route.params;
   const isNew = id === 'new';
   const { canEdit, canDelete } = usePermissions('productos');
@@ -193,27 +195,22 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      'Eliminar Producto',
-      '¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Eliminar', 
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteProduct(id);
-              Toast.show({ type: 'success', text1: 'Éxito', text2: 'Producto eliminado' });
-              navigation.goBack();
-            } catch (error: any) {
-              const msg = error?.response?.data?.message || 'Error al eliminar';
-              Toast.show({ type: 'error', text1: 'Error', text2: msg });
-            }
-          }
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar Producto',
+      message: '¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.',
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        try {
+          await deleteProduct(id);
+          Toast.show({ type: 'success', text1: 'Éxito', text2: 'Producto eliminado' });
+          navigation.goBack();
+        } catch (error: any) {
+          const msg = error?.response?.data?.message || 'Error al eliminar';
+          Toast.show({ type: 'error', text1: 'Error', text2: msg });
         }
-      ]
-    );
+      },
+    });
   };
 
   const addInsumoToReceta = () => {

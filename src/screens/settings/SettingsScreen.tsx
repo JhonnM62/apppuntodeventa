@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import useAuthStore from '../../store/useAuthStore';
 import { usePermissions } from '../../hooks/usePermissions';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Settings'>;
@@ -82,6 +83,7 @@ const MODULES = [
 ];
 
 const SettingsScreen = ({ navigation }: Props) => {
+  const { showAlert } = useCustomAlert();
   const { user, logout } = useAuthStore();
   const { canRead: canReadUsuarios } = usePermissions('config_usuarios');
   const { canRead: canReadComentarios } = usePermissions('config_comentarios');
@@ -90,14 +92,13 @@ const SettingsScreen = ({ navigation }: Props) => {
   const insets = useSafeAreaInsets();
 
   const handleLogout = () => {
-    Alert.alert(
-      'Cerrar Sesión',
-      '¿Estás seguro de que deseas cerrar sesión?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Cerrar Sesión', style: 'destructive', onPress: logout },
-      ]
-    );
+    showAlert({
+      type: 'confirm',
+      title: 'Cerrar Sesión',
+      message: '¿Estás seguro de que deseas cerrar sesión?',
+      confirmText: 'Cerrar Sesión',
+      onConfirm: logout,
+    });
   };
 
   const getRoleColor = (rol: string) => {
@@ -116,10 +117,7 @@ const SettingsScreen = ({ navigation }: Props) => {
   };
 
   const openCurrentUserEdit = () => {
-    // Navigate to user detail edit (for self)
-    // Could pass params to Users screen or have a separate edit profile flow
-    // For now we just alert
-    Alert.alert('Perfil', 'La edición de perfil está disponible en el módulo Usuarios App.');
+    showAlert({ type: 'info', title: 'Perfil', message: 'La edición de perfil está disponible en el módulo Usuarios App.' });
   };
 
   return (

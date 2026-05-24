@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text as RNText, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Switch, Platform, PermissionsAndroid, Linking } from 'react-native';
+import { View, Text as RNText, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Switch, Platform, PermissionsAndroid, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import usePrinterStore, { PrinterDevice, PrinterConfig } from '../../store/usePrinterStore';
 import { updatePrinterConfigs } from '../../services/printer-config';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 // Mock the BLE Printer for now since it requires physical device / native code
 // In real usage, you'd import { BLEPrinter } from 'react-native-thermal-receipt-printer-image-qr';
@@ -17,6 +18,7 @@ try {
 
 const PrinterSettingsScreen = ({ navigation }: any) => {
   const { currentPrinter, paperSize, isConnected, configs, setPrinter, setPaperSize, setConnected, fetchConfigs, setConfigs } = usePrinterStore();
+  const { showAlert } = useCustomAlert();
   const [devices, setDevices] = useState<PrinterDevice[]>([]);
   const [scanning, setScanning] = useState(false);
   const [connectingTo, setConnectingTo] = useState<string | null>(null);
@@ -57,9 +59,8 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
       setIsSavingConfigs(true);
       await updatePrinterConfigs(newConfigs);
     } catch (error) {
-      // Revert on error
       setConfigs(currentConfigs);
-      Alert.alert('Error', 'No se pudo guardar la configuración de impresión automática.');
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo guardar la configuración de impresión automática.' });
     } finally {
       setIsSavingConfigs(false);
     }
@@ -83,12 +84,12 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
             granted['android.permission.BLUETOOTH_SCAN'] !== PermissionsAndroid.RESULTS.GRANTED ||
             granted['android.permission.BLUETOOTH_CONNECT'] !== PermissionsAndroid.RESULTS.GRANTED
           ) {
-            Alert.alert('Permisos requeridos', 'Se necesitan permisos de Bluetooth para buscar impresoras en Android 12+.');
+            showAlert({ type: 'warning', title: 'Permisos requeridos', message: 'Se necesitan permisos de Bluetooth para buscar impresoras en Android 12+.' });
             return;
           }
         } else {
           if (granted['android.permission.ACCESS_FINE_LOCATION'] !== PermissionsAndroid.RESULTS.GRANTED) {
-            Alert.alert('Permisos requeridos', 'Se necesita permiso de ubicación para usar Bluetooth en esta versión de Android.');
+            showAlert({ type: 'warning', title: 'Permisos requeridos', message: 'Se necesita permiso de ubicación para usar Bluetooth en esta versión de Android.' });
             return;
           }
         }
@@ -98,7 +99,7 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
     }
 
     if (!BLEPrinter) {
-      Alert.alert('Error', 'El módulo de impresión Bluetooth no está disponible en este simulador. Debes compilar la aplicación para un dispositivo real.');
+      showAlert({ type: 'error', title: 'Error', message: 'El módulo de impresión Bluetooth no está disponible en este simulador. Debes compilar la aplicación para un dispositivo real.' });
       
       // Mock devices for development UI testing
       setScanning(true);
@@ -137,10 +138,11 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
         setShowBluetoothBanner(true);
         setTimeout(() => setShowBluetoothBanner(false), 6000);
       } else {
-        Alert.alert(
-          'Error de Bluetooth', 
-          `Fallo técnico: ${errorMessage}\nAsegúrate de tener el Bluetooth y el GPS/Ubicación encendidos en tu celular.`
-        );
+        showAlert({
+          type: 'error',
+          title: 'Error de Bluetooth',
+          message: `Fallo técnico: ${errorMessage}\nAsegúrate de tener el Bluetooth y el GPS/Ubicación encendidos en tu celular.`
+        });
       }
     } finally {
       setScanning(false);
@@ -187,7 +189,7 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
       
       setPrinter(printer);
       setConnected(true);
-      Alert.alert('Éxito', `Conectado a ${printer.device_name}`);
+      showAlert({ type: 'success', title: 'Éxito', message: `Conectado a ${printer.device_name}` });
     } catch (err: any) {
       setConnected(false);
       
@@ -197,7 +199,7 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
         setShowBluetoothBanner(true);
         setTimeout(() => setShowBluetoothBanner(false), 6000);
       } else {
-        Alert.alert('Error de conexión', errorMessage || 'No se pudo conectar a la impresora.');
+        showAlert({ type: 'error', title: 'Error de conexión', message: errorMessage || 'No se pudo conectar a la impresora.' });
       }
     } finally {
       setConnectingTo(null);
@@ -211,7 +213,7 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
       }
       setPrinter(null);
       setConnected(false);
-      Alert.alert('Desconectado', 'Se ha desconectado la impresora actual.');
+      showAlert({ type: 'info', title: 'Desconectado', message: 'Se ha desconectado la impresora actual.' });
     } catch (error) {
       console.log(error);
     }
@@ -219,7 +221,7 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
 
   const printTestTicket = async () => {
     if (!currentPrinter) {
-      Alert.alert('Error', 'No hay ninguna impresora conectada.');
+      showAlert({ type: 'error', title: 'Error', message: 'No hay ninguna impresora conectada.' });
       return;
     }
 
@@ -236,10 +238,10 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
       if (BLEPrinter) {
         await BLEPrinter.printText(payload);
       } else {
-        Alert.alert('Simulación de Impresión', `Imprimiendo en formato ${paperSize}mm...\n\n${payload}`);
+        showAlert({ type: 'info', title: 'Simulación de Impresión', message: `Imprimiendo en formato ${paperSize}mm...\n\n${payload}` });
       }
     } catch (err: any) {
-      Alert.alert('Error de impresión', err.message || 'Fallo al imprimir el ticket.');
+      showAlert({ type: 'error', title: 'Error de impresión', message: err.message || 'Fallo al imprimir el ticket.' });
     }
   };
 

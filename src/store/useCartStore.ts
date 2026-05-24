@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Alert } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 export interface CartItemModifier {
   name: string;
@@ -72,7 +72,7 @@ const useCartStore = create<CartStore>((set, get) => ({
       const currentQty = existing ? existing.quantity : 0;
       
       if (currentQty >= availableStock) {
-        Alert.alert('Stock insuficiente', `Solo hay ${availableStock} unidades disponibles de ${product.nombre}.`);
+        Toast.show({ type: 'error', text1: 'Stock insuficiente', text2: `Solo hay ${availableStock} unidades disponibles de ${product.nombre}.` });
         return state;
       }
 

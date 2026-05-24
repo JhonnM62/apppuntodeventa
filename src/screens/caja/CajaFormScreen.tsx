@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { View, ScrollView, ActivityIndicator, TouchableOpacity, Image, Modal, TextInput, KeyboardAvoidingView, Platform, Alert, Keyboard } from 'react-native';
+import { View, ScrollView, ActivityIndicator, TouchableOpacity, Image, Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
@@ -21,6 +21,7 @@ import { generateAndShareCajaPDF } from '../../utils/cajaPdf';
 import useSocketEvent from '../../hooks/useSocketEvent';
 import { useSocket } from '../../context/SocketContext';
 import { usePermissions } from '../../hooks/usePermissions';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import VerifyInsumosModal from '../../components/caja/VerifyInsumosModal';
 
@@ -70,6 +71,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const isNew = !cajaId;
   const { user } = useAuthStore();
   const { canCreate, canEdit, canDelete } = usePermissions('caja');
+  const { showAlert } = useCustomAlert();
   
   // Determine if the user is in read-only mode for this screen
   const isReadOnly = isNew ? !canCreate : !canEdit;
@@ -515,30 +517,27 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
   const handleDeleteCaja = () => {
     if (!cajaId) return;
-    Alert.alert(
-      'Eliminar Registro',
-      '¿Estás seguro de que deseas eliminar este registro de caja? Esta acción no se puede deshacer.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Eliminar', 
-          style: 'destructive', 
-          onPress: async () => {
-            setSaving(true);
-            try {
-              await deleteCaja(cajaId);
-              Toast.show({ type: 'success', text1: 'Eliminado', text2: 'Caja eliminada exitosamente' });
-              navigation.goBack();
-            } catch (error) {
-              console.error('Error deleting caja:', error);
-              Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo eliminar la caja' });
-            } finally {
-              setSaving(false);
-            }
-          }
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar Registro',
+      message: '¿Estás seguro de que deseas eliminar este registro de caja? Esta acción no se puede deshacer.',
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      onConfirm: async () => {
+        setSaving(true);
+        try {
+          await deleteCaja(cajaId);
+          Toast.show({ type: 'success', text1: 'Eliminado', text2: 'Caja eliminada exitosamente' });
+          navigation.goBack();
+        } catch (error) {
+          console.error('Error deleting caja:', error);
+          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo eliminar la caja' });
+        } finally {
+          setSaving(false);
         }
-      ]
-    );
+      },
+      onCancel: () => {}
+    });
   };
 
   const copyPreviousCajaInsumos = async () => {
@@ -1273,25 +1272,18 @@ export default function CajaFormScreen({ route, navigation }: any) {
                     <TouchableOpacity 
                       className="bg-red-600 py-4 rounded-xl mt-4 items-center shadow-sm shadow-red-200"
                       onPress={() => {
-                        Alert.alert(
-                          "Cierre Definitivo de Caja",
-                          "¿Estás seguro de cerrar la caja definitivamente? Ya no podrás agregar más arqueos parciales ni editarla.",
-                          [
-                            { text: "Cancelar", style: "cancel" },
-                            { 
-                              text: "Sí, Cerrar Caja", 
-                              style: "destructive",
-                              onPress: () => {
-                                // Append to observaciones
-                                const currentObs = watch('observaciones') || '';
-                                const cuadreText = `\n\n--- CIERRE DEFINITIVO (${new Date().toLocaleString('es-CO')}) ---\nEFECTIVO FÍSICO: ${formatCurrency(efectivoContado)} (Dif: ${formatCurrency(diffEfectivo)})\nTRANSFERENCIAS: ${formatCurrency(transContadas)} (Dif: ${formatCurrency(diffTrans)})\nESTADO: ${isCuadrada ? 'CUADRADA' : 'NO CUADRADA'}\n----------------------`;
-                                setValue('observaciones', currentObs + cuadreText);
-                                
-                                handleSubmit((data) => onSave(data, true), onError)();
-                              }
-                            }
-                          ]
-                        );
+                        showAlert({
+                          type: 'confirm',
+                          title: 'Cierre Definitivo de Caja',
+                          message: '¿Estás seguro de cerrar la caja definitivamente? Ya no podrás agregar más arqueos parciales ni editarla.',
+                          confirmText: 'Sí, Cerrar Caja',
+                          onConfirm: () => {
+                            const currentObs = watch('observaciones') || '';
+                            const cuadreText = `\n\n--- CIERRE DEFINITIVO (${new Date().toLocaleString('es-CO')}) ---\nEFECTIVO FÍSICO: ${formatCurrency(efectivoContado)} (Dif: ${formatCurrency(diffEfectivo)})\nTRANSFERENCIAS: ${formatCurrency(transContadas)} (Dif: ${formatCurrency(diffTrans)})\nESTADO: ${isCuadrada ? 'CUADRADA' : 'NO CUADRADA'}\n----------------------`;
+                            setValue('observaciones', currentObs + cuadreText);
+                            handleSubmit((data) => onSave(data, true), onError)();
+                          },
+                        });
                       }}
                     >
                       <Text className="text-white font-black text-sm uppercase tracking-widest">🔒 CIERRE DEFINITIVO DE CAJA</Text>

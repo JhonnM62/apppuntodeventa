@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Modal, TextInput, Alert, FlatList, KeyboardAvoidingView, Platform, Keyboard, Animated, Dimensions, Image } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Modal, TextInput, FlatList, KeyboardAvoidingView, Platform, Keyboard, Animated, Dimensions, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
 import Toast from 'react-native-toast-message';
 import { useSocketEvent } from '../../hooks/useSocketEvent';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 import { SocketEvent } from '../../types/socket.types';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
@@ -21,6 +22,7 @@ import * as Sharing from 'expo-sharing';
 type TabType = 'entrada' | 'salida' | 'registros';
 
 const InventarioScreen = ({ navigation }: any) => {
+  const { showAlert } = useCustomAlert();
   const { user } = useAuthStore();
   const isAdmin = user?.rol === 'Admin app' || user?.rol === 'Admin negocio';
   
@@ -862,26 +864,25 @@ const InventarioScreen = ({ navigation }: any) => {
       setItemToDelete({ id: orden.IDorderinventario, isComprado: true });
       setShowDeleteModal(true);
     } else {
-      Alert.alert('Confirmar', '¿Eliminar este item?', [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await inventarioService.deleteOrdenInventario(orden.IDorderinventario);
-              if (selectedInventario) {
-                await fetchOrdenes(selectedInventario.IDinventario);
-                await fetchInventarios();
-                await fetchInsumos(); // Refetch para actualizar stock visual
-              }
-              Toast.show({ type: 'success', text1: 'Eliminado', text2: 'El item ha sido eliminado' });
-            } catch (error: any) {
-              Toast.show({ type: 'error', text1: 'Error', text2: getErrorMessage(error, 'No se pudo eliminar') });
+      showAlert({
+        type: 'confirm',
+        title: 'Confirmar',
+        message: '¿Eliminar este item?',
+        confirmText: 'Eliminar',
+        onConfirm: async () => {
+          try {
+            await inventarioService.deleteOrdenInventario(orden.IDorderinventario);
+            if (selectedInventario) {
+              await fetchOrdenes(selectedInventario.IDinventario);
+              await fetchInventarios();
+              await fetchInsumos();
             }
-          },
+            Toast.show({ type: 'success', text1: 'Eliminado', text2: 'El item ha sido eliminado' });
+          } catch (error: any) {
+            Toast.show({ type: 'error', text1: 'Error', text2: getErrorMessage(error, 'No se pudo eliminar') });
+          }
         },
-      ]);
+      });
     }
   };
 
@@ -922,24 +923,23 @@ const InventarioScreen = ({ navigation }: any) => {
       return;
     }
 
-    Alert.alert('Confirmar', `¿Eliminar "${selectedInventario.nombre}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await inventarioService.delete(selectedInventario!.IDinventario);
-            setShowDetailModal(false);
-            setSelectedInventario(null);
-            fetchInventarios();
-            Toast.show({ type: 'success', text1: 'Eliminado', text2: 'El inventario ha sido eliminado' });
-          } catch (error: any) {
-            Toast.show({ type: 'error', text1: 'Error', text2: getErrorMessage(error, 'No se pudo eliminar') });
-          }
-        },
+    showAlert({
+      type: 'confirm',
+      title: 'Confirmar',
+      message: `¿Eliminar "${selectedInventario.nombre}"?`,
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        try {
+          await inventarioService.delete(selectedInventario!.IDinventario);
+          setShowDetailModal(false);
+          setSelectedInventario(null);
+          fetchInventarios();
+          Toast.show({ type: 'success', text1: 'Eliminado', text2: 'El inventario ha sido eliminado' });
+        } catch (error: any) {
+          Toast.show({ type: 'error', text1: 'Error', text2: getErrorMessage(error, 'No se pudo eliminar') });
+        }
       },
-    ]);
+    });
   };
 
   const getProveedores = () => {

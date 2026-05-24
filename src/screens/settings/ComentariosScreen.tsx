@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, ActivityIndicator, Alert, TouchableOpacity, StyleSheet, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, FlatList, ActivityIndicator, TouchableOpacity, StyleSheet, TextInput, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components/ui/text';
@@ -7,8 +7,10 @@ import { Button } from '../../components/ui/button';
 import { getComentarios, createComentario, updateComentario, deleteComentario, Comentario } from '../../services/comentarios';
 import Toast from 'react-native-toast-message';
 import { usePermissions } from '../../hooks/usePermissions';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 const ComentariosScreen = ({ navigation }: any) => {
+  const { showAlert } = useCustomAlert();
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -77,23 +79,22 @@ const ComentariosScreen = ({ navigation }: any) => {
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert('Confirmar', '¿Estás seguro de que deseas eliminar este comentario?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Eliminar',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteComentario(id);
-            Toast.show({ type: 'success', text1: 'Éxito', text2: 'Comentario eliminado' });
-            fetchComentarios();
-          } catch (error) {
-            console.error('Error deleting comentario:', error);
-            Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo eliminar el comentario' });
-          }
-        },
+    showAlert({
+      type: 'confirm',
+      title: 'Confirmar',
+      message: '¿Estás seguro de que deseas eliminar este comentario?',
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        try {
+          await deleteComentario(id);
+          Toast.show({ type: 'success', text1: 'Éxito', text2: 'Comentario eliminado' });
+          fetchComentarios();
+        } catch (error) {
+          console.error('Error deleting comentario:', error);
+          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo eliminar el comentario' });
+        }
       },
-    ]);
+    });
   };
 
   const resetForm = () => {

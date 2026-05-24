@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, Modal, TextInput, Alert, ActivityIndicator, FlatList, RefreshControl, Image as RNImage, Platform, Animated } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, Modal, TextInput, ActivityIndicator, FlatList, RefreshControl, Image as RNImage, Platform, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 // Fallback seguro para expo-image
 let ImageComponent: any = RNImage;
@@ -39,6 +41,7 @@ type Props = {
 
 const InsumosScreen = ({ navigation }: Props) => {
   const { canCreate, canEdit, canDelete } = usePermissions('insumos');
+  const { showAlert } = useCustomAlert();
 
   const [insumos, setInsumos] = useState<InsumoItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -411,10 +414,10 @@ if (filterCuadrarInsumos !== 'all') {
   const handleCamera = async () => {
     setShowImageOptions(false);
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permiso denegado', 'Necesitamos acceso a la cámara para tomar fotos.');
-      return;
-    }
+if (status !== 'granted') {
+        showAlert({ type: 'warning', title: 'Permiso denegado', message: 'Necesitamos acceso a la cámara para tomar fotos.' });
+        return;
+      }
     const result = await ImagePicker.launchCameraAsync({
       allowsEditing: true,
       aspect: [1, 1],
@@ -428,10 +431,10 @@ if (filterCuadrarInsumos !== 'all') {
   const handleGallery = async () => {
     setShowImageOptions(false);
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permiso denegado', 'Necesitamos acceso a tus fotos.');
-      return;
-    }
+if (status !== 'granted') {
+        showAlert({ type: 'warning', title: 'Permiso denegado', message: 'Necesitamos acceso a tus fotos.' });
+        return;
+      }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -445,7 +448,7 @@ if (filterCuadrarInsumos !== 'all') {
 
   const handleSave = async () => {
     if (!formData.nombre?.trim()) {
-      Alert.alert('Error', 'El nombre es obligatorio');
+      showAlert({ type: 'error', title: 'Error', message: 'El nombre es obligatorio' });
       return;
     }
 
@@ -460,7 +463,7 @@ if (filterCuadrarInsumos !== 'all') {
           }
         } catch (uploadError) {
           console.error('[DEBUG] Error subiendo imagen:', uploadError);
-          Alert.alert('Aviso', 'Se guardará el insumo, pero falló la subida de la imagen.');
+          showAlert({ type: 'warning', title: 'Aviso', message: 'Se guardará el insumo, pero falló la subida de la imagen.' });
         }
       }
 
@@ -479,48 +482,43 @@ if (filterCuadrarInsumos !== 'all') {
 
       if (isEditing && selectedInsumo) {
         await insumosService.update(selectedInsumo.IDalimentos, dataToSave);
-        Alert.alert('Éxito', 'Insumo actualizado correctamente');
+        showAlert({ type: 'success', title: 'Éxito', message: 'Insumo actualizado correctamente' });
       } else {
         await insumosService.create(dataToSave);
-        Alert.alert('Éxito', 'Insumo creado correctamente');
+        showAlert({ type: 'success', title: 'Éxito', message: 'Insumo creado correctamente' });
       }
       setShowModal(false);
       resetForm();
       fetchInsumos();
     } catch (error: any) {
       console.log('[DEBUG] Error guardando insumo (InsumosScreen):', error?.response?.data || error);
-      Alert.alert('Error', getErrorMessage(error, 'No se pudo guardar el insumo'));
+      showAlert({ type: 'error', title: 'Error', message: getErrorMessage(error, 'No se pudo guardar el insumo') });
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = (insumo: InsumoItem) => {
-    Alert.alert(
-      'Eliminar Insumo',
-      `¿Estás seguro de eliminar "${insumo.nombre || insumo.Nombre}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await insumosService.delete(insumo.IDalimentos);
-              Alert.alert('Éxito', 'Insumo eliminado');
-              fetchInsumos();
-            } catch (error) {
-              Alert.alert('Error', 'No se pudo eliminar');
-            }
-          },
-        },
-      ]
-    );
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar Insumo',
+      message: `¿Estás seguro de eliminar "${insumo.nombre || insumo.Nombre}"?`,
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        try {
+          await insumosService.delete(insumo.IDalimentos);
+          showAlert({ type: 'success', title: 'Éxito', message: 'Insumo eliminado' });
+          fetchInsumos();
+        } catch (error) {
+          showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar' });
+        }
+      },
+    });
   };
 
   const handleStockAction = async () => {
     if (!selectedInsumo || stockModal.cantidad <= 0) {
-      Alert.alert('Error', 'Ingresa una cantidad válida');
+      showAlert({ type: 'error', title: 'Error', message: 'Ingresa una cantidad válida' });
       return;
     }
 
@@ -531,20 +529,20 @@ if (filterCuadrarInsumos !== 'all') {
         await insumosService.agregarStock(selectedInsumo.IDalimentos, stockModal.cantidad, stockModal.observacion);
       } else {
         if (stockModal.cantidad > (selectedInsumo.cantidad || selectedInsumo.Cantidad || 0)) {
-          Alert.alert('Error', 'No hay suficiente stock disponible');
+          showAlert({ type: 'error', title: 'Error', message: 'No hay suficiente stock disponible' });
           setStockLoading(false);
           return;
         }
         await insumosService.descontarStock(selectedInsumo.IDalimentos, stockModal.cantidad, stockModal.observacion);
       }
-      Alert.alert('Éxito', `Stock ${stockModal.tipo === 'entrada' ? 'agregado' : 'descontado'} correctamente`);
+      showAlert({ type: 'success', title: 'Éxito', message: `Stock ${stockModal.tipo === 'entrada' ? 'agregado' : 'descontado'} correctamente` });
       setShowStockModal(false);
       setSelectedInsumo(null);
       fetchInsumos();
       fetchAlertas();
     } catch (error: any) {
       console.log('[DEBUG] Error en StockAction:', error?.response?.data || error);
-      Alert.alert('Error', error?.response?.data?.message || `No se pudo ${stockModal.tipo === 'entrada' ? 'agregar' : 'descontar'} stock`);
+      showAlert({ type: 'error', title: 'Error', message: error?.response?.data?.message || `No se pudo ${stockModal.tipo === 'entrada' ? 'agregar' : 'descontar'} stock` });
     } finally {
       setStockLoading(false);
     }

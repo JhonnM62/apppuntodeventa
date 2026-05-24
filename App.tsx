@@ -11,6 +11,7 @@ import { getProducts } from './src/services/products';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast, { BaseToast, ErrorToast, ToastConfig } from 'react-native-toast-message';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
+import { CustomAlertProvider } from './src/context/CustomAlertContext';
 
 let BLEPrinter: any = null;
 try {
@@ -124,11 +125,13 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      <SocketProvider>
-        <AppInitializer>
-          <RootNavigator />
-        </AppInitializer>
-      </SocketProvider>
+      <CustomAlertProvider>
+        <SocketProvider>
+          <AppInitializer>
+            <RootNavigator />
+          </AppInitializer>
+        </SocketProvider>
+      </CustomAlertProvider>
       <PortalHost />
       <Toast config={toastConfig} />
     </SafeAreaProvider>

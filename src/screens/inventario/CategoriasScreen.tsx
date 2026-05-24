@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, Modal, TextInput, Alert, ActivityIndicator, RefreshControl, FlatList } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, Modal, TextInput, ActivityIndicator, RefreshControl, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text } from '../../components/ui/text';
@@ -8,8 +8,10 @@ import useAuthStore from '../../store/useAuthStore';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useSocketEvent } from '../../hooks/useSocketEvent';
 import { SocketEvent } from '../../types/socket.types';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 const CategoriasScreen = () => {
+  const { showAlert } = useCustomAlert();
   const { user } = useAuthStore();
   const [categorias, setCategorias] = useState<CategoriaItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +32,7 @@ const CategoriasScreen = () => {
       const data = await categoriasService.getAll();
       setCategorias(data || []);
     } catch (error: any) {
-      Alert.alert('Error', 'No se pudieron cargar las categorías');
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudieron cargar las categorías' });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -52,7 +54,7 @@ const CategoriasScreen = () => {
 
   const handleSave = async () => {
     if (!formData.nombre.trim()) {
-      Alert.alert('Error', 'El nombre es requerido');
+      showAlert({ type: 'error', title: 'Error', message: 'El nombre es requerido' });
       return;
     }
 
@@ -60,17 +62,17 @@ const CategoriasScreen = () => {
     try {
       if (editingCategoria) {
         await categoriasService.update(editingCategoria.IDcategoria, formData);
-        Alert.alert('Éxito', 'Categoría actualizada');
+        showAlert({ type: 'success', title: 'Éxito', message: 'Categoría actualizada' });
       } else {
         await categoriasService.create(formData);
-        Alert.alert('Éxito', 'Categoría creada');
+        showAlert({ type: 'success', title: 'Éxito', message: 'Categoría creada' });
       }
       setShowModal(false);
       setEditingCategoria(null);
       setFormData({ nombre: '', image: '' });
       loadCategorias();
     } catch (error: any) {
-      Alert.alert('Error', error?.response?.data?.message || 'Error al guardar');
+      showAlert({ type: 'error', title: 'Error', message: error?.response?.data?.message || 'Error al guardar' });
     } finally {
       setSaving(false);
     }
@@ -78,29 +80,24 @@ const CategoriasScreen = () => {
 
   const handleDelete = (cat: CategoriaItem) => {
     if (cat.productos && cat.productos.length > 0) {
-      Alert.alert('Error', `No se puede eliminar. Tiene ${cat.productos.length} productos asociados.`);
+      showAlert({ type: 'error', title: 'Error', message: `No se puede eliminar. Tiene ${cat.productos.length} productos asociados.` });
       return;
     }
 
-    Alert.alert(
-      'Confirmar',
-      `¿Eliminar categoría "${cat.nombre}"?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Eliminar',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await categoriasService.delete(cat.IDcategoria);
-              loadCategorias();
-            } catch (error: any) {
-              Alert.alert('Error', 'No se pudo eliminar');
-            }
-          },
-        },
-      ]
-    );
+    showAlert({
+      type: 'confirm',
+      title: 'Confirmar',
+      message: `¿Eliminar categoría "${cat.nombre}"?`,
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        try {
+          await categoriasService.delete(cat.IDcategoria);
+          loadCategorias();
+        } catch (error: any) {
+          showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar' });
+        }
+      },
+    });
   };
 
   const openCreateModal = () => {

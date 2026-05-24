@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import { Text } from '../../components/ui/text';
 import { insumosService, CreateInsumoDto } from '../../services/insumos';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 type BulkResult = {
   exitosos: any[];
@@ -22,6 +23,7 @@ type ParsedRow = {
 };
 
 const BulkImportScreen = () => {
+  const { showAlert } = useCustomAlert();
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<BulkResult | null>(null);
   const [showResults, setShowResults] = useState(false);
@@ -52,7 +54,7 @@ const BulkImportScreen = () => {
       const content = await FileSystem.readAsStringAsync(file.uri);
       
       if (!content.trim()) {
-        Alert.alert('Error', 'El archivo está vacío');
+        showAlert({ type: 'error', title: 'Error', message: 'El archivo está vacío' });
         setPickingFile(false);
         return;
       }
@@ -63,10 +65,10 @@ const BulkImportScreen = () => {
       
       if (parsed.length > 0) {
         const validCount = parsed.filter(p => p.valido).length;
-        Alert.alert('Archivo cargado', `Se encontraron ${parsed.length} filas. ${validCount} válidas.`);
+        showAlert({ type: 'success', title: 'Archivo cargado', message: `Se encontraron ${parsed.length} filas. ${validCount} válidas.` });
       }
     } catch (error: any) {
-      Alert.alert('Error', 'No se pudo leer el archivo: ' + (error?.message || 'Error desconocido'));
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo leer el archivo: ' + (error?.message || 'Error desconocido') });
     } finally {
       setPickingFile(false);
     }
@@ -98,20 +100,20 @@ const BulkImportScreen = () => {
 
   const handlePreview = () => {
     if (!formData.csvText.trim()) {
-      Alert.alert('Error', 'Ingresa datos para previsualizar');
+      showAlert({ type: 'error', title: 'Error', message: 'Ingresa datos para previsualizar' });
       return;
     }
 
     const parsed = parseCSV(formData.csvText);
     setParsedData(parsed);
-    Alert.alert('Preview', `Se encontraron ${parsed.length} filas. ${parsed.filter(p => p.valido).length} válidas.`);
+    showAlert({ type: 'info', title: 'Preview', message: `Se encontraron ${parsed.length} filas. ${parsed.filter(p => p.valido).length} válidas.` });
   };
 
   const handleImport = async () => {
     const validRows = parsedData.filter(r => r.valido);
 
     if (validRows.length === 0) {
-      Alert.alert('Error', 'No hay filas válidas para importar');
+      showAlert({ type: 'error', title: 'Error', message: 'No hay filas válidas para importar' });
       return;
     }
 
@@ -129,7 +131,7 @@ const BulkImportScreen = () => {
       setResults(response.data);
       setShowResults(true);
     } catch (error: any) {
-      Alert.alert('Error', error?.message || 'Error al importar insumos');
+      showAlert({ type: 'error', title: 'Error', message: error?.message || 'Error al importar insumos' });
     } finally {
       setLoading(false);
     }
