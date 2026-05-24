@@ -547,6 +547,8 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         </KeyboardAvoidingView>
       </TouchableOpacity>
 
+      <Toast config={toastConfig} />
+
       {/* Modal de Opciones de Adjunto (UI-UX Pro Max) */}
       <Modal visible={showAttachmentOptions} transparent animationType="slide" onRequestClose={() => setShowAttachmentOptions(false)}>
         <TouchableOpacity
@@ -646,8 +648,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         </View>
       </Modal>
 
-      <Toast config={toastConfig} />
-    </Modal>
+      </Modal>
   );
 }
 
