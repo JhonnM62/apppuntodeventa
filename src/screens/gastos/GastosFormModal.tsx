@@ -668,3 +668,61 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
   );
 }
 
+const styles = StyleSheet.create({
+  magicNotificationOverlay: {
+    position: 'absolute',
+    top: '20%',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 99999,
+  },
+  magicNotification: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#3b82f6',
+  },
+  magicNotificationSuccess: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#16a34a',
+  },
+  magicNotificationText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#1f2937',
+    marginLeft: 10,
+  },
+  magicNotificationTextSuccess: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#16a34a',
+    marginLeft: 10,
+  },
+  magicNotificationSubtext: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginLeft: 6,
+  },
+});
+
