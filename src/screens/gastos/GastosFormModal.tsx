@@ -258,17 +258,32 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
     try {
       startScanningAnimation();
       Toast.show({ type: 'info', text1: '✨ Analizando con IA', text2: 'Extrayendo datos mágicamente...' });
-      
+
       const formData = new FormData();
       const filename = uri.split('/').pop() || 'receipt.jpg';
-      
-      // Inferir tipo mime simple
+
+      // Comprimir imagen antes de enviar si existe ImageManipulator
+      let processedUri = uri;
+      try {
+        const ImageManipulator = require('expo-image-manipulator');
+        if (ImageManipulator) {
+          const manipResult = await ImageManipulator.manipulateAsync(
+            uri,
+            [{ resize: { width: 1024 } }],
+            { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG }
+          );
+          processedUri = manipResult.uri;
+        }
+      } catch (manipErr) {
+        console.log('ImageManipulator no disponible, usando imagen original:', manipErr);
+      }
+
       const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : `image/jpeg`;
+      const type = 'image/jpeg';
 
       formData.append('file', {
-        uri,
-        name: filename,
+        uri: processedUri,
+        name: 'receipt.jpg',
         type,
       } as any);
       formData.append('context', 'gastos');
