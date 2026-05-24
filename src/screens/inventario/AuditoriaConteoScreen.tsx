@@ -225,7 +225,7 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
   return (
     <>
       <StatusBar style="dark" backgroundColor="transparent" translucent />
-      <SafeAreaView className="flex-1" style={{ backgroundColor: COLORS.background }} edges={['top']}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.background }} edges={['top']}>
         <View className="flex-row items-center justify-between p-4 border-b bg-white" style={{ borderColor: COLORS.border }}>
           <TouchableOpacity onPress={() => navigation.goBack()} className="w-10 h-10 rounded-full items-center justify-center">
             <Ionicons name="arrow-back" size={24} color={COLORS.text} />
@@ -235,7 +235,7 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
         </View>
 
         {insumos.length === 0 ? (
-        <View className="flex-1 items-center justify-center px-6">
+        <View className="flex-1 items-center justify-center px-6" style={{ flex: 1 }}>
           <Ionicons name="document-text-outline" size={64} color={COLORS.textSecondary} />
           <Text className="text-gray-500 mt-4 text-center">No hay conteos registrados aún</Text>
           <Text className="text-gray-400 text-sm mt-2 text-center">
@@ -244,6 +244,7 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
         </View>
       ) : (
         <FlatList
+          style={{ flex: 1 }}
           data={insumos}
           renderItem={renderInsumo}
           keyExtractor={(item) => item.id}
