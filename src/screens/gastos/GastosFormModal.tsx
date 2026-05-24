@@ -191,9 +191,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
   };
 
   const pickImage = async (useCamera: boolean, scanWithIA: boolean = false) => {
-    console.log('[DEBUG pickImage] INICIO - useCamera:', useCamera, 'scanWithIA:', scanWithIA);
     if (!ImagePicker) {
-      console.log('[DEBUG pickImage] ImagePicker es null');
       showAlert({ type: 'error', title: 'Módulo Faltante', message: 'La cámara/galería no está disponible. Debes recompilar la app (eas build).' });
       return;
     }
@@ -201,19 +199,15 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
     try {
       let result;
       if (useCamera) {
-        console.log('[DEBUG pickImage] Solicitando permiso de cámara...');
         const permission = await ImagePicker.requestCameraPermissionsAsync();
-        console.log('[DEBUG pickImage] Permiso cámara:', permission);
         if (!permission.granted) {
           showAlert({ type: 'warning', title: 'Permiso denegado', message: 'Se requiere acceso a la cámara' });
           return;
         }
-        console.log('[DEBUG pickImage] Abriendo cámara...');
         result = await ImagePicker.launchCameraAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
           quality: 0.5,
         });
-        console.log('[DEBUG pickImage] Resultado cámara:', JSON.stringify(result));
       } else {
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
@@ -226,26 +220,18 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         });
       }
 
-      console.log('[DEBUG pickImage] result.canceled:', result.canceled);
-      console.log('[DEBUG pickImage] result.assets:', result.assets);
-      
       if (!result.canceled && result.assets[0].uri) {
         const uri = result.assets[0].uri;
-        console.log('[DEBUG pickImage] URI capturada:', uri);
-        console.log('[DEBUG pickImage] ANTES de setFotoUri - fotoUri actual:', fotoUri);
         setFotoUri(uri);
-        console.log('[DEBUG pickImage] DESPUES de setFotoUri - fotoUri debería ser:', uri);
 
         if (scanWithIA) {
           setIsScanningIA(true);
           Toast.show({ type: 'info', text1: '✨ Analizando con IA', text2: 'Extrayendo datos mágicamente...', toastVisibilityTime: 4000 });
           processImageWithIA(uri).finally(() => setIsScanningIA(false));
         }
-      } else {
-        console.log('[DEBUG pickImage] No se capturó imagen - result.canceled:', result.canceled);
       }
     } catch (error) {
-      console.log('[DEBUG pickImage] ERROR:', error);
+      console.log(error);
     }
   };
 
@@ -267,7 +253,6 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
     }
 
     setShowAttachmentOptions(false);
-    console.log('[DEBUG handleIAScanPress] calling pickImage without await');
     pickImage(true, true);
   };
 
@@ -345,10 +330,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
   };
 
   const handleAttachment = () => {
-    // Reemplazamos el Alert nativo por un Modal personalizado más estético (se implementará abajo en el JSX)
-    console.log('[DEBUG handleAttachment] fotoUri actual:', fotoUri);
-    console.log('[DEBUG handleAttachment] Llamando a pickImage(false, false)');
-    pickImage(false, false);
+    setShowAttachmentOptions(true);
   };
 
   const [showAttachmentOptions, setShowAttachmentOptions] = useState(false);
@@ -494,7 +476,6 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
                       onPress={() => setIsFullScreen(true)}
                       className="border border-gray-200 rounded-xl overflow-hidden bg-gray-50 p-2 w-full items-center"
                     >
-                      <Text style={{ color: 'blue', fontSize: 12 }}>[DEBUG] Renderizando imagen con URI: {fotoUri}</Text>
                       <ImageComponent 
                         source={{ uri: fotoUri }}
                         style={{ width: '100%', height: 180, borderRadius: 8 }} 
