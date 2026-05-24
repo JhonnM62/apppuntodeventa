@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react'
 import { View, TouchableOpacity, ActivityIndicator, Image, RefreshControl, Platform, TextInput, FlatList, StyleSheet, Modal as RNModal, ScrollView, Alert, Text as RNText, KeyboardAvoidingView, Keyboard } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { StatusBar } from 'expo-status-bar';
 import { Audio } from 'expo-av';
 import { getProducts } from '../../services/products';
 import { getMesas, Mesa } from '../../services/mesas';
@@ -1212,8 +1213,10 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.topBar}>
+    <>
+      <StatusBar style="light" backgroundColor="#4CAF50" />
+      <SafeAreaView style={styles.container} edges={['top']}>
+        <View style={styles.topBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
@@ -1422,6 +1425,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       {renderClienteModal()}
       {renderModifiersModal()}
     </SafeAreaView>
+    </>
   );
 };
 
