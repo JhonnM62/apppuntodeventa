@@ -1214,8 +1214,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   return (
     <>
-      <StatusBar style="light" backgroundColor="#4CAF50" />
-      <SafeAreaView style={[styles.container, { backgroundColor: '#4CAF50' }]} edges={['top']}>
+      <StatusBar style="dark" backgroundColor="#fff" />
+      <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.topBar}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
