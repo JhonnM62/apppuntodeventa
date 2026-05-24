@@ -58,30 +58,22 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
 
   const loadAuditoria = useCallback(async () => {
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}/insumos`);
+      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}/insumos?limit=2000`);
       const data = await response.json();
       
       if (data?.data) {
         const insumosConConteos = data.data
           .filter((insumo: any) => {
-            let conteos = [];
-            try {
-              conteos = typeof insumo.ultimosConteos === 'string' 
-                ? JSON.parse(insumo.ultimosConteos) 
-                : (insumo.ultimosConteos || []);
-            } catch (e) {
-              conteos = [];
+            let conteos = insumo.ultimosConteos;
+            if (typeof conteos === 'string') {
+              try { conteos = JSON.parse(conteos); } catch(e) { conteos = []; }
             }
             return Array.isArray(conteos) && conteos.length > 0;
           })
           .map((insumo: any) => {
-            let conteos = [];
-            try {
-              conteos = typeof insumo.ultimosConteos === 'string' 
-                ? JSON.parse(insumo.ultimosConteos) 
-                : (insumo.ultimosConteos || []);
-            } catch (e) {
-              conteos = [];
+            let conteos = insumo.ultimosConteos;
+            if (typeof conteos === 'string') {
+              try { conteos = JSON.parse(conteos); } catch(e) { conteos = []; }
             }
             
             return {
