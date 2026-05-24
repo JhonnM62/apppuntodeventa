@@ -123,7 +123,7 @@ export default function App() {
   
   return (
     <SafeAreaProvider>
-      <StatusBar style="dark" backgroundColor="transparent" translucent />
+      <StatusBar style="dark" />
       <SocketProvider>
         <AppInitializer>
           <RootNavigator />
