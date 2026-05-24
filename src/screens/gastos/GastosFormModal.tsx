@@ -634,7 +634,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
             >
               {fotoUri && (
                 <ImageComponent 
-                  source={{ uri: fotoUri.startsWith('http') ? fotoUri : `https://backendnestpv.autosystemprojects.site/api/v1${fotoUri.startsWith('/') ? fotoUri : '/' + fotoUri}` }} 
+                  source={{ uri: fotoUri }}
                   style={{ width: '100%', height: '100%' }} 
                   contentFit="contain"
                   resizeMode="contain" 
