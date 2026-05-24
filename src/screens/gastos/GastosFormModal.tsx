@@ -267,6 +267,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
     }
 
     setShowAttachmentOptions(false);
+    console.log('[DEBUG handleIAScanPress] calling pickImage without await');
     pickImage(true, true);
   };
 
@@ -345,7 +346,9 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
 
   const handleAttachment = () => {
     // Reemplazamos el Alert nativo por un Modal personalizado más estético (se implementará abajo en el JSX)
-    setShowAttachmentOptions(true);
+    console.log('[DEBUG handleAttachment] fotoUri actual:', fotoUri);
+    console.log('[DEBUG handleAttachment] Llamando a pickImage(false, false)');
+    pickImage(false, false);
   };
 
   const [showAttachmentOptions, setShowAttachmentOptions] = useState(false);
@@ -493,11 +496,8 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
                     >
                       <Text style={{ color: 'blue', fontSize: 12 }}>[DEBUG] Renderizando imagen con URI: {fotoUri}</Text>
                       <ImageComponent 
-                        source={{ uri: fotoUri.startsWith('http') ? fotoUri : `https://backendnestpv.autosystemprojects.site/api/v1${fotoUri.startsWith('/') ? fotoUri : '/' + fotoUri}` }} 
+                        source={{ uri: fotoUri }}
                         style={{ width: '100%', height: 180, borderRadius: 8 }} 
-                        contentFit="contain"
-                        resizeMode="contain" 
-                        transition={200}
                       />
                       
                       {/* Animación de Escaneo IA */}
