@@ -19,6 +19,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS, SPACING, FONT_SIZE } from '../../lib/theme';
 import { eliminarConteo, editarConteo } from '../../services/caja';
 import { insumosService } from '../../services/insumos';
+import { useSocketEvent } from '../../hooks/useSocketEvent';
+import { SocketEvent } from '../../types/socket.types';
 
 interface ConteoItem {
   fecha: string;
@@ -130,6 +132,10 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
   }, []);
 
   useEffect(() => {
+    loadAuditoria();
+  }, [loadAuditoria]);
+
+  useSocketEvent<any>(SocketEvent.REFRESH_INSUMOS, () => {
     loadAuditoria();
   }, [loadAuditoria]);
 

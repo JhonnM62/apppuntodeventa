@@ -9,6 +9,8 @@ import GastosFormModal from './GastosFormModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { usePermissions } from '../../hooks/usePermissions';
+import { useSocketEvent } from '../../hooks/useSocketEvent';
+import { SocketEvent } from '../../types/socket.types';
 
 export default function GastosScreen({ navigation }: any) {
   const { gastos, isLoading, fetchGastos, removeGasto } = useGastosStore();
@@ -20,7 +22,11 @@ export default function GastosScreen({ navigation }: any) {
 
   useEffect(() => {
     fetchGastos();
-  }, []);
+  }, [fetchGastos]);
+
+  useSocketEvent<any>(SocketEvent.REFRESH_GASTOS, () => {
+    fetchGastos();
+  }, [fetchGastos]);
 
   const handleAdd = () => {
     setSelectedGasto(null);

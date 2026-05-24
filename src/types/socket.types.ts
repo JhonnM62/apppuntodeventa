@@ -23,6 +23,10 @@ export enum SocketEvent {
   ORDEN_COMPLETADA = 'ordenCompletada',
   REFRESH_INVENTARIO = 'refreshInventario',
   REFRESH_INSUMOS = 'refreshInsumos',
+  REFRESH_CAJA = 'refreshCaja',
+  REFRESH_PRODUCTOS = 'refreshProductos',
+  REFRESH_CATEGORIAS = 'refreshCategorias',
+  REFRESH_GASTOS = 'refreshGastos',
 }
 
 export enum Room {

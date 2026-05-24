@@ -6,6 +6,8 @@ import { Text } from '../../components/ui/text';
 import categoriasService, { CategoriaItem, CreateCategoriaDto } from '../../services/categorias';
 import useAuthStore from '../../store/useAuthStore';
 import { usePermissions } from '../../hooks/usePermissions';
+import { useSocketEvent } from '../../hooks/useSocketEvent';
+import { SocketEvent } from '../../types/socket.types';
 
 const CategoriasScreen = () => {
   const { user } = useAuthStore();
@@ -36,6 +38,10 @@ const CategoriasScreen = () => {
   }, []);
 
   useEffect(() => {
+    loadCategorias();
+  }, [loadCategorias]);
+
+  useSocketEvent<any>(SocketEvent.REFRESH_CATEGORIAS, () => {
     loadCategorias();
   }, [loadCategorias]);
 

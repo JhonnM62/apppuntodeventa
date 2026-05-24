@@ -16,6 +16,8 @@ import Toast from 'react-native-toast-message';
 import { formatCurrency } from '../../utils/formatters';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
+import { useSocketEvent } from '../../hooks/useSocketEvent';
+import { SocketEvent } from '../../types/socket.types';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'ProductoDetail'>;
@@ -134,6 +136,10 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
   }, [id, isNew]);
 
   useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  useSocketEvent<any>(SocketEvent.REFRESH_PRODUCTOS, () => {
     fetchData();
   }, [fetchData]);
 
