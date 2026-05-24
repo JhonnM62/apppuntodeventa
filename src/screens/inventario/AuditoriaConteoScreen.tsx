@@ -64,18 +64,36 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
       if (data?.data) {
         const insumosConConteos = data.data
           .filter((insumo: any) => {
-            const conteos = insumo.ultimosConteos as ConteoItem[] || [];
-            return conteos.length > 0;
+            let conteos = [];
+            try {
+              conteos = typeof insumo.ultimosConteos === 'string' 
+                ? JSON.parse(insumo.ultimosConteos) 
+                : (insumo.ultimosConteos || []);
+            } catch (e) {
+              conteos = [];
+            }
+            return Array.isArray(conteos) && conteos.length > 0;
           })
-          .map((insumo: any) => ({
-            id: insumo.IDalimentos,
-            nombre: insumo.nombre,
-            unidadDeMedida: insumo.unidades || 'und',
-            totalConteos: (insumo.ultimosConteos as ConteoItem[] || []).length,
-            conteos: (insumo.ultimosConteos as ConteoItem[] || []).sort(
-              (a: ConteoItem, b: ConteoItem) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
-            ),
-          }))
+          .map((insumo: any) => {
+            let conteos = [];
+            try {
+              conteos = typeof insumo.ultimosConteos === 'string' 
+                ? JSON.parse(insumo.ultimosConteos) 
+                : (insumo.ultimosConteos || []);
+            } catch (e) {
+              conteos = [];
+            }
+            
+            return {
+              id: insumo.IDalimentos,
+              nombre: insumo.nombre,
+              unidadDeMedida: insumo.unidades || 'und',
+              totalConteos: conteos.length,
+              conteos: conteos.sort(
+                (a: ConteoItem, b: ConteoItem) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+              ),
+            };
+          })
           .sort((a: InsumoAuditItem, b: InsumoAuditItem) => 
             new Date(b.conteos[0]?.fecha || 0).getTime() - new Date(a.conteos[0]?.fecha || 0).getTime()
           );
