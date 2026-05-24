@@ -153,12 +153,11 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
 
       if (gastoToEdit) {
         await editGasto(gastoToEdit.IDgastos, payload);
-        Toast.show({ type: 'success', text1: 'Actualizado', text2: 'Gasto modificado correctamente' });
       } else {
         await addGasto(payload);
-        Toast.show({ type: 'success', text1: 'Creado', text2: 'Gasto registrado correctamente' });
       }
       onClose();
+      Toast.show({ type: 'success', text1: gastoToEdit ? 'Actualizado' : 'Creado', text2: gastoToEdit ? 'Gasto modificado correctamente' : 'Gasto registrado correctamente' });
     } catch (error: any) {
       Toast.show({ type: 'error', text1: 'Error', text2: error.message || 'No se pudo guardar el gasto' });
     } finally {
@@ -225,7 +224,9 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         setFotoUri(uri);
 
         if (scanWithIA) {
-          await processImageWithIA(uri);
+          setIsScanningIA(true);
+          Toast.show({ type: 'info', text1: '✨ Analizando con IA', text2: 'Extrayendo datos mágicamente...', toastVisibilityTime: 4000 });
+          processImageWithIA(uri).finally(() => setIsScanningIA(false));
         }
       }
     } catch (error) {
@@ -257,7 +258,6 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
   const processImageWithIA = async (uri: string) => {
     try {
       startScanningAnimation();
-      Toast.show({ type: 'info', text1: '✨ Analizando con IA', text2: 'Extrayendo datos mágicamente...' });
 
       const formData = new FormData();
       const filename = uri.split('/').pop() || 'receipt.jpg';

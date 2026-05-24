@@ -116,6 +116,14 @@ const toastConfig: ToastConfig = {
       text1Style={{ fontSize: 16, fontWeight: '700', color: '#d97706' }}
       text2Style={{ fontSize: 14, color: '#b45309' }}
     />
+  ),
+  info: (props) => (
+    <BaseToast
+      {...props}
+      style={{ borderLeftColor: '#3b82f6', backgroundColor: '#eff6ff', borderRadius: 12, height: 'auto', paddingVertical: 12 }}
+      text1Style={{ fontSize: 16, fontWeight: '700', color: '#2563eb' }}
+      text2Style={{ fontSize: 14, color: '#1d4ed8' }}
+    />
   )
 };
 
