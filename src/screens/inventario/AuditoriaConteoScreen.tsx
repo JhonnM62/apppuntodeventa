@@ -59,6 +59,34 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Advanced Filters
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [diffSignFilter, setDiffSignFilter] = useState<'all' | 'positive' | 'negative' | 'zero'>('all');
+  const [diffOperator, setDiffOperator] = useState<'gt' | 'lt' | 'eq' | 'gte' | 'lte'>('gt');
+  const [diffValue, setDiffValue] = useState('');
+  const [unidadFilter, setUnidadFilter] = useState('');
+  const [sistemaOperator, setSistemaOperator] = useState<'gt' | 'lt' | 'eq' | 'gte' | 'lte'>('gt');
+  const [sistemaValue, setSistemaValue] = useState('');
+  const [contadaOperator, setContadaOperator] = useState<'gt' | 'lt' | 'eq' | 'gte' | 'lte'>('gt');
+  const [contadaValue, setContadaValue] = useState('');
+
+  const resetFilters = () => {
+    setDateFrom('');
+    setDateTo('');
+    setDiffSignFilter('all');
+    setDiffOperator('gt');
+    setDiffValue('');
+    setUnidadFilter('');
+    setSistemaOperator('gt');
+    setSistemaValue('');
+    setContadaOperator('gt');
+    setContadaValue('');
+  };
+
+  const hasActiveFilters = dateFrom || dateTo || diffSignFilter !== 'all' || diffValue || unidadFilter || sistemaValue || contadaValue;
 
   // Edit Modal State
   const [editingItem, setEditingItem] = useState<EditingItemInfo | null>(null);
@@ -187,6 +215,66 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
       });
     }
     
+    // Apply filters to conteos
+    result.forEach(insumo => {
+      insumo.conteos = insumo.conteos.filter(c => {
+        // Fecha desde
+        if (dateFrom) {
+          const from = new Date(dateFrom).setHours(0,0,0,0);
+          const conc = new Date(c.fecha).getTime();
+          if (conc < from) return false;
+        }
+        // Fecha hasta
+        if (dateTo) {
+          const to = new Date(dateTo).setHours(23,59,59,999);
+          const conc = new Date(c.fecha).getTime();
+          if (conc > to) return false;
+        }
+        // Filtro por signo de diferencia
+        if (diffSignFilter === 'positive' && c.diferencia <= 0) return false;
+        if (diffSignFilter === 'negative' && c.diferencia >= 0) return false;
+        if (diffSignFilter === 'zero' && c.diferencia !== 0) return false;
+        // Filtro por valor numérico de diferencia
+        if (diffValue !== '' && !isNaN(Number(diffValue))) {
+          const v = Number(diffValue);
+          if (diffOperator === 'gt' && c.diferencia <= v) return false;
+          if (diffOperator === 'lt' && c.diferencia >= v) return false;
+          if (diffOperator === 'eq' && c.diferencia !== v) return false;
+          if (diffOperator === 'gte' && c.diferencia < v) return false;
+          if (diffOperator === 'lte' && c.diferencia > v) return false;
+        }
+        // Filtro por disponible en sistema
+        if (sistemaValue !== '' && !isNaN(Number(sistemaValue))) {
+          const v = Number(sistemaValue);
+          if (sistemaOperator === 'gt' && c.disponibleEnSistema <= v) return false;
+          if (sistemaOperator === 'lt' && c.disponibleEnSistema >= v) return false;
+          if (sistemaOperator === 'eq' && c.disponibleEnSistema !== v) return false;
+          if (sistemaOperator === 'gte' && c.disponibleEnSistema < v) return false;
+          if (sistemaOperator === 'lte' && c.disponibleEnSistema > v) return false;
+        }
+        // Filtro por cantidad contada
+        if (contadaValue !== '' && !isNaN(Number(contadaValue))) {
+          const v = Number(contadaValue);
+          if (contadaOperator === 'gt' && c.cantContada <= v) return false;
+          if (contadaOperator === 'lt' && c.cantContada >= v) return false;
+          if (contadaOperator === 'eq' && c.cantContada !== v) return false;
+          if (contadaOperator === 'gte' && c.cantContada < v) return false;
+          if (contadaOperator === 'lte' && c.cantContada > v) return false;
+        }
+        return true;
+      });
+      // Remove insumos with no conteos after filter
+      insumo.totalConteos = insumo.conteos.length;
+    });
+
+    result = result.filter(insumo => insumo.conteos.length > 0);
+
+    // Filter by unidad de medida
+    if (unidadFilter.trim()) {
+      const q = unidadFilter.toLowerCase();
+      result = result.filter(insumo => insumo.unidadDeMedida.toLowerCase().includes(q));
+    }
+
     // 2. Sort Conteos inside each Insumo
     result.forEach(insumo => {
       insumo.conteos.sort((a, b) => {
@@ -205,7 +293,7 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
     });
     
     return result;
-  }, [todosLosInsumos, searchQuery, sortOrder]);
+  }, [todosLosInsumos, searchQuery, sortOrder, dateFrom, dateTo, diffSignFilter, diffOperator, diffValue, unidadFilter, sistemaOperator, sistemaValue, contadaOperator, contadaValue]);
 
   const renderConteo = (conteo: ConteoItem, insumoId: string, insumoNombre: string) => {
     const isPositive = conteo.diferencia > 0;
@@ -343,22 +431,200 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
             </View>
             <TouchableOpacity
               className="w-11 h-11 rounded-xl items-center justify-center border"
+              style={{ backgroundColor: showFilters || hasActiveFilters ? '#eff6ff' : '#f3f4f6', borderColor: showFilters || hasActiveFilters ? '#bfdbfe' : '#e5e7eb' }}
+              onPress={() => setShowFilters(prev => !prev)}
+            >
+              <Ionicons
+                name={showFilters ? 'close-circle' : 'options-outline'}
+                size={20}
+                color={hasActiveFilters ? COLORS.primary : COLORS.textSecondary}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              className="w-11 h-11 rounded-xl items-center justify-center border ml-2"
               style={{ backgroundColor: sortOrder === 'desc' ? '#eff6ff' : '#f3f4f6', borderColor: sortOrder === 'desc' ? '#bfdbfe' : '#e5e7eb' }}
               onPress={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
             >
-              <Ionicons 
-                name={sortOrder === 'desc' ? 'arrow-down-outline' : 'arrow-up-outline'} 
-                size={20} 
-                color={COLORS.primary} 
+              <Ionicons
+                name={sortOrder === 'desc' ? 'arrow-down-outline' : 'arrow-up-outline'}
+                size={20}
+                color={COLORS.primary}
               />
             </TouchableOpacity>
           </View>
+
+          {/* Filtros Avanzados */}
+          {showFilters && (
+            <View className="mt-3 p-3 rounded-xl bg-gray-50 border border-gray-200">
+              <View className="flex-row items-center justify-between mb-2">
+                <Text className="text-sm font-bold text-gray-700">Filtros Avanzados</Text>
+                {hasActiveFilters && (
+                  <TouchableOpacity onPress={resetFilters} className="flex-row items-center">
+                    <Ionicons name="refresh" size={14} color={COLORS.error} />
+                    <Text className="text-xs text-red-500 ml-1 font-medium">Limpiar</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Rango de Fechas */}
+              <Text className="text-xs font-semibold text-gray-500 mb-1 mt-1">Rango de Fechas</Text>
+              <View className="flex-row items-center mb-2">
+                <View className="flex-1 flex-row items-center bg-white rounded-lg border border-gray-200 px-2 py-1.5 mr-1">
+                  <Ionicons name="calendar-outline" size={14} color={COLORS.textSecondary} />
+                  <TextInput
+                    className="flex-1 ml-1 text-xs text-gray-700"
+                    placeholder="Desde (AAAA-MM-DD)"
+                    value={dateFrom}
+                    onChangeText={setDateFrom}
+                    placeholderTextColor={COLORS.textSecondary}
+                  />
+                </View>
+                <Text className="text-xs text-gray-400 mx-1">→</Text>
+                <View className="flex-1 flex-row items-center bg-white rounded-lg border border-gray-200 px-2 py-1.5 ml-1">
+                  <Ionicons name="calendar-outline" size={14} color={COLORS.textSecondary} />
+                  <TextInput
+                    className="flex-1 ml-1 text-xs text-gray-700"
+                    placeholder="Hasta (AAAA-MM-DD)"
+                    value={dateTo}
+                    onChangeText={setDateTo}
+                    placeholderTextColor={COLORS.textSecondary}
+                  />
+                </View>
+              </View>
+
+              {/* Signo de Diferencia */}
+              <Text className="text-xs font-semibold text-gray-500 mb-1 mt-1">Tipo de Diferencia</Text>
+              <View className="flex-row items-center mb-2">
+                {[
+                  { key: 'all', label: 'Todos' },
+                  { key: 'positive', label: 'Positivo (+)' },
+                  { key: 'negative', label: 'Negativo (−)' },
+                  { key: 'zero', label: 'Cero (=)' },
+                ].map(opt => (
+                  <TouchableOpacity
+                    key={opt.key}
+                    onPress={() => setDiffSignFilter(opt.key as any)}
+                    className="flex-1 py-1.5 rounded-lg items-center mr-1 border"
+                    style={{
+                      backgroundColor: diffSignFilter === opt.key ? (opt.key === 'positive' ? '#dcfce7' : opt.key === 'negative' ? '#fee2e2' : opt.key === 'zero' ? '#f3f4f6' : '#eff6ff') : '#fff',
+                      borderColor: diffSignFilter === opt.key ? (opt.key === 'positive' ? '#86efac' : opt.key === 'negative' ? '#fca5a5' : opt.key === 'zero' ? '#d1d5db' : '#93c5fd') : '#e5e7eb',
+                    }}
+                  >
+                    <Text className={`text-[10px] font-semibold ${diffSignFilter === opt.key ? 'text-gray-800' : 'text-gray-500'}`}>{opt.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Filtros Numéricos en 2 columnas */}
+              <View className="flex-row mb-2">
+                {/* Diferencia */}
+                <View className="flex-1 mr-1">
+                  <Text className="text-xs font-semibold text-gray-500 mb-1">Diferencia</Text>
+                  <View className="flex-row items-center">
+                    <View className="flex-1 flex-row items-center bg-white rounded-lg border border-gray-200 px-1.5 py-1 mr-1">
+                      <TextInput
+                        className="flex-1 text-xs text-gray-700 text-center"
+                        placeholder="Valor"
+                        value={diffValue}
+                        onChangeText={setDiffValue}
+                        keyboardType="numeric"
+                        placeholderTextColor={COLORS.textSecondary}
+                      />
+                    </View>
+                    {['gt','lt','eq','gte','lte'].map(op => (
+                      <TouchableOpacity
+                        key={op}
+                        onPress={() => setDiffOperator(op as any)}
+                        className="w-7 h-7 rounded items-center justify-center mr-0.5 border"
+                        style={{ backgroundColor: diffOperator === op ? '#eff6ff' : '#fff', borderColor: diffOperator === op ? '#93c5fd' : '#e5e7eb' }}
+                      >
+                        <Text className={`text-[9px] font-bold ${diffOperator === op ? 'text-blue-600' : 'text-gray-400'}`}>{op === 'gt' ? '>' : op === 'lt' ? '<' : op === 'eq' ? '=' : op === 'gte' ? '≥' : '≤'}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Unidad de Medida */}
+                <View className="flex-1 ml-1">
+                  <Text className="text-xs font-semibold text-gray-500 mb-1">Unidad Medida</Text>
+                  <View className="flex-row items-center bg-white rounded-lg border border-gray-200 px-2 py-1.5">
+                    <Ionicons name="scale-outline" size={12} color={COLORS.textSecondary} />
+                    <TextInput
+                      className="flex-1 ml-1 text-xs text-gray-700"
+                      placeholder="ej: kg, und, lt"
+                      value={unidadFilter}
+                      onChangeText={setUnidadFilter}
+                      placeholderTextColor={COLORS.textSecondary}
+                    />
+                  </View>
+                </View>
+              </View>
+
+              <View className="flex-row mb-1">
+                {/* Disponible en Sistema */}
+                <View className="flex-1 mr-1">
+                  <Text className="text-xs font-semibold text-gray-500 mb-1">Sistema</Text>
+                  <View className="flex-row items-center">
+                    <View className="flex-1 flex-row items-center bg-white rounded-lg border border-gray-200 px-1.5 py-1 mr-1">
+                      <TextInput
+                        className="flex-1 text-xs text-gray-700 text-center"
+                        placeholder="Cant."
+                        value={sistemaValue}
+                        onChangeText={setSistemaValue}
+                        keyboardType="numeric"
+                        placeholderTextColor={COLORS.textSecondary}
+                      />
+                    </View>
+                    {['gt','lt','eq','gte','lte'].map(op => (
+                      <TouchableOpacity
+                        key={op}
+                        onPress={() => setSistemaOperator(op as any)}
+                        className="w-7 h-7 rounded items-center justify-center mr-0.5 border"
+                        style={{ backgroundColor: sistemaOperator === op ? '#eff6ff' : '#fff', borderColor: sistemaOperator === op ? '#93c5fd' : '#e5e7eb' }}
+                      >
+                        <Text className={`text-[9px] font-bold ${sistemaOperator === op ? 'text-blue-600' : 'text-gray-400'}`}>{op === 'gt' ? '>' : op === 'lt' ? '<' : op === 'eq' ? '=' : op === 'gte' ? '≥' : '≤'}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                {/* Contado */}
+                <View className="flex-1 ml-1">
+                  <Text className="text-xs font-semibold text-gray-500 mb-1">Contado</Text>
+                  <View className="flex-row items-center">
+                    <View className="flex-1 flex-row items-center bg-white rounded-lg border border-gray-200 px-1.5 py-1 mr-1">
+                      <TextInput
+                        className="flex-1 text-xs text-gray-700 text-center"
+                        placeholder="Cant."
+                        value={contadaValue}
+                        onChangeText={setContadaValue}
+                        keyboardType="numeric"
+                        placeholderTextColor={COLORS.textSecondary}
+                      />
+                    </View>
+                    {['gt','lt','eq','gte','lte'].map(op => (
+                      <TouchableOpacity
+                        key={op}
+                        onPress={() => setContadaOperator(op as any)}
+                        className="w-7 h-7 rounded items-center justify-center mr-0.5 border"
+                        style={{ backgroundColor: contadaOperator === op ? '#eff6ff' : '#fff', borderColor: contadaOperator === op ? '#93c5fd' : '#e5e7eb' }}
+                      >
+                        <Text className={`text-[9px] font-bold ${contadaOperator === op ? 'text-blue-600' : 'text-gray-400'}`}>{op === 'gt' ? '>' : op === 'lt' ? '<' : op === 'eq' ? '=' : op === 'gte' ? '≥' : '≤'}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
           <View className="flex-row items-center justify-between mt-2 px-1">
             <Text className="text-xs text-gray-500 font-medium">
-              {filteredAndSortedInsumos.length} Insumo{filteredAndSortedInsumos.length !== 1 ? 's' : ''} agrupado{filteredAndSortedInsumos.length !== 1 ? 's' : ''}
+              {filteredAndSortedInsumos.length} Insumo{filteredAndSortedInsumos.length !== 1 ? 's' : ''}
+              {hasActiveFilters || searchQuery ? ' encontrado' + (filteredAndSortedInsumos.length !== 1 ? 's' : '') : ' agrupado' + (filteredAndSortedInsumos.length !== 1 ? 's' : '')}
             </Text>
             <Text className="text-xs text-gray-500 font-medium">
-              Orden: {sortOrder === 'desc' ? 'Más recientes' : 'Más antiguos'}
+              {sortOrder === 'desc' ? 'Más recientes' : 'Más antiguos'}
+              {hasActiveFilters ? ' • Filtros activos' : ''}
             </Text>
           </View>
         </View>
