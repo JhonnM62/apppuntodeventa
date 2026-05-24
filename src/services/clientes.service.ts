@@ -61,3 +61,14 @@ export const updateCliente = async (id: number, cliente: Partial<Cliente>): Prom
 export const deleteCliente = async (id: number): Promise<void> => {
   await api.delete(`/clientes/${id}`);
 };
+
+export const getVentasByCliente = async (
+  clienteId: number,
+  page = 1,
+  limit = 10
+): Promise<{ data: any[]; meta: any }> => {
+  const response = await api.get('/ventas', {
+    params: { clienteId, page, limit, includeDeleted: false }
+  });
+  return response?.data ?? response;
+};
