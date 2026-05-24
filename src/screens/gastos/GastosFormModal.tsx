@@ -17,8 +17,6 @@ try {
 import { Gasto, uploadGastoImage } from '../../services/gastos';
 import { extractDataWithIA, getConfiguracionIA } from '../../services/api';
 import { useGastosStore } from '../../store/useGastosStore';
-import Toast from 'react-native-toast-message';
-import { toastConfig } from '../../../App';
 import { useNavigation } from '@react-navigation/native';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 
@@ -66,6 +64,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
   // Animación IA
   const [isScanningIA, setIsScanningIA] = useState(false);
   const scanLineAnim = useRef(new Animated.Value(0)).current;
+  const [magicNotification, setMagicNotification] = useState<{text1: string; text2: string; type: 'analyzing' | 'completed'} | null>(null);
 
   const navigation = useNavigation<any>();
   const { showAlert } = useCustomAlert();
@@ -226,8 +225,11 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
 
         if (scanWithIA) {
           setIsScanningIA(true);
-          Toast.show({ type: 'info', text1: '✨ Analizando con IA', text2: 'Extrayendo datos mágicamente...', toastVisibilityTime: 4000 });
-          processImageWithIA(uri).finally(() => setIsScanningIA(false));
+          setMagicNotification({ text1: '✨ Analizando con IA', text2: 'Extrayendo datos mágicamente...', type: 'analyzing' });
+          processImageWithIA(uri).finally(() => {
+            setIsScanningIA(false);
+            setMagicNotification(null);
+          });
         }
       }
     } catch (error) {
@@ -295,11 +297,13 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         if (data.valor) setValor(data.valor.toString());
         if (data.tipo && (data.tipo === 'NEGOCIO' || data.tipo === 'PERSONAL')) setTipo(data.tipo);
         if (data.medioDePago) setMedioDePago(data.medioDePago);
-        Toast.show({ type: 'success', text1: '¡Magia completada!', text2: 'El recibo ha sido procesado.' });
+        setMagicNotification({ text1: '¡Magia completada!', text2: 'El recibo ha sido procesado.', type: 'completed' });
+        setTimeout(() => setMagicNotification(null), 2500);
       }
     } catch (error: any) {
       console.error('[IA Extract Error]', error);
-      Toast.show({ type: 'error', text1: 'Oops...', text2: error?.response?.data?.message || error?.message || 'No se pudo leer el recibo.' });
+      setMagicNotification({ text1: 'Oops...', text2: error?.message || 'No se pudo leer el recibo.', type: 'completed' });
+      setTimeout(() => setMagicNotification(null), 3000);
     } finally {
       stopScanningAnimation();
     }
@@ -544,7 +548,23 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         </KeyboardAvoidingView>
       </TouchableOpacity>
 
-      <Toast config={toastConfig} />
+      {/* Custom Magic Notification Overlay */}
+      {magicNotification && (
+        <View style={styles.magicNotificationOverlay}>
+          <View style={[styles.magicNotification, magicNotification.type === 'completed' && styles.magicNotificationSuccess]}>
+            {magicNotification.type === 'analyzing' && (
+              <ActivityIndicator color="#3b82f6" size="small" />
+            )}
+            {magicNotification.type === 'completed' && (
+              <Ionicons name="checkmark-circle" size={24} color="#16a34a" />
+            )}
+            <Text style={[styles.magicNotificationText, magicNotification.type === 'completed' && styles.magicNotificationTextSuccess]}>
+              {magicNotification.text1}
+            </Text>
+            <Text style={styles.magicNotificationSubtext}>{magicNotification.text2}</Text>
+          </View>
+        </View>
+      )}
 
       {/* Modal de Opciones de Adjunto (UI-UX Pro Max) */}
       <Modal visible={showAttachmentOptions} transparent animationType="slide" onRequestClose={() => setShowAttachmentOptions(false)}>
@@ -644,8 +664,6 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
           </SafeAreaView>
         </View>
       </Modal>
-
-      <Toast config={toastConfig} />
     </Modal>
   );
 }
