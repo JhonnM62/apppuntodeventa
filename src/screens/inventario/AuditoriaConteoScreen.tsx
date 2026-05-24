@@ -15,6 +15,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS, SPACING, FONT_SIZE } from '../../lib/theme';
 import { eliminarConteo } from '../../services/caja';
 
+import { insumosService } from '../../services/insumos';
+
 interface ConteoItem {
   fecha: string;
   cajaId: string;
@@ -58,11 +60,10 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
 
   const loadAuditoria = useCallback(async () => {
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1'}/insumos?limit=2000`);
-      const data = await response.json();
+      const data = await insumosService.getAll({ limit: 2000 });
       
-      if (data?.data) {
-        const insumosConConteos = data.data
+      if (data && Array.isArray(data)) {
+        const insumosConConteos = data
           .filter((insumo: any) => {
             let conteos = insumo.ultimosConteos;
             if (typeof conteos === 'string') {
