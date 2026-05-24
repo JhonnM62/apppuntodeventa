@@ -27,7 +27,7 @@ import { Text } from '../../components/ui/text';
 import { getSales, getSalesHoy, deleteSale, restoreSale, hardDeleteSale, emptyTrashSales, deleteSalesBulk, hardDeleteSalesBulk } from '../../services/sales';
 import { formatCurrency, formatTime12h, formatDateToDDMMAAAA } from '../../utils/formatters';
 import { useSocket, useSocketEvent } from '../../hooks';
-import { Room } from '../../types/socket.types';
+import { Room, SocketEvent } from '../../types/socket.types';
 
 const TABS = [
   { id: 'activas', label: 'ACTIVAS' },
@@ -135,7 +135,8 @@ export default function HistorialVentasScreen({ navigation }: any) {
   useSocketEvent('ordenRecibida', handleSocketUpdate, [handleSocketUpdate]);
   useSocketEvent('ordenActualizadaKitchen', handleSocketUpdate, [handleSocketUpdate]);
   useSocketEvent('ordenActualizadaCaja', handleSocketUpdate, [handleSocketUpdate]);
-  useSocketEvent('ordenCompletada', handleSocketUpdate, [handleSocketUpdate]); // Add missing event
+  useSocketEvent('ordenCompletada', handleSocketUpdate, [handleSocketUpdate]);
+  useSocketEvent(SocketEvent.REFRESH_VENTAS, handleSocketUpdate, [handleSocketUpdate]);
 
   // Fallback background sync for stats every 60 seconds
   useEffect(() => {

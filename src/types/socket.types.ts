@@ -27,6 +27,7 @@ export enum SocketEvent {
   REFRESH_PRODUCTOS = 'refreshProductos',
   REFRESH_CATEGORIAS = 'refreshCategorias',
   REFRESH_GASTOS = 'refreshGastos',
+  REFRESH_VENTAS = 'refreshVentas',
 }
 
 export enum Room {

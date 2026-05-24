@@ -7,7 +7,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { getSales, updateVentaEstado, deleteSale, deleteSalesBulk } from '../../services/sales';
 import { useSocket, useSocketEvent, useSocketEmitter } from '../../hooks';
-import { Room } from '../../types/socket.types';
+import { Room, SocketEvent } from '../../types/socket.types';
 import Toast from 'react-native-toast-message';
 import { useSalesStore } from '../../store/useSalesStore';
 import PaymentModal from '../../components/ui/PaymentModal';
@@ -240,6 +240,7 @@ const PedidosScreen = () => {
   useSocketEvent('ordenActualizadaKitchen', handleOrdenActualizada, []);
   useSocketEvent('ordenActualizadaCaja', handleOrdenActualizada, []);
   useSocketEvent('ordenActualizada', handleOrdenActualizada, []);
+  useSocketEvent(SocketEvent.REFRESH_VENTAS, handleOrdenActualizada, []);
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
