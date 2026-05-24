@@ -194,7 +194,7 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
     }
   };
 
-  const handleDelete = () => {
+const handleDelete = () => {
     showAlert({
       type: 'confirm',
       title: 'Eliminar Producto',
@@ -206,10 +206,10 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
           Toast.show({ type: 'success', text1: 'Éxito', text2: 'Producto eliminado' });
           navigation.goBack();
         } catch (error: any) {
-          const msg = error?.response?.data?.message || 'Error al eliminar';
-          Toast.show({ type: 'error', text1: 'Error', text2: msg });
+          showAlert({ type: 'error', title: 'Error', message: getErrorMessage(error, 'No se pudo eliminar') });
         }
       },
+      onCancel: () => {},
     });
   };
 

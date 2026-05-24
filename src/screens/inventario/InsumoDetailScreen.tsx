@@ -204,6 +204,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
           showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar' });
         }
       },
+      onCancel: () => {},
     });
   };
 

@@ -882,6 +882,7 @@ const InventarioScreen = ({ navigation }: any) => {
             Toast.show({ type: 'error', text1: 'Error', text2: getErrorMessage(error, 'No se pudo eliminar') });
           }
         },
+        onCancel: () => {},
       });
     }
   };
@@ -939,6 +940,7 @@ const InventarioScreen = ({ navigation }: any) => {
           Toast.show({ type: 'error', text1: 'Error', text2: getErrorMessage(error, 'No se pudo eliminar') });
         }
       },
+      onCancel: () => {},
     });
   };
 

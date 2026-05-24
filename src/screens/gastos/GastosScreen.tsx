@@ -47,6 +47,7 @@ export default function GastosScreen({ navigation }: any) {
       message: '¿Estás seguro de eliminar este gasto?',
       confirmText: 'Eliminar',
       onConfirm: () => removeGasto(id),
+      onCancel: () => {},
     });
   };
 

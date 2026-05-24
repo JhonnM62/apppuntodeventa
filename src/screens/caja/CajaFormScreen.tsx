@@ -1283,6 +1283,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                             setValue('observaciones', currentObs + cuadreText);
                             handleSubmit((data) => onSave(data, true), onError)();
                           },
+                          onCancel: () => {},
                         });
                       }}
                     >

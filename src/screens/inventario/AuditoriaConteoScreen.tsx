@@ -159,6 +159,7 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
           showAlert({ type: 'error', title: 'Error', message: error?.response?.data?.message || 'No se pudo eliminar el conteo' });
         }
       },
+      onCancel: () => {},
     });
   };
 

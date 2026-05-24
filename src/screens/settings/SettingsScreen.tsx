@@ -98,6 +98,7 @@ const SettingsScreen = ({ navigation }: Props) => {
       message: '¿Estás seguro de que deseas cerrar sesión?',
       confirmText: 'Cerrar Sesión',
       onConfirm: logout,
+      onCancel: () => {},
     });
   };
 

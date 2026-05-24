@@ -55,6 +55,7 @@ export default function ClienteDetailScreen({ route, navigation }: any) {
           Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo eliminar el cliente' });
         }
       },
+      onCancel: () => {},
     });
   };
 

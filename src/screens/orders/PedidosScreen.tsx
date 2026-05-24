@@ -420,6 +420,7 @@ const PedidosScreen = () => {
         message: 'Este pedido ya ha sido pagado o entregado. ¿Estás seguro de que deseas eliminarlo? Esto afectará los registros financieros.',
         confirmText: 'Eliminar',
         onConfirm: () => executeDelete(venta.IDventas),
+        onCancel: () => {},
       });
     } else {
       showAlert({
@@ -428,6 +429,7 @@ const PedidosScreen = () => {
         message: `¿Estás seguro de que deseas eliminar el pedido ${venta.pedido}?`,
         confirmText: 'Eliminar',
         onConfirm: () => executeDelete(venta.IDventas),
+        onCancel: () => {},
       });
     }
   };
@@ -460,7 +462,7 @@ const PedidosScreen = () => {
       ? 'Algunos de los pedidos seleccionados ya han sido pagados o entregados. ¿Deseas continuar con la eliminación masiva?'
       : `¿Estás seguro de que deseas eliminar los ${selectedToDelete.length} pedidos seleccionados?`;
 
-    showAlert({
+showAlert({
       type: 'confirm',
       title: 'Eliminación Masiva',
       message: message,
@@ -475,11 +477,12 @@ const PedidosScreen = () => {
           fetchVentas(true);
         } catch (error) {
           console.error('Error en eliminación masiva:', error);
-          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo realizar la eliminación masiva' });
+          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudieron eliminar los pedidos' });
         } finally {
           setLoading(false);
         }
       },
+      onCancel: () => {},
     });
   };
 
@@ -1468,6 +1471,7 @@ const PedidosScreen = () => {
       onConfirm: async () => {
         await handleChangeEstado('EN_EL_CARRITO');
       },
+      onCancel: () => {},
     });
   };
 

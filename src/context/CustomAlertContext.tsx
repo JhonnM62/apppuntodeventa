@@ -85,7 +85,7 @@ export const CustomAlertProvider: React.FC<{ children: React.ReactNode }> = ({ c
         statusBarTranslucent
       >
         <Animated.View style={[styles.overlay, { opacity: opacityAnim }]}>
-          <TouchableOpacity style={styles.overlayTouch} activeOpacity={1} onPress={isConfirmType ? hideAlert : (onCancel || hideAlert)} />
+          <TouchableOpacity style={styles.overlayTouch} activeOpacity={1} onPress={() => { if (isConfirmType) { hideAlert(); } else { onCancel ? onCancel() : hideAlert(); } }} />
           <Animated.View
             style={[
               styles.container,
@@ -98,14 +98,14 @@ export const CustomAlertProvider: React.FC<{ children: React.ReactNode }> = ({ c
             <Text style={[styles.title, { color: colorScheme.primary }]}>{title}</Text>
             {message && <Text style={styles.message}>{message}</Text>}
             <View style={styles.buttonRow}>
-              {isConfirmType && onCancel && (
-                <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => { hideAlert(); onCancel(); }} activeOpacity={0.7}>
+              {isConfirmType && (
+                <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => { hideAlert(); onCancel?.(); }} activeOpacity={0.7}>
                   <Text style={styles.cancelText}>{cancelText}</Text>
                 </TouchableOpacity>
               )}
               {onConfirm && (
                 <TouchableOpacity
-                  style={[styles.button, { backgroundColor: colorScheme.primary }, (isConfirmType && onCancel) ? styles.confirmButtonFlex : { flex: 1 }]}
+                  style={[styles.button, { backgroundColor: colorScheme.primary }, isConfirmType && onCancel ? styles.confirmButtonFlex : { flex: 1 }]}
                   onPress={() => { hideAlert(); onConfirm(); }}
                   activeOpacity={0.8}
                 >

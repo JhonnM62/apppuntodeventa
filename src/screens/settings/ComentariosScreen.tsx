@@ -78,7 +78,7 @@ const ComentariosScreen = ({ navigation }: any) => {
     setPrecio(item.precio ? item.precio.toString() : '0');
   };
 
-  const handleDelete = (id: string) => {
+const handleDelete = (id: string) => {
     showAlert({
       type: 'confirm',
       title: 'Confirmar',
@@ -90,10 +90,10 @@ const ComentariosScreen = ({ navigation }: any) => {
           Toast.show({ type: 'success', text1: 'Éxito', text2: 'Comentario eliminado' });
           fetchComentarios();
         } catch (error) {
-          console.error('Error deleting comentario:', error);
-          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo eliminar el comentario' });
+          showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar' });
         }
       },
+      onCancel: () => {},
     });
   };
 

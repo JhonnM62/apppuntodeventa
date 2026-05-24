@@ -97,6 +97,7 @@ const CategoriasScreen = () => {
           showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar' });
         }
       },
+      onCancel: () => {},
     });
   };
 
