@@ -91,7 +91,7 @@ function AppInitializer({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-const toastConfig: ToastConfig = {
+export const toastConfig: ToastConfig = {
   success: (props) => (
     <BaseToast
       {...props}

@@ -18,6 +18,7 @@ import { Gasto, uploadGastoImage } from '../../services/gastos';
 import { extractDataWithIA, getConfiguracionIA } from '../../services/api';
 import { useGastosStore } from '../../store/useGastosStore';
 import Toast from 'react-native-toast-message';
+import { toastConfig } from '../../../App';
 import { useNavigation } from '@react-navigation/native';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 
@@ -649,6 +650,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         </View>
       </Modal>
 
+      <Toast config={toastConfig} />
     </Modal>
   );
 }
