@@ -263,7 +263,6 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
       const formData = new FormData();
       const filename = uri.split('/').pop() || 'receipt.jpg';
 
-      // Comprimir imagen antes de enviar si existe ImageManipulator
       let processedUri = uri;
       try {
         const ImageManipulator = require('expo-image-manipulator');
@@ -279,7 +278,6 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         console.log('ImageManipulator no disponible, usando imagen original:', manipErr);
       }
 
-      const match = /\.(\w+)$/.exec(filename);
       const type = 'image/jpeg';
 
       formData.append('file', {
@@ -290,24 +288,20 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
       formData.append('context', 'gastos');
 
       const response = await extractDataWithIA(formData);
-      const data = response.data || response; // manejar si hay interceptor
+      const data = response.data || response;
 
       if (data) {
         if (data.concepto) setConcepto(data.concepto);
         if (data.valor) setValor(data.valor.toString());
         if (data.tipo && (data.tipo === 'NEGOCIO' || data.tipo === 'PERSONAL')) setTipo(data.tipo);
         if (data.medioDePago) setMedioDePago(data.medioDePago);
+        Toast.show({ type: 'success', text1: '¡Magia completada!', text2: 'El recibo ha sido procesado.' });
       }
     } catch (error: any) {
       console.error('[IA Extract Error]', error);
       Toast.show({ type: 'error', text1: 'Oops...', text2: error?.response?.data?.message || error?.message || 'No se pudo leer el recibo.' });
     } finally {
       stopScanningAnimation();
-      if (data) {
-        onClose();
-        setShowMagicCompleted(true);
-        setTimeout(() => setShowMagicCompleted(false), 2500);
-      }
     }
   };
 
@@ -337,7 +331,6 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
   };
 
   const [showAttachmentOptions, setShowAttachmentOptions] = useState(false);
-  const [showMagicCompleted, setShowMagicCompleted] = useState(false);
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -551,17 +544,6 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         </KeyboardAvoidingView>
       </TouchableOpacity>
 
-      {/* Custom Magic Completion Overlay */}
-      {showMagicCompleted && (
-        <View style={styles.magicToastOverlay}>
-          <View style={styles.magicToast}>
-            <Ionicons name="checkmark-circle" size={48} color="#10b981" />
-            <Text style={styles.magicToastText}>¡Magia completada!</Text>
-            <Text style={styles.magicToastSubtext}>El recibo ha sido procesado</Text>
-          </View>
-        </View>
-      )}
-
       <Toast config={toastConfig} />
 
       {/* Modal de Opciones de Adjunto (UI-UX Pro Max) */}
@@ -663,57 +645,8 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         </View>
       </Modal>
 
-      {isScanningIA && (
-        <View style={styles.magicToastOverlay}>
-          <View style={styles.magicToast}>
-            <Animated.View style={styles.scanLine} />
-            <Text style={styles.magicToastText}>Analizando con IA...</Text>
-          </View>
-        </View>
-      )}
-
       <Toast config={toastConfig} />
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  magicToastOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    zIndex: 9999,
-  },
-  magicToast: {
-    backgroundColor: '#1f2937',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    minWidth: 200,
-  },
-  scanLine: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 4,
-    backgroundColor: '#10b981',
-  },
-  magicToastText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-    marginTop: 8,
-  },
-  magicToastSubtext: {
-    color: '#9ca3af',
-    fontSize: 14,
-    marginTop: 4,
-  },
-});
 
