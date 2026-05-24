@@ -45,21 +45,42 @@ const ESTADO_COLORS: Record<string, { bg: string; text: string; label: string }>
 function LoyaltyBar({ contador }: { contador: number }) {
   const filled = Math.min(Math.max(contador, 0), 10);
   return (
-    <View style={{ flexDirection: 'row', gap: 4, marginTop: 8 }}>
-      {Array.from({ length: 10 }).map((_, i) => (
-        <View
-          key={i}
-          style={{
-            flex: 1,
-            height: 8,
-            borderRadius: 4,
-            backgroundColor: i < filled ? '#3b82f6' : '#e5e7eb',
-          }}
-        />
-      ))}
+    <View>
+      <View style={{ flexDirection: 'row', gap: 3, marginTop: 8 }}>
+        {Array.from({ length: 10 }).map((_, i) => {
+          const isFilled = i < filled;
+          // Primer bloque (0-4): azul claro → azul
+          // Segundo bloque (5-9): azul → índigo
+          const isFirstHalf = i < 5;
+          const fillColor = isFilled
+            ? isFirstHalf ? '#60a5fa' : '#4f46e5'
+            : '#e5e7eb';
+          const isMilestone = i === 4 || i === 9; // posición 5 y 10
+          return (
+            <View key={i} style={{ flex: 1, alignItems: 'center' }}>
+              <View
+                style={{
+                  width: '100%',
+                  height: isMilestone ? 12 : 8,
+                  borderRadius: 4,
+                  backgroundColor: fillColor,
+                  borderWidth: isMilestone ? 1.5 : 0,
+                  borderColor: isMilestone && isFilled ? '#2563eb' : 'transparent',
+                }}
+              />
+            </View>
+          );
+        })}
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+        <Text style={{ fontSize: 10, color: '#9ca3af' }}>0</Text>
+        <Text style={{ fontSize: 10, color: filled >= 5 ? '#3b82f6' : '#9ca3af', fontWeight: filled >= 5 ? '700' : '400' }}>5 ★</Text>
+        <Text style={{ fontSize: 10, color: filled >= 10 ? '#4f46e5' : '#9ca3af', fontWeight: filled >= 10 ? '700' : '400' }}>10 🎉</Text>
+      </View>
     </View>
   );
 }
+
 
 function VentaCard({ venta }: { venta: any }) {
   const [expanded, setExpanded] = useState(false);
@@ -387,7 +408,11 @@ export default function ClienteDetailScreen({ route, navigation }: any) {
                 <Text className="text-xs text-blue-600 font-bold mb-1">TARJETA DE FIDELIDAD</Text>
                 <Text className="text-blue-900 font-black text-2xl">{contadorActual} / 10</Text>
                 <Text className="text-blue-500 text-xs mt-1">
-                  {contadorActual >= 10 ? '🎉 ¡Ciclo completado! Próxima compra reinicia.' : `${10 - contadorActual} compra(s) para completar el ciclo`}
+                  {contadorActual >= 10
+                    ? '🎉 ¡Ciclo completado! Próxima compra reinicia.'
+                    : contadorActual >= 5
+                    ? `⭐ ¡Hito 5 alcanzado! Faltan ${10 - contadorActual} para completar el ciclo`
+                    : `${5 - contadorActual} item(s) para el primer hito (★5)`}
                 </Text>
               </View>
               <View className="items-center">
