@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reporte Hamburguesas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.4;
+            color: #333;
+            max-width: 100%;
+            margin: 0;
+            padding: 10px;
+            font-size: 12px;
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .info-block {
+            margin-bottom: 15px;
+        }
+
+        .info-block p {
+            margin: 3px 0;
+        }
+
+        /* --- OPTIMIZACIÓN DE TABLAS PARA AHORRO DE PAPEL --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            border: 1px solid black;
+            page-break-inside: auto;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 5px;
+            text-align: center;
+            font-size: 11px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        .valor-faltante,
+        .totalcaja-app {
+            background-color: #ff6b6b;
+            color: white;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .valor-excedente,
+        .total-efectivo-caja {
+            background-color: #51cf66;
+            color: white;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+
+        .columna-resaltada {
+            border-left: 3px solid #000;
+            border-right: 3px solid #000;
+        }
+
+        th.columna-resaltada {
+            border-top: 3px solid #000;
+        }
+
+        .fila-coincidente {
+            background-color: #d4edda !important;
+            color: #155724;
+            font-weight: bold;
+        }
+
+        .fila-no-coincidente {
+            background-color: #f8d7da !important;
+            color: #721c24;
+            font-weight: bold;
+        }
+
+        .totales-insumos {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 id="titulo-reporte">REPORTE DE CIERRE CAJA - HAMBURGUESAS</h1>
+
+    <div class="info-block">
+        <p><strong>Nombre:</strong> <span id="val-nombre"></span></p>
+        <p><strong>Generado:</strong> <span id="val-fechaGeneracion"></span></p>
+        <p><strong>Desde:</strong> <span id="val-fechaInicio"></span></p>
+        <p><strong>Hasta:</strong> <span id="val-fechaFin"></span></p>
+        <p><strong>¿Cuadro Caja?:</strong> <span id="val-estadoCaja"></span></p>
+        <p><span class="etiqueta valor-faltante">Valor Faltante: <span id="val-valorFaltante"></span></span> | <span
+                class="etiqueta valor-faltante">Calculado: <span id="val-valorFaltanteCalculado"></span></span></p>
+        <p><span class="etiqueta valor-excedente">Valor Excedente: <span id="val-valorExcedente"></span></span> | <span
+                class="etiqueta valor-excedente">Calculado: <span id="val-valorExcedenteCalculado"></span></span></p>
+        <p><strong>Efectivo Apertura: </strong><span id="val-efectivoApertura"></span> | <strong>Cierre: </strong><span
+                id="val-efectivoCierre"></span></p>
+    </div>
+
+    <table id="tabla-insumos">
+        <thead>
+            <tr>
+                <th>Nombre Insumo</th>
+                <th>Productos (Receta)</th>
+                <th>U. Medida</th>
+                <th>Cant apertura</th>
+                <th>Cant de cierre</th>
+                <th class="columna-resaltada">Se utilizaron</th>
+                <th class="columna-resaltada">Venta Teórica</th>
+                <th>Diferencia</th>
+            </tr>
+        </thead>
+        <tbody id="cuerpo-tabla-insumos"></tbody>
+    </table>
+
+    <div class="totales-insumos">
+        <h3>TOTALES POR INSUMO (Apertura):</h3>
+        <table id="tabla-totales-insumos">
+            <tr>
+                <th>Insumo</th>
+                <th>Total Apertura</th>
+            </tr>
+        </table>
+    </div>
+
+    <div class="totals">
+        <p class="total-efectivo-caja">Total de efectivo en caja (Físico): <span id="val-totalEfectivoCaja"></span></p>
+    </div>
+    <h2 id="total-ventas">TOTAL DE VENTAS SISTEMA: <span id="val-totalVentas"></span></h2>
+
+    <table>
+        <tr>
+            <th>CONCEPTO</th>
+            <th>VALOR</th>
+        </tr>
+        <tr>
+            <td>Efectivo Recibido:</td>
+            <td><span id="val-valorEfectivo"></span></td>
+        </tr>
+        <tr>
+            <td>Transferencias:</td>
+            <td><span id="val-valorTransferencias"></span></td>
+        </tr>
+        <tr>
+            <td>Tarjeta:</td>
+            <td><span id="val-valorTarjeta"></span></td>
+        </tr>
+        <tr>
+            <td>Número de Ordenes Repartidas:</td>
+            <td><span id="val-numOrdenes"></span></td>
+        </tr>
+        <tr>
+            <td>Efectivo Repartido:</td>
+            <td><span id="val-valorEfectivoRepartido"></span></td>
+        </tr>
+        <tr>
+            <td>Transferencias Repartidas:</td>
+            <td><span id="val-valorTransferenciasRepartidas"></span></td>
+        </tr>
+        <tr class="totalcaja-app">
+            <td>Total efectivo caja - app:</td>
+            <td><span id="val-valorTotalEfectivo"></span></td>
+        </tr>
+        <tr>
+            <td>Total de Transferencias:</td>
+            <td><span id="val-valorTotalTransferencias"></span></td>
+        </tr>
+    </table>
+
+    <div class="observation">
+        <h3>OBSERVACIONES:</h3>
+        <p id="val-obsinfo"></p>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var params = new URLSearchParams(window.location.search);
+            function formatPrice(p) { return "$" + parseFloat(p || 0).toLocaleString("es-CO", { minimumFractionDigits: 0 }).replace(/,/g, "."); }
+
+            function setElementContent(targetId, paramName, isPrice = false) {
+                var el = document.getElementById(targetId);
+                if (el) {
+                    var val = params.get(paramName) || "---";
+                    el.textContent = isPrice && val !== "---" ? formatPrice(val) : val;
+                }
+            }
+
+            // --- 1. DATOS GENERALES ---
+            var claves = ["nombre", "fechaGeneracion", "fechaInicio", "fechaFin", "estadoCaja", "numOrdenes", "obsinfo", "valorFaltante", "valorFaltanteCalculado", "valorExcedente", "valorExcedenteCalculado", "efectivoApertura", "efectivoCierre", "totalEfectivoCaja", "totalVentas", "valorEfectivo", "valorTransferencias", "valorTarjeta", "valorEfectivoRepartido", "valorTransferenciasRepartidas", "valorTotalEfectivo", "valorTotalTransferencias"];
+            claves.forEach(k => setElementContent("val-" + k, k, k.includes("valor") || k.includes("total") || k.includes("efectivo")));
+
+            // --- 2. LÓGICA DE RECETA (RE-ALINEACIÓN POR NOMBRE) ---
+            function splitAS(str) { return str ? str.split(" , ").map(x => x.trim()) : []; }
+
+            // Mapa de Ventas
+            var ventasMap = {};
+            var nomsV = splitAS(params.get("nombreProducto"));
+            var cantsV = splitAS(params.get("cantidadesProducto"));
+            nomsV.forEach((n, i) => {
+                let key = decodeURIComponent(n).trim().toLowerCase();
+                ventasMap[key] = (ventasMap[key] || 0) + (parseInt(cantsV[i]) || 0);
+            });
+
+            // Agrupación Global de Recetas (Evita el error de desplazamiento en la URL)
+            var recetasAgrupadas = {};
+            splitAS(params.get("insumosproducto")).forEach(pList => {
+                decodeURIComponent(pList).split("|").forEach(item => {
+                    let p = item.split(";");
+                    if (p.length >= 2) {
+                        let insumoKey = p[1].trim().toLowerCase();
+                        if (!recetasAgrupadas[insumoKey]) recetasAgrupadas[insumoKey] = [];
+                        recetasAgrupadas[insumoKey].push(item);
+                    }
+                });
+            });
+
+            var insNames = splitAS(params.get("insumosnombre"));
+            var insUnits = splitAS(params.get("insumosunidad"));
+            var insCantA = splitAS(params.get("insumoscantidada"));
+            var insCantC = splitAS(params.get("insumoscantidadc"));
+            var insUsados = splitAS(params.get("insumosutilizaron"));
+
+            var listFinal = [];
+            var totalesGlobales = {};
+
+            insNames.forEach((n, i) => {
+                let nombreInsumo = decodeURIComponent(n).trim();
+                let keyInsumo = nombreInsumo.toLowerCase();
+                let vtCalculada = 0;
+                let nombresVisuales = [];
+
+                // Buscar recetas exactas para este insumo en el mapa global
+                let misRecetas = recetasAgrupadas[keyInsumo] || [];
+                misRecetas.forEach(recetaStr => {
+                    let partes = recetaStr.split(";");
+                    let pNombre = partes[0] ? partes[0].trim() : "";
+                    let pQtyReceta = parseFloat(partes[2]) || 1;
+
+                    if (pNombre && ventasMap[pNombre.toLowerCase()]) {
+                        vtCalculada += (ventasMap[pNombre.toLowerCase()] * pQtyReceta);
+                    }
+                    if (pNombre) nombresVisuales.push(pNombre);
+                });
+
+                let a = parseInt(insCantA[i]) || 0;
+                let u = parseInt(insUsados[i]) || 0;
+                let c = insCantC[i] || 0;
+                let d = u - vtCalculada;
+
+                totalesGlobales[nombreInsumo] = (totalesGlobales[nombreInsumo] || 0) + a;
+                listFinal.push({ n: nombreInsumo, p: nombresVisuales.join(", "), u: decodeURIComponent(insUnits[i] || "unid"), a: a, ci: c, us: u, vt: vtCalculada, d: d });
+            });
+
+            // Ordenar A-Z y Pintar
+            listFinal.sort((a, b) => a.n.localeCompare(b.n)).forEach(item => {
+                let row = document.createElement("tr");
+                row.className = (item.d === 0) ? "fila-coincidente" : "fila-no-coincidente";
+                row.innerHTML = `<td>${item.n}</td><td>${item.p}</td><td>${item.u}</td><td>${item.a}</td><td>${item.ci}</td><td class="columna-resaltada">${item.us}</td><td class="columna-resaltada">${item.vt}</td><td>${item.d}</td>`;
+                document.getElementById("cuerpo-tabla-insumos").appendChild(row);
+            });
+
+            Object.keys(totalesGlobales).sort().forEach(k => {
+                let tr = document.createElement("tr");
+                tr.innerHTML = `<td style="text-align:left; font-weight:bold;">${k}</td><td style="font-weight:bold;">${totalesGlobales[k]}</td>`;
+                document.getElementById("tabla-totales-insumos").appendChild(tr);
+            });
+
+            // --- 3. ENVÍO WHATSAPP ---
+            var backendBase = "http://100.42.185.2:8001";
+            function upload(blob, file) {
+                var fd = new FormData(); fd.append("file", blob, file);
+                return fetch(backendBase + "/upload2", { method: "POST", mode: "cors", cache: "no-store", credentials: "omit", body: fd })
+                    .then(res => res.json()).then(data => data.publicUrl || (backendBase + data.imagePath.replace("./public", "").replace(/\\/g, "/")));
+            }
+
+            function sendWS(url, file) {
+                return fetch(backendBase + "/chats/send?id=qhubomor", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", "x-access-token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY2NzliYzdjMmFhZjc4NDJiOWYxMGM5NSIsImlhdCI6MTcxOTI1NDE0MCwiZXhwIjoxODA1NTY3NzQwfQ.d_k1ANUCgCXEc-8sEViCO4WKQ-7G0KEhjnBngVAUUio" },
+                    body: JSON.stringify({ receiver: params.get("receiver"), isGroup: false, message: { document: { url: url }, caption: "Reporte Diario Hamburguesas", mimetype: "application/pdf", fileName: file } })
+                });
+            }
+
+            var opt = { margin: 5, filename: `Reporte.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: 'css' } };
+            html2pdf().set(opt).from(document.body).toPdf().get("pdf").then(pdf => {
+                upload(pdf.output("blob"), opt.filename).then(url => sendWS(url, opt.filename));
+            }).save();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Gasto, getGastos, createGasto, updateGasto, deleteGasto } from '../services/gastos';
+import { Gasto, getGastos, createGasto, updateGasto, deleteGasto, createBulkGastos } from '../services/gastos';
 
 interface GastosState {
   gastos: Gasto[];
@@ -8,6 +8,7 @@ interface GastosState {
   meta: any;
   fetchGastos: (params?: any) => Promise<void>;
   addGasto: (gasto: Partial<Gasto>) => Promise<void>;
+  addBulkGastos: (gastos: Partial<Gasto>[]) => Promise<void>;
   editGasto: (id: string, gasto: Partial<Gasto>) => Promise<void>;
   removeGasto: (id: string) => Promise<void>;
 }
@@ -33,6 +34,15 @@ export const useGastosStore = create<GastosState>((set, get) => ({
     try {
       await createGasto(gasto);
       // Refetch
+      await get().fetchGastos();
+    } catch (error: any) {
+      throw error;
+    }
+  },
+
+  addBulkGastos: async (gastos) => {
+    try {
+      await createBulkGastos(gastos);
       await get().fetchGastos();
     } catch (error: any) {
       throw error;

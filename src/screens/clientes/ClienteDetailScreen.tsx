@@ -399,12 +399,30 @@ export default function ClienteDetailScreen({ route, navigation }: any) {
                 </Text>
               </View>
             </View>
+
+            <View className="flex-row items-center mt-4 pt-4 border-t border-gray-100">
+              <Ionicons name="time-outline" size={20} color="#6b7280" />
+              <View className="ml-3 flex-1">
+                <Text className="text-xs text-gray-500 font-bold">ÚLTIMA ACTUALIZACIÓN</Text>
+                <Text className="text-gray-900 font-medium text-base">
+                  {cliente.fecha_y_hora_actualizacion
+                    ? new Date(cliente.fecha_y_hora_actualizacion).toLocaleString('es-CO', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })
+                    : 'Nunca'}
+                </Text>
+              </View>
+            </View>
           </View>
 
           {/* Loyalty Card */}
           <View className="bg-blue-50 rounded-xl p-4 border border-blue-100 mb-4">
             <View className="flex-row items-center justify-between mb-2">
-              <View>
+              <View className="flex-1 mr-2">
                 <Text className="text-xs text-blue-600 font-bold mb-1">TARJETA DE FIDELIDAD</Text>
                 <Text className="text-blue-900 font-black text-2xl">{contadorActual} / 10</Text>
                 <Text className="text-blue-500 text-xs mt-1">
@@ -415,7 +433,7 @@ export default function ClienteDetailScreen({ route, navigation }: any) {
                     : `${5 - contadorActual} item(s) para el primer hito (★5)`}
                 </Text>
               </View>
-              <View className="items-center">
+              <View className="items-center shrink-0">
                 <Ionicons name="star" size={36} color={contadorActual >= 10 ? '#f59e0b' : '#93c5fd'} />
                 <Text className="text-xs text-blue-400 mt-1 font-medium">
                   Total items: {cliente.compras || 0}

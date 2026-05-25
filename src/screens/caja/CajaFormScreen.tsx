@@ -45,7 +45,7 @@ const schema = yup.object().shape({
     yup.object().shape({
       Idcierreyapertura: yup.string().optional(),
       nombreInsumo: yup.string().required(),
-      paraQueProducto: yup.string().optional(),
+      paraQueProducto: yup.mixed().optional(),
       nombreProductoReal: yup.string().optional(),
       categoria: yup.string().optional(),
       unidadDeMedida: yup.string().optional(),
@@ -254,7 +254,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           .map(i => ({
             nombreInsumo: i.IDalimentos,
             nombreInsumoReal: i.Nombre || i.nombre,
-            paraQueProducto: '',
+            paraQueProducto: [] as string[],
             nombreProductoReal: '',
             categoria: i.Categoria || i.categoria || '',
             unidadDeMedida: i.Unidades || i.unidades || 'Und',
@@ -290,18 +290,25 @@ export default function CajaFormScreen({ route, navigation }: any) {
           const { caja, insumos } = resumen;
         
         const mappedInsumos = insumos.map((i: any) => {
-          const prodId = i.paraQueProducto || '';
-          const prodObj = productosData.find((p: any) => p.IDproductos === prodId || p.nombre === prodId);
-          
           const insId = i.nombreInsumo || i.insumos || '';
           const insObj = insumosData.find((ins: any) => ins.IDalimentos === insId || ins.Nombre === insId || ins.nombre === insId);
+
+          // paraQueProducto may be an array (new) or string (legacy)
+          const rawPQP = i.paraQueProducto;
+          const productosIds: string[] = Array.isArray(rawPQP)
+            ? rawPQP
+            : (typeof rawPQP === 'string' && rawPQP.trim() ? [rawPQP.trim()] : []);
+          const productosNombres = productosIds.map((pid: string) => {
+            const p = productosData.find((x: any) => x.IDproductos === pid || x.nombre === pid);
+            return p ? (p.nombre || p.Nombre) : pid;
+          });
 
           return {
             Idcierreyapertura: i.Idcierreyapertura,
             nombreInsumo: insId,
             nombreInsumoReal: insObj ? (insObj.Nombre || insObj.nombre) : (i.insumo?.Nombre || i.insumo?.nombre || insId),
-            paraQueProducto: prodObj ? prodObj.IDproductos : prodId,
-            nombreProductoReal: prodObj ? prodObj.nombre : prodId,
+            paraQueProducto: productosIds,
+            nombreProductoReal: productosNombres.join(', '),
             categoria: i.categoria || i.insumo?.Categoria || insObj?.Categoria || insObj?.categoria || '',
             unidadDeMedida: i.unidadDeMedida || i.insumo?.Unidades || insObj?.Unidades || insObj?.unidades || 'Und',
             cantApertura: i.cantApertura || 0,
@@ -417,7 +424,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
       append({
         nombreInsumo: insumo.IDalimentos,
         nombreInsumoReal: insumo.Nombre || insumo.nombre,
-        paraQueProducto: '',
+        paraQueProducto: [] as string[],
         nombreProductoReal: '',
         categoria: insumo.Categoria || insumo.categoria || '',
         unidadDeMedida: insumo.Unidades || insumo.unidades || 'Und',
@@ -460,12 +467,29 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
   const handleSelectProducto = (producto: any) => {
     if (selectedIndexForProduct !== null) {
+      const current = (fields[selectedIndexForProduct] as any);
+      const currentIds: string[] = Array.isArray(current.paraQueProducto)
+        ? current.paraQueProducto
+        : (current.paraQueProducto ? [current.paraQueProducto] : []);
+      const prodId = producto.IDproductos;
+      const prodNombre = producto.nombre || producto.Nombre || '';
+
+      const isSelected = currentIds.includes(prodId);
+      const newIds = isSelected
+        ? currentIds.filter(id => id !== prodId)  // deselect
+        : [...currentIds, prodId];                  // select
+
+      const newNombres = newIds.map(id => {
+        const p = allProductos.find((x: any) => x.IDproductos === id);
+        return p ? (p.nombre || p.Nombre) : id;
+      }).join(', ');
+
       update(selectedIndexForProduct, {
-        ...(fields[selectedIndexForProduct] as any),
-        paraQueProducto: producto.IDproductos,
-        nombreProductoReal: producto.nombre || producto.Nombre
+        ...current,
+        paraQueProducto: newIds,
+        nombreProductoReal: newNombres
       });
-      setSelectedIndexForProduct(null);
+      // Don't close modal — let user select multiple, they close manually
     }
   };
 
@@ -567,8 +591,20 @@ export default function CajaFormScreen({ route, navigation }: any) {
           return {
             nombreInsumo: insId,
             nombreInsumoReal: insObj ? (insObj.Nombre || insObj.nombre) : (i.insumo?.Nombre || i.insumo?.nombre || insId),
-            paraQueProducto: prodObj ? prodObj.IDproductos : prodId,
-            nombreProductoReal: prodObj ? prodObj.nombre : prodId,
+            paraQueProducto: (() => {
+              const rawPQP = i.paraQueProducto;
+              if (Array.isArray(rawPQP)) return rawPQP;
+              if (typeof rawPQP === 'string' && rawPQP.trim()) return [rawPQP.trim()];
+              return [];
+            })() as string[],
+            nombreProductoReal: (() => {
+              const rawPQP = i.paraQueProducto;
+              const ids: string[] = Array.isArray(rawPQP) ? rawPQP : (rawPQP ? [rawPQP] : []);
+              return ids.map((pid: string) => {
+                const p = allProductos.find((x: any) => x.IDproductos === pid || x.nombre === pid);
+                return p ? (p.nombre || p.Nombre) : pid;
+              }).join(', ');
+            })(),
             categoria: i.categoria || i.insumo?.Categoria || insObj?.Categoria || insObj?.categoria || '',
             unidadDeMedida: i.unidadDeMedida || i.insumo?.Unidades || insObj?.Unidades || insObj?.unidades || 'Und',
             cantApertura: Number(i.cantDeCierre) || 0,
@@ -634,7 +670,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
               </TouchableOpacity>
             )}
             {!isReadOnly && (
-              <TouchableOpacity onPress={handleSubmit(onSave, onError)} disabled={saving} className="bg-white/20 px-3 py-2 rounded-lg flex-row items-center">
+              <TouchableOpacity onPress={(handleSubmit as any)(onSave, onError)} disabled={saving} className="bg-white/20 px-3 py-2 rounded-lg flex-row items-center">
                 {saving ? <ActivityIndicator size="small" color="#fff" /> : <Text className="text-white font-bold text-sm">Guardar</Text>}
               </TouchableOpacity>
             )}
@@ -991,11 +1027,25 @@ export default function CajaFormScreen({ route, navigation }: any) {
                             setSelectedIndexForProduct(index);
                             setModalProductosVisible(true);
                           }}
-                          className="bg-transparent border-b border-gray-200 py-1"
+                          className="bg-transparent border-b border-gray-200 py-1 min-h-[30px]"
                         >
-                          <Text className={`text-sm ${item.nombreProductoReal || item.paraQueProducto ? 'text-gray-800' : 'text-gray-400'}`} numberOfLines={1}>
-                            {item.nombreProductoReal || item.paraQueProducto || 'Seleccionar...'}
-                          </Text>
+                          {(() => {
+                            const pqp = (item as any).paraQueProducto;
+                            const ids: string[] = Array.isArray(pqp) ? pqp : (pqp ? [pqp] : []);
+                            const nombres = (item as any).nombreProductoReal;
+                            if (ids.length === 0) {
+                              return <Text className="text-sm text-gray-400" numberOfLines={2}>Seleccionar...</Text>;
+                            }
+                            return (
+                              <View className="flex-row flex-wrap gap-1">
+                                {nombres?.split(', ').map((nombre: string, i: number) => (
+                                  <View key={i} className="bg-blue-100 rounded px-1 py-0.5">
+                                    <Text className="text-[9px] text-blue-700 font-semibold" numberOfLines={1}>{nombre}</Text>
+                                  </View>
+                                ))}
+                              </View>
+                            );
+                          })()}
                         </TouchableOpacity>
                       </View>
 
@@ -1117,7 +1167,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                   <Input 
                     editable={!isReadOnly}
                     keyboardType="numeric" 
-                    value={value !== undefined && value !== '' && value !== null && Number(value) !== 0 ? formatCurrency(value) : ''} 
+                    value={value !== undefined && (value as any) !== '' && value !== null && Number(value) !== 0 ? formatCurrency(Number(value)) : ''} 
                     onChangeText={(val) => onChange(parseCurrency(val))} 
                     onFocus={() => {
                       if (Number(value) === 0) {
@@ -1191,7 +1241,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
             const efectivoContado = Number(watch('efectivoDeCierre'));
             const transContadas = Number(transferenciasContadas);
             
-            const hasAllInputs = watch('efectivoDeCierre') !== '' && watch('efectivoDeCierre') !== undefined && transferenciasContadas !== '';
+            const hasAllInputs = watch('efectivoDeCierre') !== ('' as any) && watch('efectivoDeCierre') !== undefined && transferenciasContadas !== '';
 
             if (!hasAllInputs) {
               return (
@@ -1387,40 +1437,85 @@ export default function CajaFormScreen({ route, navigation }: any) {
             <Text className="text-purple-700 text-2xl font-black tracking-tight">{formatCurrency(resumenData.resumen.totalVentas || 0)}</Text>
           </View>
 
-          {/* INSUMOS FÍSICOS - TABLA ELEGANTE */}
+          {/* INSUMOS FÍSICOS - TABLA */}
           {resumenData.insumos && resumenData.insumos.length > 0 && (
             <View className="mt-4 mb-4">
               <Text className="text-lg font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Control de Insumos Físicos</Text>
               <View className="bg-white rounded-xl border border-gray-200 shadow-sm">
                 <View className="flex-row bg-gray-100 border-b border-gray-200 p-3">
-                  <Text className="flex-[2] text-[10px] font-bold text-gray-600 uppercase">Insumo</Text>
-                  <Text className="flex-1 text-[10px] font-bold text-gray-600 uppercase text-center">Gasto Físico</Text>
-                  <Text className="flex-1 text-[10px] font-bold text-gray-600 uppercase text-center">Gasto Sist.</Text>
+                  <Text className="flex-[2] text-[10px] font-bold text-gray-600 uppercase">Insumo / Productos</Text>
+                  <Text className="flex-1 text-[10px] font-bold text-gray-600 uppercase text-center">Físico</Text>
+                  <Text className="flex-1 text-[10px] font-bold text-gray-600 uppercase text-center">Sist.</Text>
                   <Text className="flex-1 text-[10px] font-bold text-gray-600 uppercase text-right">Dif.</Text>
                 </View>
                 {resumenData.insumos.map((ins: any, index: number) => {
-                  // Find product name if available from global state or passed from backend
-                  let nombreProductoDisplay = ins.paraQueProducto || 'N/A';
-                  if (ins.paraQueProducto && allProductos.length > 0) {
-                    const prodMatch = allProductos.find(p => p.IDproductos === ins.paraQueProducto);
-                    if (prodMatch) nombreProductoDisplay = prodMatch.nombre;
-                  }
+                  // productosAsociados from backend (new) or fallback to nombreProductoReal
+                  const productosAsociados: { id: string; nombre: string }[] = ins.productosAsociados || [];
+                  const displayProductos = productosAsociados.length > 0
+                    ? productosAsociados.map((p: any) => p.nombre).join(', ')
+                    : (ins.nombreProductoReal || 'Sin productos');
 
                   return (
-                    <View key={index} className={`flex-row p-3 border-b border-gray-100 ${ins.diferencia === 0 ? 'bg-white' : ins.diferencia < 0 ? 'bg-red-50' : 'bg-emerald-50'}`}>
-                      <View className="flex-[2]">
-                        <Text className="text-xs font-bold text-gray-800">{ins.nombreReal || ins.nombreInsumo}</Text>
-                        <Text className="text-[10px] text-gray-500">{nombreProductoDisplay}</Text>
+                    <View key={index} className={`border-b border-gray-100 ${ins.diferencia === 0 ? 'bg-white' : ins.diferencia < 0 ? 'bg-red-50' : 'bg-emerald-50'}`}>
+                      <View className="flex-row p-3">
+                        <View className="flex-[2]">
+                          <Text className="text-xs font-bold text-gray-800">{ins.nombreReal || ins.nombreInsumo}</Text>
+                          {/* Show each product as a small chip */}
+                          <View className="flex-row flex-wrap gap-1 mt-1">
+                            {productosAsociados.length > 0 ? productosAsociados.map((p: any, pi: number) => (
+                              <View key={pi} className="bg-blue-50 border border-blue-200 rounded px-1.5 py-0.5">
+                                <Text className="text-[9px] text-blue-700 font-semibold">{p.nombre}</Text>
+                              </View>
+                            )) : (
+                              <Text className="text-[10px] text-gray-400">{ins.nombreProductoReal || 'Sin filtro'}</Text>
+                            )}
+                          </View>
+                        </View>
+                        <Text className="flex-1 text-xs font-bold text-gray-700 text-center self-center">{ins.seUtilizaron || 0}</Text>
+                        <Text className="flex-1 text-xs font-bold text-gray-700 text-center self-center">{ins.ventasEnSistema || 0}</Text>
+                        <Text className={`flex-1 text-xs font-bold text-right self-center ${ins.diferencia < 0 ? 'text-red-600' : ins.diferencia > 0 ? 'text-emerald-600' : 'text-gray-500'}`}>
+                          {ins.diferencia > 0 ? '+' : ''}{ins.diferencia}
+                        </Text>
                       </View>
-                      <Text className="flex-1 text-xs font-bold text-gray-700 text-center">{ins.seUtilizaron || 0}</Text>
-                      <Text className="flex-1 text-xs font-bold text-gray-700 text-center">{ins.ventasEnSistema || 0}</Text>
-                      <Text className={`flex-1 text-xs font-bold text-right ${ins.diferencia < 0 ? 'text-red-600' : ins.diferencia > 0 ? 'text-emerald-600' : 'text-gray-500'}`}>
-                        {ins.diferencia > 0 ? '+' : ''}{ins.diferencia}
-                      </Text>
+                      {/* Detail: ventas by product */}
+                      {ins.ventasPorProducto && Object.keys(ins.ventasPorProducto).length > 0 && (
+                        <View className="px-3 pb-2 border-t border-gray-100 bg-gray-50">
+                          <Text className="text-[9px] text-gray-500 font-semibold mb-1 mt-1">DETALLE POR PLATO:</Text>
+                          {Object.entries(ins.ventasPorProducto).map(([prod, cant]: [string, any], vi: number) => (
+                            <Text key={vi} className="text-[9px] text-gray-600">  • {prod}: <Text className="font-bold">{cant}</Text> uds.</Text>
+                          ))}
+                        </View>
+                      )}
                     </View>
                   );
                 })}
               </View>
+            </View>
+          )}
+
+          {/* VENTAS POR CATEGORÍA */}
+          {resumenData.ventasPorCategoria && resumenData.ventasPorCategoria.length > 0 && (
+            <View className="mt-2 mb-4">
+              <Text className="text-lg font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Ventas por Categoría</Text>
+              {resumenData.ventasPorCategoria.map((cat: any, ci: number) => (
+                <View key={ci} className="bg-white rounded-xl border border-gray-200 shadow-sm mb-3 overflow-hidden">
+                  <View className="flex-row items-center justify-between bg-indigo-50 border-b border-indigo-100 px-3 py-2">
+                    <Text className="text-sm font-bold text-indigo-800">{cat.categoria}</Text>
+                    <View className="flex-row gap-3">
+                      <Text className="text-[10px] text-indigo-600 font-bold">{cat.totalUnidades} uds.</Text>
+                      <Text className="text-[10px] text-indigo-600 font-bold">{formatCurrency(cat.totalIngresos)}</Text>
+                    </View>
+                  </View>
+                  {cat.productos.map((prod: any, pi: number) => (
+                    <View key={pi} className="flex-row items-center justify-between px-4 py-1.5 border-b border-gray-50">
+                      <Text className="text-xs text-gray-700 flex-1" numberOfLines={1}>{prod.nombre}</Text>
+                      <View className="bg-indigo-100 rounded-full px-2 py-0.5">
+                        <Text className="text-[10px] font-bold text-indigo-700">{prod.cantidad}</Text>
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ))}
             </View>
           )}
 
@@ -1512,11 +1607,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
               </View>
               <View style={{ flex: 1 }}>
                 <FlashList
-                  data={filteredInsumos}
+                  data={filteredInsumos as any[]}
                   estimatedItemSize={70}
-                  keyboardShouldPersistTaps="handled"
-                  keyExtractor={(item) => item.IDalimentos}
-                  renderItem={({ item }) => (
+                  keyExtractor={(item: any) => item.IDalimentos}
+                  renderItem={({ item }: { item: InsumoItem }) => (
                     <TouchableOpacity 
                       onPress={() => {
                         handleAddInsumo(item);
@@ -1546,7 +1640,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
       </Modal>
 
       {/* MODAL SELECCIONAR PRODUCTO */}
-      <Modal visible={modalProductosVisible} transparent animationType="slide" onRequestClose={() => setModalProductosVisible(false)}>
+      <Modal visible={modalProductosVisible} transparent animationType="slide" onRequestClose={() => { setModalProductosVisible(false); setSelectedIndexForProduct(null); }}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
           <KeyboardAvoidingView 
             behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -1554,12 +1648,15 @@ export default function CajaFormScreen({ route, navigation }: any) {
           >
             <View style={{ height: '90%', backgroundColor: '#F8FAFC', borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden', marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
               <View className="flex-row items-center justify-between p-4 bg-white border-b border-gray-200 mt-safe">
-                <Text className="text-lg font-bold text-gray-900">Seleccionar Producto</Text>
+                <View>
+                  <Text className="text-lg font-bold text-gray-900">Seleccionar Productos</Text>
+                  <Text className="text-xs text-gray-500">Toca para seleccionar/deseleccionar. Varios permitidos.</Text>
+                </View>
                 <TouchableOpacity onPress={() => {
                   setModalProductosVisible(false);
                   setSelectedIndexForProduct(null);
-                }} className="p-2">
-                  <Ionicons name="close" size={24} color="#374151" />
+                }} className="bg-green-600 px-4 py-2 rounded-lg">
+                  <Text className="text-white font-bold text-sm">Listo</Text>
                 </TouchableOpacity>
               </View>
               <View className="p-4 bg-white border-b border-gray-100">
@@ -1576,32 +1673,37 @@ export default function CajaFormScreen({ route, navigation }: any) {
               </View>
               <View style={{ flex: 1 }}>
                 <FlashList
-                  data={filteredProductos}
+                  data={filteredProductos as any[]}
                   estimatedItemSize={70}
-                  keyboardShouldPersistTaps="handled"
-                  keyExtractor={(item) => item.IDproductos || Math.random().toString()}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity 
-                      onPress={() => {
-                        handleSelectProducto(item);
-                        setModalProductosVisible(false);
-                      }}
-                      className="flex-row items-center p-4 bg-white border-b border-gray-100"
-                    >
-                      {item.imagen || item.imageUrl ? (
-                        <Image source={{ uri: item.imagen || item.imageUrl }} className="w-10 h-10 rounded bg-gray-200 mr-3" />
-                      ) : (
-                        <View className="w-10 h-10 rounded bg-gray-200 mr-3 items-center justify-center">
-                          <Ionicons name="fast-food" size={20} color="#9ca3af" />
+                  keyExtractor={(item: any) => item.IDproductos || Math.random().toString()}
+                  renderItem={({ item }: { item: any }) => {
+                    const currentField = selectedIndexForProduct !== null ? (fields[selectedIndexForProduct] as any) : null;
+                    const selectedIds: string[] = currentField
+                      ? (Array.isArray(currentField.paraQueProducto) ? currentField.paraQueProducto : (currentField.paraQueProducto ? [currentField.paraQueProducto] : []))
+                      : [];
+                    const isSelected = selectedIds.includes(item.IDproductos);
+                    return (
+                      <TouchableOpacity 
+                        onPress={() => handleSelectProducto(item)}
+                        className={`flex-row items-center p-4 border-b border-gray-100 ${isSelected ? 'bg-green-50' : 'bg-white'}`}
+                      >
+                        {item.imagen || item.imageUrl ? (
+                          <Image source={{ uri: item.imagen || item.imageUrl }} className="w-10 h-10 rounded bg-gray-200 mr-3" />
+                        ) : (
+                          <View className="w-10 h-10 rounded bg-gray-200 mr-3 items-center justify-center">
+                            <Ionicons name="fast-food" size={20} color="#9ca3af" />
+                          </View>
+                        )}
+                        <View className="flex-1">
+                          <Text className={`font-semibold ${isSelected ? 'text-green-700' : 'text-gray-800'}`}>{item.nombre || item.Nombre}</Text>
+                          <Text className="text-xs text-gray-500">{item.categoria || item.Categoria || 'Sin categoría'}</Text>
                         </View>
-                      )}
-                      <View className="flex-1">
-                        <Text className="font-semibold text-gray-800">{item.nombre || item.Nombre}</Text>
-                        <Text className="text-xs text-gray-500">{item.categoria || item.Categoria || 'Sin categoría'}</Text>
-                      </View>
-                      <Ionicons name="checkmark-circle-outline" size={24} color="#22c55e" />
-                    </TouchableOpacity>
-                  )}
+                        {isSelected
+                          ? <Ionicons name="checkmark-circle" size={24} color="#16a34a" />
+                          : <Ionicons name="add-circle-outline" size={24} color="#9ca3af" />}
+                      </TouchableOpacity>
+                    );
+                  }}
                 />
               </View>
             </View>

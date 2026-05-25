@@ -27,6 +27,11 @@ export const createGasto = async (gasto: Partial<Gasto>) => {
   return data;
 };
 
+export const createBulkGastos = async (gastos: Partial<Gasto>[]) => {
+  const { data } = await api.post('/gastos/bulk', { gastos });
+  return data;
+};
+
 export const updateGasto = async (id: string, gasto: Partial<Gasto>) => {
   const { data } = await api.patch(`/gastos/${id}`, gasto);
   return data;

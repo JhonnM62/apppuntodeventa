@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, SectionList, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import { View, FlatList, SectionList, TouchableOpacity, ActivityIndicator, TextInput, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components/ui/text';
 import { useGastosStore } from '../../store/useGastosStore';
 import { Gasto } from '../../services/gastos';
 import GastosFormModal from './GastosFormModal';
+import GastosBulkModal from './GastosBulkModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -22,9 +23,24 @@ export default function GastosScreen({ navigation }: any) {
   const [filterTipo, setFilterTipo] = useState<'TODOS' | 'NEGOCIO' | 'PERSONAL'>('TODOS');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Bulk IA state
+  const [bulkModalVisible, setBulkModalVisible] = useState(false);
+
+  // Filter state
+  const [showFilterSheet, setShowFilterSheet] = useState(false);
+  const [filterFechaDesde, setFilterFechaDesde] = useState('');
+  const [filterFechaHasta, setFilterFechaHasta] = useState('');
+  const [filterMedioDePago, setFilterMedioDePago] = useState('Todos');
+
+  const activeFiltersCount = (filterFechaDesde ? 1 : 0) + (filterFechaHasta ? 1 : 0) + (filterMedioDePago !== 'Todos' ? 1 : 0);
+
   useEffect(() => {
-    fetchGastos();
-  }, [fetchGastos]);
+    fetchGastos({
+      fechaDesde: filterFechaDesde || undefined,
+      fechaHasta: filterFechaHasta || undefined,
+      medioDePago: filterMedioDePago !== 'Todos' ? filterMedioDePago : undefined,
+    });
+  }, [fetchGastos, filterFechaDesde, filterFechaHasta, filterMedioDePago]);
 
   useSocketEvent<any>(SocketEvent.REFRESH_GASTOS, () => {
     fetchGastos();
@@ -150,18 +166,29 @@ export default function GastosScreen({ navigation }: any) {
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
-            <TouchableOpacity onPress={() => {}}>
-              <Ionicons name="options-outline" size={18} color="white" />
+            <TouchableOpacity onPress={() => setShowFilterSheet(true)} className="relative">
+              <Ionicons name="options-outline" size={22} color="white" />
+              {activeFiltersCount > 0 && (
+                <View className="absolute -top-1 -right-1 bg-red-500 w-3 h-3 rounded-full border-2 border-green-600" />
+              )}
             </TouchableOpacity>
           </View>
         </View>
         {canCreate && (
-          <TouchableOpacity 
-            onPress={handleAdd}
-            className="bg-white/20 p-2 rounded-full"
-          >
-            <Ionicons name="add" size={24} color="white" />
-          </TouchableOpacity>
+          <View className="flex-row items-center">
+            <TouchableOpacity 
+              onPress={() => setBulkModalVisible(true)}
+              className="bg-white/20 p-2 rounded-full mr-2"
+            >
+              <Ionicons name="layers-outline" size={24} color="white" />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={handleAdd}
+              className="bg-white/20 p-2 rounded-full"
+            >
+              <Ionicons name="add" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
         )}
       </View>
 
@@ -222,6 +249,84 @@ export default function GastosScreen({ navigation }: any) {
         onClose={() => setModalVisible(false)}
         gastoToEdit={selectedGasto}
       />
+
+      <GastosBulkModal
+        visible={bulkModalVisible}
+        onClose={() => setBulkModalVisible(false)}
+      />
+
+      <Modal visible={showFilterSheet} transparent animationType="slide" onRequestClose={() => setShowFilterSheet(false)}>
+        <TouchableOpacity
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
+          activeOpacity={1}
+          onPress={() => setShowFilterSheet(false)}
+        >
+          <TouchableOpacity
+            activeOpacity={1}
+            style={{ backgroundColor: 'white', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 }}
+          >
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className="text-xl font-bold text-gray-800">Filtros</Text>
+              <TouchableOpacity onPress={() => setShowFilterSheet(false)} className="bg-gray-100 p-2 rounded-full">
+                <Ionicons name="close" size={20} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <View className="mb-4">
+              <Text className="text-sm font-bold text-gray-600 mb-2">Rango de fechas</Text>
+              <View className="flex-row items-center justify-between">
+                <TextInput
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mr-2"
+                  placeholder="Desde (YYYY-MM-DD)"
+                  value={filterFechaDesde}
+                  onChangeText={setFilterFechaDesde}
+                />
+                <TextInput
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 ml-2"
+                  placeholder="Hasta (YYYY-MM-DD)"
+                  value={filterFechaHasta}
+                  onChangeText={setFilterFechaHasta}
+                />
+              </View>
+            </View>
+
+            <View className="mb-6">
+              <Text className="text-sm font-bold text-gray-600 mb-2">Medio de Pago</Text>
+              <View className="flex-row flex-wrap">
+                {['Todos', 'Efectivo', 'Transferencia', 'Nequi', 'Bancolombia'].map((medio) => (
+                  <TouchableOpacity
+                    key={medio}
+                    onPress={() => setFilterMedioDePago(medio)}
+                    className={`px-4 py-2 rounded-full mr-2 mb-2 border ${filterMedioDePago === medio ? 'bg-green-100 border-green-500' : 'bg-gray-50 border-gray-200'}`}
+                  >
+                    <Text className={`font-bold ${filterMedioDePago === medio ? 'text-green-700' : 'text-gray-500'}`}>{medio}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View className="flex-row justify-between mt-2">
+              <TouchableOpacity
+                className="flex-1 py-4 border border-gray-200 rounded-xl mr-2 items-center"
+                onPress={() => {
+                  setFilterFechaDesde('');
+                  setFilterFechaHasta('');
+                  setFilterMedioDePago('Todos');
+                }}
+              >
+                <Text className="text-gray-600 font-bold">Limpiar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-1 py-4 bg-green-600 rounded-xl ml-2 items-center"
+                onPress={() => setShowFilterSheet(false)}
+              >
+                <Text className="text-white font-bold">Aplicar Filtros</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
+
     </SafeAreaView>
   );
 }
