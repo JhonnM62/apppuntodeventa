@@ -19,6 +19,46 @@ import useAuthStore from '../../store/useAuthStore';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 
+/** Tarjeta-sugerencia inteligente: aparece cuando precio parece ser del lote completo */
+const LoteSuggestion = ({
+  precio,
+  cantidad,
+  onApply,
+}: {
+  precio: number;
+  cantidad: number;
+  onApply: (precioUnitario: number) => void;
+}) => {
+  if (cantidad <= 1 || precio <= 0) return null;
+  const unitario = Math.round(precio / cantidad);
+  if (unitario < 10) return null;
+  return (
+    <TouchableOpacity
+      onPress={() => onApply(unitario)}
+      activeOpacity={0.8}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fef9c3',
+        borderWidth: 1,
+        borderColor: '#fde047',
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 7,
+        marginTop: 6,
+      }}
+    >
+      <RNText style={{ fontSize: 14, marginRight: 4 }}>📦</RNText>
+      <RNText style={{ flex: 1, fontSize: 11, color: '#713f12' }}>
+        ¿Precio del lote? <RNText style={{ fontWeight: '700' }}>${precio.toLocaleString('es-CO')} ÷ {cantidad} = ${unitario.toLocaleString('es-CO')}/und</RNText>
+      </RNText>
+      <View style={{ backgroundColor: '#eab308', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginLeft: 6 }}>
+        <RNText style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>✓ Usar</RNText>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
 type TabType = 'entrada' | 'salida' | 'registros';
 
 const InventarioScreen = ({ navigation }: any) => {
@@ -1074,7 +1114,7 @@ const InventarioScreen = ({ navigation }: any) => {
               {getInsumoName(item.nombreDelAlimento)}
             </RNText>
           </View>
-          <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+          <View style={{ flexDirection: 'row', marginBottom: 4 }}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <RNText style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Precio ($)</RNText>
               <TextInput
@@ -1096,7 +1136,12 @@ const InventarioScreen = ({ navigation }: any) => {
               />
             </View>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <LoteSuggestion
+            precio={Number(editValues.precioActual.replace(/[^0-9.]/g, '')) || 0}
+            cantidad={Number(editValues.cantidad.replace(/[^0-9]/g, '')) || 0}
+            onApply={(u) => setEditValues('precioActual', String(u))}
+          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
             <RNText style={{ fontSize: 12, color: '#6b7280' }}>
               Subtotal adic: <RNText style={{ fontWeight: '700', color: '#111827' }}>${previewSubtotal.toLocaleString('es-CO')}</RNText>
             </RNText>
@@ -1679,6 +1724,15 @@ const InventarioScreen = ({ navigation }: any) => {
                               setAddItemsList(newItems);
                             }}
                           />
+                          <LoteSuggestion
+                            precio={item.precioActual}
+                            cantidad={item.cantidad}
+                            onApply={(u) => {
+                              const newItems = [...addItemsList];
+                              newItems[index].precioActual = u;
+                              setAddItemsList(newItems);
+                            }}
+                          />
                         </View>
                       )}
                     </View>
@@ -2160,6 +2214,15 @@ const InventarioScreen = ({ navigation }: any) => {
                           onChangeText={(t) => {
                             const newItems = [...addItemsList];
                             newItems[index].precioActual = Number(t.replace(/[^0-9]/g, '')) || 0;
+                            setAddItemsList(newItems);
+                          }}
+                        />
+                        <LoteSuggestion
+                          precio={item.precioActual}
+                          cantidad={item.cantidad}
+                          onApply={(u) => {
+                            const newItems = [...addItemsList];
+                            newItems[index].precioActual = u;
                             setAddItemsList(newItems);
                           }}
                         />

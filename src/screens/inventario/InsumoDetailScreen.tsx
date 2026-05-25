@@ -26,6 +26,46 @@ import { inventarioService } from '../../services/inventario';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 
+/** Tarjeta-sugerencia inteligente precio por lote */
+const LoteSuggestion = ({
+  precio,
+  cantidad,
+  onApply,
+}: {
+  precio: number;
+  cantidad: number;
+  onApply: (precioUnitario: number) => void;
+}) => {
+  if (cantidad <= 1 || precio <= 0) return null;
+  const unitario = Math.round(precio / cantidad);
+  if (unitario < 10) return null;
+  return (
+    <TouchableOpacity
+      onPress={() => onApply(unitario)}
+      activeOpacity={0.8}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fef9c3',
+        borderWidth: 1,
+        borderColor: '#fde047',
+        borderRadius: 10,
+        paddingHorizontal: 10,
+        paddingVertical: 7,
+        marginTop: 6,
+      }}
+    >
+      <RNText style={{ fontSize: 14, marginRight: 4 }}>📦</RNText>
+      <RNText style={{ flex: 1, fontSize: 11, color: '#713f12' }}>
+        ¿Precio del lote? <RNText style={{ fontWeight: '700' }}>${precio.toLocaleString('es-CO')} ÷ {cantidad} = ${unitario.toLocaleString('es-CO')}/und</RNText>
+      </RNText>
+      <View style={{ backgroundColor: '#eab308', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginLeft: 6 }}>
+        <RNText style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>✓ Usar</RNText>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
 let ImagePicker: any = null;
 try {
   ImagePicker = require('expo-image-picker');
@@ -863,6 +903,11 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                   onChangeText={(v) => setUpdateValues(prev => ({ ...prev, precioActual: v }))}
                   placeholder="0"
                   placeholderTextColor="#9ca3af"
+                />
+                <LoteSuggestion
+                  precio={Number(updateValues.precioActual.replace(/[^0-9.]/g, '')) || 0}
+                  cantidad={Number(updateValues.cantidad.replace(/[^0-9]/g, '')) || 0}
+                  onApply={(u) => setUpdateValues(prev => ({ ...prev, precioActual: String(u) }))}
                 />
               </View>
 
