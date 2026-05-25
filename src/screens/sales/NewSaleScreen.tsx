@@ -1422,6 +1422,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         onCobrar={handlePaymentConfirm}
         total={useCartStore.getState().getTotalPrice()}
         isLoading={isSubmitting}
+        cliente={selectedCliente}
       />
 
       {renderClienteModal()}
