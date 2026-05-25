@@ -19,6 +19,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [horaCorteDia, setHoraCorteDia] = useState('00:00');
+  const [modoOperacion, setModoOperacion] = useState('GENERAL');
   
   // Estados para IA
   const [iaConfig, setIaConfig] = useState({
@@ -57,12 +58,17 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
       ]);
 
       const dataNegocio = resNegocio.data ? resNegocio.data : resNegocio;
-      if (dataNegocio && dataNegocio.horaCorteDia) {
-        setHoraCorteDia(dataNegocio.horaCorteDia);
-        const [h, m] = dataNegocio.horaCorteDia.split(':');
-        const d = new Date();
-        d.setHours(parseInt(h, 10), parseInt(m, 10), 0);
-        setTempDate(d);
+      if (dataNegocio) {
+        if (dataNegocio.horaCorteDia) {
+          setHoraCorteDia(dataNegocio.horaCorteDia);
+          const [h, m] = dataNegocio.horaCorteDia.split(':');
+          const d = new Date();
+          d.setHours(parseInt(h, 10), parseInt(m, 10), 0);
+          setTempDate(d);
+        }
+        if (dataNegocio.modoOperacion) {
+          setModoOperacion(dataNegocio.modoOperacion);
+        }
       }
 
       const dataIA = resIA.data ? resIA.data : resIA;
@@ -87,7 +93,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     try {
       setSaving(true);
       await Promise.all([
-        updateConfiguracion({ horaCorteDia }),
+        updateConfiguracion({ horaCorteDia, modoOperacion }),
         updateConfiguracionIA({
           apiKey: iaConfig.apiKey,
           modeloDefecto: iaConfig.modeloDefecto,
@@ -167,6 +173,32 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
               onChange={onChangeTime}
             />
           )}
+
+          <Text style={[styles.label, { marginTop: 20 }]}>Modo de Operación</Text>
+          <View style={styles.modelButtons}>
+            <TouchableOpacity
+              style={[styles.modelBtn, { flex: 1, alignItems: 'center' }, modoOperacion === 'GENERAL' && styles.modelBtnActive]}
+              onPress={() => setModoOperacion('GENERAL')}
+            >
+              <Ionicons name="storefront-outline" size={20} color={modoOperacion === 'GENERAL' ? '#fff' : '#4b5563'} style={{ marginBottom: 4 }} />
+              <Text style={[styles.modelBtnText, modoOperacion === 'GENERAL' && styles.modelBtnTextActive]}>
+                General
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.modelBtn, { flex: 1, alignItems: 'center' }, modoOperacion === 'RESTAURANTE' && styles.modelBtnActive]}
+              onPress={() => setModoOperacion('RESTAURANTE')}
+            >
+              <Ionicons name="restaurant-outline" size={20} color={modoOperacion === 'RESTAURANTE' ? '#fff' : '#4b5563'} style={{ marginBottom: 4 }} />
+              <Text style={[styles.modelBtnText, modoOperacion === 'RESTAURANTE' && styles.modelBtnTextActive]}>
+                Restaurante
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 8 }}>
+            El modo Restaurante habilita el control de insumos por plato en los reportes de caja.
+          </Text>
         </View>
 
         {/* INTELIGENCIA ARTIFICIAL */}

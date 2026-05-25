@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { View, ScrollView, ActivityIndicator, TouchableOpacity, Image, Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { View, ScrollView, ActivityIndicator, TouchableOpacity, Image, Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
@@ -8,6 +9,7 @@ import * as yup from 'yup';
 import Toast from 'react-native-toast-message';
 import { FlashList } from '@shopify/flash-list';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { getConfiguracion } from '../../services/configuracion';
 
 import { Text } from '../../components/ui/text';
 import { Input } from '../../components/ui/input';
@@ -24,6 +26,8 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import VerifyInsumosModal from '../../components/caja/VerifyInsumosModal';
+
+const { width } = Dimensions.get('window');
 
 let DateTimePicker: any;
 try {
@@ -60,9 +64,6 @@ const schema = yup.object().shape({
 
 const formatDateToLocalYYYYMMDD = (isoString: string) => {
   if (!isoString) return '';
-  // El backend guarda la fecha enviada adjuntándole 'T00:00:00.000Z'.
-  // Al hacer substring(0, 10) obtenemos el 'YYYY-MM-DD' original enviado.
-  // No usar new Date() con getFullYear() local, ya que 00:00 UTC en Colombia son las 7PM del día anterior.
   return isoString.substring(0, 10);
 };
 
@@ -73,13 +74,13 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const { canCreate, canEdit, canDelete } = usePermissions('caja');
   const { showAlert } = useCustomAlert();
   
-  // Determine if the user is in read-only mode for this screen
   const isReadOnly = isNew ? !canCreate : !canEdit;
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [allInsumos, setAllInsumos] = useState<InsumoItem[]>([]);
   const [allProductos, setAllProductos] = useState<any[]>([]);
+  const [modoOperacion, setModoOperacion] = useState<'GENERAL' | 'RESTAURANTE'>('GENERAL');
   const [modalInsumosVisible, setModalInsumosVisible] = useState(false);
   const [modalProductosVisible, setModalProductosVisible] = useState(false);
   const [searchInsumo, setSearchInsumo] = useState('');
@@ -91,34 +92,29 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [activeTab, setActiveTab] = useState<'form' | 'analysis' | 'cuadre'>('form');
   const [horaCongelada, _setHoraCongelada] = useState<string | null>(null);
 
-  // Instead of only using AsyncStorage, we push the state to the Backend so ALL devices know it's frozen
   const setHoraCongelada = async (hora: string | null) => {
     _setHoraCongelada(hora);
     if (!isNew && cajaId) {
       try {
-        await updateCaja(cajaId, { horaCongelada: hora || '' } as any); // Send empty string to clear it in backend if null
+        await updateCaja(cajaId, { horaCongelada: hora || '' } as any);
       } catch (e) {
         console.log('Error syncing freeze state', e);
       }
     }
   };
 
-  // Load horaCongelada from AsyncStorage on mount
   useEffect(() => {
-    // Legacy cleanup - We don't use AsyncStorage anymore, we use DB directly.
     if (!isNew && cajaId) {
       AsyncStorage.removeItem(`@caja_congelada_${cajaId}`).catch(() => {});
     }
   }, [cajaId, isNew]);
   
-  // Custom Modal States
   const [isFreezeModalVisible, setIsFreezeModalVisible] = useState(false);
   const [pendingTab, setPendingTab] = useState<'form' | 'analysis' | 'cuadre' | null>(null);
 
   const handleTabChange = (tab: 'form' | 'analysis' | 'cuadre') => {
     if ((tab === 'cuadre' || tab === 'analysis') && !isNew && !verificacionCompletada) {
       setPendingTab(tab);
-      console.log('[DEBUG handleTabChange] Setting verifyModalVisible=true, current horaCongelada:', horaCongelada);
       setVerifyModalVisible(true);
     } else {
       setActiveTab(tab);
@@ -126,14 +122,11 @@ export default function CajaFormScreen({ route, navigation }: any) {
   };
 
   const handleVerificationPassed = () => {
-    console.log('[DEBUG handleVerificationPassed] horaCongelada:', horaCongelada, 'pendingTab:', pendingTab);
     setVerifyModalVisible(false);
     setVerificacionCompletada(true);
     if (!horaCongelada) {
-      console.log('[DEBUG] Showing freeze modal because horaCongelada is null');
       setIsFreezeModalVisible(true);
     } else {
-      console.log('[DEBUG] Directly setting activeTab to pendingTab');
       setActiveTab(pendingTab);
     }
   };
@@ -142,19 +135,12 @@ export default function CajaFormScreen({ route, navigation }: any) {
     setVerifyModalVisible(false);
   };
 
-  // State to manage smooth scrolling for the multiline Observations field
   const [isEditingObservaciones, setIsEditingObservaciones] = useState(false);
-
-  // States for Cuadre de Caja
   const [transferenciasContadas, setTransferenciasContadas] = useState<string>('');
-
-  // State for VerifyInsumosModal
   const [verifyModalVisible, setVerifyModalVisible] = useState(false);
   const [verificacionCompletada, setVerificacionCompletada] = useState(false);
 
   const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
-
-  // Keyboard Height State for Modals (Mathematical Approach Android)
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
@@ -173,7 +159,6 @@ export default function CajaFormScreen({ route, navigation }: any) {
     };
   }, []);
 
-  // Date/Time picker states
   const [showDatePickerApertura, setShowDatePickerApertura] = useState(false);
   const [showTimePickerApertura, setShowTimePickerApertura] = useState(false);
   const [showDatePickerCierre, setShowDatePickerCierre] = useState(false);
@@ -199,13 +184,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const { joinRoom } = useSocket();
 
   useEffect(() => {
-    // Unirse al room de caja para recibir actualizaciones en tiempo real
     joinRoom('caja');
   }, [joinRoom]);
 
   useSocketEvent('refreshCaja', (data: any) => {
-    console.log('Socket event refreshCaja received:', data);
-    // Si la acción no es borrar y es para la caja actual, mostramos alerta y recargamos
     if (data && data.action !== 'delete' && data.cajaId === cajaId) {
       Toast.show({ type: 'info', text1: 'Actualización', text2: 'Alguien modificó esta caja' });
       fetchResumenSilenciosamente();
@@ -239,16 +221,24 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const fetchInitialData = useCallback(async () => {
     setLoading(true);
     try {
-      const [insumosData, resProductos] = await Promise.all([
+      const [insumosRes, prodRes, configRes] = await Promise.all([
         insumosService.getAll({ limit: 1000 }),
-        getProducts()
+        getProducts(),
+        getConfiguracion()
       ]);
-      const productosData = resProductos?.data || resProductos?.productos || resProductos || [];
+
+      const insumosData = insumosRes || [];
+      const productosData = prodRes?.data || prodRes?.productos || prodRes || [];
+      const configData = configRes?.data || configRes;
+      
+      if (configData?.modoOperacion) {
+        setModoOperacion(configData.modoOperacion);
+      }
+
       setAllInsumos(insumosData);
       setAllProductos(productosData);
 
       if (isNew) {
-        // Pre-fill with items that have llevarControlEnCaja = 'SI'
         const defaultInsumos = insumosData
           .filter(i => i.llevar_control_en_caja === 'SI' || i.llevarControlEnCaja === 'SI')
           .map(i => ({
@@ -1438,7 +1428,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           </View>
 
           {/* INSUMOS FÍSICOS - TABLA */}
-          {resumenData.insumos && resumenData.insumos.length > 0 && (
+          {resumenData.insumos && resumenData.insumos.length > 0 && modoOperacion === 'RESTAURANTE' && (
             <View className="mt-4 mb-4">
               <Text className="text-lg font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Control de Insumos Físicos</Text>
               <View className="bg-white rounded-xl border border-gray-200 shadow-sm">
@@ -1494,7 +1484,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           )}
 
           {/* VENTAS POR CATEGORÍA */}
-          {resumenData.ventasPorCategoria && resumenData.ventasPorCategoria.length > 0 && (
+          {resumenData.ventasPorCategoria && resumenData.ventasPorCategoria.length > 0 && modoOperacion === 'RESTAURANTE' && (
             <View className="mt-2 mb-4">
               <Text className="text-lg font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Ventas por Categoría</Text>
               {resumenData.ventasPorCategoria.map((cat: any, ci: number) => (
