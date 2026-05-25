@@ -20,6 +20,7 @@ import { Button } from './button';
 import usePrinterStore from '../../store/usePrinterStore';
 import { executePrint, TicketData } from '../../utils/printer';
 import useCartStore from '../../store/useCartStore';
+import { Cliente } from '../../services/clientes.service';
 
 type PaymentMethod = 'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'EFECTIVO Y OTROS';
 
@@ -41,6 +42,7 @@ interface PaymentModalProps {
   total: number;
   isLoading?: boolean;
   editingPedidoId?: string;
+  cliente?: Cliente | null;
 }
 
 interface BankOption {
@@ -85,6 +87,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   total,
   isLoading = false,
   editingPedidoId,
+  cliente,
 }) => {
   const { height: windowHeight } = useWindowDimensions();
   const [method, setMethod] = useState<PaymentMethod | null>(null);
@@ -143,6 +146,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const remaining = actualTotal - efectivoAmount - transferenciaAmount;
   const isMixedPaymentComplete = efectivoAmount + transferenciaAmount >= actualTotal && efectivoAmount > 0 && transferenciaAmount > 0;
   const isPagado = selectedEstado === 'PAGADO';
+
+  const getDisplayCompras = () => {
+    if (!cliente) return '0';
+    const total = parseInt(cliente.compras || '0', 10) || 0;
+    if (total === 0) return '0';
+    return ((total - 1) % 10) + 1;
+  };
 
   const handleEfectivoChange = (text: string) => {
     const value = parseMoney(text);
@@ -740,7 +750,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           />
         </Animated.View>
 
-        <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }], maxHeight: windowHeight * 0.88 }]}>
+        <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }], maxHeight: windowHeight * 0.94 }]}>
           <View style={styles.handle} />
 
           <View style={styles.header}>
@@ -757,6 +767,24 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               <Ionicons name="close" size={24} color="#6b7280" />
             </TouchableOpacity>
           </View>
+
+          {cliente && (
+            <View style={styles.clientInfoContainer}>
+              <View style={styles.clientInfoLeft}>
+                <View style={styles.clientIconContainer}>
+                  <Ionicons name="person" size={20} color="#6366f1" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <RNText style={styles.clientInfoLabel}>CLIENTE SELECCIONADO</RNText>
+                  <RNText style={styles.clientInfoName} numberOfLines={1}>{cliente.nombre}</RNText>
+                </View>
+              </View>
+              <View style={styles.clientPurchasesBadge}>
+                <Ionicons name="gift" size={14} color="#10b981" />
+                <RNText style={styles.clientPurchasesText}>{getDisplayCompras()}/10 COMPRAS</RNText>
+              </View>
+            </View>
+          )}
 
           {renderCartSummary()}
 
@@ -926,6 +954,13 @@ const styles = StyleSheet.create({
   discountChipSelected: { backgroundColor: '#ef4444', borderColor: '#ef4444' },
   discountChipText: { fontSize: 10, fontWeight: '700', color: '#6b7280' },
   discountChipTextSelected: { color: '#fff' },
+  clientInfoContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#eef2ff', marginHorizontal: 20, marginTop: 12, padding: 12, borderRadius: 16, borderWidth: 1, borderColor: '#c7d2fe' },
+  clientInfoLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 10 },
+  clientIconContainer: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#e0e7ff', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  clientInfoLabel: { fontSize: 10, fontWeight: '800', color: '#6366f1', letterSpacing: 1 },
+  clientInfoName: { fontSize: 14, fontWeight: '700', color: '#312e81' },
+  clientPurchasesBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#d1fae5', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: '#a7f3d0' },
+  clientPurchasesText: { fontSize: 12, fontWeight: '800', color: '#059669', marginLeft: 4 },
 });
 
 export default PaymentModal;
