@@ -579,6 +579,7 @@ export default function HistorialVentasScreen({ navigation }: any) {
         }
         setActionModalVisible(false);
         fetchVentas(1, activeTab, false, searchText); // refresh
+        if (activeTab === 'activas') fetchStatsHoy();
       } catch (error) {
         console.error('Error deleting sale(s):', error);
         Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo eliminar' });
@@ -593,6 +594,7 @@ export default function HistorialVentasScreen({ navigation }: any) {
         setActionModalVisible(false);
         setModalVisible(false);
         fetchVentas(1, activeTab, false, searchText); // refresh current tab
+        if (activeTab === 'activas') fetchStatsHoy();
       } catch (error) {
         console.error('Error restoring sale:', error);
         Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo restaurar la venta' });
@@ -614,6 +616,7 @@ export default function HistorialVentasScreen({ navigation }: any) {
         }
         setActionModalVisible(false);
         fetchVentas(1, activeTab, false, searchText, true); // silent refresh current tab
+        if (activeTab === 'activas') fetchStatsHoy();
       } catch (error) {
         console.error('Error hard deleting sale(s):', error);
         Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo eliminar definitivamente' });
@@ -627,6 +630,7 @@ export default function HistorialVentasScreen({ navigation }: any) {
         Toast.show({ type: 'success', text1: 'Papelera Vaciada', text2: 'Todas las ventas eliminadas han sido borradas definitivamente' });
         setActionModalVisible(false);
         fetchVentas(1, activeTab, false, searchText); // refresh current tab
+        if (activeTab === 'activas') fetchStatsHoy();
       } catch (error) {
         console.error('Error emptying trash:', error);
         Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo vaciar la papelera' });
