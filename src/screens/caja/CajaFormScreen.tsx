@@ -587,15 +587,22 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 return i.productosAsociados.map((p: any) => p.id);
               }
               const rawPQP = i.paraQueProducto || i.nombreDelProducto;
-              if (Array.isArray(rawPQP)) return rawPQP;
-              if (typeof rawPQP === 'string' && rawPQP.trim()) {
+              let rawIds: string[] = [];
+              if (Array.isArray(rawPQP)) {
+                rawIds = rawPQP;
+              } else if (typeof rawPQP === 'string' && rawPQP.trim()) {
                 try {
                   const parsed = JSON.parse(rawPQP);
-                  if (Array.isArray(parsed)) return parsed;
-                } catch(e) {}
-                return [rawPQP.trim()];
+                  rawIds = Array.isArray(parsed) ? parsed : [rawPQP.trim()];
+                } catch(e) {
+                  rawIds = [rawPQP.trim()];
+                }
               }
-              return [];
+              // Resolve IDs: if the value is a name, find the product ID
+              return rawIds.map(val => {
+                const p = allProductos.find((x: any) => x.IDproductos === val || x.nombre === val);
+                return p ? p.IDproductos : val;
+              }).filter(Boolean);
             })() as string[],
             nombreProductoReal: (() => {
               if (i.productosAsociados && Array.isArray(i.productosAsociados) && i.productosAsociados.length > 0) {
