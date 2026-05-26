@@ -569,6 +569,8 @@ export default function CajaFormScreen({ route, navigation }: any) {
       }
 
       const resumen = await getResumenCaja(lastCaja.IDcaja);
+      console.log('DEBUG_COPIAR_RESUMEN:', JSON.stringify(resumen?.insumos?.[0] || 'NO_INSUMOS', null, 2));
+      
       if (resumen && resumen.insumos && resumen.insumos.length > 0) {
         const newInsumos = resumen.insumos.map((i: any) => {
           const prodId = i.paraQueProducto || '';
@@ -584,7 +586,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
               if (i.productosAsociados && Array.isArray(i.productosAsociados) && i.productosAsociados.length > 0) {
                 return i.productosAsociados.map((p: any) => p.id);
               }
-              const rawPQP = i.paraQueProducto;
+              const rawPQP = i.paraQueProducto || i.nombreDelProducto;
               if (Array.isArray(rawPQP)) return rawPQP;
               if (typeof rawPQP === 'string' && rawPQP.trim()) {
                 try {
@@ -599,7 +601,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
               if (i.productosAsociados && Array.isArray(i.productosAsociados) && i.productosAsociados.length > 0) {
                 return i.productosAsociados.map((p: any) => p.nombre).join(', ');
               }
-              const rawPQP = i.paraQueProducto;
+              const rawPQP = i.paraQueProducto || i.nombreDelProducto;
               let ids: string[] = [];
               if (Array.isArray(rawPQP)) {
                 ids = rawPQP;
