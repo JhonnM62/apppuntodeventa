@@ -581,14 +581,36 @@ export default function CajaFormScreen({ route, navigation }: any) {
             nombreInsumo: insId,
             nombreInsumoReal: insObj ? (insObj.Nombre || insObj.nombre) : (i.insumo?.Nombre || i.insumo?.nombre || insId),
             paraQueProducto: (() => {
+              if (i.productosAsociados && Array.isArray(i.productosAsociados) && i.productosAsociados.length > 0) {
+                return i.productosAsociados.map((p: any) => p.id);
+              }
               const rawPQP = i.paraQueProducto;
               if (Array.isArray(rawPQP)) return rawPQP;
-              if (typeof rawPQP === 'string' && rawPQP.trim()) return [rawPQP.trim()];
+              if (typeof rawPQP === 'string' && rawPQP.trim()) {
+                try {
+                  const parsed = JSON.parse(rawPQP);
+                  if (Array.isArray(parsed)) return parsed;
+                } catch(e) {}
+                return [rawPQP.trim()];
+              }
               return [];
             })() as string[],
             nombreProductoReal: (() => {
+              if (i.productosAsociados && Array.isArray(i.productosAsociados) && i.productosAsociados.length > 0) {
+                return i.productosAsociados.map((p: any) => p.nombre).join(', ');
+              }
               const rawPQP = i.paraQueProducto;
-              const ids: string[] = Array.isArray(rawPQP) ? rawPQP : (rawPQP ? [rawPQP] : []);
+              let ids: string[] = [];
+              if (Array.isArray(rawPQP)) {
+                ids = rawPQP;
+              } else if (typeof rawPQP === 'string' && rawPQP.trim()) {
+                try {
+                  const parsed = JSON.parse(rawPQP);
+                  ids = Array.isArray(parsed) ? parsed : [rawPQP.trim()];
+                } catch(e) {
+                  ids = [rawPQP.trim()];
+                }
+              }
               return ids.map((pid: string) => {
                 const p = allProductos.find((x: any) => x.IDproductos === pid || x.nombre === pid);
                 return p ? (p.nombre || p.Nombre) : pid;
