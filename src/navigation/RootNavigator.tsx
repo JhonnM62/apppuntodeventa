@@ -10,6 +10,7 @@ import { useDockStore } from '../store/useDockStore';
 import FloatingDock from '../components/ui/FloatingDock';
 import { useSalesStore } from '../store/useSalesStore';
 import { Text } from 'react-native';
+import SessionExpiredModal from '../components/ui/SessionExpiredModal';
 
 // Screens
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -267,6 +268,7 @@ const RootNavigator = () => {
         )}
       </Stack.Navigator>
       {token != null && <FloatingDock />}
+      <SessionExpiredModal />
     </NavigationContainer>
   );
 };
