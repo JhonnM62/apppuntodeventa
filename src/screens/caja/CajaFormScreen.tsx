@@ -39,7 +39,11 @@ const schema = yup.object().shape({
   nombre: yup.string().required('Responsable es requerido'),
   fechaDeApertura: yup.string().optional(),
   horaDeApertura: yup.string().optional(),
-  efectivoDeApertura: yup.number().transform((value) => (isNaN(value) ? 0 : value)).typeError('Número inválido').min(0, 'No negativo'),
+  efectivoDeApertura: yup.number()
+    .transform((value, originalValue) => (String(originalValue).trim() === '' || originalValue === null || originalValue === undefined ? NaN : value))
+    .required('El efectivo inicial es obligatorio')
+    .typeError('El efectivo inicial es obligatorio')
+    .min(0, 'No negativo'),
   fechaDeCierre: yup.string().optional(),
   horaDeCierre: yup.string().optional(),
   efectivoDeCierre: yup.number().transform((value) => (isNaN(value) ? 0 : value)).typeError('Número inválido').min(0, 'No negativo'),
@@ -952,10 +956,13 @@ export default function CajaFormScreen({ route, navigation }: any) {
           </View>
 
           <View className="mb-3">
-            <Text className="text-gray-600 text-xs font-semibold mb-1 uppercase">Efectivo Inicial</Text>
+            <Text className="text-gray-600 text-xs font-semibold mb-1 uppercase">Efectivo Inicial <Text className="text-red-500">*</Text></Text>
             <Controller control={control} name="efectivoDeApertura" render={({ field: { onChange, value } }) => (
-              <Input editable={!isReadOnly} keyboardType="numeric" value={formatCurrency(value)} onChangeText={(val) => onChange(parseCurrency(val))} className="font-bold bg-gray-50 border-gray-300 text-gray-900" style={{ fontSize: 15 }} />
+              <Input editable={!isReadOnly} keyboardType="numeric" value={formatCurrency(value)} onChangeText={(val) => onChange(parseCurrency(val))} className={cn("font-bold bg-gray-50 border-gray-300 text-gray-900", errors.efectivoDeApertura && "border-red-500")} style={{ fontSize: 15 }} />
             )} />
+            {errors.efectivoDeApertura && (
+              <Text className="text-red-500 text-xs mt-1 font-medium">{errors.efectivoDeApertura.message as string}</Text>
+            )}
           </View>
 
           <View className="mb-2 relative">
