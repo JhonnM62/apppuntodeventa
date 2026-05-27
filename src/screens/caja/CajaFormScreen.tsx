@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { View, ScrollView, ActivityIndicator, TouchableOpacity, Image, Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard, Dimensions } from 'react-native';
+import { View, ScrollView, ActivityIndicator, TouchableOpacity, Image, Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard, Dimensions, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
@@ -695,7 +695,21 @@ export default function CajaFormScreen({ route, navigation }: any) {
               </TouchableOpacity>
             )}
             {!isReadOnly && (
-              <TouchableOpacity onPress={(handleSubmit as any)(onSave, onError)} disabled={saving} className="bg-white/20 px-3 py-2 rounded-lg flex-row items-center">
+              <TouchableOpacity onPress={() => {
+                if (isNew) {
+                  (handleSubmit as any)((data: any) => onSave(data, false), onError)();
+                } else {
+                  Alert.alert(
+                    'Opciones de Guardado',
+                    '¿Qué deseas hacer con los cambios en esta caja?',
+                    [
+                      { text: 'Cancelar', style: 'cancel' },
+                      { text: 'Solo Actualizar', onPress: () => (handleSubmit as any)((data: any) => onSave(data, false), onError)() },
+                      { text: 'Cerrar Caja Definitivo', onPress: () => (handleSubmit as any)((data: any) => onSave(data, true), onError)(), style: 'destructive' }
+                    ]
+                  );
+                }
+              }} disabled={saving} className="bg-white/20 px-3 py-2 rounded-lg flex-row items-center">
                 {saving ? <ActivityIndicator size="small" color="#fff" /> : <Text className="text-white font-bold text-sm">Guardar</Text>}
               </TouchableOpacity>
             )}
