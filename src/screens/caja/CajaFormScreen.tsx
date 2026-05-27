@@ -179,7 +179,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
     }
   });
 
-  const { fields, append, remove, update } = useFieldArray({
+  const { fields, append, remove, update, replace } = useFieldArray({
     control,
     name: 'insumos',
   });
@@ -322,9 +322,11 @@ export default function CajaFormScreen({ route, navigation }: any) {
           fechaDeCierre: caja.fechaDeCierre ? formatDateToLocalYYYYMMDD(caja.fechaDeCierre) : '',
           horaDeCierre: formatTime12h(caja.horaDeCierre || ''),
           efectivoDeCierre: caja.efectivoDeCierre != null ? String(caja.efectivoDeCierre) : ('' as any),
-          observaciones: caja.observaciones || '',
-          insumos: mappedInsumos
+          observaciones: caja.observaciones || ''
         });
+        
+        // Explicitly replace the field array to prevent react-hook-form duplication bugs
+        replace(mappedInsumos);
         
         // Recuperar el valor guardado de transferencias contadas si existe
         if (caja.transferenciasContadas != null) {
@@ -407,7 +409,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
       }
     } catch (error: any) {
       console.error(error);
-      const errorMsg = error?.response?.data?.message || 'No se pudo guardar';
+      const errorMsg = error?.message || error?.response?.data?.message || 'No se pudo guardar';
       if (errorMsg.includes('insumos sin verificar') || errorMsg.includes('Debes hacer la verificación') || errorMsg.includes('Debes verificar')) {
         Toast.show({ type: 'error', text1: 'Verificación Pendiente', text2: 'Debes verificar los insumos antes de cerrar.' });
         setVerifyModalVisible(true);
@@ -646,7 +648,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           };
         });
         
-        setValue('insumos', newInsumos as any);
+        replace(newInsumos as any);
         Toast.show({ type: 'success', text1: 'Copiado', text2: `Se copiaron ${newInsumos.length} insumos de la caja anterior.` });
       } else {
         Toast.show({ type: 'info', text1: 'Aviso', text2: 'La caja anterior no tiene insumos registrados.' });
