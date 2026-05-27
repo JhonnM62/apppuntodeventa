@@ -1535,7 +1535,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           </View>
 
           {/* INSUMOS FÍSICOS - TABLA */}
-          {resumenData.insumos && resumenData.insumos.length > 0 && modoOperacion === 'RESTAURANTE' && (
+          {resumenData.insumos && resumenData.insumos.length > 0 && (
             <View className="mt-4 mb-4">
               <Text className="text-lg font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Control de Insumos Físicos</Text>
               <View className="bg-white rounded-xl border border-gray-200 shadow-sm">
@@ -1591,7 +1591,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           )}
 
           {/* VENTAS POR CATEGORÍA */}
-          {resumenData.ventasPorCategoria && resumenData.ventasPorCategoria.length > 0 && modoOperacion === 'RESTAURANTE' && (
+          {resumenData.ventasPorCategoria && resumenData.ventasPorCategoria.length > 0 && (
             <View className="mt-2 mb-4">
               <Text className="text-lg font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Ventas por Categoría</Text>
               {resumenData.ventasPorCategoria.map((cat: any, ci: number) => (
