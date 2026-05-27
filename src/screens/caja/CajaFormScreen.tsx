@@ -1086,16 +1086,22 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 <Controller control={control} name="cuadroCaja" render={({ field: { onChange, value } }) => (
                   <View className="flex-row rounded-lg overflow-hidden border border-gray-300 h-[50px]">
                     <TouchableOpacity 
-                      onPress={() => onChange('SI')} 
-                      className={`flex-1 justify-center items-center ${value === 'SI' ? 'bg-green-500' : 'bg-gray-100'}`}
+                      onPress={() => onChange('SI CUADRO CAJA')} 
+                      className={`flex-1 justify-center items-center ${value === 'SI CUADRO CAJA' ? 'bg-green-500' : 'bg-gray-100'}`}
                     >
-                      <Text className={`font-bold ${value === 'SI' ? 'text-white' : 'text-gray-500'}`}>SI</Text>
+                      <Text className={`font-bold text-[10px] ${value === 'SI CUADRO CAJA' ? 'text-white' : 'text-gray-500'}`}>SÍ</Text>
                     </TouchableOpacity>
                     <TouchableOpacity 
-                      onPress={() => onChange('NO')} 
-                      className={`flex-1 justify-center items-center ${value === 'NO' ? 'bg-red-500' : 'bg-gray-100 border-l border-gray-300'}`}
+                      onPress={() => onChange('NO CUADRO CAJA')} 
+                      className={`flex-1 justify-center items-center ${value === 'NO CUADRO CAJA' ? 'bg-red-500' : 'bg-gray-100 border-l border-gray-300'}`}
                     >
-                      <Text className={`font-bold ${value === 'NO' ? 'text-white' : 'text-gray-500'}`}>NO</Text>
+                      <Text className={`font-bold text-[10px] ${value === 'NO CUADRO CAJA' ? 'text-white' : 'text-gray-500'}`}>NO</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      onPress={() => onChange('NO SE HA REVISADO')} 
+                      className={`flex-1 justify-center items-center ${value === 'NO SE HA REVISADO' ? 'bg-amber-500' : 'bg-gray-100 border-l border-gray-300'}`}
+                    >
+                      <Text className={`font-bold text-[10px] text-center ${value === 'NO SE HA REVISADO' ? 'text-white' : 'text-gray-500'}`}>PENDIENTE</Text>
                     </TouchableOpacity>
                   </View>
                 )} />
@@ -1130,7 +1136,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 const diffTr = trContadas - trTot;
                 const totalD = diffEf + diffTr;
 
-                setValue('cuadroCaja', totalD === 0 && diffEf === 0 && diffTr === 0 ? 'SI' : 'NO', { shouldValidate: true, shouldDirty: true });
+                setValue('cuadroCaja', totalD === 0 && diffEf === 0 && diffTr === 0 ? 'SI CUADRO CAJA' : 'NO CUADRO CAJA', { shouldValidate: true, shouldDirty: true });
                 setValue('valorFaltante', totalD < 0 ? Math.abs(totalD) : 0, { shouldValidate: true, shouldDirty: true });
                 setValue('valorExcedente', totalD > 0 ? totalD : 0, { shouldValidate: true, shouldDirty: true });
                 Toast.show({ type: 'success', text1: 'Sugerido', text2: 'Se han calculado los valores desde el Arqueo' });
