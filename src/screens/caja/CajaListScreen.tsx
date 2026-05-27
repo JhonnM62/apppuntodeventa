@@ -119,6 +119,25 @@ export default function CajaListScreen({ navigation }: any) {
           <Text className="text-gray-600 text-sm mt-1">
             Responsable: {item.nombre || 'N/A'}
           </Text>
+          <View className="flex-row flex-wrap mt-2">
+            {item.cuadroCaja && item.cuadroCaja !== '' && (
+              <View className={`px-2 py-0.5 rounded text-[10px] font-bold mr-2 ${item.cuadroCaja.toUpperCase() === 'SI' ? 'bg-green-100' : 'bg-red-100'}`}>
+                <Text className={item.cuadroCaja.toUpperCase() === 'SI' ? 'text-green-700 text-[10px] font-bold' : 'text-red-700 text-[10px] font-bold'}>
+                  CUADRE: {item.cuadroCaja.toUpperCase()}
+                </Text>
+              </View>
+            )}
+            {item.valorFaltante != null && Number(item.valorFaltante) > 0 && (
+              <View className="bg-red-100 px-2 py-0.5 rounded mr-2">
+                <Text className="text-red-700 text-[10px] font-bold">FALTANTE: ${Number(item.valorFaltante).toLocaleString('es-CO')}</Text>
+              </View>
+            )}
+            {item.valorExcedente != null && Number(item.valorExcedente) > 0 && (
+              <View className="bg-green-100 px-2 py-0.5 rounded">
+                <Text className="text-green-700 text-[10px] font-bold">EXCEDENTE: ${Number(item.valorExcedente).toLocaleString('es-CO')}</Text>
+              </View>
+            )}
+          </View>
         </View>
         <View className="items-end">
           <Ionicons name="chevron-forward" size={20} color="#9ca3af" />

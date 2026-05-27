@@ -48,6 +48,10 @@ const schema = yup.object().shape({
   fechaDeCierre: yup.string().optional(),
   horaDeCierre: yup.string().optional(),
   efectivoDeCierre: yup.number().transform((value) => (isNaN(value) ? 0 : value)).typeError('Número inválido').min(0, 'No negativo'),
+  plataGuardada: yup.number().transform((value) => (isNaN(value) ? undefined : value)).optional(),
+  cuadroCaja: yup.string().optional(),
+  valorFaltante: yup.number().transform((value) => (isNaN(value) ? undefined : value)).optional(),
+  valorExcedente: yup.number().transform((value) => (isNaN(value) ? undefined : value)).optional(),
   observaciones: yup.string().optional(),
   insumos: yup.array().of(
     yup.object().shape({
@@ -68,6 +72,9 @@ const schema = yup.object().shape({
 
 const formatDateToLocalYYYYMMDD = (isoString: string) => {
   if (!isoString) return '';
+  if (isoString.includes('T')) {
+    return isoString.split('T')[0];
+  }
   const d = new Date(isoString);
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 };
@@ -339,6 +346,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
           fechaDeCierre: caja.fechaDeCierre ? formatDateToLocalYYYYMMDD(caja.fechaDeCierre) : '',
           horaDeCierre: formatTime12h(caja.horaDeCierre || ''),
           efectivoDeCierre: caja.efectivoDeCierre != null ? String(caja.efectivoDeCierre) : ('' as any),
+          plataGuardada: caja.plataGuardada != null ? String(caja.plataGuardada) : ('' as any),
+          cuadroCaja: caja.cuadroCaja || '',
+          valorFaltante: caja.valorFaltante != null ? String(caja.valorFaltante) : ('' as any),
+          valorExcedente: caja.valorExcedente != null ? String(caja.valorExcedente) : ('' as any),
           observaciones: caja.observaciones || ''
         });
         
@@ -366,10 +377,6 @@ export default function CajaFormScreen({ route, navigation }: any) {
     setSaving(true);
     try {
       const cleanData = { ...data };
-      if (!isNew) {
-        delete cleanData.fechaDeApertura;
-        delete cleanData.horaDeApertura;
-      }
       if (!cleanData.fechaDeCierre) delete cleanData.fechaDeCierre;
       if (!cleanData.horaDeCierre) delete cleanData.horaDeCierre;
       if (cleanData.efectivoDeCierre === '' || isNaN(cleanData.efectivoDeCierre)) delete cleanData.efectivoDeCierre;
@@ -896,7 +903,16 @@ export default function CajaFormScreen({ route, navigation }: any) {
             <>
               {/* CAMPOS PRINCIPALES */}
               <View className="bg-white p-4 rounded-xl shadow-sm mb-4 border border-gray-200">
-                <Text className="text-lg font-bold text-gray-800 mb-4 border-b border-gray-100 pb-2">Información General</Text>
+                <View className="flex-row items-center justify-between mb-4 border-b border-gray-100 pb-2">
+                  <Text className="text-lg font-bold text-gray-800">Información General</Text>
+                  {!isNew && resumenData?.caja && (
+                    <View className={`px-2 py-1 rounded-md ${resumenData.caja.cierre?.toLowerCase() === 'cerrada' || resumenData.caja.apertura?.toLowerCase() === 'cerrada' ? 'bg-red-100' : 'bg-green-100'}`}>
+                      <Text className={`text-xs font-bold ${resumenData.caja.cierre?.toLowerCase() === 'cerrada' || resumenData.caja.apertura?.toLowerCase() === 'cerrada' ? 'text-red-700' : 'text-green-700'}`}>
+                        {resumenData.caja.cierre?.toLowerCase() === 'cerrada' || resumenData.caja.apertura?.toLowerCase() === 'cerrada' ? 'CERRADA' : 'ABIERTA'}
+                      </Text>
+                    </View>
+                  )}
+                </View>
             
             <View className="mb-3">
               <Text className="text-gray-600 text-xs font-semibold mb-1 uppercase">Responsable *</Text>
@@ -1053,6 +1069,78 @@ export default function CajaFormScreen({ route, navigation }: any) {
             )} />
           </View>
         </View>
+
+        {isAdmin && !isNew && (
+          <View className="bg-red-50 p-4 rounded-xl shadow-sm mb-4 border border-red-200">
+            <Text className="text-sm font-bold text-red-800 mb-3 border-b border-red-200 pb-2">Administración de Cuadre (Admin)</Text>
+            
+            <View className="flex-row justify-between mb-3">
+              <View className="flex-1 mr-2">
+                <Text className="text-gray-600 text-xs font-semibold mb-1 uppercase">Plata Guardada</Text>
+                <Controller control={control} name="plataGuardada" render={({ field: { onChange, value } }) => (
+                  <Input keyboardType="numeric" value={formatCurrency(value)} onChangeText={(val) => onChange(parseCurrency(val))} className="bg-white border-red-300 text-gray-900" />
+                )} />
+              </View>
+              <View className="flex-1 ml-2">
+                <Text className="text-gray-600 text-xs font-semibold mb-1 uppercase">¿Cuadró Caja?</Text>
+                <Controller control={control} name="cuadroCaja" render={({ field: { onChange, value } }) => (
+                  <View className="flex-row rounded-lg overflow-hidden border border-gray-300 h-[50px]">
+                    <TouchableOpacity 
+                      onPress={() => onChange('SI')} 
+                      className={`flex-1 justify-center items-center ${value === 'SI' ? 'bg-green-500' : 'bg-gray-100'}`}
+                    >
+                      <Text className={`font-bold ${value === 'SI' ? 'text-white' : 'text-gray-500'}`}>SI</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      onPress={() => onChange('NO')} 
+                      className={`flex-1 justify-center items-center ${value === 'NO' ? 'bg-red-500' : 'bg-gray-100 border-l border-gray-300'}`}
+                    >
+                      <Text className={`font-bold ${value === 'NO' ? 'text-white' : 'text-gray-500'}`}>NO</Text>
+                    </TouchableOpacity>
+                  </View>
+                )} />
+              </View>
+            </View>
+
+            <View className="flex-row justify-between">
+              <View className="flex-1 mr-2">
+                <Text className="text-gray-600 text-xs font-semibold mb-1 uppercase">Valor Faltante</Text>
+                <Controller control={control} name="valorFaltante" render={({ field: { onChange, value } }) => (
+                  <Input keyboardType="numeric" value={formatCurrency(value)} onChangeText={(val) => onChange(parseCurrency(val))} className="bg-white border-red-300 text-gray-900" />
+                )} />
+              </View>
+              <View className="flex-1 ml-2">
+                <Text className="text-gray-600 text-xs font-semibold mb-1 uppercase">Valor Excedente</Text>
+                <Controller control={control} name="valorExcedente" render={({ field: { onChange, value } }) => (
+                  <Input keyboardType="numeric" value={formatCurrency(value)} onChangeText={(val) => onChange(parseCurrency(val))} className="bg-white border-red-300 text-gray-900" />
+                )} />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              className="bg-blue-600 py-3 rounded-xl items-center mt-2 shadow-sm shadow-blue-200 flex-row justify-center"
+              onPress={() => {
+                const efContado = parseFloat(watch('efectivoDeCierre') as string) || 0;
+                const trContadas = parseFloat(transferenciasContadas) || 0;
+                const efAper = Number(resumenData?.resumen?.efectivoApertura || 0);
+                const efTot = Number(resumenData?.resumen?.totalEfectivo || 0);
+                const trTot = Number(resumenData?.resumen?.totalTransferencia || 0) + Number(resumenData?.resumen?.totalNequi || 0);
+
+                const diffEf = efContado - (efAper + efTot);
+                const diffTr = trContadas - trTot;
+                const totalD = diffEf + diffTr;
+
+                setValue('cuadroCaja', totalD === 0 && diffEf === 0 && diffTr === 0 ? 'SI' : 'NO', { shouldValidate: true, shouldDirty: true });
+                setValue('valorFaltante', totalD < 0 ? Math.abs(totalD) : 0, { shouldValidate: true, shouldDirty: true });
+                setValue('valorExcedente', totalD > 0 ? totalD : 0, { shouldValidate: true, shouldDirty: true });
+                Toast.show({ type: 'success', text1: 'Sugerido', text2: 'Se han calculado los valores desde el Arqueo' });
+              }}
+            >
+              <Ionicons name="calculator-outline" size={18} color="#fff" />
+              <Text className="text-white font-bold ml-2">Sugerir Valores desde Arqueo</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* INSUMOS (APP SHEET STYLE) */}
         <View className="bg-white rounded-xl shadow-sm mb-10 border border-gray-200">
@@ -1413,7 +1501,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                     )}
                   </View>
                   
-                  {!isReadOnly && !isNew && (
+                  {!isReadOnly && !isNew && !(resumenData?.caja?.cierre?.toLowerCase() === 'cerrada' || resumenData?.caja?.apertura?.toLowerCase() === 'cerrada') && (
                     <TouchableOpacity 
                       className="bg-red-600 py-4 rounded-xl mt-4 items-center shadow-sm shadow-red-200"
                       onPress={() => {
@@ -1655,17 +1743,6 @@ export default function CajaFormScreen({ route, navigation }: any) {
             </View>
           )}
 
-          <View className={`p-5 rounded-xl border shadow-sm flex-row justify-between items-center ${resumenData.resumen.valorFaltante > 0 ? 'bg-red-50 border-red-300' : resumenData.resumen.valorExcedente > 0 ? 'bg-emerald-50 border-emerald-300' : 'bg-gray-50 border-gray-300'}`}>
-            <View className="flex-row items-center">
-              <Ionicons name={resumenData.resumen.valorFaltante > 0 ? 'warning' : resumenData.resumen.valorExcedente > 0 ? 'trending-up' : 'checkmark-circle'} size={24} color={resumenData.resumen.valorFaltante > 0 ? '#b91c1c' : resumenData.resumen.valorExcedente > 0 ? '#047857' : '#4b5563'} style={{ marginRight: 8 }} />
-              <Text className={`font-black uppercase tracking-wider text-xs ${resumenData.resumen.valorFaltante > 0 ? 'text-red-900' : resumenData.resumen.valorExcedente > 0 ? 'text-emerald-900' : 'text-gray-700'}`}>
-                {resumenData.resumen.valorFaltante > 0 ? 'Faltante Caja' : resumenData.resumen.valorExcedente > 0 ? 'Sobrante Caja' : 'Caja Cuadrada'}
-              </Text>
-            </View>
-            <Text className={`text-2xl font-black tracking-tight ${resumenData.resumen.valorFaltante > 0 ? 'text-red-700' : resumenData.resumen.valorExcedente > 0 ? 'text-emerald-700' : 'text-gray-700'}`}>
-              {resumenData.resumen.valorFaltante > 0 ? '-' + formatCurrency(resumenData.resumen.valorFaltante) : resumenData.resumen.valorExcedente > 0 ? '+' + formatCurrency(resumenData.resumen.valorExcedente) : '$0'}
-            </Text>
-          </View>
           
           <TouchableOpacity onPress={handlePrintPDF} className="bg-[#16a34a] p-4 rounded-xl mt-6 flex-row justify-center items-center shadow-md active:bg-[#15803d]">
             <Ionicons name="share-social" size={22} color="#fff" />
@@ -1825,8 +1902,9 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 <Text className="text-white font-bold">Solo Actualizar Datos</Text>
               </TouchableOpacity>
               
+              {!(resumenData?.caja?.cierre?.toLowerCase() === 'cerrada' || resumenData?.caja?.apertura?.toLowerCase() === 'cerrada') && (
               <TouchableOpacity 
-                className="bg-red-600 py-3.5 rounded-xl items-center shadow-sm"
+                className="bg-red-600 py-3.5 rounded-xl items-center mt-2 shadow-sm"
                 onPress={() => {
                   setGuardarModalVisible(false);
                   (handleSubmit as any)((data: any) => onSave(data, true), onError)();
@@ -1834,6 +1912,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
               >
                 <Text className="text-white font-bold">Cierre Definitivo de Caja</Text>
               </TouchableOpacity>
+              )}
 
               {resumenData?.caja?.cierre === 'cerrada' && isAdmin && (
                 <TouchableOpacity 
