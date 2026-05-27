@@ -12,9 +12,15 @@ import useSocketEvent from '../../hooks/useSocketEvent';
 import { useSocket } from '../../context/SocketContext';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { usePermissions } from '../../hooks/usePermissions';
+import useAuthStore from '../../store/useAuthStore';
+import { useCustomAlert } from '../../context/CustomAlertContext';
+import Toast from 'react-native-toast-message';
+import { reabrirCaja } from '../../services/caja';
 
 export default function CajaListScreen({ navigation }: any) {
   const { canCreate } = usePermissions('caja');
+  const { user } = useAuthStore();
+  const { showAlert } = useCustomAlert();
 
   const [cajas, setCajas] = useState<any[]>([]);
   const [cajaActiva, setCajaActiva] = useState<any>(null);
@@ -74,6 +80,27 @@ export default function CajaListScreen({ navigation }: any) {
     return (
       <TouchableOpacity 
         onPress={() => handlePressCaja(item)}
+        onLongPress={() => {
+          if (!isActiva && user?.rol === 'Admin app') {
+            showAlert({
+              type: 'confirm',
+              title: 'Reabrir Caja',
+              message: '¿Estás seguro de reabrir esta caja cerrada? Volverá al estado "En curso".',
+              confirmText: 'Sí, Reabrir',
+              onConfirm: async () => {
+                try {
+                  await reabrirCaja(item.IDcaja);
+                  Toast.show({ type: 'success', text1: 'Éxito', text2: 'Caja reabierta' });
+                  fetchCajas();
+                } catch (err: any) {
+                  Toast.show({ type: 'error', text1: 'Error', text2: err?.response?.data?.message || 'No se pudo reabrir' });
+                }
+              },
+              onCancel: () => {},
+            });
+          }
+        }}
+        delayLongPress={600}
         className={`p-4 rounded-xl border ${bgColor} mb-3 shadow-sm flex-row items-center justify-between`}
       >
         <View className="flex-1">
