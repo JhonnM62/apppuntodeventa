@@ -443,7 +443,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           Toast.show({ type: 'success', text1: 'Arqueo Guardado', text2: 'El arqueo parcial se ha guardado' });
         }
         
-        navigation.goBack();
+        await fetchInitialData();
       }
     } catch (error: any) {
       console.error(error);
