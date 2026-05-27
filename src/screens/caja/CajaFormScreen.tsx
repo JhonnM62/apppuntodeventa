@@ -15,7 +15,7 @@ import { Input } from '../../components/ui/input';
 import useAuthStore from '../../store/useAuthStore';
 import { insumosService, InsumoItem } from '../../services/insumos';
 import { getProducts } from '../../services/products';
-import { abrirCaja, getResumenCaja, deleteCaja, getCajas, cerrarCaja, updateCaja, reabrirCaja } from '../../services/caja';
+import { abrirCaja, getResumenCaja, deleteCaja, getCajas, cerrarCaja, updateCaja, reabrirCaja, getVerificacionPendiente } from '../../services/caja';
 import api from '../../services/api';
 import { formatCurrency, parseCurrency, formatTime12h, formatDateToDDMMAAAA } from '../../utils/formatters';
 import { generateAndShareCajaPDF } from '../../utils/cajaPdf';
@@ -68,7 +68,8 @@ const schema = yup.object().shape({
 
 const formatDateToLocalYYYYMMDD = (isoString: string) => {
   if (!isoString) return '';
-  return isoString.substring(0, 10);
+  const d = new Date(isoString);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 };
 
 export default function CajaFormScreen({ route, navigation }: any) {
@@ -376,6 +377,18 @@ export default function CajaFormScreen({ route, navigation }: any) {
         navigation.goBack();
       } else {
         if (isFinalClose) {
+          // CHECK PENDING VERIFICATIONS FIRST
+          try {
+            const verificacion = await getVerificacionPendiente(cajaId);
+            if (!verificacion.todasVerificadas) {
+              setVerifyModalVisible(true);
+              setSaving(false);
+              return; // Stop execution before saving partial data
+            }
+          } catch (e) {
+            console.warn("No se pudo verificar el estado de insumos, se continuará con el guardado...", e);
+          }
+
           // ERROR HANDLING PATTERN: "Double-Step Save" (Systematic Debugging)
           // Dado que el endpoint de cerrarCaja tiene un ValidationPipe extremadamente estricto en producción que rechaza la trazabilidad compleja,
           // PRIMERO: Guardamos toda la trazabilidad y datos extras usando el endpoint genérico (updateCaja) que es flexible.
@@ -414,7 +427,9 @@ export default function CajaFormScreen({ route, navigation }: any) {
       }
     } catch (error: any) {
       console.error(error);
-      const errorMsg = error?.message || error?.response?.data?.message || 'No se pudo guardar';
+      let errorMsg = error?.response?.data?.message || error?.message || 'No se pudo guardar';
+      if (Array.isArray(errorMsg)) errorMsg = errorMsg.join(', ');
+
       if (errorMsg.includes('insumos sin verificar') || errorMsg.includes('Debes hacer la verificación') || errorMsg.includes('Debes verificar')) {
         Toast.show({ type: 'error', text1: 'Verificación Pendiente', text2: 'Debes verificar los insumos antes de cerrar.' });
         setVerifyModalVisible(true);
@@ -1799,6 +1814,27 @@ export default function CajaFormScreen({ route, navigation }: any) {
               >
                 <Text className="text-white font-bold">Cierre Definitivo de Caja</Text>
               </TouchableOpacity>
+
+              {resumenData?.caja?.cierre === 'cerrada' && isAdmin && (
+                <TouchableOpacity 
+                  className="bg-green-600 py-3.5 rounded-xl items-center mt-2 shadow-sm"
+                  onPress={async () => {
+                    setGuardarModalVisible(false);
+                    setSaving(true);
+                    try {
+                      await reabrirCaja(cajaId);
+                      Toast.show({ type: 'success', text1: 'Caja Reabierta', text2: 'La caja está nuevamente en curso' });
+                      navigation.goBack();
+                    } catch (err: any) {
+                      Toast.show({ type: 'error', text1: 'Error', text2: err?.response?.data?.message || err?.message || 'No se pudo reabrir la caja' });
+                    } finally {
+                      setSaving(false);
+                    }
+                  }}
+                >
+                  <Text className="text-white font-bold">Reabrir Caja (Admin)</Text>
+                </TouchableOpacity>
+              )}
 
               <TouchableOpacity 
                 className="bg-gray-200 py-3.5 rounded-xl items-center mt-2"

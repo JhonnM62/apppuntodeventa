@@ -121,10 +121,10 @@ export const posponerVerificacion = async (cajaId: string) => {
 
 export const eliminarConteo = async (cajaId: string, insumoId: string, conteoIndex: number) => {
   const response = await api.delete(`/caja/${cajaId}/insumo/${insumoId}/conteo/${conteoIndex}`);
-  return extractData(response);
+  return response.data;
 };
 
 export const editarConteo = async (cajaId: string, insumoId: string, conteoIndex: number, cantContada: number) => {
   const response = await api.patch(`/caja/${cajaId}/insumo/${insumoId}/conteo/${conteoIndex}`, { cantContada });
-  return extractData(response);
+  return response.data;
 };
