@@ -424,8 +424,12 @@ export default function CajaFormScreen({ route, navigation }: any) {
           
           if (cleanData.insumos) {
             closeData.insumos = cleanData.insumos.map((i: any) => ({
+              Idcierreyapertura: i.Idcierreyapertura,
               nombreInsumo: i.nombreInsumo,
-              cantDeCierre: i.cantDeCierre
+              cantApertura: i.cantApertura,
+              cantDeCierre: i.cantDeCierre,
+              observacion: i.observacion,
+              paraQueProducto: i.paraQueProducto
             }));
           }
 
