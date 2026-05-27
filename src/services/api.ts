@@ -54,10 +54,12 @@ api.interceptors.response.use(
 
     const is401 = error.response?.status === 401;
     const isRefreshEndpoint = originalRequest?.url?.includes('/auth/refresh');
+    const isLoginEndpoint = originalRequest?.url?.includes('/auth/login');
+    const isRegisterEndpoint = originalRequest?.url?.includes('/auth/register');
     const alreadyRetried = originalRequest?._retry;
 
-    // If it's a 401 on a non-refresh endpoint and we haven't retried yet
-    if (is401 && !isRefreshEndpoint && !alreadyRetried) {
+    // If it's a 401 on a non-refresh/login endpoint and we haven't retried yet
+    if (is401 && !isRefreshEndpoint && !isLoginEndpoint && !isRegisterEndpoint && !alreadyRetried) {
       originalRequest._retry = true;
 
       if (isRefreshing) {
