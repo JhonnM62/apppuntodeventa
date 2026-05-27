@@ -142,6 +142,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [isEditingObservaciones, setIsEditingObservaciones] = useState(false);
   const [transferenciasContadas, setTransferenciasContadas] = useState<string>('');
   const [verifyModalVisible, setVerifyModalVisible] = useState(false);
+  const [guardarModalVisible, setGuardarModalVisible] = useState(false);
   const [verificacionCompletada, setVerificacionCompletada] = useState(false);
 
   const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
@@ -404,9 +405,15 @@ export default function CajaFormScreen({ route, navigation }: any) {
         
         navigation.goBack();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo guardar' });
+      const errorMsg = error?.response?.data?.message || 'No se pudo guardar';
+      if (errorMsg.includes('insumos sin verificar') || errorMsg.includes('Debes hacer la verificación') || errorMsg.includes('Debes verificar')) {
+        Toast.show({ type: 'error', text1: 'Verificación Pendiente', text2: 'Debes verificar los insumos antes de cerrar.' });
+        setVerifyModalVisible(true);
+      } else {
+        Toast.show({ type: 'error', text1: 'Error', text2: errorMsg });
+      }
     } finally {
       setSaving(false);
     }
@@ -699,15 +706,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 if (isNew) {
                   (handleSubmit as any)((data: any) => onSave(data, false), onError)();
                 } else {
-                  Alert.alert(
-                    'Opciones de Guardado',
-                    '¿Qué deseas hacer con los cambios en esta caja?',
-                    [
-                      { text: 'Cancelar', style: 'cancel' },
-                      { text: 'Solo Actualizar', onPress: () => (handleSubmit as any)((data: any) => onSave(data, false), onError)() },
-                      { text: 'Cerrar Caja Definitivo', onPress: () => (handleSubmit as any)((data: any) => onSave(data, true), onError)(), style: 'destructive' }
-                    ]
-                  );
+                  setGuardarModalVisible(true);
                 }
               }} disabled={saving} className="bg-white/20 px-3 py-2 rounded-lg flex-row items-center">
                 {saving ? <ActivityIndicator size="small" color="#fff" /> : <Text className="text-white font-bold text-sm">Guardar</Text>}
@@ -1752,6 +1751,44 @@ export default function CajaFormScreen({ route, navigation }: any) {
               </View>
             </View>
           </KeyboardAvoidingView>
+        </View>
+      </Modal>
+
+      <Modal visible={guardarModalVisible} transparent animationType="fade">
+        <View className="flex-1 justify-center items-center bg-black/60 px-4">
+          <View className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <Text className="text-lg font-bold text-gray-900 mb-2 text-center">Opciones de Guardado</Text>
+            <Text className="text-sm text-gray-500 mb-6 text-center">¿Qué deseas hacer con los cambios en esta caja?</Text>
+            
+            <View className="space-y-3 gap-y-3">
+              <TouchableOpacity 
+                className="bg-blue-600 py-3.5 rounded-xl items-center shadow-sm"
+                onPress={() => {
+                  setGuardarModalVisible(false);
+                  (handleSubmit as any)((data: any) => onSave(data, false), onError)();
+                }}
+              >
+                <Text className="text-white font-bold">Solo Actualizar Datos</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                className="bg-red-600 py-3.5 rounded-xl items-center shadow-sm"
+                onPress={() => {
+                  setGuardarModalVisible(false);
+                  (handleSubmit as any)((data: any) => onSave(data, true), onError)();
+                }}
+              >
+                <Text className="text-white font-bold">Cierre Definitivo de Caja</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                className="bg-gray-200 py-3.5 rounded-xl items-center mt-2"
+                onPress={() => setGuardarModalVisible(false)}
+              >
+                <Text className="text-gray-700 font-bold">Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </Modal>
 
