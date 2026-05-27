@@ -21,7 +21,16 @@ const ComentariosScreen = ({ navigation }: any) => {
   const [nombre, setNombre] = useState('');
   const [tipo, setTipo] = useState('');
   const [precio, setPrecio] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const insets = useSafeAreaInsets();
+
+  const uniqueTipos = Array.from(new Set(comentarios.map(c => c.tipo).filter(Boolean))) as string[];
+  const filteredComentarios = comentarios
+    .filter(c => 
+      c.comentarios?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      c.tipo?.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => (a.tipo || '').localeCompare(b.tipo || ''));
 
   const fetchComentarios = async () => {
     try {
@@ -143,6 +152,17 @@ const handleDelete = (id: string) => {
           <Text style={styles.headerTitle}>Adicionales y Descuentos</Text>
         </View>
 
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#9ca3af" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar por nombre o tipo..."
+            placeholderTextColor="#9ca3af"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
         {(editingId ? canEdit : canCreate) && (
           <View style={styles.formContainer}>
             <Text style={styles.formTitle}>{editingId ? 'Editar Adicional' : 'Nuevo Adicional'}</Text>
@@ -154,6 +174,7 @@ const handleDelete = (id: string) => {
                 value={nombre}
                 onChangeText={setNombre}
                 placeholder="Nombre del adicional"
+                placeholderTextColor="#9ca3af"
               />
             </View>
 
@@ -165,7 +186,17 @@ const handleDelete = (id: string) => {
                   value={tipo}
                   onChangeText={setTipo}
                   placeholder="ej: Adicional"
+                  placeholderTextColor="#9ca3af"
                 />
+                {uniqueTipos.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
+                    {uniqueTipos.map(t => (
+                      <TouchableOpacity key={t} style={styles.tipoChip} onPress={() => setTipo(t)}>
+                        <Text style={styles.tipoChipText}>{t}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                )}
               </View>
               <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
                 <Text style={styles.label}>Precio (+ o -)</Text>
@@ -174,6 +205,7 @@ const handleDelete = (id: string) => {
                   value={precio}
                   onChangeText={setPrecio}
                   placeholder="0"
+                  placeholderTextColor="#9ca3af"
                   keyboardType="numeric"
                 />
               </View>
@@ -196,7 +228,7 @@ const handleDelete = (id: string) => {
           <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 20 }} />
         ) : (
           <FlatList
-            data={comentarios}
+            data={filteredComentarios}
             keyExtractor={(item) => item.ID}
             renderItem={renderItem}
             contentContainerStyle={styles.listContent}
@@ -218,9 +250,15 @@ const styles = StyleSheet.create({
   inputGroup: { marginBottom: 12 },
   label: { fontSize: 12, fontWeight: '600', color: '#6b7280', marginBottom: 4 },
   input: { backgroundColor: '#f3f4f6', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, color: '#111827', borderWidth: 1, borderColor: '#e5e7eb' },
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
+  searchIcon: { marginRight: 8 },
+  searchInput: { flex: 1, backgroundColor: '#f3f4f6', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: '#111827' },
+  chipsScroll: { marginTop: 8, flexDirection: 'row' },
+  tipoChip: { backgroundColor: '#e0e7ff', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12, marginRight: 6 },
+  tipoChipText: { fontSize: 12, color: '#4338ca', fontWeight: '600' },
   row: { flexDirection: 'row' },
   formActions: { flexDirection: 'row', marginTop: 8 },
-  listContent: { padding: 16 },
+  listContent: { padding: 16, paddingBottom: 100 },
   card: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
   cardContent: { flex: 1 },
   cardTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
