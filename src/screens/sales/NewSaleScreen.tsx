@@ -25,6 +25,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
+import QuantityNumpad from '../../components/ui/QuantityNumpad';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Sales'>;
@@ -91,6 +92,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const addToCart = useCartStore((state) => state.addToCart);
   const decrementQuantity = useCartStore((state) => state.decrementQuantity);
   const removeFromCart = useCartStore((state) => state.removeFromCart);
+  const setQuantity = useCartStore((state) => state.setQuantity);
   const clearCart = useCartStore((state) => state.clearCart);
   const getTotalItems = useCartStore((state) => state.getTotalItems);
   const getTotalPrice = useCartStore((state) => state.getTotalPrice);
@@ -98,6 +100,23 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   const isEditing = editingSaleId !== null;
   const saleIdFromRoute = route?.params?.saleId;
+
+  // ── Quantity Numpad state ────────────────────────────────────────────────
+  const [numpadVisible, setNumpadVisible] = useState(false);
+  const [numpadItem, setNumpadItem] = useState<CartItem | null>(null);
+
+  const openNumpad = (item: CartItem) => {
+    setNumpadItem(item);
+    setNumpadVisible(true);
+  };
+
+  const handleNumpadConfirm = (quantity: number) => {
+    if (!numpadItem) return;
+    setQuantity(numpadItem.IDproductos, quantity);
+    setNumpadVisible(false);
+    setNumpadItem(null);
+  };
+  // ────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -293,7 +312,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         setIsRecording(true);
 
       } else {
-        showAlert('Permiso Denegado', 'Debes otorgar permisos de micrófono para usar esta función.');
+        showAlert({ type: 'warning', title: 'Permiso Denegado', message: 'Debes otorgar permisos de micrófono para usar esta función.' });
       }
     } catch (err) {
       console.error('Error iniciando grabación', err);
@@ -1154,7 +1173,15 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           }}>
             <Ionicons name={item.quantity === 1 ? "trash" : "remove"} size={18} color={item.quantity === 1 ? "#ef4444" : "#4b5563"} />
           </TouchableOpacity>
-          <Text style={styles.qtyTextCompact}>{item.quantity}</Text>
+          <TouchableOpacity
+            onPress={() => addToCart(item)}
+            onLongPress={() => openNumpad(item)}
+            delayLongPress={350}
+            activeOpacity={0.7}
+            style={styles.qtyTextTouchable}
+          >
+            <Text style={styles.qtyTextCompact}>{item.quantity}</Text>
+          </TouchableOpacity>
           <TouchableOpacity style={styles.qtyBtnCompact} onPress={() => addToCart(item)}>
             <Ionicons name="add" size={18} color="#4b5563" />
           </TouchableOpacity>
@@ -1427,6 +1454,18 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
       {renderClienteModal()}
       {renderModifiersModal()}
+
+      {/* Quantity Numpad — bottom sheet overlay */}
+      {numpadItem && (
+        <QuantityNumpad
+          visible={numpadVisible}
+          productName={numpadItem.nombre}
+          unitPrice={Number(numpadItem.precioUnitario || numpadItem.Precio_Unitario || 0)}
+          currentQuantity={numpadItem.quantity}
+          onConfirm={handleNumpadConfirm}
+          onCancel={() => { setNumpadVisible(false); setNumpadItem(null); }}
+        />
+      )}
     </SafeAreaView>
     </>
   );
@@ -1514,6 +1553,7 @@ const styles = StyleSheet.create({
   qtyColumnCompact: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3f4f6', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 6, marginRight: 12, height: 38 },
   qtyBtnCompact: { padding: 4, width: 28, alignItems: 'center', justifyContent: 'center' },
   qtyTextCompact: { fontSize: 15, fontWeight: '800', color: '#111827', minWidth: 24, textAlign: 'center' },
+  qtyTextTouchable: { minWidth: 28, height: 28, justifyContent: 'center', alignItems: 'center', borderRadius: 6, backgroundColor: 'rgba(76,175,80,0.1)' },
   infoColumnCompact: { flex: 1, justifyContent: 'center' },
   infoRowTop: { flexDirection: 'column' },
   cartItemNameCompact: { fontSize: 13, fontWeight: '700', color: '#1f2937', marginBottom: 2 },

@@ -27,6 +27,7 @@ interface CartStore {
   addToCart: (product: any) => void;
   removeFromCart: (productId: string) => void;
   decrementQuantity: (productId: string) => void;
+  setQuantity: (productId: string, quantity: number) => void;
   clearCart: () => void;
   addModifier: (productId: string, modifier: CartItemModifier) => void;
   removeModifier: (productId: string, modifierName: string) => void;
@@ -112,6 +113,17 @@ const useCartStore = create<CartStore>((set, get) => ({
   removeFromCart: (productId: string) => {
     set((state) => ({
       cart: state.cart.filter((item) => item.IDproductos !== productId),
+    }));
+  },
+  setQuantity: (productId: string, quantity: number) => {
+    if (quantity <= 0) {
+      set((state) => ({ cart: state.cart.filter((item) => item.IDproductos !== productId) }));
+      return;
+    }
+    set((state) => ({
+      cart: state.cart.map((item) =>
+        item.IDproductos === productId ? { ...item, quantity } : item
+      ),
     }));
   },
   addModifier: (productId: string, modifier: CartItemModifier) => {
