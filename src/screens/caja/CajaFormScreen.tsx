@@ -117,6 +117,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   
   const [isFreezeModalVisible, setIsFreezeModalVisible] = useState(false);
   const [pendingTab, setPendingTab] = useState<'form' | 'analysis' | 'cuadre' | null>(null);
+  const pendingSaveRef = useRef<{ data: any, isFinalClose: boolean } | null>(null);
 
   const handleTabChange = (tab: 'form' | 'analysis' | 'cuadre') => {
     if ((tab === 'cuadre' || tab === 'analysis') && !isNew && !verificacionCompletada) {
@@ -130,17 +131,27 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const handleVerificationPassed = () => {
     setVerifyModalVisible(false);
     setVerificacionCompletada(true);
-    if (!horaCongelada) {
-      setIsFreezeModalVisible(true);
+    if (pendingTab) {
+      if (!horaCongelada) {
+        setIsFreezeModalVisible(true);
+      } else {
+        setActiveTab(pendingTab);
+        setPendingTab(null);
+      }
+    } else if (pendingSaveRef.current) {
+      const { data, isFinalClose } = pendingSaveRef.current;
+      pendingSaveRef.current = null;
+      onSave(data, isFinalClose);
     } else {
-      setActiveTab(pendingTab);
+      Toast.show({ type: 'success', text1: 'Verificación Completa', text2: 'Ahora puedes continuar con el cierre de caja.' });
     }
   };
 
   const handleVerificationCancelled = () => {
     setVerifyModalVisible(false);
+    setPendingTab(null);
+    pendingSaveRef.current = null;
   };
-
   const [isEditingObservaciones, setIsEditingObservaciones] = useState(false);
   const [transferenciasContadas, setTransferenciasContadas] = useState<string>('');
   const [verifyModalVisible, setVerifyModalVisible] = useState(false);
@@ -381,6 +392,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           try {
             const verificacion = await getVerificacionPendiente(cajaId);
             if (!verificacion.todasVerificadas) {
+              pendingSaveRef.current = { data, isFinalClose };
               setVerifyModalVisible(true);
               setSaving(false);
               return; // Stop execution before saving partial data
