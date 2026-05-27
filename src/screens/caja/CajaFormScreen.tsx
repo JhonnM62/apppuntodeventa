@@ -15,7 +15,7 @@ import { Input } from '../../components/ui/input';
 import useAuthStore from '../../store/useAuthStore';
 import { insumosService, InsumoItem } from '../../services/insumos';
 import { getProducts } from '../../services/products';
-import { abrirCaja, getResumenCaja, deleteCaja, getCajas, cerrarCaja, updateCaja } from '../../services/caja';
+import { abrirCaja, getResumenCaja, deleteCaja, getCajas, cerrarCaja, updateCaja, reabrirCaja } from '../../services/caja';
 import api from '../../services/api';
 import { formatCurrency, parseCurrency, formatTime12h, formatDateToDDMMAAAA } from '../../utils/formatters';
 import { generateAndShareCajaPDF } from '../../utils/cajaPdf';
@@ -25,6 +25,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import VerifyInsumosModal from '../../components/caja/VerifyInsumosModal';
+import { cn } from '../../lib/utils';
 
 const { width } = Dimensions.get('window');
 
@@ -1365,6 +1366,32 @@ export default function CajaFormScreen({ route, navigation }: any) {
                       }}
                     >
                       <Text className="text-white font-black text-sm uppercase tracking-widest">🔒 CIERRE DEFINITIVO DE CAJA</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  {isReadOnly && !isNew && user?.rol === 'Admin app' && (
+                    <TouchableOpacity 
+                      className="bg-yellow-500 py-4 rounded-xl mt-4 items-center shadow-sm shadow-yellow-200"
+                      onPress={() => {
+                        showAlert({
+                          type: 'confirm',
+                          title: 'Reabrir Caja',
+                          message: '¿Estás seguro de reabrir esta caja? Volverá al estado "En curso".',
+                          confirmText: 'Sí, Reabrir Caja',
+                          onConfirm: async () => {
+                            try {
+                              await reabrirCaja(cajaId!);
+                              navigation.goBack();
+                              Toast.show({ type: 'success', text1: 'Éxito', text2: 'Caja reabierta correctamente' });
+                            } catch (err: any) {
+                              Toast.show({ type: 'error', text1: 'Error', text2: err?.response?.data?.message || 'No se pudo reabrir' });
+                            }
+                          },
+                          onCancel: () => {},
+                        });
+                      }}
+                    >
+                      <Text className="text-white font-black text-sm uppercase tracking-widest">⚠️ REABRIR CAJA (ADMIN)</Text>
                     </TouchableOpacity>
                   )}
 

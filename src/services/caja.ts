@@ -49,6 +49,11 @@ export const cerrarCaja = async (id: string, data: CierreCajaPayload) => {
   return response.data;
 };
 
+export const reabrirCaja = async (id: string) => {
+  const response = await api.patch(`/caja/reabrir/${id}`);
+  return response.data || response;
+};
+
 export const updateCaja = async (id: string, data: Partial<CierreCajaPayload> & { horaCongelada?: string }) => {
   const response = await api.patch(`/caja/${id}`, data);
   return response.data;
