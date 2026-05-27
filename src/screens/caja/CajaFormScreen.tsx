@@ -366,6 +366,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
     setSaving(true);
     try {
       const cleanData = { ...data };
+      if (!isNew) {
+        delete cleanData.fechaDeApertura;
+        delete cleanData.horaDeApertura;
+      }
       if (!cleanData.fechaDeCierre) delete cleanData.fechaDeCierre;
       if (!cleanData.horaDeCierre) delete cleanData.horaDeCierre;
       if (cleanData.efectivoDeCierre === '' || isNaN(cleanData.efectivoDeCierre)) delete cleanData.efectivoDeCierre;
