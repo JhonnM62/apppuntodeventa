@@ -77,6 +77,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const { user } = useAuthStore();
   const { canCreate, canEdit, canDelete } = usePermissions('caja');
   const { showAlert } = useCustomAlert();
+  const isAdmin = user?.rol === 'Admin app' || user?.rol === 'Admin negocio';
   
   const isReadOnly = isNew ? !canCreate : !canEdit;
   
@@ -168,6 +169,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [showTimePickerApertura, setShowTimePickerApertura] = useState(false);
   const [showDatePickerCierre, setShowDatePickerCierre] = useState(false);
   const [showTimePickerCierre, setShowTimePickerCierre] = useState(false);
+  
+  const [addQtyModalVisible, setAddQtyModalVisible] = useState(false);
+  const [addQtyIndex, setAddQtyIndex] = useState<number | null>(null);
+  const [addQtyAmount, setAddQtyAmount] = useState<string>('');
   
   const { control, handleSubmit, reset, watch, formState: { errors }, setValue, getValues } = useForm({
     resolver: yupResolver(schema),
@@ -1111,14 +1116,26 @@ export default function CajaFormScreen({ route, navigation }: any) {
                           control={control}
                           name={`insumos.${index}.cantApertura`}
                           render={({ field: { onChange, value } }) => (
-                            <View>
+                            <View className="flex-row items-center">
                               <TextInput
-                                editable={!isReadOnly}
+                                editable={!isReadOnly && isAdmin}
                                 keyboardType="numeric"
                                 value={value !== undefined ? String(value) : ''}
                                 onChangeText={onChange}
-                                className={`text-center font-bold bg-gray-50 border ${errors.insumos?.[index]?.cantApertura ? 'border-red-500' : 'border-gray-200'} rounded py-1 text-gray-900`}
+                                className={`flex-1 text-center font-bold bg-gray-50 border ${errors.insumos?.[index]?.cantApertura ? 'border-red-500' : 'border-gray-200'} rounded py-1 text-gray-900`}
                               />
+                              {!isReadOnly && isAdmin && (
+                                <TouchableOpacity 
+                                  className="ml-1 bg-green-500 rounded w-6 h-6 items-center justify-center"
+                                  onPress={() => {
+                                    setAddQtyIndex(index);
+                                    setAddQtyAmount('');
+                                    setAddQtyModalVisible(true);
+                                  }}
+                                >
+                                  <Ionicons name="add" size={16} color="white" />
+                                </TouchableOpacity>
+                              )}
                             </View>
                           )}
                         />
@@ -1801,6 +1818,52 @@ export default function CajaFormScreen({ route, navigation }: any) {
           onPostponed={handleVerificationPassed}
           onCancel={handleVerificationCancelled}
         />
+
+        {/* Add Quantity Modal */}
+        <Modal
+          visible={addQtyModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setAddQtyModalVisible(false)}
+        >
+          <View className="flex-1 bg-black/50 justify-center items-center px-4">
+            <View className="bg-white rounded-2xl p-5 w-full max-w-sm">
+              <Text className="text-lg font-bold text-gray-800 mb-2">Sumar a la Apertura</Text>
+              <Text className="text-sm text-gray-500 mb-4">Ingresa la cantidad que deseas agregar a la apertura existente.</Text>
+              
+              <TextInput
+                className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-lg text-center font-bold text-gray-900 mb-4"
+                keyboardType="numeric"
+                value={addQtyAmount}
+                onChangeText={setAddQtyAmount}
+                placeholder="Ej. 10"
+                autoFocus
+              />
+              
+              <View className="flex-row justify-end space-x-3">
+                <TouchableOpacity 
+                  className="px-4 py-2 bg-gray-200 rounded-lg"
+                  onPress={() => setAddQtyModalVisible(false)}
+                >
+                  <Text className="text-gray-700 font-bold">Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  className="px-4 py-2 bg-blue-600 rounded-lg"
+                  onPress={() => {
+                    if (addQtyIndex !== null && addQtyAmount && !isNaN(Number(addQtyAmount))) {
+                      const amountToAdd = Number(addQtyAmount);
+                      const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
+                      setValue(`insumos.${addQtyIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
+                    }
+                    setAddQtyModalVisible(false);
+                  }}
+                >
+                  <Text className="text-white font-bold">Sumar</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
     </View>
   );
 }
