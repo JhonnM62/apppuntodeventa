@@ -22,9 +22,34 @@ export const getGastoById = async (id: string) => {
   return data;
 };
 
+import { useSyncStore } from '../store/useSyncStore';
+import Toast from 'react-native-toast-message';
+
 export const createGasto = async (gasto: Partial<Gasto>) => {
-  const { data } = await api.post('/gastos', gasto);
-  return data;
+  try {
+    const { data } = await api.post('/gastos', gasto);
+    return data;
+  } catch (error: any) {
+    if (error.message === 'Network Error' || error.code === 'ECONNABORTED' || !error.response) {
+      console.log(`[Offline] Guardando gasto en cola local...`);
+      useSyncStore.getState().enqueueAction({
+        type: 'POST',
+        url: '/gastos',
+        payload: gasto,
+      });
+      Toast.show({
+        type: 'info',
+        text1: 'Gasto Guardado Localmente',
+        text2: 'Sin conexión. El gasto se sincronizará cuando vuelva el internet.',
+      });
+      return {
+        ...gasto,
+        IDgastos: 'offline-' + Date.now(),
+        fechaYHora: new Date().toISOString(),
+      };
+    }
+    throw error;
+  }
 };
 
 export const createBulkGastos = async (gastos: Partial<Gasto>[]) => {

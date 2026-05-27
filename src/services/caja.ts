@@ -44,9 +44,39 @@ export const abrirCaja = async (data: AperturaCajaPayload) => {
   return response.data;
 };
 
+import { useSyncStore } from '../store/useSyncStore';
+import Toast from 'react-native-toast-message';
+
 export const cerrarCaja = async (id: string, data: CierreCajaPayload) => {
-  const response = await api.patch(`/caja/cerrar/${id}`, data);
-  return response.data;
+  try {
+    const response = await api.patch(`/caja/cerrar/${id}`, data);
+    return response.data;
+  } catch (error: any) {
+    if (error.message === 'Network Error' || error.code === 'ECONNABORTED' || !error.response) {
+      console.log(`[Offline] Guardando cierre de caja en cola local...`);
+      useSyncStore.getState().enqueueAction({
+        type: 'PATCH',
+        url: `/caja/cerrar/${id}`,
+        payload: data,
+      });
+      Toast.show({
+        type: 'info',
+        text1: 'Cierre Offline',
+        text2: 'Se ha forzado el cierre localmente. No borres los datos de la app hasta reconectar.',
+      });
+      return {
+        success: true,
+        offline: true,
+        data: {
+          id,
+          ...data,
+          estado: 'CERRADA',
+          horaCierre: new Date().toISOString(),
+        }
+      };
+    }
+    throw error;
+  }
 };
 
 export const reabrirCaja = async (id: string) => {

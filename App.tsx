@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { View } from 'react-native';
 import './global.css';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -127,21 +128,35 @@ export const toastConfig: ToastConfig = {
   )
 };
 
+import { useSettingsStore } from './src/store/useSettingsStore';
+
+import { SyncManager } from './src/services/SyncManager';
+import OfflineBanner from './src/components/ui/OfflineBanner';
+
 export default function App() {
   usePushNotifications();
+  const { primaryColor } = useSettingsStore();
+  
+  useEffect(() => {
+    SyncManager.init();
+    return () => SyncManager.cleanup();
+  }, []);
   
   return (
-    <SafeAreaProvider>
-      <StatusBar style="dark" />
-      <CustomAlertProvider>
-        <SocketProvider>
-          <AppInitializer>
-            <RootNavigator />
-          </AppInitializer>
-        </SocketProvider>
-      </CustomAlertProvider>
-      <PortalHost />
-      <Toast config={toastConfig} />
+    <SafeAreaProvider style={{ flex: 1, '--color-primary': primaryColor, '--color-green-500': primaryColor, '--color-green-600': primaryColor } as any}>
+      <View style={{ flex: 1, '--color-primary': primaryColor, '--color-green-500': primaryColor, '--color-green-600': primaryColor } as any}>
+        <OfflineBanner />
+        <StatusBar style="dark" />
+        <CustomAlertProvider>
+          <SocketProvider>
+            <AppInitializer>
+              <RootNavigator />
+            </AppInitializer>
+          </SocketProvider>
+        </CustomAlertProvider>
+        <PortalHost />
+        <Toast config={toastConfig} />
+      </View>
     </SafeAreaProvider>
   );
 }

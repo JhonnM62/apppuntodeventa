@@ -123,6 +123,7 @@ const InventarioScreen = ({ navigation }: any) => {
   const [newInventario, setNewInventario] = useState<CreateInventarioDto>({ nombre: '', tipo: 'entrada' });
   const [addItemsList, setAddItemsList] = useState<any[]>([]);
   const [addItemSearchText, setAddItemSearchText] = useState('');
+  const [selectedCategoriaFilter, setSelectedCategoriaFilter] = useState<string | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const createModalScrollRef = useRef<ScrollView>(null);
   const detailModalScrollRef = useRef<any>(null);
@@ -208,8 +209,6 @@ const InventarioScreen = ({ navigation }: any) => {
       </View>
     </View>
   );
-
-  const [selectedCategoriaFilter, setSelectedCategoriaFilter] = useState<string | null>(null);
 
   const [newItem, setNewItem] = useState({
     insumoId: '',

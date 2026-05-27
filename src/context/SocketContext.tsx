@@ -205,6 +205,17 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   const { token } = useAuthStore();
 
+  const disconnectSocket = useCallback(() => {
+    if (socketRef.current) {
+      socketRef.current.disconnect();
+      socketRef.current = null;
+      setSocket(null);
+      setIsConnected(false);
+      setConnectionState(ConnectionState.DISCONNECTED);
+      setJoinedRooms(new Set());
+    }
+  }, []);
+
   useEffect(() => {
     isMountedRef.current = true;
     
@@ -277,17 +288,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
   const getRooms = useCallback((): string[] => {
     return [...joinedRooms];
   }, [joinedRooms]);
-
-  const disconnectSocket = useCallback(() => {
-    if (socketRef.current) {
-      socketRef.current.disconnect();
-      socketRef.current = null;
-      setSocket(null);
-      setIsConnected(false);
-      setConnectionState(ConnectionState.DISCONNECTED);
-      setJoinedRooms(new Set());
-    }
-  }, []);
 
   const value = useMemo(
     () => ({

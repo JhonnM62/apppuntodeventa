@@ -64,6 +64,15 @@ const MODULES = [
     adminOnly: true,
   },
   {
+    id: 'config_avanzada',
+    title: 'Visual y Offline',
+    description: 'Colores, tipografía y Modo Offline',
+    icon: 'palette-swatch',
+    color: '#f43f5e',
+    route: 'ConfiguracionAvanzada',
+    adminOnly: true,
+  },
+  {
     id: 'notificaciones',
     title: 'Notificaciones Push',
     description: 'Configurar alertas y eventos',
@@ -166,6 +175,7 @@ const SettingsScreen = ({ navigation }: Props) => {
                 'mesas': 'configuracion',
                 'notificaciones': 'configuracion',
                 'config_negocio': 'configuracion',
+                'config_avanzada': 'configuracion',
               };
 
               const key = permissionMapping[modulo.id];

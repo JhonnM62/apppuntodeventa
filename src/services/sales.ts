@@ -32,6 +32,9 @@ export interface SalePayload {
   productos: SaleProduct[];
 }
 
+import { useSyncStore } from '../store/useSyncStore';
+import Toast from 'react-native-toast-message';
+
 export const createSale = async (data: SalePayload) => {
   const startTime = performance.now();
   try {
@@ -39,7 +42,31 @@ export const createSale = async (data: SalePayload) => {
     const endTime = performance.now();
     console.log(`[Metrics] createSale (Cobro Completo) tomó ${(endTime - startTime).toFixed(2)}ms`);
     return response;
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'Network Error' || error.code === 'ECONNABORTED' || !error.response) {
+      console.log(`[Offline] Guardando venta en cola local...`);
+      useSyncStore.getState().enqueueAction({
+        type: 'POST',
+        url: '/ventas/completa',
+        payload: data,
+      });
+      Toast.show({
+        type: 'info',
+        text1: 'Venta Guardada Localmente',
+        text2: 'Sin conexión. La venta se sincronizará cuando vuelva el internet.',
+      });
+      return {
+        data: {
+          success: true,
+          offline: true,
+          data: {
+            ...data.venta,
+            IDventas: 'offline-' + Date.now(),
+            fecha: new Date().toISOString(),
+          }
+        }
+      };
+    }
     const endTime = performance.now();
     console.log(`[Metrics] createSale falló después de ${(endTime - startTime).toFixed(2)}ms`);
     throw error;
