@@ -1,12 +1,16 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Mesa } from '../services/mesas';
 
 interface MesaStore {
-  mesas: any[];
+  mesas: Mesa[];
   lastFetched: number | null;
   isLoading: boolean;
-  setMesas: (mesas: any[]) => void;
+  setMesas: (mesas: Mesa[]) => void;
+  addMesa: (mesa: Mesa) => void;
+  updateMesaState: (id: string, data: Partial<Mesa>) => void;
+  removeMesaState: (id: string) => void;
   setLoading: (loading: boolean) => void;
   shouldRefetch: () => boolean;
   clearCache: () => void;
@@ -26,6 +30,24 @@ export const useMesaStore = create<MesaStore>()(
           mesas,
           lastFetched: Date.now(),
         });
+      },
+
+      addMesa: (mesa) => {
+        set((state) => ({
+          mesas: [...state.mesas, mesa].sort((a, b) => a.nombre.localeCompare(b.nombre)),
+        }));
+      },
+
+      updateMesaState: (id, data) => {
+        set((state) => ({
+          mesas: state.mesas.map((m) => (m.IdMesas === id ? { ...m, ...data } : m)).sort((a, b) => a.nombre.localeCompare(b.nombre)),
+        }));
+      },
+
+      removeMesaState: (id) => {
+        set((state) => ({
+          mesas: state.mesas.filter((m) => m.IdMesas !== id),
+        }));
       },
 
       setLoading: (isLoading) => set({ isLoading }),
