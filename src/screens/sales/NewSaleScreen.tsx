@@ -459,43 +459,41 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       const mesaValue = selectedMesa?.IdMesas || 'V.R';
 
       if (isEditing && editingSaleId) {
-        const updatePayload = {
-          estado: paymentData.estado,
-          medioDePago: paymentData.medioDePago,
-          efectivoRecibido: paymentData.efectivoRecibido || finalTotal,
-          devueltas: paymentData.devueltas || 0,
-          banco: paymentData.medioDePago === 'EFECTIVO' ? null : paymentData.banco,
-          totalInput: finalTotal,
-          descuento: descuento,
-          porcentajeDeDescuento: discountPercent.toString(),
-          clienteId: selectedCliente ? selectedCliente.IDcliente : undefined,
+        const payload: SalePayload = {
+          venta: {
+            mesa: mesaValue,
+            estado: paymentData.estado,
+            medioDePago: paymentData.medioDePago,
+            efectivoRecibido: paymentData.efectivoRecibido || finalTotal,
+            devueltas: paymentData.devueltas || 0,
+            banco: paymentData.medioDePago === 'EFECTIVO' ? null : paymentData.banco,
+            totalInput: finalTotal,
+            descuento: descuento,
+            porcentajeDeDescuento: discountPercent.toString(),
+            clienteId: selectedCliente ? selectedCliente.IDcliente : undefined,
+          },
+          productos: cart.map((item) => ({
+            productoId: item.IDproductos,
+            nombre: item.nombre,
+            nombreProducto: item.nombre,
+            categoria: item.categoriaNombre || item.categoria || 'LO MAS VENDIDO',
+            categoriaProducto: item.categoriaNombre || item.categoria || 'LO MAS VENDIDO',
+            cantidad: item.quantity,
+            precio: Number(item.precioUnitario || item.Precio_Unitario || 0),
+            precioTotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
+            estado: paymentData.estado,
+            imagenUrl: item.imagenUrl || item.image,
+            comentarios: item.modifiers?.length ? JSON.stringify(item.modifiers) : undefined,
+          })),
         };
-
-        const newProducts = getNewProductsOnly().map((item) => ({
-          productoId: item.IDproductos,
-          nombre: item.nombre,
-          nombreProducto: item.nombre,
-          categoria: item.categoriaNombre || item.categoria || 'LO MAS VENDIDO',
-          categoriaProducto: item.categoriaNombre || item.categoria || 'LO MAS VENDIDO',
-          cantidad: item.quantity,
-          precio: Number(item.precioUnitario || item.Precio_Unitario || 0),
-          precioTotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
-          estado: paymentData.estado,
-          imagenUrl: item.imagenUrl || item.image,
-          comentarios: item.modifiers?.length ? JSON.stringify(item.modifiers) : undefined,
-        }));
 
         setPaymentModalVisible(false);
         clearCart();
         setSelectedMesa(null);
 
-        import('../../services/sales').then(async ({ updateVentaPago, addProductosToVenta }) => {
+        import('../../services/sales').then(async ({ updateVentaCompleta }) => {
           try {
-            await updateVentaPago(editingSaleId, updatePayload);
-            if (newProducts.length > 0) {
-              await addProductosToVenta(editingSaleId, newProducts);
-            }
-
+            await updateVentaCompleta(editingSaleId, payload);
             emitOrdenActualizada({ ventaId: editingSaleId, estado: paymentData.estado });
 
             Toast.show({
@@ -507,31 +505,31 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             });
 
             setTimeout(() => {
-               const finalMethod = updatePayload.medioDePago;
+               const finalMethod = payload.venta.medioDePago;
                const printStore = usePrinterStore.getState();
-               if (printStore.shouldPrint(updatePayload.estado)) {
+               if (printStore.shouldPrint(payload.venta.estado)) {
                  let cleanOrderId = editingVenta?.pedido || editingSaleId;
                  if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
                    cleanOrderId = cleanOrderId.substring(7);
                  }
 
-                 const allProducts = cart.map(item => ({
-                   cantidad: item.quantity,
+                 const allProducts = payload.productos.map(item => ({
+                   cantidad: item.cantidad,
                    nombre: item.nombre,
-                   precioUnitario: Number(item.precioUnitario || item.Precio_Unitario || 0),
-                   subtotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
-                   modifiers: item.modifiers,
+                   precioUnitario: item.precio,
+                   subtotal: item.precioTotal,
+                   modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
                  }));
 
                  const ticketData = {
                    orderId: cleanOrderId,
                    fecha: new Date().toLocaleString('es-CO'),
-                   total: updatePayload.totalInput,
+                   total: payload.venta.totalInput,
                    productos: allProducts,
-                   estado: updatePayload.estado,
+                   estado: payload.venta.estado,
                    metodoPago: finalMethod,
-                   efectivoRecibido: updatePayload.efectivoRecibido,
-                   devueltas: updatePayload.devueltas,
+                   efectivoRecibido: payload.venta.efectivoRecibido,
+                   devueltas: payload.venta.devueltas,
                  };
                  printStore.printTicket(ticketData);
                }
@@ -679,30 +677,41 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       const descuento = getDiscountAmount();
 
       if (isEditing && editingSaleId) {
-        const newProducts = getNewProductsOnly().map((item) => ({
-          productoId: item.IDproductos,
-          nombre: item.nombre,
-          nombreProducto: item.nombre,
-          categoria: item.categoriaNombre || item.categoria || 'LO MAS VENDIDO',
-          categoriaProducto: item.categoriaNombre || item.categoria || 'LO MAS VENDIDO',
-          cantidad: item.quantity,
-          precio: Number(item.precioUnitario || item.Precio_Unitario || 0),
-          precioTotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
-          estado: data.estado,
-          imagenUrl: item.imagenUrl || item.image,
-          comentarios: item.modifiers?.length ? JSON.stringify(item.modifiers) : undefined,
-        }));
+        const payload: SalePayload = {
+          venta: {
+            mesa: selectedMesa?.IdMesas || 'V.R',
+            estado: data.estado,
+            medioDePago: editingVenta?.medioDePago || 'PENDIENTE',
+            efectivoRecibido: editingVenta?.efectivoRecibido || finalTotal,
+            devueltas: editingVenta?.devueltas || 0,
+            banco: editingVenta?.banco,
+            totalInput: finalTotal,
+            descuento: descuento,
+            porcentajeDeDescuento: discountPercent.toString(),
+            clienteId: selectedCliente ? selectedCliente.IDcliente : undefined,
+          },
+          productos: cart.map((item) => ({
+            productoId: item.IDproductos,
+            nombre: item.nombre,
+            nombreProducto: item.nombre,
+            categoria: item.categoriaNombre || item.categoria || 'LO MAS VENDIDO',
+            categoriaProducto: item.categoriaNombre || item.categoria || 'LO MAS VENDIDO',
+            cantidad: item.quantity,
+            precio: Number(item.precioUnitario || item.Precio_Unitario || 0),
+            precioTotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
+            estado: data.estado,
+            imagenUrl: item.imagenUrl || item.image,
+            comentarios: item.modifiers?.length ? JSON.stringify(item.modifiers) : undefined,
+          })),
+        };
 
         setPaymentModalVisible(false);
         clearCart();
         setSelectedMesa(null);
 
-        import('../../services/sales').then(async ({ updateVentaEstado, addProductosToVenta }) => {
+        import('../../services/sales').then(async ({ updateVentaCompleta }) => {
           try {
-            await updateVentaEstado(editingSaleId, data.estado);
-            if (newProducts.length > 0) {
-              await addProductosToVenta(editingSaleId, newProducts);
-            }
+            await updateVentaCompleta(editingSaleId, payload);
             emitOrdenActualizada({ ventaId: editingSaleId, estado: data.estado });
 
             Toast.show({
@@ -1373,7 +1382,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               </View>
               <View>
                 {cart.map((item, index) => (
-                  <React.Fragment key={item.IDproductos || `cart-${index}`}>
+                  <React.Fragment key={`${item.IDproductos}-${index}`}>
                     {renderCartItem({ item })}
                   </React.Fragment>
                 ))}
@@ -1409,7 +1418,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           ) : (
             <View style={styles.productsGrid}>
               {filteredProducts.map((item, index) => (
-                <View key={item.IDproductos || `product-${index}`} style={styles.productCardWrapper}>
+                <View key={`${item.IDproductos}-${index}`} style={styles.productCardWrapper}>
                   {renderProduct({ item })}
                 </View>
               ))}

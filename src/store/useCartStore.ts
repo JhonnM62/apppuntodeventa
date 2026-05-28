@@ -163,30 +163,49 @@ const useCartStore = create<CartStore>((set, get) => ({
   clearCart: () => set({ cart: [], cartStartTime: null, discountPercent: 0, editingSaleId: null, editingVenta: null, originalCartIds: [] }),
   setEditingSale: (saleId: string | null, venta: any | null = null) => set({ editingSaleId: saleId, editingVenta: venta, originalCartIds: [] }),
   loadCartFromVenta: (ordenVentas: any[]) => {
-    const cartItems = ordenVentas.map((item) => {
-      let parsedModifiers = [];
+    const groupedCart: Record<string, CartItem> = {};
+
+    ordenVentas.forEach((item) => {
+      const id = item.producto?.IDproductos || item.productoId || item.IDorderventas;
+      let parsedModifiers: CartItemModifier[] = [];
       try {
         if (item.comentarios) {
           parsedModifiers = JSON.parse(item.comentarios);
         }
       } catch (e) {
-        // Fallback for old comma-separated or plain text
         if (item.comentarios) {
-          parsedModifiers = [{ name: item.comentarios, price: 0 }];
+          parsedModifiers = [{ name: item.comentarios, price: 0, quantity: 1 }];
         }
       }
-      return {
-        IDproductos: item.producto?.IDproductos || item.productoId || item.IDorderventas,
-        nombre: item.nombreProducto || item.producto?.nombre || item.nombre || 'Producto',
-        precioUnitario: item.precio,
-        Precio_Unitario: item.precio,
-        quantity: item.cantidad || 1,
-        categoriaNombre: item.categoriaProducto || item.categoria,
-        imagenUrl: item.imagenUrl || item.producto?.imagenUrl || item.producto?.image,
-        modifiers: parsedModifiers,
-        ...item,
-      };
+
+      if (groupedCart[id]) {
+        groupedCart[id].quantity += (item.cantidad || 1);
+        
+        // Merge modifiers
+        parsedModifiers.forEach(mod => {
+          const existingMod = groupedCart[id].modifiers?.find(m => m.name === mod.name);
+          if (existingMod) {
+            existingMod.quantity = (existingMod.quantity || 1) + (mod.quantity || 1);
+          } else {
+            groupedCart[id].modifiers = [...(groupedCart[id].modifiers || []), { ...mod, quantity: mod.quantity || 1 }];
+          }
+        });
+      } else {
+        groupedCart[id] = {
+          IDproductos: id,
+          nombre: item.nombreProducto || item.producto?.nombre || item.nombre || 'Producto',
+          precioUnitario: item.precio,
+          Precio_Unitario: item.precio,
+          quantity: item.cantidad || 1,
+          categoriaNombre: item.categoriaProducto || item.categoria,
+          imagenUrl: item.imagenUrl || item.producto?.imagenUrl || item.producto?.image,
+          modifiers: parsedModifiers,
+          ...item,
+        };
+      }
     });
+
+    const cartItems = Object.values(groupedCart);
     const originalIds = cartItems.map((item) => item.IDproductos);
     set({ cart: cartItems, originalCartIds: originalIds });
   },

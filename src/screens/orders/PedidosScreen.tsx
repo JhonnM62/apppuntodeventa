@@ -1465,11 +1465,20 @@ showAlert({
     if (!selectedVenta) return;
     showAlert({
       type: 'confirm',
-      title: 'Volver a Carrito',
-      message: 'El pedido se moverá a EN EL CARRITO. ¿Deseas continuar editando ahora?',
-      confirmText: 'Solo Cambiar',
+      title: 'Editar Pedido',
+      message: 'El pedido pasará a EN EL CARRITO y podrás agregar o quitar productos. ¿Deseas continuar?',
+      confirmText: 'Sí, Editar',
+      cancelText: 'Cancelar',
       onConfirm: async () => {
         await handleChangeEstado('EN_EL_CARRITO');
+        if (selectedVenta.ordenVentas && selectedVenta.ordenVentas.length > 0) {
+          useCartStore.getState().loadCartFromVenta(selectedVenta.ordenVentas);
+        } else {
+          useCartStore.getState().clearCart();
+        }
+        useCartStore.getState().setEditingSale(selectedVenta.IDventas, selectedVenta);
+        closeModal();
+        navigation.navigate('Sales', { screen: 'NewSale' } as any);
       },
       onCancel: () => {},
     });

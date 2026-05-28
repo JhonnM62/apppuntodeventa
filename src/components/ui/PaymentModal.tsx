@@ -610,7 +610,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             const unitPrice = Number(item.precioUnitario || item.Precio_Unitario || 0);
             const subtotal = item.quantity * unitPrice;
             return (
-              <View key={item.IDproductos || index} style={styles.cartSummaryItem}>
+              <View key={`${item.IDproductos}-${index}`} style={styles.cartSummaryItem}>
                 <View style={styles.cartSummaryItemLeft}>
                   <View style={styles.cartSummaryQty}>
                     <RNText style={styles.cartSummaryQtyText}>{item.quantity}x</RNText>

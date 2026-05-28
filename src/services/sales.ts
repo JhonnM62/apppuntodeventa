@@ -104,6 +104,10 @@ export const updateVentaPago = async (ventaId: string, data: any) => {
   return await api.patch(`/ventas/${ventaId}/pago`, data);
 };
 
+export const updateVentaCompleta = async (ventaId: string, data: SalePayload) => {
+  return await api.put(`/ventas/${ventaId}`, data);
+};
+
 export const addProductosToVenta = async (ventaId: string, productos: SaleProduct[]) => {
   return await api.post(`/ventas/${ventaId}/productos`, { productos });
 };
