@@ -144,7 +144,6 @@ const MesasScreen = ({ navigation }: any) => {
             <Text style={styles.emptyText}>No hay mesas registradas</Text>
           </View>
         ) : (
-          {/* @ts-ignore */}
           <FlashList
             data={mesas}
             renderItem={renderMesaItem}
