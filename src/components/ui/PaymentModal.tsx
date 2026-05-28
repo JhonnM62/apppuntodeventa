@@ -29,7 +29,7 @@ type OrderStatus = 'PAGADO' | 'EN_EL_CARRITO' | 'TOMADO' | 'LISTO_PARA_ENTREGA' 
 interface PaymentModalProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (data: { estado: OrderStatus; pedidoId?: string }) => Promise<{ pedidoId?: string } | void>;
+  onSave: (data: { estado: OrderStatus; pedidoId?: string; medioDePago?: string | null }) => Promise<{ pedidoId?: string } | void>;
   onCobrar?: (paymentData: {
     medioDePago: string;
     banco?: string | null;
@@ -189,14 +189,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       // Si ya está seleccionado, volvemos al estado base 'EN_EL_CARRITO' o 'PAGADO' dependiendo del modo
       const baseEstado = onCobrar ? 'PAGADO' : 'EN_EL_CARRITO';
       setSelectedEstado(baseEstado);
-      if (baseEstado !== 'PAGADO') {
-        setMethod(null);
-      }
     } else {
       setSelectedEstado(newEstado);
-      if (newEstado !== 'PAGADO') {
-        setMethod(null);
-      }
     }
   };
 
@@ -254,7 +248,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       const estadoActual = selectedEstado;
       const pedidoIdActual = editingPedidoId;
       
-      const result = await onSave({ estado: estadoActual, pedidoId: pedidoIdActual });
+      const result = await onSave({ estado: estadoActual, pedidoId: pedidoIdActual, medioDePago: method });
       const finalOrderId = (result && 'pedidoId' in result) ? result.pedidoId : pedidoIdActual;
       
       // Intentar impresión automática en segundo plano

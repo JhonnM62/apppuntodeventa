@@ -19,7 +19,9 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
 
   const formatMoney = (amount: number) => `$${amount.toLocaleString('es-CO')}`;
 
-  const fechaAperturaObj = new Date(resumen.caja.fechaDeApertura);
+  const parseLocal = (iso: string | null | undefined) => iso ? new Date(String(iso).replace(/Z$/i, '')) : null;
+  const fechaAperturaObj = parseLocal(resumen.caja.fechaDeApertura) || new Date();
+  const fechaCierreObj = parseLocal(resumen.caja.fechaDeCierre);
   const now = new Date();
   
   // Format name: Cierre_y_apertura_DD_de_mes_del_YYYY_HH_MM.pdf
@@ -135,7 +137,7 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
         <p>Responsable: ${resumen.caja.nombre || 'No especificado'}</p>
         <p>Generado: ${now.toLocaleString('es-CO')}</p>
         <p>Desde: ${fechaAperturaObj.toLocaleString('es-CO')}</p>
-        <p>Hasta: ${resumen.caja.fechaDeCierre ? new Date(resumen.caja.fechaDeCierre).toLocaleString('es-CO') : 'NO SE HA RENDIDO'}</p>
+        <p>Hasta: ${fechaCierreObj ? fechaCierreObj.toLocaleString('es-CO') : 'NO SE HA RENDIDO'}</p>
       </div>
 
       <div class="section">
@@ -188,6 +190,40 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
               <strong>${resumen.resumen.valorFaltante > 0 ? '-' + formatMoney(resumen.resumen.valorFaltante) : resumen.resumen.valorExcedente > 0 ? '+' + formatMoney(resumen.resumen.valorExcedente) : '$0'}</strong>
             </td>
           </tr>
+        </table>
+      </div>
+
+      <div class="section" style="page-break-inside: avoid;">
+        <div class="section-title">CANTIDAD DE PEDIDOS POR MEDIO DE PAGO</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Medio de Pago</th>
+              <th class="text-center">Cantidad de Pedidos</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Efectivo</td>
+              <td class="text-center" style="font-weight: bold; color: #4b5563;">${resumen.resumen.cantEfectivo || 0}</td>
+            </tr>
+            <tr>
+              <td>Transferencias (Incluye Nequi, Daviplata, etc.)</td>
+              <td class="text-center" style="font-weight: bold; color: #4b5563;">${(resumen.resumen.cantTransferencia || 0) + (resumen.resumen.cantNequi || 0)}</td>
+            </tr>
+            <tr>
+              <td>Efectivo y Otros (Mixto)</td>
+              <td class="text-center" style="font-weight: bold; color: #4b5563;">${resumen.resumen.numeroOrdenesRepartidas || 0}</td>
+            </tr>
+            <tr>
+              <td>Tarjeta</td>
+              <td class="text-center" style="font-weight: bold; color: #4b5563;">${resumen.resumen.cantTarjeta || 0}</td>
+            </tr>
+            <tr style="background-color: #f8fafc;">
+              <td><strong>TOTAL PEDIDOS COBRADOS</strong></td>
+              <td class="text-center" style="font-size: 14px; font-weight: 900;">${(resumen.resumen.cantEfectivo || 0) + (resumen.resumen.cantTransferencia || 0) + (resumen.resumen.cantNequi || 0) + (resumen.resumen.numeroOrdenesRepartidas || 0) + (resumen.resumen.cantTarjeta || 0)}</td>
+            </tr>
+          </tbody>
         </table>
       </div>
 

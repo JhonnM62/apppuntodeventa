@@ -72,10 +72,7 @@ const schema = yup.object().shape({
 
 const formatDateToLocalYYYYMMDD = (isoString: string) => {
   if (!isoString) return '';
-  if (isoString.includes('T')) {
-    return isoString.split('T')[0];
-  }
-  const d = new Date(isoString);
+  const d = new Date(isoString.replace(/Z$/i, ''));
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 };
 

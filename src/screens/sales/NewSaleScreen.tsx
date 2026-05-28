@@ -669,7 +669,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     }
   };
 
-  const handleSavePedido = async (data: { estado: string }) => {
+  const handleSavePedido = async (data: { estado: string; medioDePago?: string | null }) => {
     setIsSubmitting(true);
     try {
       const { getFinalTotalPrice, getDiscountAmount, discountPercent } = useCartStore.getState();
@@ -681,7 +681,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           venta: {
             mesa: selectedMesa?.IdMesas || 'V.R',
             estado: data.estado,
-            medioDePago: editingVenta?.medioDePago || 'PENDIENTE',
+            medioDePago: data.medioDePago || editingVenta?.medioDePago || 'PENDIENTE',
             efectivoRecibido: editingVenta?.efectivoRecibido || finalTotal,
             devueltas: editingVenta?.devueltas || 0,
             banco: editingVenta?.banco,
@@ -741,7 +741,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         venta: {
           mesa: mesaValue,
           estado: data.estado,
-          medioDePago: 'PENDIENTE',
+          medioDePago: data.medioDePago || 'PENDIENTE',
           efectivoRecibido: 0,
           devueltas: 0,
           banco: null,
