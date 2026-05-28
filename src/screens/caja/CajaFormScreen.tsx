@@ -216,7 +216,6 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
   useSocketEvent('refreshCaja', (data: any) => {
     if (data && data.action !== 'delete' && data.cajaId === cajaId) {
-      Toast.show({ type: 'info', text1: 'Actualización', text2: 'Alguien modificó esta caja' });
       fetchResumenSilenciosamente();
     } else if (data && data.action === 'delete' && data.cajaId === cajaId) {
       Toast.show({ type: 'error', text1: 'Caja Eliminada', text2: 'Esta caja ha sido eliminada por otro usuario' });
@@ -551,11 +550,25 @@ export default function CajaFormScreen({ route, navigation }: any) {
     try {
       // Combinar el estado actual del formulario para que el PDF refleje los cambios no guardados
       const currentValues = getValues();
+      const efectivoContado = Number(currentValues.efectivoDeCierre) || 0;
+      const transContadasVal = Number(transferenciasContadas) || 0;
+      const diffEfectivo = efectivoContado - (Number(resumenData.resumen?.efectivoApertura || 0) + Number(resumenData.resumen?.totalEfectivo || 0));
+      const diffTrans = transContadasVal - ((resumenData.resumen?.totalTransferencia || 0) + (resumenData.resumen?.totalNequi || 0));
+      const totalDiff = diffEfectivo + diffTrans;
+
       const updatedResumenData = {
         ...resumenData,
         caja: {
           ...resumenData.caja,
           observaciones: currentValues.observaciones,
+        },
+        resumen: {
+          ...resumenData.resumen,
+          efectivoCierre: efectivoContado,
+          transferenciasContadas: transContadasVal,
+          plataGuardada: Number(currentValues.plataGuardada) || 0,
+          valorFaltante: totalDiff < 0 ? Math.abs(totalDiff) : 0,
+          valorExcedente: totalDiff > 0 ? totalDiff : 0,
         },
         insumos: resumenData.insumos?.map((backendInsumo: any) => {
           // Encontrar el insumo correspondiente en el formulario actual
@@ -563,21 +576,33 @@ export default function CajaFormScreen({ route, navigation }: any) {
             (fi: any) => fi.Idcierreyapertura === backendInsumo.Idcierreyapertura || fi.nombreInsumo === backendInsumo.nombreInsumo
           );
 
+          let cantApertura = 0;
+          let cantDeCierre = 0;
+          let nombreReal = backendInsumo.nombreReal;
+          let nombreProductoReal = backendInsumo.nombreProductoReal;
+
           if (formInsumo) {
-            const gastadoFisico = (Number(formInsumo.cantApertura) || 0) - (Number(formInsumo.cantDeCierre) || 0);
-            const diferencia = gastadoFisico - (backendInsumo.ventasEnSistema || 0);
-            
-            return {
-              ...backendInsumo,
-              nombreReal: formInsumo.nombreInsumoReal || backendInsumo.nombreReal,
-              nombreProductoReal: formInsumo.nombreProductoReal || backendInsumo.nombreProductoReal,
-              cantApertura: formInsumo.cantApertura,
-              cantDeCierre: formInsumo.cantDeCierre,
-              seUtilizaron: gastadoFisico,
-              diferencia: diferencia
-            };
+            cantApertura = Number(formInsumo.cantApertura) || 0;
+            cantDeCierre = Number(formInsumo.cantDeCierre) || 0;
+            nombreReal = formInsumo.nombreInsumoReal || backendInsumo.nombreReal;
+            nombreProductoReal = formInsumo.nombreProductoReal || backendInsumo.nombreProductoReal;
+          } else {
+            cantApertura = Number(backendInsumo.cantApertura) || 0;
+            cantDeCierre = Number(backendInsumo.cantDeCierre) || 0;
           }
-          return backendInsumo;
+
+          const gastadoFisico = cantApertura - cantDeCierre;
+          const diferencia = gastadoFisico - (backendInsumo.ventasEnSistema || 0);
+
+          return {
+            ...backendInsumo,
+            nombreReal,
+            nombreProductoReal,
+            cantApertura,
+            cantDeCierre,
+            seUtilizaron: gastadoFisico,
+            diferencia: diferencia
+          };
         }) || []
       };
 
@@ -1719,16 +1744,47 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
           {/* NUEVA SECCIÓN: ANÁLISIS DE NOTAS Y MODIFICADORES */}
           {resumenData?.notasAnalysis && resumenData.notasAnalysis.length > 0 && (
-            <View className="mb-6">
+            <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 mt-2">
               <Text className="text-lg font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Análisis de Notas y Modificadores</Text>
-              <View className="bg-white rounded-xl border border-gray-200 shadow-sm">
-                <View className="flex-row bg-amber-50 border-b border-amber-200 p-3">
-                  <Text className="w-16 text-[10px] font-bold text-amber-800 uppercase">Hora</Text>
-                  <Text className="flex-1 text-[10px] font-bold text-amber-800 uppercase">Pedido / Notas</Text>
+              
+              {/* SUMMARY */}
+              {(() => {
+                const summaryMap: Record<string, number> = {};
+                resumenData.notasAnalysis.forEach((nota: any) => {
+                  nota.productosConNotas?.forEach((prod: any) => {
+                    prod.notas?.forEach((n: any) => {
+                      const name = n.name || n.nombre || n.Nombre;
+                      const qty = Number(n.cantidad) || 1;
+                      const price = Number(n.price || n.precio || n.Precio) || 0;
+                      const key = `${name}${price > 0 ? ` (+$${price})` : ''}`;
+                      summaryMap[key] = (summaryMap[key] || 0) + qty;
+                    });
+                  });
+                });
+                const summaryItems = Object.entries(summaryMap).sort((a, b) => b[1] - a[1]);
+                if (summaryItems.length > 0) {
+                  return (
+                    <View className="bg-orange-50 p-3 rounded-xl mb-4 border border-orange-100">
+                      <Text className="text-orange-800 font-bold text-sm mb-2">Resumen Total de Modificadores</Text>
+                      {summaryItems.map(([key, count], idx) => (
+                        <Text key={idx} className="text-orange-700 text-xs font-medium">
+                          • {count}x {key}
+                        </Text>
+                      ))}
+                    </View>
+                  );
+                }
+                return null;
+              })()}
+
+              <View className="bg-gray-50 rounded-xl overflow-hidden border border-gray-200">
+                <View className="flex-row p-3 bg-[#fcfcfc] border-b border-gray-200">
+                  <Text className="w-16 text-[10px] font-bold text-orange-800 uppercase tracking-wider">Hora</Text>
+                  <Text className="flex-1 text-[10px] font-bold text-orange-800 uppercase tracking-wider ml-1">Pedido / Notas</Text>
                 </View>
                 {resumenData.notasAnalysis.map((nota: any, index: number) => (
                   <View key={index} className={`flex-row p-3 border-b border-gray-100 bg-white`}>
-                    <Text className="w-16 text-xs font-bold text-gray-700">{nota.hora || '-'}</Text>
+                    <Text className="w-16 text-xs font-bold text-gray-700">{formatTime12h(nota.hora) || '-'}</Text>
                     <View className="flex-1">
                       <View className="flex-row items-center mb-1">
                         <Ionicons name="receipt-outline" size={14} color="#6b7280" />
@@ -1738,14 +1794,14 @@ export default function CajaFormScreen({ route, navigation }: any) {
                         <View key={pIdx} className="mb-2 ml-1">
                           <Text className="text-xs font-bold text-gray-700">{prod.cantidad}x {prod.producto}</Text>
                           {prod.notas.map((n: any, nIdx: number) => (
-                            <View key={nIdx} className="flex-row items-center ml-2 mt-0.5">
-                              <Text className="text-[11px] text-gray-600">• {n.cantidad || 1}x {n.name || n.nombre || n.Nombre}</Text>
+                            <Text key={nIdx} className="text-[11px] text-gray-600 ml-2 mt-0.5">
+                              • {n.cantidad || 1}x {n.name || n.nombre || n.Nombre}
                               {(n.price || n.precio || n.Precio) > 0 && (
-                                <Text className="text-[10px] text-amber-600 font-bold ml-1">
-                                  (+{formatCurrency(n.price || n.precio || n.Precio)})
+                                <Text className="text-[10px] text-amber-600 font-bold">
+                                  {` (+${formatCurrency(n.price || n.precio || n.Precio)})`}
                                 </Text>
                               )}
-                            </View>
+                            </Text>
                           ))}
                         </View>
                       ))}

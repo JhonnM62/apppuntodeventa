@@ -46,6 +46,43 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
     </tr>
   `).join('') || '<tr><td colspan="7" class="text-center">No hay insumos registrados</td></tr>';
 
+  const formatTime12hPdf = (timeString: string) => {
+    if (!timeString) return '-';
+    try {
+      const date = timeString.includes('T') ? new Date(timeString) : new Date(`1970-01-01T${timeString}Z`);
+      let hours = date.getUTCHours();
+      const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12; 
+      return `${hours}:${minutes} ${ampm}`;
+    } catch {
+      return timeString;
+    }
+  };
+
+  const summaryMap: Record<string, number> = {};
+  resumen.notasAnalysis?.forEach((nota: any) => {
+    nota.productosConNotas?.forEach((prod: any) => {
+      prod.notas?.forEach((n: any) => {
+        const name = n.name || n.nombre || n.Nombre;
+        const qty = Number(n.cantidad) || 1;
+        const price = Number(n.price || n.precio || n.Precio) || 0;
+        const key = `${name}${price > 0 ? ` (+$${price})` : ''}`;
+        summaryMap[key] = (summaryMap[key] || 0) + qty;
+      });
+    });
+  });
+  const summaryItems = Object.entries(summaryMap).sort((a, b) => b[1] - a[1]);
+  const summaryHtml = summaryItems.length > 0 ? `
+    <div style="background-color: #fff7ed; padding: 10px; border: 1px solid #ffedd5; border-radius: 6px; margin-bottom: 15px; page-break-inside: avoid;">
+      <div style="font-size: 13px; font-weight: bold; color: #9a3412; margin-bottom: 5px;">Resumen Total de Modificadores</div>
+      <ul style="margin: 0; padding-left: 20px; color: #c2410c; font-size: 12px;">
+        ${summaryItems.map(([key, count]) => `<li><strong>${count}x</strong> ${key}</li>`).join('')}
+      </ul>
+    </div>
+  ` : '';
+
   const notasRows = resumen.notasAnalysis?.map((nota: any) => {
     const notasList = nota.productosConNotas.map((prod: any) => {
       const notasItems = prod.notas.map((n: any) => `<li>${n.cantidad || 1}x ${n.name || n.nombre || n.Nombre} ${(n.price || n.precio || n.Precio) > 0 ? '(+$' + (n.price || n.precio || n.Precio) + ')' : ''}</li>`).join('');
@@ -54,7 +91,7 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
 
     return `
       <tr style="page-break-inside: avoid;">
-        <td class="text-center">${nota.hora || '-'}</td>
+        <td class="text-center">${formatTime12hPdf(nota.hora) || '-'}</td>
         <td class="text-center"><strong>${nota.pedido || '-'}</strong></td>
         <td>${notasList}</td>
       </tr>
@@ -127,7 +164,7 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
           </tr>
           <tr>
             <td>Transferencias / Otros (Digital)</td>
-            <td class="text-right">${formatMoney(resumen.resumen.totalTransferencia || 0)}</td>
+            <td class="text-right">${formatMoney(resumen.resumen.transferenciasContadas ?? ((resumen.resumen.totalTransferencia || 0) + (resumen.resumen.totalNequi || 0)))}</td>
           </tr>
           <tr>
             <td>Total Ventas Sistema</td>
@@ -172,6 +209,7 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
 
       <div class="section">
         <div class="section-title">ANÁLISIS DE NOTAS Y MODIFICADORES</div>
+        ${summaryHtml}
         <table>
           <thead>
             <tr>
