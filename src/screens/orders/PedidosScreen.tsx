@@ -5,7 +5,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { getSales, updateVentaEstado, deleteSale, deleteSalesBulk } from '../../services/sales';
+import { getSales, updateVentaEstado, updateVentaPago, deleteSale, deleteSalesBulk } from '../../services/sales';
 import { useSocket, useSocketEvent, useSocketEmitter } from '../../hooks';
 import { Room, SocketEvent } from '../../types/socket.types';
 import Toast from 'react-native-toast-message';
@@ -1180,6 +1180,20 @@ showAlert({
                           <Ionicons name="alert-circle-outline" size={20} color="#fff" />
                           <RNText style={styles.actionBtnText}>Marcar Deudor</RNText>
                         </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { backgroundColor: '#6b7280' }]}
+                          onPress={handleVolverCarrito}
+                        >
+                          <Ionicons name="cart-outline" size={20} color="#fff" />
+                          <RNText style={styles.actionBtnText}>Volver a Carrito</RNText>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
+                          onPress={handleOpenCobrar}
+                        >
+                          <Ionicons name="cash-outline" size={20} color="#fff" />
+                          <RNText style={styles.actionBtnText}>Cobrar / Pago</RNText>
+                        </TouchableOpacity>
                       </>
                     )}
                     {selectedVenta.estado === 'ENTREGADO' && (
@@ -1197,6 +1211,13 @@ showAlert({
                         >
                           <Ionicons name="cart-outline" size={20} color="#fff" />
                           <RNText style={styles.actionBtnText}>Volver a Carrito</RNText>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
+                          onPress={handleOpenCobrar}
+                        >
+                          <Ionicons name="cash-outline" size={20} color="#fff" />
+                          <RNText style={styles.actionBtnText}>Cobrar / Pago</RNText>
                         </TouchableOpacity>
                       </>
                     )}
@@ -1520,7 +1541,7 @@ showAlert({
           banco: paymentData.banco,
           transferencia: paymentData.transferencia,
         };
-        updateVenta(cobrarVenta.IDventas, {
+        updateVentaPago(cobrarVenta.IDventas, {
           estado: 'PAGADO',
           medioDePago: paymentData.medioDePago,
           efectivoRecibido: paymentData.efectivoRecibido,
@@ -1550,7 +1571,7 @@ showAlert({
   const handleSaveCobrar = async (data: { estado: string }) => {
     if (!cobrarVenta) return;
     try {
-      updateVenta(cobrarVenta.IDventas, { estado: data.estado });
+      updateVentaEstado(cobrarVenta.IDventas, data.estado);
       closeModal();
       setPaymentModalVisible(false);
       setCobrarVenta(null);
