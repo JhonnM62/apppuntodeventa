@@ -33,15 +33,15 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
   const fileName = `Cierre_y_apertura_${day}_de_${monthName}_del_${year}_${hours}_${minutes}_${seconds}.pdf`;
 
   const insumosRows = resumen.insumos?.map((i: any) => `
-    <tr style="page-break-inside: avoid;">
-      <td>${i.nombreReal || i.nombreInsumo}</td>
+    <tr style="page-break-inside: avoid; background-color: ${i.diferencia === 0 ? '#ecfdf5' : '#fef2f2'}; border-left: 4px solid ${i.diferencia === 0 ? '#10b981' : '#ef4444'};">
+      <td style="font-weight: bold; color: #1f2937;">${i.nombreReal || i.nombreInsumo}</td>
       <td>${i.nombreProductoReal !== 'N/A' && i.nombreProductoReal ? i.nombreProductoReal : '-'}</td>
-      <td class="text-center">${i.cantApertura || 0}</td>
-      <td class="text-center">${i.cantDeCierre || 0}</td>
-      <td class="text-center">${i.seUtilizaron || 0}</td>
-      <td class="text-center">${i.ventasEnSistema || 0}</td>
-      <td class="text-center ${i.diferencia < 0 ? 'text-red' : i.diferencia > 0 ? 'text-green' : ''}">
-        ${i.diferencia > 0 ? '+' : ''}${i.diferencia}
+      <td class="text-center">${i.cantApertura !== undefined && i.cantApertura !== null && i.cantApertura !== '' ? i.cantApertura : 0}</td>
+      <td class="text-center">${i.cantDeCierre !== undefined && i.cantDeCierre !== null && i.cantDeCierre !== '' ? i.cantDeCierre : 0}</td>
+      <td class="text-center" style="font-weight: bold; color: #4b5563;">${i.seUtilizaron !== undefined ? i.seUtilizaron : 0}</td>
+      <td class="text-center" style="font-weight: bold; color: #4b5563;">${i.ventasEnSistema !== undefined ? i.ventasEnSistema : 0}</td>
+      <td class="text-center" style="font-weight: 900; color: ${i.diferencia < 0 ? '#dc2626' : i.diferencia > 0 ? '#ea580c' : '#059669'}; font-size: 14px;">
+        ${i.diferencia > 0 ? '+' : ''}${i.diferencia !== undefined ? i.diferencia : 0}
       </td>
     </tr>
   `).join('') || '<tr><td colspan="7" class="text-center">No hay insumos registrados</td></tr>';
@@ -110,7 +110,7 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
         .header { text-align: center; border-bottom: 2px solid #22c55e; padding-bottom: 10px; margin-bottom: 20px; page-break-after: avoid; }
         .header h1 { margin: 0; color: #22c55e; font-size: 24px; }
         .header p { margin: 5px 0; color: #666; font-size: 14px; }
-        .section { margin-bottom: 25px; page-break-inside: avoid; }
+        .section { margin-bottom: 25px; page-break-inside: auto; }
         .section-title { background-color: #f3f4f6; padding: 8px 12px; font-size: 16px; font-weight: bold; border-left: 4px solid #22c55e; margin-bottom: 10px; page-break-after: avoid; }
         table { width: 100%; border-collapse: collapse; font-size: 12px; page-break-inside: auto; }
         tr { page-break-inside: avoid; page-break-after: auto; }
@@ -169,6 +169,14 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
           <tr>
             <td>Total Ventas Sistema</td>
             <td class="text-right">${formatMoney(resumen.resumen.totalVentas || 0)}</td>
+          </tr>
+          <tr>
+            <td style="padding-left: 20px; font-size: 11px; color: #555;">• Repartido en Efectivo</td>
+            <td class="text-right" style="font-size: 11px; color: #555;">${formatMoney(resumen.resumen.totalEfectivo || 0)}</td>
+          </tr>
+          <tr>
+            <td style="padding-left: 20px; font-size: 11px; color: #555;">• Repartido en Transferencias</td>
+            <td class="text-right" style="font-size: 11px; color: #555;">${formatMoney((resumen.resumen.totalTransferencia || 0) + (resumen.resumen.totalNequi || 0))}</td>
           </tr>
           <tr>
             <td>Dinero Retirado (Guardado)</td>
@@ -230,6 +238,16 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
         <div class="observations">${resumen.caja.observaciones}</div>
       </div>
       ` : ''}
+
+      <div class="section" style="margin-top: 30px; font-size: 11px; color: #4b5563; background-color: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed #cbd5e1; page-break-inside: avoid;">
+        <strong style="color: #1f2937; font-size: 13px;">¿Cómo se calculan las operaciones? (Guía de verificación manual)</strong><br/><br/>
+        <b>1. Efectivo Esperado en Caja:</b><br/>
+        (Efectivo de Apertura) + (Ventas en Efectivo del Sistema) - (Dinero Retirado o Guardado) = Efectivo Esperado.<br/><br/>
+        <b>2. Descuadre (Faltante / Sobrante):</b><br/>
+        (Efectivo Físico Contado) - (Efectivo Esperado) = Descuadre.<br/>
+        <i>* Si el resultado es Negativo (Rojo): Falta dinero físicamente en la caja.<br/>
+        * Si el resultado es Positivo (Verde): Sobra dinero físicamente en la caja.</i>
+      </div>
 
     </body>
     </html>

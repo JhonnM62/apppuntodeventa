@@ -572,9 +572,14 @@ export default function CajaFormScreen({ route, navigation }: any) {
         },
         insumos: resumenData.insumos?.map((backendInsumo: any) => {
           // Encontrar el insumo correspondiente en el formulario actual
-          const formInsumo = currentValues.insumos?.find(
-            (fi: any) => fi.Idcierreyapertura === backendInsumo.Idcierreyapertura || fi.nombreInsumo === backendInsumo.nombreInsumo
+          let formInsumo = currentValues.insumos?.find(
+            (fi: any) => fi.Idcierreyapertura && fi.Idcierreyapertura === backendInsumo.Idcierreyapertura
           );
+          if (!formInsumo) {
+            formInsumo = currentValues.insumos?.find(
+              (fi: any) => !fi.Idcierreyapertura && fi.nombreInsumo === backendInsumo.nombreInsumo
+            );
+          }
 
           let cantApertura = 0;
           let cantDeCierre = 0;
