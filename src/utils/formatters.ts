@@ -12,7 +12,14 @@ export const parseCurrency = (val: string): string => {
 
 export const formatDateToReadable = (dateString: string | Date): string => {
   if (!dateString) return '';
-  const date = new Date(dateString);
+  let date: Date;
+  if (typeof dateString === 'string' && dateString.includes('-')) {
+    const datePart = dateString.split('T')[0];
+    const [year, month, day] = datePart.split('-');
+    date = new Date(Number(year), Number(month) - 1, Number(day), 12, 0, 0);
+  } else {
+    date = new Date(dateString);
+  }
   const options: Intl.DateTimeFormatOptions = { 
     weekday: 'long', 
     day: '2-digit', 

@@ -88,6 +88,11 @@ export default function VerifyInsumosModal({
       if (insumosPendientes.length === 0) {
         setInsumos([]);
         setModalState('ALREADY_VERIFIED');
+        if (todasVerificadas) {
+          onVerified();
+        } else {
+          onVerified();
+        }
         return;
       }
       

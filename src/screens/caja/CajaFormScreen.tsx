@@ -208,8 +208,6 @@ export default function CajaFormScreen({ route, navigation }: any) {
     name: 'insumos',
   });
 
-  const insumosActuales = watch('insumos');
-
   const { joinRoom } = useSocket();
 
   useEffect(() => {
@@ -469,7 +467,8 @@ export default function CajaFormScreen({ route, navigation }: any) {
   };
 
   const handleAddInsumo = (insumo: InsumoItem) => {
-    const exists = insumosActuales.find(i => i.nombreInsumo === insumo.IDalimentos);
+    const currentInsumos = getValues('insumos') || [];
+    const exists = currentInsumos.find((i: any) => i.nombreInsumo === insumo.IDalimentos);
     if (!exists) {
       append({
         nombreInsumo: insumo.IDalimentos,
@@ -728,6 +727,14 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+      {saving && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.7)', zIndex: 999, justifyContent: 'center', alignItems: 'center' }}>
+          <View className="bg-white p-6 rounded-2xl shadow-lg items-center" style={{ elevation: 5 }}>
+            <ActivityIndicator size="large" color="#4CAF50" />
+            <Text className="mt-4 font-bold text-gray-800">Procesando guardado...</Text>
+          </View>
+        </View>
+      )}
       <View style={{ backgroundColor: '#4CAF50', paddingTop: insets.top }}>
         <View className="bg-primary flex-row items-center justify-between px-4 py-3 shadow-md" style={{ backgroundColor: '#4CAF50' }}>
           <View className="flex-row items-center flex-1">

@@ -83,7 +83,13 @@ export default function CajaListScreen({ navigation }: any) {
     // Group
     const groups: Record<string, any[]> = {};
     filtered.forEach(c => {
-      const d = new Date(c.fechaDeApertura);
+      let d = new Date(c.fechaDeApertura);
+      if (typeof c.fechaDeApertura === 'string' && c.fechaDeApertura.includes('-')) {
+        const datePart = c.fechaDeApertura.split('T')[0];
+        const [year, month, day] = datePart.split('-');
+        d = new Date(Number(year), Number(month) - 1, Number(day), 12, 0, 0);
+      }
+      
       let monthYear = 'Sin fecha';
       if (!isNaN(d.getTime())) {
         const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
@@ -163,13 +169,13 @@ export default function CajaListScreen({ navigation }: any) {
         className={containerClass}
       >
         {/* Top Row: Date & Status */}
-        <View className="flex-row justify-between items-center mb-3">
-          <View className="flex-row items-center">
+        <View className="flex-row justify-between items-start mb-3">
+          <View className="flex-row items-center flex-1 mr-2">
             <View className={`p-2 rounded-full ${isActiva ? 'bg-green-200' : isDescuadrada ? 'bg-red-200' : 'bg-gray-100'}`}>
               <Ionicons name={isActiva ? "lock-open" : isDescuadrada ? "warning" : "lock-closed"} size={16} color={isActiva ? "#15803d" : isDescuadrada ? "#b91c1c" : "#4b5563"} />
             </View>
-            <View className="ml-2">
-              <Text className="text-gray-900 font-bold text-base capitalize">{formatDateToReadable(item.fechaDeApertura)}</Text>
+            <View className="ml-2 flex-1">
+              <Text className="text-gray-900 font-bold text-base capitalize" numberOfLines={1}>{formatDateToReadable(item.fechaDeApertura)}</Text>
               <Text className="text-gray-500 text-xs mt-0.5">
                 Apertura: {formatTime12h(item.horaDeApertura)} {item.horaDeCierre ? `• Cierre: ${formatTime12h(item.horaDeCierre)}` : ''}
               </Text>
