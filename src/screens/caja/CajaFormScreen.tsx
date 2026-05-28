@@ -1732,7 +1732,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                           <Text className="text-xs font-bold text-gray-700">{prod.cantidad}x {prod.producto}</Text>
                           {prod.notas.map((n: any, nIdx: number) => (
                             <View key={nIdx} className="flex-row items-center ml-2 mt-0.5">
-                              <Text className="text-[11px] text-gray-600">• {n.name || n.nombre || n.Nombre}</Text>
+                              <Text className="text-[11px] text-gray-600">• {n.cantidad || 1}x {n.name || n.nombre || n.Nombre}</Text>
                               {(n.price || n.precio || n.Precio) > 0 && (
                                 <Text className="text-[10px] text-amber-600 font-bold ml-1">
                                   (+{formatCurrency(n.price || n.precio || n.Precio)})

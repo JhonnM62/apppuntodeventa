@@ -48,7 +48,7 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
 
   const notasRows = resumen.notasAnalysis?.map((nota: any) => {
     const notasList = nota.productosConNotas.map((prod: any) => {
-      const notasItems = prod.notas.map((n: any) => `<li>${n.name || n.nombre || n.Nombre} ${(n.price || n.precio || n.Precio) > 0 ? '(+$' + (n.price || n.precio || n.Precio) + ')' : ''}</li>`).join('');
+      const notasItems = prod.notas.map((n: any) => `<li>${n.cantidad || 1}x ${n.name || n.nombre || n.Nombre} ${(n.price || n.precio || n.Precio) > 0 ? '(+$' + (n.price || n.precio || n.Precio) + ')' : ''}</li>`).join('');
       return `<strong>${prod.cantidad}x ${prod.producto}</strong><ul>${notasItems}</ul>`;
     }).join('');
 
