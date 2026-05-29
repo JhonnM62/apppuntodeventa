@@ -1,6 +1,8 @@
 import { Platform, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
+import { getConfiguracionWhatsapp, uploadAndSendCajaWhatsapp } from './../services/configuracion';
+import Constants from 'expo-constants';
 
 export const generateAndShareCajaPDF = async (resumen: any) => {
   let Print: any;
@@ -312,6 +314,28 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
       base64: false,
     });
     
+    // --- INTEGRACIÓN WHATSAPP ---
+    try {
+      const resW = await getConfiguracionWhatsapp();
+      const wConfig = resW.data || resW;
+      
+      if (wConfig?.enabled) {
+        Toast.show({ type: 'info', text1: 'WhatsApp', text2: 'Enviando reporte...' });
+        
+        // Obtener el baseUrl (desde EXPO_PUBLIC_API_URL o la configuracion del backend)
+        const baseUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/api\/v1\/?$/, '') || 'http://192.168.1.100:3000';
+        
+        const captionText = `*REPORTE DE CAJA*\nFecha: ${fechaCierreObj ? fechaCierreObj.toLocaleDateString() : now.toLocaleDateString()}\nEfectivo en Caja: ${formatMoney(resumen.caja.efectivoDeCierre)}\nVentas Totales: ${formatMoney(resumen.resumen?.ventasTotales)}`;
+        
+        await uploadAndSendCajaWhatsapp(uri, fileName, captionText, baseUrl);
+        Toast.show({ type: 'success', text1: 'WhatsApp', text2: 'Reporte enviado con éxito' });
+      }
+    } catch (err) {
+      console.error('Error enviando a WhatsApp:', err);
+      Toast.show({ type: 'error', text1: 'Error WhatsApp', text2: 'No se pudo enviar el reporte por WhatsApp' });
+    }
+    // ----------------------------
+
     if (Platform.OS === 'android') {
       const SAF_DIRECTORY_KEY = '@saf_downloads_directory';
       let directoryUri = await AsyncStorage.getItem(SAF_DIRECTORY_KEY);

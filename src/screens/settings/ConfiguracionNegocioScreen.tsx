@@ -7,7 +7,7 @@ import Toast from 'react-native-toast-message';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getConfiguracion, updateConfiguracion } from '../../services/configuracion';
+import { getConfiguracion, updateConfiguracion, getConfiguracionWhatsapp, updateConfiguracionWhatsapp } from '../../services/configuracion';
 import { getConfiguracionIA, updateConfiguracionIA } from '../../services/api';
 
 type Props = {
@@ -28,6 +28,16 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     temperatura: '0.4',
     maxTokens: '2048',
     isActive: true
+  });
+
+  // Estados para Whatsapp
+  const [whatsappConfig, setWhatsappConfig] = useState({
+    enabled: false,
+    urlBase: '',
+    sessionId: '',
+    token: '',
+    receiver: '',
+    isGroup: false,
   });
   
   // Para el Time Picker
@@ -52,9 +62,10 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const fetchConfig = async () => {
     try {
       setLoading(true);
-      const [resNegocio, resIA] = await Promise.all([
+      const [resNegocio, resIA, resWhatsapp] = await Promise.all([
         getConfiguracion(),
-        getConfiguracionIA()
+        getConfiguracionIA(),
+        getConfiguracionWhatsapp()
       ]);
 
       const dataNegocio = resNegocio.data ? resNegocio.data : resNegocio;
@@ -81,6 +92,18 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           isActive: dataIA.isActive ?? true
         });
       }
+
+      const dataWhatsapp = resWhatsapp.data ? resWhatsapp.data : resWhatsapp;
+      if (dataWhatsapp) {
+        setWhatsappConfig({
+          enabled: dataWhatsapp.enabled ?? false,
+          urlBase: dataWhatsapp.urlBase || '',
+          sessionId: dataWhatsapp.sessionId || '',
+          token: dataWhatsapp.token || '',
+          receiver: dataWhatsapp.receiver || '',
+          isGroup: dataWhatsapp.isGroup ?? false,
+        });
+      }
     } catch (error) {
       console.error(error);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cargar la configuración' });
@@ -100,6 +123,14 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           temperatura: parseFloat(iaConfig.temperatura),
           maxTokens: parseInt(iaConfig.maxTokens, 10),
           isActive: iaConfig.isActive
+        }),
+        updateConfiguracionWhatsapp({
+          enabled: whatsappConfig.enabled,
+          urlBase: whatsappConfig.urlBase,
+          sessionId: whatsappConfig.sessionId,
+          token: whatsappConfig.token,
+          receiver: whatsappConfig.receiver,
+          isGroup: whatsappConfig.isGroup,
         })
       ]);
       Toast.show({ type: 'success', text1: 'Éxito', text2: 'Configuración guardada correctamente' });
@@ -275,6 +306,85 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             </View>
           </View>
 
+        </View>
+
+        {/* NOTIFICACIONES WHATSAPP */}
+        <View style={[styles.card, { marginTop: 20, borderColor: '#dcfce7', borderWidth: 1 }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={[styles.iaIconContainer, { backgroundColor: '#dcfce7' }]}>
+                <Ionicons name="logo-whatsapp" size={20} color="#16a34a" />
+              </View>
+              <Text style={[styles.sectionTitleIA, { color: '#16a34a' }]}>
+                Notificaciones WhatsApp
+              </Text>
+            </View>
+            <Switch
+              value={whatsappConfig.enabled}
+              onValueChange={(val) => setWhatsappConfig({...whatsappConfig, enabled: val})}
+              trackColor={{ false: '#d1d5db', true: '#bbf7d0' }}
+              thumbColor={whatsappConfig.enabled ? '#16a34a' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={[styles.infoCardIA, { backgroundColor: '#f0fdf4' }]}>
+            <Ionicons name="information-circle" size={24} color="#16a34a" />
+            <Text style={[styles.infoTextIA, { color: '#15803d' }]}>
+              Activa esta opción para que al generar un reporte de caja, se envíe automáticamente en PDF vía WhatsApp usando la API configurada (Ej. Evolution API).
+            </Text>
+          </View>
+
+          <Text style={styles.label}>URL Base de la API</Text>
+          <TextInput
+            style={styles.input}
+            value={whatsappConfig.urlBase}
+            onChangeText={(text) => setWhatsappConfig({...whatsappConfig, urlBase: text})}
+            placeholder="http://192.168.1.100:8080"
+            autoCapitalize="none"
+          />
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={styles.label}>Session ID</Text>
+              <TextInput
+                style={styles.input}
+                value={whatsappConfig.sessionId}
+                onChangeText={(text) => setWhatsappConfig({...whatsappConfig, sessionId: text})}
+                placeholder="default"
+                autoCapitalize="none"
+              />
+            </View>
+            <View style={{ flex: 1, marginLeft: 8 }}>
+              <Text style={styles.label}>Teléfono Destino</Text>
+              <TextInput
+                style={styles.input}
+                value={whatsappConfig.receiver}
+                onChangeText={(text) => setWhatsappConfig({...whatsappConfig, receiver: text.replace(/[^0-9@g.us]/g, '')})}
+                keyboardType="default"
+                placeholder="573001234567"
+              />
+            </View>
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, marginBottom: 8 }}>
+            <Text style={[styles.label, { flex: 1, marginTop: 0 }]}>¿El destino es un Grupo?</Text>
+            <Switch
+              value={whatsappConfig.isGroup}
+              onValueChange={(val) => setWhatsappConfig({...whatsappConfig, isGroup: val})}
+              trackColor={{ false: '#d1d5db', true: '#bbf7d0' }}
+              thumbColor={whatsappConfig.isGroup ? '#16a34a' : '#f3f4f6'}
+            />
+          </View>
+
+          <Text style={styles.label}>Token (x-access-token)</Text>
+          <TextInput
+            style={styles.input}
+            value={whatsappConfig.token}
+            onChangeText={(text) => setWhatsappConfig({...whatsappConfig, token: text})}
+            placeholder="eyJhbGciOiJIUzI1NiIs..."
+            secureTextEntry={true}
+            autoCapitalize="none"
+          />
         </View>
 
       </ScrollView>
