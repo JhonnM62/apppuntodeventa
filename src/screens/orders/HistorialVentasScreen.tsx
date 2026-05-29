@@ -37,6 +37,7 @@ const TABS = [
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { usePermissions } from '../../hooks/usePermissions';
 import AdminSaleFormModal from './AdminSaleFormModal';
+import { useProductStore } from '../../store/useProductStore';
 
 export default function HistorialVentasScreen({ navigation }: any) {
   const { canCreate, canEdit, canDelete } = usePermissions('historial_ventas');
@@ -60,6 +61,7 @@ export default function HistorialVentasScreen({ navigation }: any) {
     fechaHasta?: string;
     totalMin?: string;
     totalMax?: string;
+    categoriaProducto?: string;
   }>({});
   const [tempFilters, setTempFilters] = useState(activeFilters);
   const isFilterActive = Object.values(activeFilters).some(v => v !== undefined && v !== '');
@@ -111,6 +113,8 @@ export default function HistorialVentasScreen({ navigation }: any) {
   const [statsHoy, setStatsHoy] = useState<{ total: number; count: number; efectivo: number; transferencias: number }>({ total: 0, count: 0, efectivo: 0, transferencias: 0 });
   const [statsProducts, setStatsProducts] = useState<Record<string, Record<string, { cantidad: number, total: number }>>>({});
   const [productsModalVisible, setProductsModalVisible] = useState(false);
+
+  const productCategorias = useProductStore((state) => state.categorias);
 
   // Sockets
   const { joinRoom, isConnected } = useSocket();
@@ -211,8 +215,35 @@ export default function HistorialVentasScreen({ navigation }: any) {
         ...currentFilters
       });
 
-      const newData = response.data || [];
+      let newData = response.data || [];
       const meta = response.meta || {};
+
+      // Sort intelligently based on search matches
+      if (search) {
+        const searchLower = search.toLowerCase();
+        const parsedNum = parseFloat(search.replace(/[^\d]/g, ''));
+        const isNum = !isNaN(parsedNum) && parsedNum > 0 && search.replace(/[^\d.]/g, '').length > 0;
+
+        newData.sort((a: any, b: any) => {
+          let scoreA = 0;
+          let scoreB = 0;
+
+          if (isNum) {
+            if (a.totalInput === parsedNum) scoreA += 100;
+            if (b.totalInput === parsedNum) scoreB += 100;
+            if (a.ordenVentas?.some((p: any) => p.precioTotal === parsedNum || p.precio === parsedNum)) scoreA += 50;
+            if (b.ordenVentas?.some((p: any) => p.precioTotal === parsedNum || p.precio === parsedNum)) scoreB += 50;
+          }
+
+          if (a.ordenVentas?.some((p: any) => p.nombre?.toLowerCase() === searchLower || p.nombreProducto?.toLowerCase() === searchLower)) scoreA += 80;
+          if (b.ordenVentas?.some((p: any) => p.nombre?.toLowerCase() === searchLower || p.nombreProducto?.toLowerCase() === searchLower)) scoreB += 80;
+
+          if (a.ordenVentas?.some((p: any) => p.nombre?.toLowerCase().includes(searchLower) || p.nombreProducto?.toLowerCase().includes(searchLower))) scoreA += 40;
+          if (b.ordenVentas?.some((p: any) => p.nombre?.toLowerCase().includes(searchLower) || p.nombreProducto?.toLowerCase().includes(searchLower))) scoreB += 40;
+
+          return scoreB - scoreA;
+        });
+      }
 
       setCache(prev => ({
         ...prev,
@@ -1372,6 +1403,30 @@ export default function HistorialVentasScreen({ navigation }: any) {
                   >
                     <Text className={`text-xs font-bold ${tempFilters.estado === estado ? 'text-indigo-700' : 'text-gray-600'}`}>
                       {estado.replace(/_/g, ' ')}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Categoria */}
+              <Text className="text-gray-800 font-bold mb-2">Categoría de Producto</Text>
+              <View className="flex-row flex-wrap gap-2 mb-5">
+                <TouchableOpacity
+                  onPress={() => setTempFilters(prev => ({ ...prev, categoriaProducto: undefined }))}
+                  className={`px-3 py-2 rounded-lg border ${!tempFilters.categoriaProducto ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-300'}`}
+                >
+                  <Text className={`text-xs font-bold ${!tempFilters.categoriaProducto ? 'text-indigo-700' : 'text-gray-600'}`}>
+                    Todas
+                  </Text>
+                </TouchableOpacity>
+                {productCategorias?.map(cat => (
+                  <TouchableOpacity
+                    key={cat}
+                    onPress={() => setTempFilters(prev => ({ ...prev, categoriaProducto: prev.categoriaProducto === cat ? undefined : cat }))}
+                    className={`px-3 py-2 rounded-lg border ${tempFilters.categoriaProducto === cat ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-300'}`}
+                  >
+                    <Text className={`text-xs font-bold ${tempFilters.categoriaProducto === cat ? 'text-indigo-700' : 'text-gray-600'}`}>
+                      {cat}
                     </Text>
                   </TouchableOpacity>
                 ))}

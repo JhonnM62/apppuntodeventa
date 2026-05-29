@@ -15,6 +15,7 @@ import { Text } from '../../components/ui/text';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import useCartStore from '../../store/useCartStore';
 import useAuthStore from '../../store/useAuthStore';
+import { useProductStore } from '../../store/useProductStore';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 
@@ -93,6 +94,7 @@ interface FilterState {
   maxTotal: string;
   pedidoNumero: string;
   cliente: string;
+  categoriaProducto: string;
 }
 
 type SectionData = {
@@ -127,12 +129,15 @@ const PedidosScreen = () => {
     maxTotal: '',
     pedidoNumero: '',
     cliente: '',
+    categoriaProducto: '',
   });
 
   const { joinRoom, isConnected } = useSocket();
   const { emitOrdenActualizada } = useSocketEmitter();
   const { user } = useAuthStore();
   const isAdminApp = user?.rol === 'Admin app';
+
+  const productCategorias = useProductStore((state) => state.categorias);
 
   const [selectedToDelete, setSelectedToDelete] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
@@ -231,14 +236,28 @@ const PedidosScreen = () => {
 
     if (filters.searchText) {
       const searchLower = filters.searchText.toLowerCase();
-      filtered = filtered.filter(v =>
-        (v.pedido?.toLowerCase().includes(searchLower)) ||
-        (v.cliente?.toLowerCase().includes(searchLower)) ||
-        (v.mesa?.toLowerCase().includes(searchLower)) ||
-        (v.medioDePago?.toLowerCase().includes(searchLower)) ||
-        (v.usuarioRelacion?.nombre?.toLowerCase().includes(searchLower)) ||
-        (v.direccion?.toLowerCase().includes(searchLower))
-      );
+      const parsedNum = parseFloat(filters.searchText.replace(/[^\d]/g, ''));
+      const isNum = !isNaN(parsedNum) && parsedNum > 0 && filters.searchText.replace(/[^\d.]/g, '').length > 0;
+
+      filtered = filtered.filter(v => {
+        const textMatch = 
+          (v.pedido?.toLowerCase().includes(searchLower)) ||
+          (v.cliente?.toLowerCase().includes(searchLower)) ||
+          (v.mesa?.toLowerCase().includes(searchLower)) ||
+          (v.medioDePago?.toLowerCase().includes(searchLower)) ||
+          (v.usuarioRelacion?.nombre?.toLowerCase().includes(searchLower)) ||
+          (v.direccion?.toLowerCase().includes(searchLower)) ||
+          (v.ordenVentas?.some(prod => prod.nombre?.toLowerCase().includes(searchLower) || prod.nombreProducto?.toLowerCase().includes(searchLower)));
+
+        if (isNum) {
+          const numMatch = 
+            (v.totalInput === parsedNum) ||
+            (v.numeroTelefono === parsedNum) ||
+            (v.ordenVentas?.some(prod => prod.precioTotal === parsedNum || prod.precio === parsedNum));
+          return textMatch || numMatch;
+        }
+        return textMatch;
+      });
     }
 
     if (filters.pedidoNumero) {
@@ -293,6 +312,42 @@ const PedidosScreen = () => {
       if (!isNaN(max)) {
         filtered = filtered.filter(v => (v.totalInput || 0) <= max);
       }
+    }
+
+    if (filters.categoriaProducto) {
+      filtered = filtered.filter(v => 
+        v.ordenVentas?.some(prod => prod.categoriaProducto === filters.categoriaProducto || prod.categoria === filters.categoriaProducto)
+      );
+    }
+
+    // Sort intelligently based on searchText exact matches
+    if (filters.searchText) {
+      const searchLower = filters.searchText.toLowerCase();
+      const parsedNum = parseFloat(filters.searchText.replace(/[^\d]/g, ''));
+      const isNum = !isNaN(parsedNum) && parsedNum > 0 && filters.searchText.replace(/[^\d.]/g, '').length > 0;
+
+      filtered.sort((a, b) => {
+        let scoreA = 0;
+        let scoreB = 0;
+
+        // Num matches give highest priority
+        if (isNum) {
+          if (a.totalInput === parsedNum) scoreA += 100;
+          if (b.totalInput === parsedNum) scoreB += 100;
+          if (a.ordenVentas?.some(p => p.precioTotal === parsedNum || p.precio === parsedNum)) scoreA += 50;
+          if (b.ordenVentas?.some(p => p.precioTotal === parsedNum || p.precio === parsedNum)) scoreB += 50;
+        }
+
+        // Product name exact matches
+        if (a.ordenVentas?.some(p => p.nombre?.toLowerCase() === searchLower || p.nombreProducto?.toLowerCase() === searchLower)) scoreA += 80;
+        if (b.ordenVentas?.some(p => p.nombre?.toLowerCase() === searchLower || p.nombreProducto?.toLowerCase() === searchLower)) scoreB += 80;
+        
+        // Product name includes
+        if (a.ordenVentas?.some(p => p.nombre?.toLowerCase().includes(searchLower) || p.nombreProducto?.toLowerCase().includes(searchLower))) scoreA += 40;
+        if (b.ordenVentas?.some(p => p.nombre?.toLowerCase().includes(searchLower) || p.nombreProducto?.toLowerCase().includes(searchLower))) scoreB += 40;
+
+        return scoreB - scoreA; // Highest score first
+      });
     }
 
     return filtered;
@@ -464,6 +519,7 @@ showAlert({
       maxTotal: '',
       pedidoNumero: '',
       cliente: '',
+      categoriaProducto: '',
     });
     setIsFiltering(false);
     setFilterModalVisible(false);
@@ -1303,6 +1359,33 @@ showAlert({
                 >
                   <RNText style={[styles.chipText, filters.mediosDePago.includes(medio) && styles.chipTextActive]}>
                     {medio}
+                  </RNText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+
+
+          <View style={styles.filterSection}>
+            <RNText style={styles.filterSectionTitle}>CATEGORÍA DE PRODUCTO</RNText>
+            <View style={styles.chipsContainer}>
+              <TouchableOpacity
+                style={[styles.chip, !filters.categoriaProducto && styles.chipActive]}
+                onPress={() => setFilters(prev => ({ ...prev, categoriaProducto: '' }))}
+              >
+                <RNText style={[styles.chipText, !filters.categoriaProducto && styles.chipTextActive]}>
+                  Todas
+                </RNText>
+              </TouchableOpacity>
+              {productCategorias?.map(cat => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[styles.chip, filters.categoriaProducto === cat && styles.chipActive]}
+                  onPress={() => setFilters(prev => ({ ...prev, categoriaProducto: prev.categoriaProducto === cat ? '' : cat }))}
+                >
+                  <RNText style={[styles.chipText, filters.categoriaProducto === cat && styles.chipTextActive]}>
+                    {cat}
                   </RNText>
                 </TouchableOpacity>
               ))}

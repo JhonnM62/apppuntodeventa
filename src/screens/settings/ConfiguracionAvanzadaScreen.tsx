@@ -21,7 +21,7 @@ export default function ConfiguracionAvanzadaScreen() {
   const { primaryColor, fontScale, setPrimaryColor, setFontScale, resetSettings } = useSettingsStore();
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'bottom']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }} edges={['top', 'bottom']}>
       {/* Header */}
       <View style={{ backgroundColor: primaryColor }} className="px-4 py-4 flex-row items-center justify-between shadow-sm z-10">
         <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 rounded-full">
@@ -31,10 +31,13 @@ export default function ConfiguracionAvanzadaScreen() {
         <View className="w-10" />
       </View>
 
-      <ScrollView className="flex-1 p-5">
+      <ScrollView 
+        style={{ flex: 1 }} 
+        contentContainerStyle={{ flexGrow: 1, padding: 20, paddingBottom: 100 }}
+      >
         
         {/* Sección: Color Principal */}
-        <View className="bg-white p-5 rounded-2xl shadow-sm mb-6">
+        <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 16, marginBottom: 24 }}>
           <Text className="text-lg font-bold mb-1 text-gray-800">Color Principal</Text>
           <Text className="text-gray-500 mb-4 text-sm">Elige el color dominante para botones y cabeceras de la aplicación.</Text>
           
@@ -56,7 +59,7 @@ export default function ConfiguracionAvanzadaScreen() {
         </View>
 
         {/* Sección: Tamaño de Fuente */}
-        <View className="bg-white p-5 rounded-2xl shadow-sm mb-6">
+        <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 16, marginBottom: 24 }}>
           <Text className="text-lg font-bold mb-1 text-gray-800">Tamaño de Fuente (Escala)</Text>
           <Text className="text-gray-500 mb-4 text-sm">Ajusta el tamaño global de los textos.</Text>
           

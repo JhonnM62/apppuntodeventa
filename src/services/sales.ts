@@ -85,6 +85,7 @@ export const getSales = async (params?: {
   search?: string;
   totalMin?: string;
   totalMax?: string;
+  categoriaProducto?: string;
 }) => {
   const response = await api.get('/ventas', { params });
   
