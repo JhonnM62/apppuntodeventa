@@ -13,6 +13,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast, { BaseToast, ErrorToast, ToastConfig } from 'react-native-toast-message';
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 import { CustomAlertProvider } from './src/context/CustomAlertContext';
+import { useGlobalSalesSync } from './src/hooks/useGlobalSalesSync';
 
 let BLEPrinter: any = null;
 try {
@@ -27,6 +28,9 @@ function AppInitializer({ children }: { children: React.ReactNode }) {
   const shouldRefetch = useProductStore((state) => state.shouldRefetch);
   const productos = useProductStore((state) => state.productos);
   const [isReady, setIsReady] = useState(false);
+
+  // Initialize global sales sync for sockets and background fetching
+  useGlobalSalesSync();
 
   // Auto-connect printer state
   const { currentPrinter, isConnected, setConnected } = usePrinterStore();

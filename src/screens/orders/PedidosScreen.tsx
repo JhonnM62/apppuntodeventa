@@ -203,46 +203,6 @@ const PedidosScreen = () => {
     fetchVentas();
   }, []);
 
-  const hasJoinedRoom = useRef(false);
-
-  useEffect(() => {
-    if (isConnected && !hasJoinedRoom.current) {
-      hasJoinedRoom.current = true;
-      joinRoom(Room.KITCHEN);
-    }
-  }, [isConnected, joinRoom]);
-
-  const handleOrdenRecibida = useCallback((data: any) => {
-    console.log('[PedidosScreen] Orden recibida via socket:', JSON.stringify(data)?.slice(0, 200));
-    if (data) {
-      if (data.ventaId && data.venta) {
-        const ventaConProductos = { ...data.venta, ordenVentas: data.productos };
-        addVenta(ventaConProductos);
-      } else if (data.IDventas) {
-        addVenta(data);
-      }
-      forceFetchRef.current();
-    }
-  }, [addVenta]);
-
-  const handleOrdenActualizada = useCallback((data: any) => {
-    console.log('[PedidosScreen] Orden actualizada via socket:', JSON.stringify(data)?.slice(0, 200));
-    if (data) {
-      if (data.IDventas) {
-        updateVenta(data.IDventas, data);
-      } else if (data.ventaId) {
-        updateVenta(data.ventaId, data);
-      }
-      forceFetchRef.current();
-    }
-  }, [updateVenta]);
-
-  useSocketEvent('nuevaOrden', handleOrdenRecibida, []);
-  useSocketEvent('ordenRecibida', handleOrdenRecibida, []);
-  useSocketEvent('ordenActualizadaKitchen', handleOrdenActualizada, []);
-  useSocketEvent('ordenActualizadaCaja', handleOrdenActualizada, []);
-  useSocketEvent('ordenActualizada', handleOrdenActualizada, []);
-  useSocketEvent(SocketEvent.REFRESH_VENTAS, handleOrdenActualizada, []);
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;

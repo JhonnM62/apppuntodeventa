@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList } from '@shopify/flash-list';
@@ -160,7 +160,12 @@ const MesasScreen = ({ navigation }: any) => {
           style={styles.modalOverlay} 
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <View style={styles.modalContent}>
+          <ScrollView 
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end', paddingBottom: 32 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{isEditing ? 'Editar Mesa' : 'Nueva Mesa'}</Text>
               <TouchableOpacity onPress={() => setFormModalVisible(false)} style={styles.closeBtn}>
@@ -192,6 +197,7 @@ const MesasScreen = ({ navigation }: any) => {
               )}
             </TouchableOpacity>
           </View>
+          </ScrollView>
         </KeyboardAvoidingView>
       </Modal>
 
