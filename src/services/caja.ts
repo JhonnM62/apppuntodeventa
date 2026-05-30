@@ -155,6 +155,16 @@ export const eliminarConteo = async (cajaId: string, insumoId: string, conteoInd
 };
 
 export const editarConteo = async (cajaId: string, insumoId: string, conteoIndex: number, cantContada: number) => {
-  const response = await api.patch(`/caja/${cajaId}/insumo/${insumoId}/conteo/${conteoIndex}`, { cantContada });
-  return response.data;
+  const { data } = await api.patch(`/caja/${cajaId}/insumo/${insumoId}/conteo/${conteoIndex}`, { cantContada });
+  return data;
+};
+
+export const getAutoCuadrePreview = async (cajaId: string) => {
+  const { data } = await api.post(`/caja/${cajaId}/auto-cuadre/preview`);
+  return data;
+};
+
+export const executeAutoCuadre = async (cajaId: string, planIA: any) => {
+  const { data } = await api.post(`/caja/${cajaId}/auto-cuadre/execute`, planIA);
+  return data;
 };

@@ -25,6 +25,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import VerifyInsumosModal from '../../components/caja/VerifyInsumosModal';
+import AutoCuadrePreviewModal from '../../components/caja/AutoCuadrePreviewModal';
 import { cn } from '../../lib/utils';
 
 const { width } = Dimensions.get('window');
@@ -101,6 +102,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [resumenData, setResumenData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'form' | 'analysis' | 'cuadre'>('form');
   const [horaCongelada, _setHoraCongelada] = useState<string | null>(null);
+  const [isAutoCuadreModalVisible, setIsAutoCuadreModalVisible] = useState(false);
 
   const setHoraCongelada = async (hora: string | null) => {
     _setHoraCongelada(hora);
@@ -124,7 +126,8 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const pendingSaveRef = useRef<{ data: any, isFinalClose: boolean } | null>(null);
 
   const handleTabChange = (tab: 'form' | 'analysis' | 'cuadre') => {
-    if ((tab === 'cuadre' || tab === 'analysis') && !isNew && !verificacionCompletada) {
+    const isCerrada = resumenData?.caja?.cierre?.toLowerCase() === 'cerrada';
+    if ((tab === 'cuadre' || tab === 'analysis') && !isNew && !verificacionCompletada && !isCerrada) {
       setPendingTab(tab);
       setVerifyModalVisible(true);
     } else {
@@ -298,6 +301,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
           if (resumen.caja && resumen.caja.horaCongelada) {
             _setHoraCongelada(resumen.caja.horaCongelada);
+          }
+
+          if (resumen.caja && resumen.caja.cierre?.toLowerCase() === 'cerrada') {
+            setVerificacionCompletada(true);
           }
 
           const { caja, insumos } = resumen;
@@ -832,6 +839,25 @@ export default function CajaFormScreen({ route, navigation }: any) {
               </TouchableOpacity>
             </View>
         </View>
+      )}
+
+      <VerifyInsumosModal
+        visible={verifyModalVisible}
+        cajaId={cajaId}
+        onSuccess={handleVerificationPassed}
+        onCancel={handleVerificationCancelled}
+      />
+
+      {cajaId && isAutoCuadreModalVisible && (
+        <AutoCuadrePreviewModal
+          visible={isAutoCuadreModalVisible}
+          cajaId={cajaId}
+          onSuccess={() => {
+            setIsAutoCuadreModalVisible(false);
+            fetchInitialData();
+          }}
+          onCancel={() => setIsAutoCuadreModalVisible(false)}
+        />
       )}
 
       <Modal
@@ -1491,7 +1517,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 </View>
 
                 {!isCuadrada && (
-                  <View className="bg-white/60 p-3 rounded-lg mt-2">
+                  <View className="bg-white/60 p-3 rounded-lg mt-2 mb-3">
                     <Text className="text-red-800 font-bold text-xs mb-2 uppercase text-center">Detalle de Diferencias</Text>
                     {diffEfectivo !== 0 && <Text className="text-red-700 text-xs text-center">Efectivo: {diffEfectivo > 0 ? '+' : ''}{formatCurrency(diffEfectivo)}</Text>}
                     {diffTrans !== 0 && <Text className="text-red-700 text-xs text-center mt-1">Transferencias: {diffTrans > 0 ? '+' : ''}{formatCurrency(diffTrans)}</Text>}
@@ -1502,7 +1528,17 @@ export default function CajaFormScreen({ route, navigation }: any) {
                   </View>
                 )}
 
-                <View className="flex-row justify-between mt-5 w-full">
+                {!isCuadrada && isAdmin && !isReadOnly && (
+                  <TouchableOpacity
+                    className="bg-purple-600 py-3 rounded-xl items-center flex-row justify-center mb-4 shadow-sm shadow-purple-200"
+                    onPress={() => setIsAutoCuadreModalVisible(true)}
+                  >
+                    <Ionicons name="sparkles" size={18} color="#fff" />
+                    <Text className="text-white font-bold ml-2 text-xs uppercase tracking-wide">Auto-Cuadre con IA</Text>
+                  </TouchableOpacity>
+                )}
+
+                <View className="flex-row justify-between w-full">
                     <TouchableOpacity
                       className="flex-1 bg-white border border-gray-300 py-3 rounded-xl mr-2 items-center justify-center"
                       onPress={() => {
@@ -1530,7 +1566,19 @@ export default function CajaFormScreen({ route, navigation }: any) {
                             ? `Corte: ${new Date(horaCongelada).toLocaleString('es-CO')}`
                             : `${new Date().toLocaleString('es-CO')}`;
 
-                          const cuadreText = `\n\n--- ARQUEO PARCIAL (${timestampArqueo}) ---${rangoInfo}\nEFECTIVO FÍSICO: ${formatCurrency(efectivoContado)} (Dif: ${formatCurrency(diffEfectivo)})\nTRANSFERENCIAS: ${formatCurrency(transContadas)} (Dif: ${formatCurrency(diffTrans)})\nESTADO: ${isCuadrada ? 'CUADRADA' : 'NO CUADRADA (DIFERENCIA TOTAL: ' + formatCurrency(totalDiff) + ')'}\n----------------------`;
+                          let insumosInfo = '';
+                          if (resumenData?.insumos && resumenData.insumos.length > 0) {
+                            const insumosDescuadrados = resumenData.insumos.filter((ins: any) => ins.diferencia !== 0);
+                            if (insumosDescuadrados.length > 0) {
+                              insumosInfo = '\\nINSUMOS DESCUADRADOS:\\n' + insumosDescuadrados.map((ins: any) => 
+                                `- ${ins.nombreReal || ins.nombreInsumo}: ${ins.diferencia > 0 ? '+' : ''}${ins.diferencia} ${ins.diferencia < 0 ? '(Faltan)' : '(Sobran)'}`
+                              ).join('\\n');
+                            } else {
+                              insumosInfo = '\\nINSUMOS: Todos cuadrados perfectamente.';
+                            }
+                          }
+
+                          const cuadreText = `\\n\\n--- ARQUEO PARCIAL (${timestampArqueo}) ---${rangoInfo}\\nEFECTIVO FÍSICO: ${formatCurrency(efectivoContado)} (Dif: ${formatCurrency(diffEfectivo)})\\nTRANSFERENCIAS: ${formatCurrency(transContadas)} (Dif: ${formatCurrency(diffTrans)})\\nESTADO: ${isCuadrada ? 'CUADRADA' : 'NO CUADRADA (DIFERENCIA TOTAL: ' + formatCurrency(totalDiff) + ')'}${insumosInfo}\\n----------------------`;
                           setValue('observaciones', currentObs + cuadreText);
 
                           handleSubmit((data) => onSave(data, false), onError)();
@@ -1552,7 +1600,20 @@ export default function CajaFormScreen({ route, navigation }: any) {
                           confirmText: 'Sí, Cerrar Caja',
                           onConfirm: () => {
                             const currentObs = watch('observaciones') || '';
-                            const cuadreText = `\n\n--- CIERRE DEFINITIVO (${new Date().toLocaleString('es-CO')}) ---\nEFECTIVO FÍSICO: ${formatCurrency(efectivoContado)} (Dif: ${formatCurrency(diffEfectivo)})\nTRANSFERENCIAS: ${formatCurrency(transContadas)} (Dif: ${formatCurrency(diffTrans)})\nESTADO: ${isCuadrada ? 'CUADRADA' : 'NO CUADRADA'}\n----------------------`;
+                            
+                            let insumosInfoCierre = '';
+                            if (resumenData?.insumos && resumenData.insumos.length > 0) {
+                              const insumosDescuadrados = resumenData.insumos.filter((ins: any) => ins.diferencia !== 0);
+                              if (insumosDescuadrados.length > 0) {
+                                insumosInfoCierre = '\\nINSUMOS DESCUADRADOS:\\n' + insumosDescuadrados.map((ins: any) => 
+                                  `- ${ins.nombreReal || ins.nombreInsumo}: ${ins.diferencia > 0 ? '+' : ''}${ins.diferencia} ${ins.diferencia < 0 ? '(Faltan)' : '(Sobran)'}`
+                                ).join('\\n');
+                              } else {
+                                insumosInfoCierre = '\\nINSUMOS: Todos cuadrados perfectamente.';
+                              }
+                            }
+
+                            const cuadreText = `\\n\\n--- CIERRE DEFINITIVO (${new Date().toLocaleString('es-CO')}) ---\\nEFECTIVO FÍSICO: ${formatCurrency(efectivoContado)} (Dif: ${formatCurrency(diffEfectivo)})\\nTRANSFERENCIAS: ${formatCurrency(transContadas)} (Dif: ${formatCurrency(diffTrans)})\\nESTADO: ${isCuadrada ? 'CUADRADA' : 'NO CUADRADA'}${insumosInfoCierre}\\n----------------------`;
                             setValue('observaciones', currentObs + cuadreText);
                             handleSubmit((data) => onSave(data, true), onError)();
                           },
