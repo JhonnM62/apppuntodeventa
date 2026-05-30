@@ -160,11 +160,11 @@ export const editarConteo = async (cajaId: string, insumoId: string, conteoIndex
 };
 
 export const getAutoCuadrePreview = async (cajaId: string) => {
-  const { data } = await api.post(`/caja/${cajaId}/auto-cuadre/preview`);
+  const { data } = await api.post(`/caja/${cajaId}/auto-cuadre/preview`, {}, { timeout: 30000 });
   return data;
 };
 
 export const executeAutoCuadre = async (cajaId: string, planIA: any) => {
-  const { data } = await api.post(`/caja/${cajaId}/auto-cuadre/execute`, planIA);
+  const { data } = await api.post(`/caja/${cajaId}/auto-cuadre/execute`, planIA, { timeout: 30000 });
   return data;
 };

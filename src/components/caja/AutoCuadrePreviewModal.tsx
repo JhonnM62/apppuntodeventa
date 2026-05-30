@@ -161,11 +161,11 @@ export default function AutoCuadrePreviewModal({
                       </View>
                       <Text className="text-xs text-gray-600">
                         {accion.action === 'remove_product' 
-                          ? `Quitar ${accion.cantidadARemover} unidad(es) en Orden #${accion.ordenId}`
+                          ? `Quitar ${accion.cantidadARemover} unidad(es) de ${accion.nombreProducto || 'Producto'} en Orden #${accion.ordenId}`
                           : `Pasar Venta #${accion.ventaId} a ${accion.method}`}
                       </Text>
                       <Text className="text-xs text-gray-500 italic mt-1 font-medium text-amber-700">
-                        Por qué: {accion.reason}
+                        Por qué: {accion.motivo || accion.reason}
                       </Text>
                     </View>
                   ))}
