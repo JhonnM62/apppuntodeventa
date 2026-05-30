@@ -844,7 +844,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
       <VerifyInsumosModal
         visible={verifyModalVisible}
         cajaId={cajaId}
-        onSuccess={handleVerificationPassed}
+        onVerified={handleVerificationPassed}
         onCancel={handleVerificationCancelled}
       />
 
