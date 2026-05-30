@@ -31,22 +31,43 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
   const [medioDePago, setMedioDePago] = useState('EFECTIVO');
   const [cart, setCart] = useState<any[]>([]);
 
+  // Add Modifier State
+  const [modifiersModalVisible, setModifiersModalVisible] = useState(false);
+  const [selectedCartItemId, setSelectedCartItemId] = useState<number | null>(null);
+  const [modifierSearchQuery, setModifierSearchQuery] = useState('');
+  const [comentariosDb, setComentariosDb] = useState<any[]>([]);
+
   useEffect(() => {
     if (visible) {
       fetchProducts();
+      fetchComentarios();
       if (isEdit && saleData) {
         setFechaManual(saleData.fecha ? new Date(saleData.fecha) : new Date());
         setEstado(saleData.estado || 'PAGADO');
         setMedioDePago(saleData.medioDePago || 'EFECTIVO');
         
         if (saleData.ordenVentas) {
-          setCart(saleData.ordenVentas.map((ov: any) => ({
-            productoId: ov.productoId || ov.IDorderventas, // fallback if productoId is null
-            nombre: ov.nombre || ov.nombreProducto,
-            precio: Number(ov.precio || 0),
-            cantidad: Number(ov.cantidad || 1),
-            categoria: ov.categoria || ov.categoriaProducto || 'OTROS'
-          })));
+          setCart(saleData.ordenVentas.map((ov: any) => {
+            let parsedModifiers: any[] = [];
+            if (ov.comentarios) {
+              try {
+                parsedModifiers = JSON.parse(ov.comentarios);
+                if (!Array.isArray(parsedModifiers)) {
+                  parsedModifiers = [{ name: ov.comentarios, price: 0 }];
+                }
+              } catch (e) {
+                parsedModifiers = [{ name: ov.comentarios, price: 0 }];
+              }
+            }
+            return {
+              productoId: ov.productoId || ov.IDorderventas, // fallback if productoId is null
+              nombre: ov.nombre || ov.nombreProducto,
+              precio: Number(ov.precio || 0),
+              cantidad: Number(ov.cantidad || 1),
+              categoria: ov.categoria || ov.categoriaProducto || 'OTROS',
+              modifiers: parsedModifiers
+            };
+          }));
         }
       } else {
         setFechaManual(new Date());
@@ -63,6 +84,15 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
       setProducts(res.data || []);
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const fetchComentarios = async () => {
+    try {
+      const response = await api.get('/comentarios');
+      setComentariosDb(Array.isArray(response.data) ? response.data : (response.data.data || []));
+    } catch (err) {
+      console.log('Error fetching comentarios', err);
     }
   };
 
@@ -95,6 +125,64 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
     });
   };
 
+  const handleIncrementModifier = (mod: any) => {
+    if (selectedCartItemId === null) return;
+    const idx = selectedCartItemId;
+    const item = cart[idx];
+    if (!item) return;
+
+    const appliedMod = item.modifiers?.find((m: any) => m.name === mod.comentarios);
+    const currentQty = appliedMod ? appliedMod.quantity || 1 : 0;
+    
+    if (currentQty >= item.cantidad) {
+      Toast.show({ type: 'info', text1: 'Límite alcanzado', text2: 'No puedes agregar más adicionales que la cantidad del producto.', position: 'bottom' });
+      return;
+    }
+
+    setCart(prev => {
+      const newCart = [...prev];
+      const newModifiers = [...(newCart[idx].modifiers || [])];
+      
+      const existIdx = newModifiers.findIndex((m: any) => m.name === mod.comentarios);
+      if (existIdx >= 0) {
+        newModifiers[existIdx] = { ...newModifiers[existIdx], quantity: currentQty + 1 };
+      } else {
+        newModifiers.push({ name: mod.comentarios, price: Number(mod.precio || 0), quantity: 1 });
+      }
+      
+      newCart[idx] = { ...newCart[idx], modifiers: newModifiers };
+      return newCart;
+    });
+  };
+
+  const handleDecrementModifier = (mod: any) => {
+    if (selectedCartItemId === null) return;
+    const idx = selectedCartItemId;
+    const item = cart[idx];
+    if (!item) return;
+
+    const appliedMod = item.modifiers?.find((m: any) => m.name === mod.comentarios);
+    if (!appliedMod) return;
+    const currentQty = appliedMod.quantity || 1;
+    
+    setCart(prev => {
+      const newCart = [...prev];
+      let newModifiers = [...(newCart[idx].modifiers || [])];
+      
+      if (currentQty <= 1) {
+        newModifiers = newModifiers.filter((m: any) => m.name !== mod.comentarios);
+      } else {
+        const existIdx = newModifiers.findIndex((m: any) => m.name === mod.comentarios);
+        if (existIdx >= 0) {
+          newModifiers[existIdx] = { ...newModifiers[existIdx], quantity: currentQty - 1 };
+        }
+      }
+      
+      newCart[idx] = { ...newCart[idx], modifiers: newModifiers };
+      return newCart;
+    });
+  };
+
   const handleSave = async () => {
     if (cart.length === 0) {
       Toast.show({ type: 'error', text1: 'Error', text2: 'Agrega al menos un producto' });
@@ -103,7 +191,11 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
 
     setLoading(true);
     try {
-      const total = cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+      const total = cart.reduce((sum, item) => {
+        const itemBaseTotal = item.precio * item.cantidad;
+        const modsTotal = (item.modifiers || []).reduce((mSum: number, mod: any) => mSum + (Number(mod.price) * (mod.quantity || 1)), 0);
+        return sum + itemBaseTotal + modsTotal;
+      }, 0);
       const fechaString = fechaManual.toISOString().substring(0, 10);
 
       const payload = {
@@ -114,15 +206,20 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
           devueltas: 0,
           totalInput: total,
         },
-        productos: cart.map(item => ({
-          productoId: item.productoId,
-          nombre: item.nombre,
-          categoria: item.categoria,
-          cantidad: item.cantidad,
-          precio: item.precio,
-          precioTotal: item.precio * item.cantidad,
-          estado
-        })),
+        productos: cart.map(item => {
+          const itemBaseTotal = item.precio * item.cantidad;
+          const modsTotal = (item.modifiers || []).reduce((mSum: number, mod: any) => mSum + (Number(mod.price) * (mod.quantity || 1)), 0);
+          return {
+            productoId: item.productoId,
+            nombre: item.nombre,
+            categoria: item.categoria,
+            cantidad: item.cantidad,
+            precio: item.precio,
+            precioTotal: itemBaseTotal + modsTotal,
+            estado,
+            comentarios: item.modifiers && item.modifiers.length > 0 ? JSON.stringify(item.modifiers) : undefined
+          };
+        }),
         fechaContableManual: fechaString
       };
 
@@ -231,24 +328,52 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
             {cart.length === 0 ? (
               <Text className="text-gray-500 text-center py-6">No hay productos en la venta</Text>
             ) : (
-              cart.map((item, idx) => (
-                <View key={idx} className={`flex-row items-center justify-between p-3 ${idx > 0 ? 'border-t border-gray-100' : ''}`}>
-                  <View className="flex-1">
-                    <Text className="font-bold text-gray-800">{item.nombre}</Text>
-                    <Text className="text-gray-500 text-xs">${item.precio.toLocaleString()}</Text>
+              cart.map((item, idx) => {
+                const itemBaseTotal = item.precio * item.cantidad;
+                const modsTotal = (item.modifiers || []).reduce((mSum: number, mod: any) => mSum + (Number(mod.price) * (mod.quantity || 1)), 0);
+                const itemFinalTotal = itemBaseTotal + modsTotal;
+                return (
+                <View key={idx} className={`p-3 ${idx > 0 ? 'border-t border-gray-100' : ''}`}>
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-1">
+                      <Text className="font-bold text-gray-800">{item.nombre}</Text>
+                      <Text className="text-gray-500 text-xs">${item.precio.toLocaleString()}</Text>
+                    </View>
+                    <View className="flex-row items-center bg-gray-100 rounded-lg p-1">
+                      <TouchableOpacity onPress={() => updateQuantity(idx, -1)} className="p-2">
+                        <Ionicons name="remove" size={16} color="#ef4444" />
+                      </TouchableOpacity>
+                      <Text className="font-bold px-2">{item.cantidad}</Text>
+                      <TouchableOpacity onPress={() => updateQuantity(idx, 1)} className="p-2">
+                        <Ionicons name="add" size={16} color="#10b981" />
+                      </TouchableOpacity>
+                    </View>
+                    <Text className="font-bold text-gray-900 ml-4 w-20 text-right">${itemFinalTotal.toLocaleString()}</Text>
                   </View>
-                  <View className="flex-row items-center bg-gray-100 rounded-lg p-1">
-                    <TouchableOpacity onPress={() => updateQuantity(idx, -1)} className="p-2">
-                      <Ionicons name="remove" size={16} color="#ef4444" />
-                    </TouchableOpacity>
-                    <Text className="font-bold px-2">{item.cantidad}</Text>
-                    <TouchableOpacity onPress={() => updateQuantity(idx, 1)} className="p-2">
-                      <Ionicons name="add" size={16} color="#10b981" />
+                  {item.modifiers && item.modifiers.length > 0 && (
+                    <View className="mt-2 pl-2">
+                      {item.modifiers.map((mod: any, mIdx: number) => (
+                        <View key={mIdx} className="flex-row justify-between items-center mb-1 bg-amber-50 rounded-md p-1 px-2 border border-amber-200">
+                          <Text className="text-amber-800 text-xs flex-1">{mod.name}</Text>
+                          <Text className="text-amber-700 text-xs font-bold mr-3">
+                            {mod.price < 0 ? `-$${Math.abs(mod.price).toLocaleString()}` : (mod.price > 0 ? `+$${mod.price.toLocaleString()}` : '')}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  <View className="mt-1 flex-row justify-end">
+                    <TouchableOpacity onPress={() => {
+                      setSelectedCartItemId(idx);
+                      setModifiersModalVisible(true);
+                    }}>
+                      <Text className="text-indigo-600 text-xs font-bold">+ Agregar Nota/Promo</Text>
                     </TouchableOpacity>
                   </View>
-                  <Text className="font-bold text-gray-900 ml-4 w-20 text-right">${(item.precio * item.cantidad).toLocaleString()}</Text>
                 </View>
-              ))
+                );
+              })
             )}
             {cart.length > 0 && (
               <View className="bg-gray-50 p-3 flex-row justify-between items-center border-t border-gray-200 rounded-b-xl">
@@ -309,6 +434,117 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
             </ScrollView>
           </View>
         </View>
+      </Modal>
+      {/* Modifiers Modal */}
+      <Modal visible={modifiersModalVisible} transparent animationType="slide" onRequestClose={() => setModifiersModalVisible(false)}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1 bg-black/50 justify-end"
+        >
+          <TouchableOpacity className="flex-1 w-full justify-end" activeOpacity={1} onPress={() => setModifiersModalVisible(false)}>
+            <TouchableOpacity activeOpacity={1} className="bg-white rounded-t-3xl pt-5 px-5 pb-0 max-h-[85%]">
+              <View className="flex-row justify-between items-start mb-3">
+                <View>
+                  <Text className="text-lg font-black text-gray-900">Adicionales / Notas</Text>
+                  {selectedCartItemId !== null && cart[selectedCartItemId] && (
+                    <Text className="text-xs text-gray-500 mt-0.5">{cart[selectedCartItemId].nombre} (Cant: {cart[selectedCartItemId].cantidad || 0})</Text>
+                  )}
+                </View>
+                <TouchableOpacity onPress={() => setModifiersModalVisible(false)} className="p-1 bg-gray-100 rounded-xl">
+                  <Ionicons name="close" size={24} color="#6b7280" />
+                </TouchableOpacity>
+              </View>
+
+              <View className="flex-row items-center bg-gray-100 rounded-xl px-3 py-2 mb-3">
+                <Ionicons name="search" size={18} color="#9ca3af" />
+                <TextInput
+                  className="flex-1 text-[15px] text-gray-800 ml-2 h-9"
+                  placeholder="Buscar o escribir nota rápida..."
+                  placeholderTextColor="#9ca3af"
+                  value={modifierSearchQuery}
+                  onChangeText={setModifierSearchQuery}
+                  returnKeyType="done"
+                  onSubmitEditing={() => {
+                    if (modifierSearchQuery.trim().length > 0 && !comentariosDb.some(mod => mod.comentarios.toLowerCase() === modifierSearchQuery.trim().toLowerCase())) {
+                      const customNote = { ID: `custom-${Date.now()}`, comentarios: modifierSearchQuery.trim(), precio: 0, tipo: 'Nota Personalizada' };
+                      handleIncrementModifier(customNote);
+                      setModifierSearchQuery('');
+                    }
+                  }}
+                />
+                {modifierSearchQuery.length > 0 && (
+                  <TouchableOpacity onPress={() => setModifierSearchQuery('')}>
+                    <Ionicons name="close-circle" size={18} color="#9ca3af" />
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {modifierSearchQuery.trim().length > 0 && !comentariosDb.some(mod => mod.comentarios.toLowerCase() === modifierSearchQuery.trim().toLowerCase()) && (
+                <TouchableOpacity className="flex-row items-center bg-blue-50 p-3 rounded-xl mb-3 border border-blue-200" onPress={() => {
+                  const customNote = { ID: `custom-${Date.now()}`, comentarios: modifierSearchQuery.trim(), precio: 0, tipo: 'Nota Personalizada' };
+                  handleIncrementModifier(customNote);
+                  setModifierSearchQuery('');
+                }}>
+                  <Ionicons name="add-circle" size={20} color="#3b82f6" />
+                  <Text className="text-sm font-bold text-blue-700 ml-2">Agregar como nota: "{modifierSearchQuery.trim()}"</Text>
+                </TouchableOpacity>
+              )}
+
+              <ScrollView className="mb-4" showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                {comentariosDb.filter(mod => mod.comentarios.toLowerCase().includes(modifierSearchQuery.toLowerCase())).length === 0 && !(modifierSearchQuery.trim().length > 0 && !comentariosDb.some(mod => mod.comentarios.toLowerCase() === modifierSearchQuery.trim().toLowerCase())) ? (
+                  <Text className="text-gray-500 text-sm text-center mt-5">No se encontraron resultados.</Text>
+                ) : (
+                  comentariosDb.filter(mod => mod.comentarios.toLowerCase().includes(modifierSearchQuery.toLowerCase())).map((mod: any) => {
+                    const appliedMod = selectedCartItemId !== null && cart[selectedCartItemId] ? cart[selectedCartItemId].modifiers?.find((m: any) => m.name === mod.comentarios) : null;
+                    const isApplied = !!appliedMod;
+                    const qty = appliedMod ? appliedMod.quantity || 1 : 0;
+                    const modPrice = Number(mod.precio || 0);
+                    const priceStr = modPrice !== 0 ? (modPrice > 0 ? `+$${modPrice.toLocaleString()}` : `-$${Math.abs(modPrice).toLocaleString()}`) : 'Gratis';
+                    
+                    return (
+                      <View key={mod.ID} className={`flex-row justify-between items-center p-3 rounded-xl bg-gray-50 mb-2 border-2 ${isApplied ? 'bg-blue-50 border-blue-500' : 'border-transparent'}`}>
+                        <View className="flex-1 flex-row items-center pr-2">
+                          <View>
+                            <Text className={`text-sm font-bold ${isApplied ? 'text-blue-700' : 'text-gray-700'}`}>
+                              {mod.comentarios}
+                            </Text>
+                            <Text className={`text-xs font-bold mt-0.5 ${isApplied ? 'text-blue-600' : 'text-gray-500'}`}>
+                              {priceStr} {mod.tipo && `• ${mod.tipo}`}
+                            </Text>
+                          </View>
+                        </View>
+                        
+                        <View className="flex-row items-center bg-white rounded-lg border border-gray-200 p-0.5">
+                          {isApplied ? (
+                            <>
+                              <TouchableOpacity onPress={() => handleDecrementModifier(mod)} className="p-1 bg-blue-50 rounded-md">
+                                <Ionicons name="remove" size={16} color="#3b82f6" />
+                              </TouchableOpacity>
+                              <Text className="text-sm font-bold text-gray-900 min-w-[24px] text-center mx-1">{qty}</Text>
+                              <TouchableOpacity onPress={() => handleIncrementModifier(mod)} className="p-1 bg-blue-50 rounded-md">
+                                <Ionicons name="add" size={16} color="#3b82f6" />
+                              </TouchableOpacity>
+                            </>
+                          ) : (
+                            <TouchableOpacity onPress={() => handleIncrementModifier(mod)} className="py-1 px-3 bg-blue-500 rounded-md">
+                              <Ionicons name="add" size={18} color="#fff" />
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      </View>
+                    );
+                  })
+                )}
+              </ScrollView>
+              
+              <View className="pt-3 border-t border-gray-200 mb-6 mt-2">
+                <TouchableOpacity onPress={() => { setModifiersModalVisible(false); setModifierSearchQuery(''); }} className="bg-green-500 rounded-xl h-12 justify-center items-center">
+                  <Text className="text-white font-bold text-base">Listo</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
     </Modal>
   );

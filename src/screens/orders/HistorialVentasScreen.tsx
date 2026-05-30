@@ -875,6 +875,23 @@ export default function HistorialVentasScreen({ navigation }: any) {
               </View>
             )}
 
+            {item.ordenVentas && item.ordenVentas.length > 0 && (
+              <View className="flex-row flex-wrap mt-2 mb-1">
+                {item.ordenVentas.slice(0, 3).map((prod: any, idx: number) => (
+                  <View key={prod.IDorderventas || prod.producto?.IDproductos || idx} className="bg-gray-100 px-2 py-1 rounded-md border border-gray-200 mr-1 mb-1">
+                    <Text className="text-gray-700 text-xs" numberOfLines={1}>
+                      {prod.cantidad}x {prod.nombreProducto || prod.nombre}
+                    </Text>
+                  </View>
+                ))}
+                {item.ordenVentas.length > 3 && (
+                  <View className="bg-gray-200 px-2 py-1 rounded-md border border-gray-300 justify-center mb-1">
+                    <Text className="text-gray-600 text-[10px] font-bold">+{item.ordenVentas.length - 3}</Text>
+                  </View>
+                )}
+              </View>
+            )}
+
             <View className="flex-row justify-between items-end mt-1 pt-3 border-t border-gray-100">
               <Text className="text-gray-400 text-[10px] font-bold uppercase">TOTAL</Text>
               <Text className="text-gray-900 text-lg font-black">{formatCurrency(item.totalInput || 0)}</Text>
@@ -1094,7 +1111,9 @@ export default function HistorialVentasScreen({ navigation }: any) {
         <View className="flex-1 bg-black/60 justify-end">
           <View className="bg-gray-50 rounded-t-3xl h-[85%]">
             <View className="flex-row justify-between items-center p-4 border-b border-gray-200 bg-white rounded-t-3xl">
-              <Text className="text-lg font-bold text-gray-800">Detalle de Venta</Text>
+              <Text className="text-lg font-bold text-gray-800">
+                Detalle - {selectedVenta?.pedido?.replace('Pedido-', '') || 'Sin Ticket'}
+              </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)} className="p-2 bg-gray-100 rounded-full">
                 <Ionicons name="close" size={24} color="#4b5563" />
               </TouchableOpacity>
@@ -1125,6 +1144,40 @@ export default function HistorialVentasScreen({ navigation }: any) {
                     <Text className="text-gray-500 font-medium">Método de Pago:</Text>
                     <Text className="text-gray-800 font-bold">{selectedVenta.medioDePago}</Text>
                   </View>
+
+                  {selectedVenta.medioDePago === 'EFECTIVO Y OTROS' && (
+                    <>
+                      <View className="flex-row justify-between mb-2 pl-4 border-l-2 border-green-500">
+                        <Text className="text-gray-500 font-medium">Efectivo:</Text>
+                        <Text className="text-gray-800 font-bold">
+                          {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(selectedVenta.efectivoRecibido || 0)}
+                        </Text>
+                      </View>
+                      <View className="flex-row justify-between mb-2 pl-4 border-l-2 border-indigo-500">
+                        <Text className="text-gray-500 font-medium">Transferencia ({selectedVenta.banco || 'Banco'}):</Text>
+                        <Text className="text-gray-800 font-bold">
+                          {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format((selectedVenta.totalInput || 0) - (selectedVenta.efectivoRecibido || 0))}
+                        </Text>
+                      </View>
+                    </>
+                  )}
+
+                  {selectedVenta.medioDePago === 'EFECTIVO' && (
+                    <>
+                      <View className="flex-row justify-between mb-2 pl-4 border-l-2 border-green-500">
+                        <Text className="text-gray-500 font-medium">Recibido:</Text>
+                        <Text className="text-gray-800 font-bold">
+                          {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(selectedVenta.efectivoRecibido || 0)}
+                        </Text>
+                      </View>
+                      <View className="flex-row justify-between mb-2 pl-4 border-l-2 border-gray-300">
+                        <Text className="text-gray-500 font-medium">Devueltas:</Text>
+                        <Text className="text-gray-800 font-bold">
+                          {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(selectedVenta.devueltas || 0)}
+                        </Text>
+                      </View>
+                    </>
+                  )}
 
                   {selectedVenta.vendedor && (
                     <View className="flex-row justify-between mb-2">
@@ -1183,14 +1236,19 @@ export default function HistorialVentasScreen({ navigation }: any) {
                             {/* Notas Compactas */}
                             {notas.length > 0 && (
                               <View className="flex-row flex-wrap mt-1">
-                                {notas.map((nota, nIdx) => (
-                                  <View key={nIdx} className="bg-amber-100 px-1.5 py-0.5 rounded mr-1 mb-1 flex-row items-center">
-                                    <Text className="text-[9px] text-amber-700 font-bold">
-                                      {nota.name || nota.nombre || nota.Nombre}
-                                      {(nota.price || nota.precio || nota.Precio) > 0 ? ` (+$${formatCurrency(nota.price || nota.precio || nota.Precio)})` : ''}
-                                    </Text>
-                                  </View>
-                                ))}
+                                {notas.map((nota, nIdx) => {
+                                  const name = nota.name || nota.nombre || nota.Nombre || '';
+                                  const price = nota.price || nota.precio || nota.Precio || 0;
+                                  const qty = nota.quantity || 1;
+                                  return (
+                                    <View key={nIdx} className="bg-amber-100 px-1.5 py-0.5 rounded mr-1 mb-1 flex-row items-center">
+                                      <Text className="text-[9px] text-amber-700 font-bold">
+                                        {qty > 1 ? `${qty}x ` : ''}{name}
+                                        {price < 0 ? ` (-${formatCurrency(Math.abs(price))})` : (price > 0 ? ` (+${formatCurrency(price)})` : '')}
+                                      </Text>
+                                    </View>
+                                  );
+                                })}
                               </View>
                             )}
                           </View>
