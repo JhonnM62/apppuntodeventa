@@ -150,28 +150,50 @@ export default function AutoCuadrePreviewModal({
 
                   <Text className="text-sm font-medium text-gray-700 mb-2">Acciones a realizar:</Text>
 
-                  {planIA?.acciones?.map((accion: any, index: number) => (
-                    <View key={index} className="mb-2 p-3 rounded-lg bg-gray-50 border border-gray-200">
-                      <View className="flex-row items-center mb-1">
-                        <Ionicons 
-                          name={accion.action === 'remove_product' ? 'trash' : 'swap-horizontal'} 
-                          size={16} 
-                          color={COLORS.primary} 
-                        />
-                        <Text className="text-sm font-bold text-gray-800 ml-2">
-                          {accion.action === 'remove_product' ? 'Reducir Producto' : 'Cambiar Método Pago'}
-                        </Text>
-                      </View>
-                      <Text className="text-xs text-gray-600">
-                        {accion.action === 'remove_product' 
-                          ? `Quitar ${accion.cantidadARemover} unidad(es) de ${accion.nombreProducto || 'Producto'} en Orden #${accion.ordenId}`
-                          : `Pasar Venta #${accion.ventaId} a ${accion.method}`}
-                      </Text>
-                      <Text className="text-xs text-gray-500 italic mt-1 font-medium text-amber-700">
-                        Por qué: {accion.motivo || accion.reason}
-                      </Text>
-                    </View>
-                  ))}
+                  {planIA?.acciones?.map((accion: any, index: number) => {
+                    if (accion.action === 'remove_product' || accion.action === 'change_payment') {
+                      return (
+                        <View key={index} className="mb-2 p-3 rounded-lg bg-gray-50 border border-gray-200">
+                          <View className="flex-row items-center mb-1">
+                            <Ionicons 
+                              name={accion.action === 'remove_product' ? 'trash' : 'swap-horizontal'} 
+                              size={16} 
+                              color={COLORS.primary} 
+                            />
+                            <Text className="text-sm font-bold text-gray-800 ml-2">
+                              {accion.action === 'remove_product' ? 'Reducir Producto' : 'Cambiar Método Pago'}
+                            </Text>
+                          </View>
+                          <Text className="text-xs text-gray-600">
+                            {accion.action === 'remove_product' 
+                              ? `Quitar ${accion.cantidadARemover} unidad(es) de ${accion.nombreProducto || 'Producto'} en Orden #${accion.ordenId}`
+                              : `Pasar Venta #${accion.ventaId} a ${accion.method}`}
+                          </Text>
+                          <Text className="text-xs text-gray-600 mt-1 italic">
+                            Por qué: {accion.motivo || accion.reason}
+                          </Text>
+                        </View>
+                      );
+                    }
+
+                    if (accion.action === 'add_product') {
+                      return (
+                        <View key={index} className="mb-2 p-3 rounded-lg bg-blue-50 border border-blue-100">
+                          <View className="flex-row items-center mb-1">
+                            <Ionicons name="add-circle" size={16} color={COLORS.primary} />
+                            <Text className="text-sm font-bold text-gray-800 ml-2">Añadir Producto</Text>
+                          </View>
+                          <Text className="text-xs text-gray-600">
+                            Añadir {accion.cantidadAAnadir} unidad(es) de {accion.nombreProducto || 'Producto'} en Orden #{accion.ventaId}
+                          </Text>
+                          <Text className="text-xs text-gray-600 mt-1 italic">
+                            Por qué: {accion.motivo || accion.reason}
+                          </Text>
+                        </View>
+                      );
+                    }
+                    return null;
+                  })}
                 </View>
               </ScrollView>
             )}
