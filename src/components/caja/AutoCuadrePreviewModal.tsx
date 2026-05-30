@@ -52,7 +52,10 @@ export default function AutoCuadrePreviewModal({
       setModalState('REVIEW_PLAN');
     } catch (error: any) {
       console.error('Error cargando plan IA:', error);
-      const msg = error?.response?.data?.message || 'Error al obtener plan de IA';
+      let msg = error?.response?.data?.message || error?.message || 'Error al obtener plan de IA';
+      if (msg === 'Network Error') {
+        msg = 'El servidor no respondió a tiempo o se estaba reiniciando. Por favor, intenta de nuevo.';
+      }
       setErrorMessage(msg);
       setModalState('ERROR');
     }
