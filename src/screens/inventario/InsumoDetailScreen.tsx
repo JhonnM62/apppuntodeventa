@@ -262,7 +262,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
       estado: insumo.estado || insumo.Estado || 'ACTIVO',
       apartir_de_cantidad: insumo.apartirDeCantidad || insumo.apartir_de_cantidad || 0,
       agregar_cantidad: insumo.agregarCantidad || insumo.agregar_cantidad || 100,
-      fecha_de_vencimiento: insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento || '',
+      fecha_de_vencimiento: (insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento) ? new Date(insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento).toISOString().split('T')[0] : '',
       descontar_cant_de_ventas: insumo.descontarCantDeVentas || insumo.descontar_cant_de_ventas || 'NO',
       notificar_a_whatsapp: insumo.notificarAWhatsapp || insumo.notificar_a_whatsapp || 'NO',
       llevar_control_en_caja: insumo.llevarControlEnCaja || insumo.llevar_control_en_caja || 'NO',
@@ -288,7 +288,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
     setSaving(true);
     try {
       let finalImageUrl = formData.imageUrl;
-      if (localImageUri && !localImageUri.startsWith('http') && !localImageUri.startsWith('/uploads')) {
+      if (localImageUri && (localImageUri.startsWith('file://') || localImageUri.startsWith('content://'))) {
         try {
           const uploadedUrl = await insumosService.uploadImage(localImageUri);
           if (uploadedUrl) {
@@ -489,7 +489,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
           </View>
           <View style={styles.infoRow}>
             <RNText style={styles.infoLabel}>Fecha de Vencimiento</RNText>
-            <RNText style={styles.infoValue}>{insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento || 'No definida'}</RNText>
+            <RNText style={styles.infoValue}>{(insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento) ? new Date(insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento).toISOString().split('T')[0] : 'No definida'}</RNText>
           </View>
           <View style={styles.infoRow}>
             <RNText style={styles.infoLabel}>Descontar de Ventas</RNText>

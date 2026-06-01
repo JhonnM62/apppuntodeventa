@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, Modal, TextInput, ActivityIndicator, FlatList, RefreshControl, Image as RNImage, Platform, Animated } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, Modal, TextInput, ActivityIndicator, FlatList, RefreshControl, Image as RNImage, Platform, Animated, Keyboard, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -89,6 +89,13 @@ const InsumosScreen = ({ navigation }: Props) => {
   const [estadoActivo, setEstadoActivo] = useState(true);
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
   const [showImageOptions, setShowImageOptions] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => setKeyboardHeight(e.endCoordinates.height));
+    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardHeight(0));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, []);
 
   const [formData, setFormData] = useState<CreateInsumoDto>({
     nombre: '',
@@ -382,7 +389,7 @@ if (filterCuadrarInsumos !== 'all') {
       estado: insumo.estado || insumo.Estado || 'ACTIVO',
       apartir_de_cantidad: insumo.apartirDeCantidad || insumo.apartir_de_cantidad || 0,
       agregar_cantidad: insumo.agregarCantidad || insumo.agregar_cantidad || 100,
-      fecha_de_vencimiento: insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento || '',
+      fecha_de_vencimiento: (insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento) ? new Date(insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento).toISOString().split('T')[0] : '',
       descontar_cant_de_ventas: insumo.descontarCantDeVentas || insumo.descontar_cant_de_ventas || 'NO',
       notificar_a_whatsapp: insumo.notificarAWhatsapp || insumo.notificar_a_whatsapp || 'NO',
       llevar_control_en_caja: insumo.llevarControlEnCaja || insumo.llevar_control_en_caja || 'NO',
@@ -455,7 +462,7 @@ if (status !== 'granted') {
     setSaving(true);
     try {
       let finalImageUrl = formData.imageUrl;
-      if (localImageUri) {
+      if (localImageUri && (localImageUri.startsWith('file://') || localImageUri.startsWith('content://'))) {
         try {
           const uploadedUrl = await insumosService.uploadImage(localImageUri);
           if (uploadedUrl) {
@@ -1336,12 +1343,16 @@ if (status !== 'granted') {
 
       {/* MODAL DE MOVIMIENTO DE STOCK (ACCESO RÁPIDO) */}
       <Modal visible={showStockModal} animationType="slide" transparent onRequestClose={() => setShowStockModal(false)}>
-        <TouchableOpacity 
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} 
-          activeOpacity={1} 
-          onPress={() => setShowStockModal(false)}
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={{ flex: 1 }}
         >
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24 }}>
+          <TouchableOpacity 
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} 
+            activeOpacity={1} 
+            onPress={() => setShowStockModal(false)}
+          >
+            <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : (keyboardHeight > 0 ? keyboardHeight + 24 : 24) }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
               <RNText style={{ fontSize: 18, fontWeight: '800', color: '#111827' }}>Registrar Movimiento</RNText>
               <TouchableOpacity onPress={() => setShowStockModal(false)} style={{ backgroundColor: '#f3f4f6', padding: 6, borderRadius: 20 }}>
@@ -1365,7 +1376,7 @@ if (status !== 'granted') {
                 </View>
                 <View>
                   <RNText style={{ fontSize: 14, fontWeight: '700', color: '#1f2937' }}>{selectedInsumo.nombre || selectedInsumo.Nombre}</RNText>
-                  <RNText style={{ fontSize: 12, color: '#6b7280' }}>Stock Actual: {selectedInsumo.cantidad || selectedInsumo.Cantidad || 0}</RNText>
+                  <RNText style={{ fontSize: 12, color: '#6b7280' }}>Stock Actual: {Number(selectedInsumo.disponible) || Number(selectedInsumo.Disponible) || 0}</RNText>
                 </View>
               </View>
             )}
@@ -1438,6 +1449,7 @@ if (status !== 'granted') {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Filter Modal */}

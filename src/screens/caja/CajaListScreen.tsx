@@ -75,8 +75,8 @@ export default function CajaListScreen({ navigation }: any) {
       filtered = cajas.filter(c => 
         c.nombre?.toLowerCase().includes(lowerQ) ||
         (c.cierre === 'abierta' ? 'activa abierta curso' : 'cerrada').includes(lowerQ) ||
-        (c.cuadroCaja?.toLowerCase() === 'no cuadro caja' && 'descuadrada').includes(lowerQ) ||
-        (c.cuadroCaja?.toLowerCase() === 'no se ha revisado' && 'pendiente revisado').includes(lowerQ)
+        (c.cuadroCaja?.toLowerCase() === 'no cuadro caja' && 'descuadrada'.includes(lowerQ)) ||
+        (c.cuadroCaja?.toLowerCase() === 'no se ha revisado' && 'pendiente revisado'.includes(lowerQ))
       );
     }
 

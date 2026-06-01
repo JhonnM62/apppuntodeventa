@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, TouchableOpacity, ActivityIndicator, Dimensions, TextInput, Modal, Platform, Keyboard } from 'react-native';
+import { View, FlatList, TouchableOpacity, ActivityIndicator, Dimensions, TextInput, Modal, Platform, Keyboard, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -132,8 +132,22 @@ export default function ReportesScreen({ navigation }: any) {
     }
   };
 
-  const handleDeleteReporte = (id: string) => {
-    eliminarReporte(id);
+  const handleDeleteReporte = (item: ReporteFilter) => {
+    const fechaDesde = item.desde ? format(new Date(item.desde), "d 'de' MMMM", { locale: es }) : 'N/A';
+    const fechaHasta = item.hasta ? format(new Date(item.hasta), "d 'de' MMMM", { locale: es }) : 'N/A';
+    
+    Alert.alert(
+      "Eliminar Reporte",
+      `Reporte del ${fechaDesde} hasta el ${fechaHasta}.\n\n¿Está seguro que desea eliminar este reporte de manera permanente?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Eliminar", 
+          style: "destructive",
+          onPress: () => eliminarReporte(item.FilterID) 
+        }
+      ]
+    );
   };
 
   const renderItem = ({ item }: { item: ReporteFilter }) => (
@@ -159,7 +173,7 @@ export default function ReportesScreen({ navigation }: any) {
         </Text>
         <View className="flex-row mt-2">
           {canDelete && (
-            <TouchableOpacity onPress={() => handleDeleteReporte(item.FilterID)} className="p-1 mr-2 bg-gray-100 rounded">
+            <TouchableOpacity onPress={() => handleDeleteReporte(item)} className="p-1 mr-2 bg-gray-100 rounded">
               <Ionicons name="trash-outline" size={20} color="#ef4444" />
             </TouchableOpacity>
           )}
