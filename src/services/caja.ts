@@ -109,7 +109,7 @@ export interface InsumoVerificacion {
   unidadDeMedida: string;
   disponibleEnSistema: number;
   ultimoConteoAt: string | null;
-  conteoVerificadoHoy: boolean;
+  conteoVerificado: boolean;
 }
 
 export interface VerificacionPendienteResponse {

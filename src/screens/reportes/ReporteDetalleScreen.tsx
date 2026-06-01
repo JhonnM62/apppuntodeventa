@@ -58,6 +58,10 @@ export default function ReporteDetalleScreen({ route, navigation }: any) {
   const [searchQuery, setSearchQuery] = useState('');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
+  const [modalBaseVisible, setModalBaseVisible] = useState(false);
+  const [montoBase, setMontoBase] = useState('');
+  const [observacionBase, setObservacionBase] = useState('');
+
   useEffect(() => {
     const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => setKeyboardHeight(e.endCoordinates.height));
     const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardHeight(0));
@@ -137,6 +141,29 @@ export default function ReporteDetalleScreen({ route, navigation }: any) {
       setObservacion('');
       setSelectedRetiroId(null);
       Toast.show({ type: 'success', text1: 'Éxito', text2: 'Retiro registrado' });
+      loadData();
+    } catch (err: any) {
+      Toast.show({ type: 'error', text1: 'Error', text2: err?.message || 'No se pudo guardar' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCreateBaseManual = async () => {
+    if (!montoBase) {
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Ingresa el monto de la base' });
+      return;
+    }
+    setSaving(true);
+    try {
+      await api.post(`/reportes/dinero-guardado/${filterId}/base`, {
+        valor: Number(montoBase.replace(/[^0-9]/g, '')),
+        observacion: observacionBase.trim()
+      });
+      setModalBaseVisible(false);
+      setMontoBase('');
+      setObservacionBase('');
+      Toast.show({ type: 'success', text1: 'Éxito', text2: 'Base manual agregada' });
       loadData();
     } catch (err: any) {
       Toast.show({ type: 'error', text1: 'Error', text2: err?.message || 'No se pudo guardar' });
@@ -239,7 +266,7 @@ export default function ReporteDetalleScreen({ route, navigation }: any) {
 
       <ScrollView
         style={{ flex: 1, backgroundColor: '#f9fafb' }}
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 120 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#16a34a']} />}
         showsVerticalScrollIndicator={false}
       >
@@ -326,6 +353,18 @@ export default function ReporteDetalleScreen({ route, navigation }: any) {
               </View>
             ))
           )}
+
+          {canEdit && (
+            <View className="px-4 py-4 border-t border-gray-100">
+              <TouchableOpacity 
+                className="bg-green-600 py-3 rounded-xl flex-row justify-center items-center"
+                onPress={() => setModalBaseVisible(true)}
+              >
+                <Ionicons name="add-circle-outline" size={20} color="white" />
+                <Text className="text-white font-bold ml-2">Agregar Base Manual</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -361,10 +400,54 @@ export default function ReporteDetalleScreen({ route, navigation }: any) {
               />
 
               <View className="flex-row justify-end space-x-3">
-                <TouchableOpacity className="px-5 py-3 rounded-lg border border-gray-300" onPress={() => setModalVisible(false)}>
+                <TouchableOpacity className="px-5 py-3 rounded-lg border border-gray-300 mr-2" onPress={() => setModalVisible(false)}>
                   <Text className="text-gray-600 font-bold">Cancelar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity className="px-5 py-3 rounded-lg bg-green-600" onPress={handleCreateRetiro} disabled={saving}>
+                  {saving ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold">Guardar</Text>}
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        </TouchableOpacity>
+      </Modal>
+
+      <Modal visible={modalBaseVisible} transparent animationType="fade" onRequestClose={() => setModalBaseVisible(false)}>
+        <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} activeOpacity={1} onPress={() => setModalBaseVisible(false)}>
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%', marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
+            <TouchableOpacity activeOpacity={1} style={{ backgroundColor: 'white', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20 }}>
+              <View className="flex-row justify-between items-center mb-6">
+                <Text className="text-xl font-bold text-gray-800">Registrar Base Manual</Text>
+                <TouchableOpacity onPress={() => setModalBaseVisible(false)}>
+                  <Ionicons name="close" size={24} color="#6b7280" />
+                </TouchableOpacity>
+              </View>
+
+              <Text className="text-sm font-bold text-gray-500 mb-1 ml-1">Monto Inicial (Base) *</Text>
+              <View className="flex-row items-center border border-gray-300 rounded-lg px-3 py-3 mb-4">
+                <Text className="text-lg font-bold text-gray-500 mr-2">$</Text>
+                <TextInput
+                  className="flex-1 text-lg text-gray-800 font-bold"
+                  placeholder="0"
+                  keyboardType="numeric"
+                  value={montoBase ? new Intl.NumberFormat('es-CO').format(Number(montoBase)) : ''}
+                  onChangeText={(t) => setMontoBase(t.replace(/[^0-9]/g, ''))}
+                />
+              </View>
+
+              <Text className="text-sm font-bold text-gray-500 mb-1 ml-1">Observación (Opcional)</Text>
+              <TextInput
+                className="border border-gray-300 rounded-lg px-3 py-3 text-base text-gray-800 mb-6"
+                placeholder="Ej. Saldo inicial mes"
+                value={observacionBase}
+                onChangeText={setObservacionBase}
+              />
+
+              <View className="flex-row justify-end space-x-3">
+                <TouchableOpacity className="px-5 py-3 rounded-lg border border-gray-300 mr-2" onPress={() => setModalBaseVisible(false)}>
+                  <Text className="text-gray-600 font-bold">Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity className="px-5 py-3 rounded-lg bg-green-600" onPress={handleCreateBaseManual} disabled={saving}>
                   {saving ? <ActivityIndicator color="white" /> : <Text className="text-white font-bold">Guardar</Text>}
                 </TouchableOpacity>
               </View>

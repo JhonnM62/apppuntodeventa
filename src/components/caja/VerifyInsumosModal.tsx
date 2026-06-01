@@ -75,7 +75,7 @@ export default function VerifyInsumosModal({
       console.log('[VerifyInsumosModal] Response:', JSON.stringify(response, null, 2));
       
       const pendientes = response?.pendientes ?? [];
-      console.log('[VerifyInsumosModal] Pendientes:', pendientes.length, pendientes.map(p => ({ nombre: p.nombre, conteoVerificadoHoy: p.conteoVerificadoHoy })));
+      console.log('[VerifyInsumosModal] Pendientes:', pendientes.length, pendientes.map(p => ({ nombre: p.nombre, conteoVerificado: p.conteoVerificado })));
       
       const todasVerificadas = response?.todasVerificadas ?? false;
       console.log('[VerifyInsumosModal] TodasVerificadas:', todasVerificadas);
@@ -83,7 +83,7 @@ export default function VerifyInsumosModal({
       setPuedePosponer(response?.puedePosponer ?? false);
       setPosposicionesRestantes(response?.posposicionesRestantes ?? 0);
       
-      const insumosPendientes = pendientes.filter((p: InsumoVerificacion) => !p.conteoVerificadoHoy);
+      const insumosPendientes = pendientes.filter((p: InsumoVerificacion) => !p.conteoVerificado);
       
       if (insumosPendientes.length === 0) {
         setInsumos([]);
