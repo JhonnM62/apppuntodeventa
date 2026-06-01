@@ -166,8 +166,8 @@ export default function AutoCuadrePreviewModal({
                           </View>
                           <Text className="text-xs text-gray-600">
                             {accion.action === 'remove_product' 
-                              ? `Quitar ${accion.cantidadARemover} unidad(es) de ${accion.nombreProducto || 'Producto'} en Orden #${accion.ordenId}`
-                              : `Pasar Venta #${accion.ventaId} a ${accion.method}`}
+                              ? `Quitar ${accion.cantidadARemover} unidad(es) de ${accion.nombreProducto || 'Producto'} en Pedido: ${accion.pedidoDisplay || accion.ventaId}`
+                              : `Pasar Venta: ${accion.pedidoDisplay || accion.ventaId} a ${accion.method}`}
                           </Text>
                           <Text className="text-xs text-gray-600 mt-1 italic">
                             Por qué: {accion.motivo || accion.reason}
@@ -184,7 +184,7 @@ export default function AutoCuadrePreviewModal({
                             <Text className="text-sm font-bold text-gray-800 ml-2">Añadir Producto</Text>
                           </View>
                           <Text className="text-xs text-gray-600">
-                            Añadir {accion.cantidadAAnadir} unidad(es) de {accion.nombreProducto || 'Producto'} en Orden #{accion.ventaId}
+                            Añadir {accion.cantidadAAnadir} unidad(es) de {accion.nombreProducto || 'Producto'} en Pedido: {accion.pedidoDisplay || accion.ventaId}
                           </Text>
                           <Text className="text-xs text-gray-600 mt-1 italic">
                             Por qué: {accion.motivo || accion.reason}

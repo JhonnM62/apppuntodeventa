@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useDockStore, RouteHistoryItem } from '../../store/useDockStore';
 import useAuthStore from '../../store/useAuthStore';
+import { useSettingsStore } from '../../store/useSettingsStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Mapa de permisos por rol
@@ -106,6 +107,7 @@ const FloatingDock = () => {
   const navigation = useNavigation<any>();
   const { isVisible, currentRoute, history } = useDockStore();
   const { user } = useAuthStore();
+  const { primaryColor } = useSettingsStore();
   const insets = useSafeAreaInsets();
   
   const [showTooltip, setShowTooltip] = useState(false);
@@ -202,12 +204,12 @@ const FloatingDock = () => {
         <>
           {!sideMenuOpen && (
             <TouchableOpacity 
-              style={[styles.sideTab, { top: '40%' }]} 
+              style={[styles.sideTab, { top: '40%', shadowColor: primaryColor }]} 
               onPress={() => setSideMenuOpen(true)}
               activeOpacity={0.8}
             >
-              <Ionicons name="chevron-back" size={16} color="#16a34a" />
-              <Ionicons name="menu" size={20} color="#16a34a" style={{ marginLeft: -4 }} />
+              <Ionicons name="chevron-back" size={16} color={primaryColor} />
+              <Ionicons name="menu" size={20} color={primaryColor} style={{ marginLeft: -4 }} />
             </TouchableOpacity>
           )}
           
@@ -225,16 +227,16 @@ const FloatingDock = () => {
                     </View>
 
                     <TouchableOpacity style={styles.sideMenuItem} onPress={() => { setSideMenuOpen(false); navigation.navigate('Main', { screen: 'Inicio' }); }}>
-                      <View style={styles.sideMenuIconBox}>
-                        <Ionicons name="home" size={20} color="#16a34a" />
+                      <View style={[styles.sideMenuIconBox, { backgroundColor: primaryColor + '1A' }]}>
+                        <Ionicons name="home" size={20} color={primaryColor} />
                       </View>
                       <Text style={styles.sideMenuItemText}>Inicio</Text>
                     </TouchableOpacity>
 
                     {hasRoutePermission(user, 'Pedidos') && (
                       <TouchableOpacity style={styles.sideMenuItem} onPress={() => { setSideMenuOpen(false); navigation.navigate('Main', { screen: 'Pedidos' }); }}>
-                        <View style={styles.sideMenuIconBox}>
-                          <Ionicons name="receipt" size={20} color="#16a34a" />
+                        <View style={[styles.sideMenuIconBox, { backgroundColor: primaryColor + '1A' }]}>
+                          <Ionicons name="receipt" size={20} color={primaryColor} />
                         </View>
                         <Text style={styles.sideMenuItemText}>Pedidos</Text>
                       </TouchableOpacity>
@@ -301,8 +303,8 @@ const FloatingDock = () => {
                                 }
                               }}
                           >
-                            <View style={styles.tooltipIconBox}>
-                              <Ionicons name={item.icon as any} size={16} color="#16a34a" />
+                            <View style={[styles.tooltipIconBox, { backgroundColor: primaryColor + '1A' }]}>
+                              <Ionicons name={item.icon as any} size={16} color={primaryColor} />
                             </View>
                             <Text style={styles.tooltipItemText} numberOfLines={1}>{item.label}</Text>
                           </TouchableOpacity>
@@ -326,12 +328,12 @@ const FloatingDock = () => {
             ]}
             pointerEvents={isVisible ? "box-none" : "none"}
           >
-            <View style={styles.dock}>
+            <View style={[styles.dock, { shadowColor: primaryColor }]}>
               <TouchableOpacity 
                 style={styles.button} 
                 onPress={() => navigation.navigate('Main', { screen: 'Inicio' })}
               >
-                <Ionicons name="home" size={24} color="#16a34a" />
+                <Ionicons name="home" size={24} color={primaryColor} />
                 <Text style={styles.label}>Inicio</Text>
               </TouchableOpacity>
 
@@ -343,7 +345,7 @@ const FloatingDock = () => {
                     style={styles.button} 
                     onPress={() => navigation.navigate('Main', { screen: 'Pedidos' })}
                   >
-                    <Ionicons name="receipt" size={24} color="#16a34a" />
+                    <Ionicons name="receipt" size={24} color={primaryColor} />
                     <Text style={styles.label}>Pedidos</Text>
                   </TouchableOpacity>
 
@@ -356,7 +358,7 @@ const FloatingDock = () => {
                 onPress={() => setShowTooltip(true)}
               >
                 <View style={styles.recentIconContainer}>
-                  <Ionicons name="time" size={24} color="#16a34a" />
+                  <Ionicons name="time" size={24} color={primaryColor} />
                   {recentHistory.length > 0 && (
                     <View style={styles.badge}>
                       <Text style={styles.badgeText}>{recentHistory.length}</Text>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -1853,11 +1854,12 @@ showAlert({
           <ActivityIndicator size="large" color="#4CAF50" />
         </View>
       ) : (
-        <FlatList
+        <FlashList
           data={flatListData}
           renderItem={renderListItem}
           keyExtractor={keyExtractor}
           contentContainerStyle={styles.listContent}
+          estimatedItemSize={200}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4CAF50']} />
           }

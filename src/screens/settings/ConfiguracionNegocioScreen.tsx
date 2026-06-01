@@ -21,6 +21,12 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const [horaCorteDia, setHoraCorteDia] = useState('00:00');
   const [modoOperacion, setModoOperacion] = useState('GENERAL');
   
+  // Datos comerciales
+  const [nombreComercial, setNombreComercial] = useState('Q HUBO MOR');
+  const [nit, setNit] = useState('');
+  const [direccion, setDireccion] = useState('');
+  const [telefono, setTelefono] = useState('');
+  
   // Estados para IA
   const [iaConfig, setIaConfig] = useState({
     apiKey: '',
@@ -80,6 +86,10 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         if (dataNegocio.modoOperacion) {
           setModoOperacion(dataNegocio.modoOperacion);
         }
+        if (dataNegocio.nombreComercial) setNombreComercial(dataNegocio.nombreComercial);
+        if (dataNegocio.nit) setNit(dataNegocio.nit);
+        if (dataNegocio.direccion) setDireccion(dataNegocio.direccion);
+        if (dataNegocio.telefono) setTelefono(dataNegocio.telefono);
       }
 
       const dataIA = resIA.data ? resIA.data : resIA;
@@ -116,7 +126,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     try {
       setSaving(true);
       await Promise.all([
-        updateConfiguracion({ horaCorteDia, modoOperacion }),
+        updateConfiguracion({ horaCorteDia, modoOperacion, nombreComercial, nit, direccion, telefono }),
         updateConfiguracionIA({
           apiKey: iaConfig.apiKey,
           modeloDefecto: iaConfig.modeloDefecto,
@@ -185,11 +195,49 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           <View style={styles.infoCard}>
             <Ionicons name="information-circle" size={24} color="#3b82f6" />
             <Text style={styles.infoText}>
-              La Hora de Corte define en qué momento termina el "Día Comercial".
+              La Hora de Corte define en qué momento termina el "Día Comercial". Los datos comerciales se imprimirán en la cabecera de las facturas (estilo remisión).
             </Text>
           </View>
 
-          <Text style={styles.label}>Hora de Corte del Día</Text>
+          <Text style={styles.label}>Nombre Comercial</Text>
+          <TextInput
+            style={styles.input}
+            value={nombreComercial}
+            onChangeText={setNombreComercial}
+            placeholder="Ej. Q HUBO MOR"
+          />
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={styles.label}>NIT / RUT</Text>
+              <TextInput
+                style={styles.input}
+                value={nit}
+                onChangeText={setNit}
+                placeholder="Ej. 901234567-8"
+              />
+            </View>
+            <View style={{ flex: 1, marginLeft: 8 }}>
+              <Text style={styles.label}>Teléfono</Text>
+              <TextInput
+                style={styles.input}
+                value={telefono}
+                onChangeText={setTelefono}
+                keyboardType="phone-pad"
+                placeholder="Ej. 300 123 4567"
+              />
+            </View>
+          </View>
+
+          <Text style={styles.label}>Dirección</Text>
+          <TextInput
+            style={styles.input}
+            value={direccion}
+            onChangeText={setDireccion}
+            placeholder="Ej. Calle 123 #45-67"
+          />
+
+          <Text style={[styles.label, { marginTop: 20 }]}>Hora de Corte del Día</Text>
           <TouchableOpacity style={styles.timePickerButton} onPress={openTimePicker}>
             <Ionicons name="time-outline" size={24} color="#4f46e5" style={{ marginRight: 10 }} />
             <Text style={styles.timePickerText}>{format12Hour(horaCorteDia)}</Text>

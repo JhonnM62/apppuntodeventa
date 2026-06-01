@@ -1465,7 +1465,7 @@ const InventarioScreen = ({ navigation }: any) => {
                 {[...Array(6)].map((_, i) => <View key={i}>{renderSkeletonOrden()}</View>)}
               </ScrollView>
             ) : (
-              <FlatList
+              <FlashList
                 data={todasLasOrdenes}
                 keyboardShouldPersistTaps="handled"
                 renderItem={({ item }) => (
@@ -1475,6 +1475,7 @@ const InventarioScreen = ({ navigation }: any) => {
                 )}
                 keyExtractor={(item: any) => item.IDorderinventario}
                 contentContainerStyle={{ paddingTop: 16, paddingBottom: 32, flexGrow: 1 }}
+                estimatedItemSize={120}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />}
                 onEndReached={handleLoadMoreOrdenes}
                 onEndReachedThreshold={0.5}

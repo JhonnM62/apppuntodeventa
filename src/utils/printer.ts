@@ -1,4 +1,5 @@
 import { Platform } from 'react-native';
+import { getConfiguracion } from '../services/configuracion';
 
 let BLEPrinter: any = null;
 try {
@@ -33,6 +34,12 @@ export interface TicketData {
   metodoPago?: string;
   observaciones?: string;
   estado?: string;
+  comercio?: {
+    nombre?: string;
+    nit?: string;
+    direccion?: string;
+    telefono?: string;
+  };
 }
 
 // Helpers para alinear texto de forma manual (evita fallos de comandos ESC/POS en algunas impresoras)
@@ -127,8 +134,26 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
   let payload = '';
 
   // HEADER
-  payload += alignCenter(cleanText('Q HUBO MOR'), width) + '\n';
-  payload += alignCenter(cleanText('SISTEMA POS'), width) + '\n';
+  if (data.comercio) {
+    const { nombre, nit, direccion, telefono } = data.comercio;
+    payload += ESC_CMD.ALIGN_CT;
+    payload += ESC_CMD.TXT_BOLD_ON;
+    payload += alignCenter(cleanText(nombre || 'Q HUBO MOR'), width) + '\n';
+    payload += ESC_CMD.TXT_NORMAL;
+    payload += ESC_CMD.TXT_BOLD_OFF;
+    if (nit) payload += alignCenter(cleanText(`NIT: ${nit}`), width) + '\n';
+    if (direccion) payload += alignCenter(cleanText(direccion), width) + '\n';
+    if (telefono) payload += alignCenter(cleanText(`Tel: ${telefono}`), width) + '\n';
+    payload += alignCenter(cleanText('DOCUMENTO EQUIVALENTE / REMISION'), width) + '\n';
+  } else {
+    payload += ESC_CMD.ALIGN_CT;
+    payload += ESC_CMD.TXT_BOLD_ON;
+    payload += alignCenter(cleanText('Q HUBO MOR'), width) + '\n';
+    payload += ESC_CMD.TXT_NORMAL;
+    payload += ESC_CMD.TXT_BOLD_OFF;
+    payload += alignCenter(cleanText('SISTEMA POS'), width) + '\n';
+  }
+  payload += ESC_CMD.ALIGN_LT;
   payload += separator + '\n';
 
   // INFO DE ORDEN
@@ -257,6 +282,20 @@ export const executePrint = async (
   macAddress: string
 ): Promise<boolean> => {
   try {
+    try {
+      const configRes = await getConfiguracion();
+      const config = configRes?.data || configRes;
+      if (config && (config.nombreComercial || config.nit || config.direccion || config.telefono)) {
+        ticketData.comercio = {
+          nombre: config.nombreComercial,
+          nit: config.nit,
+          direccion: config.direccion,
+          telefono: config.telefono,
+        };
+      }
+    } catch (err) {
+      console.log('Error fetching configuracion for ticket:', err);
+    }
     if (!BLEPrinter) {
       console.log('Simulando impresión (No hay BLEPrinter)\n', generateTicketPayload(ticketData, paperSize));
       return true; // Simulado
