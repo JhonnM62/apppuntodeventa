@@ -837,6 +837,12 @@ export default function HistorialVentasScreen({ navigation }: any) {
                     <Text style={{ fontSize: 10, color: '#d97706', fontWeight: 'bold', marginLeft: 4 }}>NOTAS</Text>
                   </View>
                 )}
+                {item.mensaje?.includes('Auto-Cuadre IA') && (
+                  <View style={{ marginLeft: 8, backgroundColor: '#ede9fe', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 12 }}>🤖</Text>
+                    <Text style={{ fontSize: 10, color: '#6d28d9', fontWeight: 'bold', marginLeft: 4 }}>IA</Text>
+                  </View>
+                )}
               </View>
               <View className={`px-2 py-1 rounded-full flex-shrink-0 ${isDeleted ? 'bg-red-100' : 'bg-green-100'}`}>
                 <Text className={`text-[10px] font-bold ${isDeleted ? 'text-red-700' : 'text-green-700'}`}>

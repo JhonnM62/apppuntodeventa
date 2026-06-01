@@ -680,6 +680,12 @@ showAlert({
                   <RNText style={{ fontSize: 10, color: '#d97706', fontWeight: 'bold', marginLeft: 4 }}>NOTAS</RNText>
                 </View>
               )}
+              {item.mensaje?.includes('Auto-Cuadre IA') && (
+                <View style={{ marginLeft: 8, backgroundColor: '#ede9fe', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
+                  <RNText style={{ fontSize: 12 }}>🤖</RNText>
+                  <RNText style={{ fontSize: 10, color: '#6d28d9', fontWeight: 'bold', marginLeft: 4 }}>IA</RNText>
+                </View>
+              )}
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.estado) + '20' }]}>
