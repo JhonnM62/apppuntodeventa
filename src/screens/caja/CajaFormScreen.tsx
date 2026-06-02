@@ -446,6 +446,57 @@ export default function CajaFormScreen({ route, navigation }: any) {
     fetchInitialData();
   }, [fetchInitialData]);
 
+  const handleAutoCuadreClick = async () => {
+    setSaving(true);
+    try {
+      const data = getValues();
+      const cleanData = { ...data } as any;
+      if (!cleanData.fechaDeCierre) delete cleanData.fechaDeCierre;
+      if (!cleanData.horaDeCierre) delete cleanData.horaDeCierre;
+      if (cleanData.efectivoDeCierre === '' || isNaN(cleanData.efectivoDeCierre)) delete cleanData.efectivoDeCierre;
+
+      if (transferenciasContadas !== '' && !isNaN(Number(transferenciasContadas))) {
+        cleanData.transferenciasContadas = Number(transferenciasContadas);
+      }
+
+      if (cleanData.insumos) {
+        cleanData.insumos = cleanData.insumos.map((i: any) => ({
+          ...i,
+          cantDeCierre: i.cantDeCierre === '' || isNaN(Number(i.cantDeCierre)) ? undefined : Number(i.cantDeCierre)
+        }));
+      }
+
+      const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre } as any;
+
+      // Calculate and sync physical differences in the DB so that preview endpoint gets correct metrics
+      const efContado = parseFloat(watch('efectivoDeCierre') as unknown as string) || 0;
+      const trContadas = parseFloat(transferenciasContadas) || 0;
+      const efAper = Number(resumenData?.resumen?.efectivoApertura || 0);
+      const efTot = Number(resumenData?.resumen?.totalEfectivo || 0);
+      const trTot = Number(resumenData?.resumen?.totalTransferencia || 0) + Number(resumenData?.resumen?.totalNequi || 0);
+
+      const diffEf = efContado - (efAper + efTot);
+      const diffTr = trContadas - trTot;
+      const totalD = diffEf + diffTr;
+
+      updateData.valorFaltante = totalD < 0 ? Math.abs(totalD) : 0;
+      updateData.valorExcedente = totalD > 0 ? totalD : 0;
+      updateData.cuadroCaja = totalD === 0 && diffEf === 0 && diffTr === 0 ? 'SI CUADRO CAJA' : 'NO CUADRO CAJA';
+
+      await updateCaja(cajaId, updateData);
+      await fetchInitialData();
+      
+      setIsAutoCuadreModalVisible(true);
+    } catch (error: any) {
+      console.error('Error guardando antes de Auto-Cuadre:', error);
+      let errorMsg = error?.response?.data?.message || error?.message || 'No se pudo guardar';
+      if (Array.isArray(errorMsg)) errorMsg = errorMsg.join(', ');
+      Toast.show({ type: 'error', text1: 'Error', text2: `No se pudieron guardar los montos actuales: ${errorMsg}` });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const onSave = async (data: any, isFinalClose: boolean = false) => {
     setSaving(true);
     try {
@@ -1607,7 +1658,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 {!isCuadrada && isAdmin && !isReadOnly && (
                   <TouchableOpacity
                     className="bg-purple-600 py-3 rounded-xl items-center flex-row justify-center mb-4 shadow-sm shadow-purple-200"
-                    onPress={() => setIsAutoCuadreModalVisible(true)}
+                    onPress={handleAutoCuadreClick}
                   >
                     <Ionicons name="sparkles" size={18} color="#fff" />
                     <Text className="text-white font-bold ml-2 text-xs uppercase tracking-wide">Auto-Cuadre con IA</Text>

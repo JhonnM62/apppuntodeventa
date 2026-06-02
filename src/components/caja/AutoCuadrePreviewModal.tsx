@@ -51,7 +51,7 @@ export default function AutoCuadrePreviewModal({
       setPlanIA(plan);
       setModalState('REVIEW_PLAN');
     } catch (error: any) {
-      console.error('Error cargando plan IA:', error);
+      console.log('Error cargando plan IA:', error);
       let msg = error?.response?.data?.message || error?.message || 'Error al obtener plan de IA';
       if (msg === 'Network Error') {
         msg = 'El servidor no respondió a tiempo o se estaba reiniciando. Por favor, intenta de nuevo.';
@@ -67,7 +67,7 @@ export default function AutoCuadrePreviewModal({
       await executeAutoCuadre(cajaId, planIA);
       setModalState('SUCCESS');
     } catch (error: any) {
-      console.error('Error ejecutando plan IA:', error);
+      console.log('Error ejecutando plan IA:', error);
       setErrorMessage(error?.response?.data?.message || 'Error al ejecutar plan de IA');
       setModalState('ERROR');
     }
