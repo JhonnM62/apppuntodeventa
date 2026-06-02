@@ -183,7 +183,7 @@ const PedidosScreen = () => {
     }
     try {
       // Pedimos datos frescos de ventas
-      const data = await getSales({ limit: 100 });
+      const data = await getSales({ limit: 500 });
       // Extraemos array si viene envuelto en objeto { data: [...], meta: {...} }
       const ventasData = data?.data || data;
       if (Array.isArray(ventasData)) {

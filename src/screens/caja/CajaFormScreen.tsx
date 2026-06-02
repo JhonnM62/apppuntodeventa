@@ -1892,7 +1892,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
             style={{ flex: 1, justifyContent: 'flex-end' }}
           >
-            <View style={{ height: '90%', backgroundColor: '#F8FAFC', borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden', marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
+            <View style={{ height: '90%', backgroundColor: '#F8FAFC', borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden', paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
               <View className="flex-row items-center justify-between p-4 bg-white border-b border-gray-200 mt-safe">
                 <Text className="text-lg font-bold text-gray-900">Seleccionar Insumo</Text>
                 <TouchableOpacity onPress={() => setModalInsumosVisible(false)} className="p-2">
@@ -1952,7 +1952,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
             style={{ flex: 1, justifyContent: 'flex-end' }}
           >
-            <View style={{ height: '90%', backgroundColor: '#F8FAFC', borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden', marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
+            <View style={{ height: '90%', backgroundColor: '#F8FAFC', borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden', paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
               <View className="flex-row items-center justify-between p-4 bg-white border-b border-gray-200 mt-safe">
                 <View>
                   <Text className="text-lg font-bold text-gray-900">Seleccionar Productos</Text>

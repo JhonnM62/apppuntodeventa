@@ -11,6 +11,7 @@ import FloatingDock from '../components/ui/FloatingDock';
 import { useSalesStore } from '../store/useSalesStore';
 import { Text } from 'react-native';
 import SessionExpiredModal from '../components/ui/SessionExpiredModal';
+import { useGlobalSalesSync } from '../hooks/useGlobalSalesSync';
 
 // Screens
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -189,6 +190,8 @@ export const navigationRef = createNavigationContainerRef();
 const RootNavigator = () => {
   const { isInitialized, token, init } = useAuthStore();
   const { setCurrentRoute, addToHistory, setVisible } = useDockStore();
+
+  useGlobalSalesSync();
 
   useEffect(() => {
     init();
