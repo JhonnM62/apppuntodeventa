@@ -168,6 +168,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
   const [cuadreModalVisible, setCuadreModalVisible] = useState(false);
   const [cuadreOrders, setCuadreOrders] = useState<any[]>([]);
+  const [isSearchingCuadre, setIsSearchingCuadre] = useState(false);
   const [cuadreProduct, setCuadreProduct] = useState<any>(null);
   const [cuadreDiff, setCuadreDiff] = useState<number>(0);
 
@@ -254,7 +255,8 @@ export default function CajaFormScreen({ route, navigation }: any) {
     setCuadreProduct(prod);
     setCuadreDiff(diff);
     setCuadreModalVisible(true);
-    setCuadreOrders([]); // loading state
+    setCuadreOrders([]); // clear previous
+    setIsSearchingCuadre(true);
     try {
       const res = await api.get('/ventas', { params: { search: prod.nombre, limit: 100 } });
       let orders = res.data?.data || [];
@@ -275,6 +277,8 @@ export default function CajaFormScreen({ route, navigation }: any) {
     } catch (e) {
       console.error(e);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudieron cargar los pedidos' });
+    } finally {
+      setIsSearchingCuadre(false);
     }
   };
 
@@ -2263,10 +2267,14 @@ export default function CajaFormScreen({ route, navigation }: any) {
               </View>
 
               <ScrollView className="p-5" contentContainerStyle={{ paddingBottom: 100 }}>
-                {cuadreOrders.length === 0 ? (
+                {isSearchingCuadre ? (
                   <View className="py-10 items-center justify-center">
                     <ActivityIndicator size="large" color="#4f46e5" />
                     <Text className="text-gray-500 mt-4">Buscando ventas...</Text>
+                  </View>
+                ) : cuadreOrders.length === 0 ? (
+                  <View className="py-10 items-center justify-center">
+                    <Text className="text-gray-500 mt-4">No se encontraron ventas para este producto en la fecha actual.</Text>
                   </View>
                 ) : (
                   ['TRANSFERENCIA', 'EFECTIVO', 'COMENTARIOS'].map((grupoKey, gIdx) => {

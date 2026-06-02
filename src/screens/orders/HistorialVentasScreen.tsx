@@ -176,8 +176,9 @@ export default function HistorialVentasScreen({ navigation }: any) {
 
         if (v.ordenVentas && Array.isArray(v.ordenVentas)) {
           v.ordenVentas.forEach((prod: any) => {
-            const cat = prod.categoriaProducto || prod.categoria || 'Sin Categoría';
-            const name = prod.nombreProducto || prod.nombre || 'Producto Desconocido';
+            let cat = prod.producto?.categoriaNombre || prod.producto?.categoria || prod.categoriaProducto || prod.categoria || 'LO MAS VENDIDO';
+            if (cat === 'Sin Categoría') cat = 'LO MAS VENDIDO';
+            const name = prod.producto?.nombre || prod.nombreProducto || prod.nombre || 'Producto Desconocido';
             const qty = Number(prod.cantidad) || 0;
             const pTotal = Number(prod.precioTotal) || 0;
 
