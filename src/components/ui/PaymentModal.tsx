@@ -602,16 +602,44 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         <ScrollView style={[styles.cartSummaryList, { maxHeight: windowHeight * 0.18 }]} showsVerticalScrollIndicator={false} nestedScrollEnabled>
           {cart.map((item, index) => {
             const unitPrice = Number(item.precioUnitario || item.Precio_Unitario || 0);
-            const subtotal = item.quantity * unitPrice;
+            const modifiersTotal = (item.modifiers || []).reduce((sum: number, mod: any) => sum + mod.price, 0);
+            const subtotal = (item.quantity * unitPrice) + modifiersTotal;
             return (
-              <View key={`${item.IDproductos}-${index}`} style={styles.cartSummaryItem}>
-                <View style={styles.cartSummaryItemLeft}>
-                  <View style={styles.cartSummaryQty}>
-                    <RNText style={styles.cartSummaryQtyText}>{item.quantity}x</RNText>
+              <View key={`${item.IDproductos}-${index}`} style={{ marginBottom: 6, paddingBottom: 4, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' }}>
+                <View style={[styles.cartSummaryItem, { marginBottom: 2 }]}>
+                  <View style={styles.cartSummaryItemLeft}>
+                    <View style={styles.cartSummaryQty}>
+                      <RNText style={styles.cartSummaryQtyText}>{item.quantity}x</RNText>
+                    </View>
+                    <RNText style={styles.cartSummaryName} numberOfLines={1}>{item.nombre}</RNText>
                   </View>
-                  <RNText style={styles.cartSummaryName} numberOfLines={1}>{item.nombre}</RNText>
+                  <RNText style={styles.cartSummaryPrice}>{formatMoney(subtotal)}</RNText>
                 </View>
-                <RNText style={styles.cartSummaryPrice}>{formatMoney(subtotal)}</RNText>
+
+                {/* MODIFICADORES */}
+                {item.modifiers && item.modifiers.length > 0 && (
+                  <View style={{ paddingLeft: 36 }}>
+                    {item.modifiers.map((mod: any, modIdx: number) => (
+                      <View key={`mod-${modIdx}`} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 1 }}>
+                        <RNText style={{ fontSize: 10, color: '#6b7280', flex: 1, marginRight: 8 }} numberOfLines={1}>
+                          + {mod.name}
+                        </RNText>
+                        <RNText style={{ fontSize: 10, color: '#9ca3af', fontWeight: 'bold' }}>
+                          {mod.price < 0 ? `-${formatMoney(Math.abs(mod.price))}` : `+${formatMoney(mod.price)}`}
+                        </RNText>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {/* NOTA PERSONALIZADA (Si existe) */}
+                {item.notaPersonalizada ? (
+                  <View style={{ paddingLeft: 36, marginTop: 2 }}>
+                    <RNText style={{ fontSize: 10, color: '#9ca3af', fontStyle: 'italic' }} numberOfLines={2}>
+                      ✏️ {item.notaPersonalizada}
+                    </RNText>
+                  </View>
+                ) : null}
               </View>
             );
           })}

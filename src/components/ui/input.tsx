@@ -49,4 +49,3 @@ const Input = React.forwardRef<React.ElementRef<typeof TextInput>, InputProps>(
 Input.displayName = 'Input';
 
 export { Input, TextInput };
-export type { InputProps };

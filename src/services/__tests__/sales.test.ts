@@ -3,7 +3,7 @@ import api from '../api';
 
 jest.mock('../api');
 
-const mockApi = api as jest.MockedFunction<typeof api>;
+const mockApi = api as jest.Mocked<typeof api>;
 
 describe('sales service', () => {
   afterEach(() => {

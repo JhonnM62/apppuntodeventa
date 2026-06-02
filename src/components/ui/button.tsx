@@ -60,7 +60,7 @@ const Button = React.forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>
             variant === 'default' || variant === 'destructive' ? 'text-primary-foreground' : 'text-foreground'
           )}
         >
-          {children}
+          {children as any}
         </Text>
       </Pressable>
     );

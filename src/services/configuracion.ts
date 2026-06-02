@@ -1,7 +1,7 @@
 import api from './api';
 
 export const getConfiguracion = () => api.get('/configuracion');
-export const updateConfiguracion = (data: { horaCorteDia?: string, modoOperacion?: string }) => api.put('/configuracion', data);
+export const updateConfiguracion = (data: { horaCorteDia?: string, modoOperacion?: string, nombreComercial?: string, nit?: string, direccion?: string, telefono?: string }) => api.put('/configuracion', data);
 
 export const getConfiguracionWhatsapp = () => api.get('/configuracion/whatsapp');
 export const updateConfiguracionWhatsapp = (data: any) => api.put('/configuracion/whatsapp', data);

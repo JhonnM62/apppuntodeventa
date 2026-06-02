@@ -3,7 +3,8 @@ import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, TextInp
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+const FlashList = OriginalFlashList as any;
 import { Text } from '../../components/ui/text';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';

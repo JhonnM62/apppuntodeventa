@@ -3,7 +3,8 @@ import { View, Text, TouchableOpacity, ActivityIndicator, Keyboard, Animated, Pl
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+const FlashList = OriginalFlashList as any;
 import { Input } from '../../components/ui/input';
 import { getClientes, Cliente } from '../../services/clientes.service';
 import { usePermissions } from '../../hooks/usePermissions';

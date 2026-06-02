@@ -206,7 +206,7 @@ const handleDelete = () => {
           Toast.show({ type: 'success', text1: 'Éxito', text2: 'Producto eliminado' });
           navigation.goBack();
         } catch (error: any) {
-          showAlert({ type: 'error', title: 'Error', message: getErrorMessage(error, 'No se pudo eliminar') });
+          showAlert({ type: 'error', title: 'Error', message: error?.response?.data?.message || error?.message || 'No se pudo eliminar' });
         }
       },
       onCancel: () => {},

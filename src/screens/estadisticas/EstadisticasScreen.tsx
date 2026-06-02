@@ -437,8 +437,6 @@ export default function EstadisticasScreen({ navigation }: any) {
             value={startDate}
             mode="date"
             display="default"
-            onNeutralButtonPress={() => {}}
-            onDismiss={() => setShowStartPicker(false)}
             onChange={(e, date) => {
               setShowStartPicker(false);
               if (e.type === 'set' && date) setStartDate(date);
@@ -451,8 +449,6 @@ export default function EstadisticasScreen({ navigation }: any) {
             mode="date"
             display="default"
             minimumDate={startDate}
-            onNeutralButtonPress={() => {}}
-            onDismiss={() => setShowEndPicker(false)}
             onChange={(e, date) => {
               setShowEndPicker(false);
               if (e.type === 'set' && date) setEndDate(date);

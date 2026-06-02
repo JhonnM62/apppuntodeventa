@@ -20,6 +20,8 @@ describe('Performance y Lógica de Ventas', () => {
         productoId: '1',
         nombre: 'Producto Test',
         categoria: 'LO MAS VENDIDO',
+        nombreProducto: 'Producto Test',
+        categoriaProducto: 'LO MAS VENDIDO',
         cantidad: 1,
         precio: 10000,
         precioTotal: 10000,

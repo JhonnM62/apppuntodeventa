@@ -6,7 +6,8 @@ import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import Toast from 'react-native-toast-message';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+const FlashList = OriginalFlashList as any;
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { getConfiguracion } from '../../services/configuracion';
 
@@ -164,6 +165,11 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [verifyModalVisible, setVerifyModalVisible] = useState(false);
   const [guardarModalVisible, setGuardarModalVisible] = useState(false);
   const [verificacionCompletada, setVerificacionCompletada] = useState(false);
+  const [expandedProduct, setExpandedProduct] = useState<string | null>(null);
+  const [cuadreModalVisible, setCuadreModalVisible] = useState(false);
+  const [cuadreOrders, setCuadreOrders] = useState<any[]>([]);
+  const [cuadreProduct, setCuadreProduct] = useState<any>(null);
+  const [cuadreDiff, setCuadreDiff] = useState<number>(0);
 
   const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -244,6 +250,46 @@ export default function CajaFormScreen({ route, navigation }: any) {
     fetchResumenSilenciosamente();
   });
 
+  const handleOpenCuadreModal = async (prod: any, diff: number) => {
+    setCuadreProduct(prod);
+    setCuadreDiff(diff);
+    setCuadreModalVisible(true);
+    setCuadreOrders([]); // loading state
+    try {
+      const res = await api.get('/ventas', { params: { search: prod.nombre, limit: 100 } });
+      let orders = res.data?.data || [];
+      
+      orders = orders.filter((v: any) => v.ordenVentas?.some((ov: any) => ov.nombre === prod.nombre || ov.nombreProducto === prod.nombre));
+
+      if (resumenData?.caja?.fechaDeApertura) {
+        const aperturaDate = new Date(`${resumenData.caja.fechaDeApertura}T${resumenData.caja.horaDeApertura || '00:00:00'}`);
+        orders = orders.filter((v: any) => new Date(v.fechaYHora) >= aperturaDate);
+      }
+      
+      if (horaCongelada) {
+        const congeladaDate = new Date(horaCongelada);
+        orders = orders.filter((v: any) => new Date(v.fechaYHora) <= congeladaDate);
+      }
+
+      setCuadreOrders(orders);
+    } catch (e) {
+      console.error(e);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudieron cargar los pedidos' });
+    }
+  };
+
+  const handleUpdateProductInVenta = async (ventaId: string, orderVentaId: string, newCantidad: number) => {
+    try {
+      await api.patch(`/ventas/${ventaId}/producto/${orderVentaId}`, { cantidad: newCantidad });
+      Toast.show({ type: 'success', text1: 'Ajustado', text2: 'Pedido ajustado correctamente' });
+      handleOpenCuadreModal(cuadreProduct, cuadreDiff);
+      fetchResumenSilenciosamente();
+    } catch (e: any) {
+      console.error(e);
+      Toast.show({ type: 'error', text1: 'Error', text2: e.response?.data?.message || 'No se pudo ajustar el pedido' });
+    }
+  };
+
   const fetchInitialData = useCallback(async () => {
     setLoading(true);
     try {
@@ -270,7 +316,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           .map(i => ({
             nombreInsumo: i.IDalimentos,
             nombreInsumoReal: i.Nombre || i.nombre,
-            paraQueProducto: [] as string[],
+            paraQueProducto: [] as unknown as string[],
             nombreProductoReal: '',
             categoria: i.Categoria || i.categoria || '',
             unidadDeMedida: i.Unidades || i.unidades || 'Und',
@@ -476,7 +522,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
       append({
         nombreInsumo: insumo.IDalimentos,
         nombreInsumoReal: insumo.Nombre || insumo.nombre,
-        paraQueProducto: [] as string[],
+        paraQueProducto: [] as unknown as string[],
         nombreProductoReal: '',
         categoria: insumo.Categoria || insumo.categoria || '',
         unidadDeMedida: insumo.Unidades || insumo.unidades || 'Und',
@@ -697,7 +743,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 const p = allProductos.find((x: any) => x.IDproductos === val || x.nombre === val);
                 return p ? p.IDproductos : val;
               }).filter(Boolean);
-            })() as string[],
+            })() as unknown as string[],
             nombreProductoReal: (() => {
               if (i.productosAsociados && Array.isArray(i.productosAsociados) && i.productosAsociados.length > 0) {
                 return i.productosAsociados.map((p: any) => p.nombre).join(', ');
@@ -1093,7 +1139,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
               <Input editable={!isReadOnly} keyboardType="numeric" value={formatCurrency(value)} onChangeText={(val) => onChange(parseCurrency(val))} className={cn("font-bold bg-gray-50 border-gray-300 text-gray-900", errors.efectivoDeApertura && "border-red-500")} style={{ fontSize: 15 }} />
             )} />
             {errors.efectivoDeApertura && (
-              <Text className="text-red-500 text-xs mt-1 font-medium">{errors.efectivoDeApertura.message as string}</Text>
+              <Text className="text-red-500 text-xs mt-1 font-medium">{errors.efectivoDeApertura.message as unknown as string}</Text>
             )}
           </View>
 
@@ -1186,7 +1232,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
             <TouchableOpacity
               className="bg-blue-600 py-3 rounded-xl items-center mt-2 shadow-sm shadow-blue-200 flex-row justify-center"
               onPress={() => {
-                const efContado = parseFloat(watch('efectivoDeCierre') as string) || 0;
+                const efContado = parseFloat(watch('efectivoDeCierre') as unknown as string) || 0;
                 const trContadas = parseFloat(transferenciasContadas) || 0;
                 const efAper = Number(resumenData?.resumen?.efectivoApertura || 0);
                 const efTot = Number(resumenData?.resumen?.totalEfectivo || 0);
@@ -1436,7 +1482,9 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 return (
                   <View className={`mt-3 p-3 rounded-lg flex-row justify-between items-center ${diff === 0 ? 'bg-green-50' : diff < 0 ? 'bg-red-50' : 'bg-orange-50'}`}>
                     <Text className={`font-bold text-xs ${diff === 0 ? 'text-green-800' : diff < 0 ? 'text-red-800' : 'text-orange-800'}`}>Diferencia Efectivo:</Text>
-                    <Text className={`font-black text-sm ${diff === 0 ? 'text-green-700' : diff < 0 ? 'text-red-700' : 'text-orange-700'}`}>{diff > 0 ? '+' : ''}{formatCurrency(diff)}</Text>
+                    <Text className={`font-black text-sm ${diff === 0 ? 'text-green-700' : diff < 0 ? 'text-red-700' : 'text-orange-700'}`}>
+                      {diff > 0 ? '+' : ''}{formatCurrency(diff)} {diff !== 0 && <Text>{diff > 0 ? '(Sobran)' : '(Faltan)'}</Text>}
+                    </Text>
                   </View>
                 );
               })()}
@@ -1478,7 +1526,9 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 return (
                   <View className={`mt-3 p-3 rounded-lg flex-row justify-between items-center ${diff === 0 ? 'bg-green-50' : diff < 0 ? 'bg-red-50' : 'bg-orange-50'}`}>
                     <Text className={`font-bold text-xs ${diff === 0 ? 'text-green-800' : diff < 0 ? 'text-red-800' : 'text-orange-800'}`}>Diferencia Transf.:</Text>
-                    <Text className={`font-black text-sm ${diff === 0 ? 'text-green-700' : diff < 0 ? 'text-red-700' : 'text-orange-700'}`}>{diff > 0 ? '+' : ''}{formatCurrency(diff)}</Text>
+                    <Text className={`font-black text-sm ${diff === 0 ? 'text-green-700' : diff < 0 ? 'text-red-700' : 'text-orange-700'}`}>
+                      {diff > 0 ? '+' : ''}{formatCurrency(diff)} {diff !== 0 && <Text>{diff > 0 ? '(Sobran)' : '(Faltan)'}</Text>}
+                    </Text>
                   </View>
                 );
               })()}
@@ -1742,7 +1792,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                     : (ins.nombreProductoReal || 'Sin productos');
 
                   return (
-                    <View key={index} className={`border-b border-gray-100 ${ins.diferencia === 0 ? 'bg-white' : ins.diferencia < 0 ? 'bg-red-50' : 'bg-emerald-50'}`}>
+                    <View key={index} className={`border-b border-gray-100 ${ins.diferencia === 0 ? 'bg-green-50' : 'bg-red-50'}`}>
                       <View className="flex-row p-3">
                         <View className="flex-[2]">
                           <Text className="text-xs font-bold text-gray-800">{ins.nombreReal || ins.nombreInsumo}</Text>
@@ -1759,7 +1809,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                         </View>
                         <Text className="flex-1 text-xs font-bold text-gray-700 text-center self-center">{ins.seUtilizaron || 0}</Text>
                         <Text className="flex-1 text-xs font-bold text-gray-700 text-center self-center">{ins.ventasEnSistema || 0}</Text>
-                        <Text className={`flex-1 text-xs font-bold text-right self-center ${ins.diferencia < 0 ? 'text-red-600' : ins.diferencia > 0 ? 'text-emerald-600' : 'text-gray-500'}`}>
+                        <Text className={`flex-1 text-xs font-bold text-right self-center ${ins.diferencia === 0 ? 'text-green-600' : 'text-red-600'}`}>
                           {ins.diferencia > 0 ? '+' : ''}{ins.diferencia}
                         </Text>
                       </View>
@@ -1792,14 +1842,70 @@ export default function CajaFormScreen({ route, navigation }: any) {
                       <Text className="text-[10px] text-indigo-600 font-bold">{formatCurrency(cat.totalIngresos)}</Text>
                     </View>
                   </View>
-                  {cat.productos.map((prod: any, pi: number) => (
-                    <View key={pi} className="flex-row items-center justify-between px-4 py-1.5 border-b border-gray-50">
-                      <Text className="text-xs text-gray-700 flex-1" numberOfLines={1}>{prod.nombre}</Text>
-                      <View className="bg-indigo-100 rounded-full px-2 py-0.5">
-                        <Text className="text-[10px] font-bold text-indigo-700">{prod.cantidad}</Text>
+                  {cat.productos.map((prod: any, pi: number) => {
+                    const insumo = resumenData.insumos?.find((ins: any) => 
+                      (ins.productosAsociados && ins.productosAsociados.includes(prod.productoId)) ||
+                      (ins.nombreProductoReal && ins.nombreProductoReal.includes(prod.nombre)) ||
+                      (ins.nombreInsumoReal && ins.nombreInsumoReal.includes(prod.nombre))
+                    );
+                    const diff = insumo?.diferencia || 0;
+                    const isExpanded = expandedProduct === prod.nombre;
+
+                    return (
+                      <View key={pi} className="border-b border-gray-50">
+                        <TouchableOpacity 
+                          onPress={() => setExpandedProduct(isExpanded ? null : prod.nombre)}
+                          className="flex-row items-center justify-between px-4 py-1.5"
+                        >
+                          <Text className="text-xs text-gray-700 flex-1" numberOfLines={1}>
+                            {prod.nombre}
+                          </Text>
+                          <View className="flex-row items-center gap-2">
+                            {diff !== 0 && (
+                              <View className={`px-2 py-0.5 rounded-md ${diff > 0 ? 'bg-orange-100' : 'bg-red-100'}`}>
+                                <Text className={`text-[10px] font-bold ${diff > 0 ? 'text-orange-700' : 'text-red-700'}`}>
+                                  {diff > 0 ? `Faltan ${diff}` : `Exceso ${Math.abs(diff)}`}
+                                </Text>
+                              </View>
+                            )}
+                            <View className="bg-indigo-100 rounded-full px-2 py-0.5">
+                              <Text className="text-[10px] font-bold text-indigo-700">{prod.cantidad}</Text>
+                            </View>
+                            <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={14} color="#6b7280" />
+                          </View>
+                        </TouchableOpacity>
+
+                        {isExpanded && (
+                          <View className="px-4 py-2 bg-gray-50 border-t border-gray-100 flex-row justify-end">
+                            {diff > 0 ? (
+                              <TouchableOpacity 
+                                className="bg-blue-600 px-3 py-1.5 rounded-lg flex-row items-center"
+                                onPress={() => {
+                                  navigation.navigate('NewSale' as never, { 
+                                    prefillProduct: prod.nombre,
+                                    prefillQuantity: diff 
+                                  } as never);
+                                }}
+                              >
+                                <Ionicons name="add-circle" size={16} color="white" className="mr-1" />
+                                <Text className="text-white text-xs font-bold ml-1">Agregar Venta (+{diff})</Text>
+                              </TouchableOpacity>
+                            ) : diff < 0 ? (
+                              <TouchableOpacity 
+                                className="bg-red-500 px-3 py-1.5 rounded-lg flex-row items-center"
+                                onPress={() => handleOpenCuadreModal(prod, diff)}
+                              >
+                                <Ionicons name="search" size={16} color="white" className="mr-1" />
+                                <Text className="text-white text-xs font-bold ml-1">Ver Ventas para Quitar</Text>
+                              </TouchableOpacity>
+                            ) : (
+                              <Text className="text-xs text-green-600 font-bold">Cuadre exacto (No hay acciones)</Text>
+                            )}
+                          </View>
+                        )}
                       </View>
-                    </View>
-                  ))}
+                    );
+                  })}
                 </View>
               ))}
             </View>
@@ -2128,6 +2234,111 @@ export default function CajaFormScreen({ route, navigation }: any) {
                   <Text className="text-white font-bold">Sumar</Text>
                 </TouchableOpacity>
               </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* CUADRE MODAL (Scenario B) */}
+        <Modal
+          visible={cuadreModalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setCuadreModalVisible(false)}
+        >
+          <View className="flex-1 bg-black/60 justify-end">
+            <View className="bg-white rounded-t-3xl h-[85%]">
+              <View className="flex-row items-center justify-between p-5 border-b border-gray-100 mt-safe">
+                <View>
+                  <Text className="text-xl font-bold text-gray-900">Ajustar Ventas</Text>
+                  <Text className="text-sm text-gray-500">
+                    {cuadreProduct?.nombre} <Text className="text-red-500 font-bold">(Exceso de {Math.abs(cuadreDiff)})</Text>
+                  </Text>
+                </View>
+                <TouchableOpacity 
+                  onPress={() => setCuadreModalVisible(false)}
+                  className="bg-gray-100 p-2 rounded-full"
+                >
+                  <Ionicons name="close" size={24} color="#374151" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView className="p-5" contentContainerStyle={{ paddingBottom: 100 }}>
+                {cuadreOrders.length === 0 ? (
+                  <View className="py-10 items-center justify-center">
+                    <ActivityIndicator size="large" color="#4f46e5" />
+                    <Text className="text-gray-500 mt-4">Buscando ventas...</Text>
+                  </View>
+                ) : (
+                  ['TRANSFERENCIA', 'EFECTIVO', 'COMENTARIOS'].map((grupoKey, gIdx) => {
+                    const groupOrders = cuadreOrders.filter(v => {
+                      const hasComment = v.ordenVentas?.some((ov: any) => 
+                        (ov.nombre === cuadreProduct?.nombre || ov.nombreProducto === cuadreProduct?.nombre) && 
+                        ov.comentarios && ov.comentarios.trim().length > 0
+                      );
+                      
+                      if (grupoKey === 'COMENTARIOS') return hasComment;
+                      if (grupoKey === 'TRANSFERENCIA') return !hasComment && v.medioDePago !== 'EFECTIVO';
+                      if (grupoKey === 'EFECTIVO') return !hasComment && v.medioDePago === 'EFECTIVO';
+                      return false;
+                    });
+
+                    if (groupOrders.length === 0) return null;
+
+                    return (
+                      <View key={gIdx} className="mb-6">
+                        <Text className="text-sm font-bold text-gray-400 mb-3 ml-1 uppercase tracking-wider">
+                          {grupoKey === 'COMENTARIOS' ? 'Con Comentarios / Modificadores' : grupoKey}
+                        </Text>
+                        
+                        {groupOrders.map((venta, vIdx) => {
+                          const orderVenta = venta.ordenVentas?.find((ov: any) => 
+                            ov.nombre === cuadreProduct?.nombre || ov.nombreProducto === cuadreProduct?.nombre
+                          );
+                          if (!orderVenta) return null;
+                          
+                          return (
+                            <View key={vIdx} className="bg-white border border-gray-200 rounded-xl mb-3 shadow-sm overflow-hidden">
+                              <View className="bg-gray-50 px-4 py-2 border-b border-gray-100 flex-row justify-between items-center">
+                                <Text className="text-xs font-bold text-gray-600">Pedido #{venta.pedido?.split('-').pop()}</Text>
+                                <Text className="text-xs text-gray-500">{new Date(venta.fechaYHora).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</Text>
+                              </View>
+                              
+                              <View className="p-4 flex-row items-center justify-between">
+                                <View className="flex-1 mr-4">
+                                  <Text className="text-sm font-bold text-gray-800">{orderVenta.nombre}</Text>
+                                  {orderVenta.comentarios && (
+                                    <View className="bg-amber-50 self-start px-2 py-1 rounded mt-1 border border-amber-100">
+                                      <Text className="text-xs text-amber-800">{orderVenta.comentarios}</Text>
+                                    </View>
+                                  )}
+                                </View>
+                                
+                                <View className="flex-row items-center gap-2">
+                                  <Text className="font-bold text-lg mr-2 text-indigo-700">x{orderVenta.cantidad}</Text>
+                                  
+                                  <TouchableOpacity 
+                                    className="bg-orange-100 px-3 py-2 rounded-lg"
+                                    onPress={() => handleUpdateProductInVenta(venta.IDventas, orderVenta.IDorderventas, orderVenta.cantidad - 1)}
+                                  >
+                                    <Text className="text-orange-700 font-bold text-xs">-1</Text>
+                                  </TouchableOpacity>
+                                  
+                                  <TouchableOpacity 
+                                    className="bg-red-100 px-3 py-2 rounded-lg"
+                                    onPress={() => handleUpdateProductInVenta(venta.IDventas, orderVenta.IDorderventas, 0)}
+                                  >
+                                    <Text className="text-red-700 font-bold text-xs">Quitar</Text>
+                                  </TouchableOpacity>
+                                </View>
+                              </View>
+                            </View>
+                          );
+                        })}
+                      </View>
+                    );
+                  })
+                )}
+              </ScrollView>
             </View>
           </View>
         </Modal>

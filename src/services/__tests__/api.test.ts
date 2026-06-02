@@ -29,7 +29,7 @@ describe('API Services', () => {
       const mockResponse = { message: 'Venta creada', id: '123' };
       (api.post as jest.Mock).mockResolvedValueOnce({ data: mockResponse });
 
-      const result = await createSale(payload);
+      const result = await createSale(payload as any);
       expect(api.post).toHaveBeenCalledWith('/ventas', payload);
       expect(result).toEqual(mockResponse);
     });

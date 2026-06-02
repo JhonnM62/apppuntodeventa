@@ -182,6 +182,20 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     loadInitialData();
   }, []);
 
+  useEffect(() => {
+    if (editingVenta && mesas.length > 0 && !selectedMesa) {
+      if (editingVenta.mesa && editingVenta.mesa !== 'V.R') {
+        const foundMesa = mesas.find(m => m.IdMesas === editingVenta.mesa || m.nombre === editingVenta.mesa);
+        if (foundMesa) {
+          setSelectedMesa(foundMesa);
+        } else {
+          // Fallback en caso de que la mesa no se encuentre en la lista
+          setSelectedMesa({ IdMesas: editingVenta.mesa, nombre: editingVenta.mesa });
+        }
+      }
+    }
+  }, [editingVenta, mesas, selectedMesa]);
+
   const { joinRoom, isConnected } = useSocket();
   const { emitNuevaOrden, emitOrdenActualizada } = useSocketEmitter();
 
@@ -494,7 +508,17 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         import('../../services/sales').then(async ({ updateVentaCompleta }) => {
           try {
             await updateVentaCompleta(editingSaleId, payload);
-            emitOrdenActualizada({ ventaId: editingSaleId, estado: paymentData.estado });
+            emitOrdenActualizada({ 
+              ventaId: editingSaleId, 
+              IDventas: editingSaleId, 
+              estado: paymentData.estado,
+              venta: {
+                ...editingVenta,
+                ...payload.venta,
+                IDventas: editingSaleId
+              },
+              productos: payload.productos 
+            });
 
             Toast.show({
               type: 'success',
@@ -712,7 +736,17 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         import('../../services/sales').then(async ({ updateVentaCompleta }) => {
           try {
             await updateVentaCompleta(editingSaleId, payload);
-            emitOrdenActualizada({ ventaId: editingSaleId, estado: data.estado });
+            emitOrdenActualizada({ 
+              ventaId: editingSaleId, 
+              IDventas: editingSaleId, 
+              estado: data.estado,
+              venta: {
+                ...editingVenta,
+                ...payload.venta,
+                IDventas: editingSaleId
+              },
+              productos: payload.productos
+            });
 
             Toast.show({
               type: 'success',

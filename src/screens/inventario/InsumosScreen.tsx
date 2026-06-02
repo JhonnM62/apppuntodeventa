@@ -209,7 +209,7 @@ const InsumosScreen = ({ navigation }: Props) => {
 
     if (filterEstado !== 'all') {
       result = result.filter(insumo => {
-        const est = (insumo.estado || insumo.Estado || '').toUpperCase();
+        const est = (insumo.estado || (insumo as any).Estado || '').toUpperCase();
         return est === filterEstado;
       });
     }
@@ -385,8 +385,8 @@ if (filterCuadrarInsumos !== 'all') {
       cantidad: insumo.cantidad || insumo.Cantidad || 0,
       precio: insumo.precio || insumo.Precio || 0,
       imageUrl: insumo.imagen || '',
-      disponible: Number(insumo.disponible) || Number(insumo.Disponible) || 0,
-      estado: insumo.estado || insumo.Estado || 'ACTIVO',
+      disponible: String(Number(insumo.disponible) || Number((insumo as any).Disponible) || 0),
+      estado: insumo.estado || (insumo as any).Estado || 'ACTIVO',
       apartir_de_cantidad: insumo.apartirDeCantidad || insumo.apartir_de_cantidad || 0,
       agregar_cantidad: insumo.agregarCantidad || insumo.agregar_cantidad || 100,
       fecha_de_vencimiento: (insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento) ? new Date(insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento).toISOString().split('T')[0] : '',
@@ -397,7 +397,7 @@ if (filterCuadrarInsumos !== 'all') {
     });
     setLocalImageUri(null); // Reset local image when opening edit, rely on imageUrl if exists
     setIsEditing(true);
-    setEstadoActivo((insumo.estado || insumo.Estado || 'ACTIVO').toUpperCase() === 'ACTIVO');
+    setEstadoActivo((insumo.estado || (insumo as any).Estado || 'ACTIVO').toUpperCase() === 'ACTIVO');
     setShowModal(true);
   };
 
@@ -720,7 +720,7 @@ if (status !== 'granted') {
                 <RNText className="text-sm font-semibold text-gray-700">
                   {formatMoney(item.precio || item.Precio)}
                 </RNText>
-                {(item.estado?.toUpperCase() !== 'ACTIVO' && item.Estado?.toUpperCase() !== 'ACTIVO') && (
+                {(item.estado?.toUpperCase() !== 'ACTIVO' && (item as any).Estado?.toUpperCase() !== 'ACTIVO') && (
                   <View className="ml-2 px-2 py-0.5 bg-red-100 rounded">
                     <RNText className="text-xs text-red-600 font-medium">Inactivo</RNText>
                   </View>

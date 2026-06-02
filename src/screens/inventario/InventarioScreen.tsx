@@ -3,7 +3,8 @@ import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, Refresh
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+const FlashList = OriginalFlashList as any;
 import Toast from 'react-native-toast-message';
 import { useSocketEvent } from '../../hooks/useSocketEvent';
 import { useCustomAlert } from '../../context/CustomAlertContext';

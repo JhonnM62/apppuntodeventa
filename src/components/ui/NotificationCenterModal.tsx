@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, ActivityIndicator, Animated } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+const FlashList = OriginalFlashList as any;
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import useAuthStore from '../../store/useAuthStore';
 import { useNotificationStore } from '../../store/useNotificationStore';

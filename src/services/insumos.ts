@@ -62,6 +62,7 @@ export type CreateInsumoDto = {
   contador2?: number;
   imagencard?: string;
   fecha?: string;
+  estado?: string;
 };
 
 export type UpdateInsumoDto = Partial<CreateInsumoDto>;

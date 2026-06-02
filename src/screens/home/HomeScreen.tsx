@@ -10,6 +10,7 @@ import { Text } from '../../components/ui/text';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import NotificationCenterModal from '../../components/ui/NotificationCenterModal';
+import useCartStore from '../../store/useCartStore';
 
 const CARD_MARGIN = 10;
 
@@ -255,11 +256,12 @@ const HomeScreen = ({ navigation }: Props) => {
 
   const handlePress = (item: MenuItem) => {
     if (item.route === 'NewSale') {
+      useCartStore.getState().clearCart();
       navigation.navigate('Sales');
     } else if (item.route === 'Historial') {
       navigation.navigate('HistorialVentas');
     } else {
-      navigation.navigate(item.route);
+      navigation.navigate(item.route as any);
     }
   };
 

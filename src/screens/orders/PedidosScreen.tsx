@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+const FlashList = OriginalFlashList as any;
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -1039,25 +1040,40 @@ showAlert({
                           <RNText style={styles.productName} numberOfLines={1}>{prod.nombreProducto || prod.nombre}</RNText>
                           <RNText style={styles.productMeta}>{prod.cantidad}x {formatMoney(prod.precio)}</RNText>
                           
-                          {/* Notas Compactas */}
+                          {/* Notas/Modificadores con cantidades y precios */}
                           {notas.length > 0 && (
-                            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginTop: 2, marginBottom: 4 }}>
-                              {notas.map((nota, nIdx) => (
-                                <View key={nIdx} style={{ backgroundColor: '#fef3c7', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4, marginRight: 4, marginBottom: 2, flexDirection: 'row', alignItems: 'center' }}>
-                                  <RNText style={{ fontSize: 9, color: '#b45309', fontWeight: 'bold' }}>
-                                    {nota.name || nota.nombre || nota.Nombre}
-                                    {(nota.price || nota.precio || nota.Precio) > 0 ? ` (+$${nota.price || nota.precio || nota.Precio})` : ''}
-                                  </RNText>
-                                </View>
-                              ))}
+                            <View style={{ marginTop: 2, marginBottom: 2 }}>
+                              {notas.map((nota, nIdx) => {
+                                const notaName = nota.name || nota.nombre || nota.Nombre || '';
+                                const notaPrice = Number(nota.price ?? nota.precio ?? nota.Precio ?? 0);
+                                const notaQty = Number(nota.quantity ?? nota.cantidad ?? 1);
+                                const displayQty = notaQty > 1 ? `${notaQty}x ` : '';
+                                
+                                let priceLabel = '';
+                                if (notaPrice !== 0) {
+                                  const sign = notaPrice < 0 ? '-' : '+';
+                                  priceLabel = ` (${sign}${formatMoney(Math.abs(notaPrice * notaQty))})`;
+                                }
+
+                                return (
+                                  <View key={nIdx} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                                    <View style={{ 
+                                      backgroundColor: notaPrice < 0 ? '#fce4ec' : '#fef3c7', 
+                                      paddingHorizontal: 6, 
+                                      paddingVertical: 2, 
+                                      borderRadius: 6, 
+                                      flexDirection: 'row', 
+                                      alignItems: 'center' 
+                                    }}>
+                                      <RNText style={{ fontSize: 10, color: notaPrice < 0 ? '#c62828' : '#b45309', fontWeight: '700' }}>
+                                        {displayQty}{notaName}{priceLabel}
+                                      </RNText>
+                                    </View>
+                                  </View>
+                                );
+                              })}
                             </View>
                           )}
-
-                          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(prod.estado) + '20', alignSelf: 'flex-start' }]}>
-                            <RNText style={[styles.statusText, { color: getStatusColor(prod.estado), fontSize: 9 }]}>
-                              {prod.estado?.replace(/_/g, ' ')}
-                            </RNText>
-                          </View>
                         </View>
                         <RNText style={styles.productTotal}>{formatMoney(prod.precioTotal)}</RNText>
                       </View>
@@ -1610,6 +1626,7 @@ showAlert({
       closeModal();
       setPaymentModalVisible(false);
       setCobrarVenta(null);
+      useCartStore.getState().clearCart();
       Toast.show({ type: 'success', text1: 'Cobro Exitoso', text2: 'Pedido cobrado correctamente', position: 'top' });
       return { pedidoId: cobrarVenta.pedido || cobrarVenta.IDventas };
     } catch (error) {
@@ -1625,6 +1642,7 @@ showAlert({
       closeModal();
       setPaymentModalVisible(false);
       setCobrarVenta(null);
+      useCartStore.getState().clearCart();
       Toast.show({ type: 'success', text1: 'Actualizado', text2: 'El pedido fue actualizado', position: 'top' });
       return { pedidoId: cobrarVenta.pedido || cobrarVenta.IDventas };
     } catch (error) {
@@ -1652,7 +1670,10 @@ showAlert({
           {canCreateVenta && (
             <TouchableOpacity
               style={styles.newSaleBtn}
-              onPress={() => navigation.navigate('Sales', { screen: 'NewSale' } as any)}
+              onPress={() => {
+                useCartStore.getState().clearCart();
+                navigation.navigate('Sales', { screen: 'NewSale' } as any);
+              }}
             >
               <Ionicons name="add" size={20} color="#fff" />
               <RNText style={styles.newSaleBtnText}>Nueva Venta</RNText>

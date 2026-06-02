@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+const FlashList = OriginalFlashList as any;
 import { useMesaStore } from '../../store/useMesaStore';
 import { getMesas, createMesa, updateMesa, deleteMesa, Mesa } from '../../services/mesas';
 
@@ -155,17 +156,22 @@ const MesasScreen = ({ navigation }: any) => {
       </View>
 
       {/* Modal de Formulario (Crear/Editar) */}
-      <Modal visible={formModalVisible} animationType="slide" transparent={true}>
+      <Modal visible={formModalVisible} animationType="slide" transparent={true} onRequestClose={() => setFormModalVisible(false)}>
         <KeyboardAvoidingView 
           style={styles.modalOverlay} 
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <ScrollView 
-            contentContainerStyle={{ flexGrow: 1, justifyContent: 'flex-end', paddingBottom: 32 }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            <View style={styles.modalContent}>
+          <TouchableOpacity 
+            style={{ flex: 1, width: '100%' }} 
+            activeOpacity={1} 
+            onPress={() => setFormModalVisible(false)} 
+          />
+          <View style={[styles.modalContent, { width: '100%', maxHeight: '80%' }]}>
+            <ScrollView 
+              contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{isEditing ? 'Editar Mesa' : 'Nueva Mesa'}</Text>
               <TouchableOpacity onPress={() => setFormModalVisible(false)} style={styles.closeBtn}>
@@ -196,8 +202,8 @@ const MesasScreen = ({ navigation }: any) => {
                 <Text style={styles.saveBtnText}>Guardar</Text>
               )}
             </TouchableOpacity>
+            </ScrollView>
           </View>
-          </ScrollView>
         </KeyboardAvoidingView>
       </Modal>
 

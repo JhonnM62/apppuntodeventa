@@ -228,7 +228,7 @@ const UsersScreen = ({ navigation }: any) => {
         rol: formData.rol,
       });
 
-      if (response?.success) {
+      if (response?.data?.success || (response as any)?.success) {
         setCreatedCredentials({
           email: formData.email.trim().toLowerCase(),
           passwordTemporal: formData.password,

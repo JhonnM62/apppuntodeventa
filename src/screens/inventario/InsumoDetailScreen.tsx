@@ -258,8 +258,8 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
       cantidad: insumo.cantidad || insumo.Cantidad || 0,
       precio: insumo.precio || insumo.Precio || 0,
       imageUrl: insumo.imageUrl || insumo['Image Url'] || '',
-      disponible: Number(insumo.disponible) || Number(insumo.Disponible) || 0,
-      estado: insumo.estado || insumo.Estado || 'ACTIVO',
+      disponible: String(Number(insumo.disponible) || Number((insumo as any).Disponible) || 0),
+      estado: insumo.estado || (insumo as any).Estado || 'ACTIVO',
       apartir_de_cantidad: insumo.apartirDeCantidad || insumo.apartir_de_cantidad || 0,
       agregar_cantidad: insumo.agregarCantidad || insumo.agregar_cantidad || 100,
       fecha_de_vencimiento: (insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento) ? new Date(insumo.fechaDeVencimiento || insumo.fecha_de_vencimiento).toISOString().split('T')[0] : '',
@@ -268,7 +268,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
       llevar_control_en_caja: insumo.llevarControlEnCaja || insumo.llevar_control_en_caja || 'NO',
       cuadrarInsumos: insumo.cuadrarInsumos || false
     });
-    setEstadoActivo((insumo.estado || insumo.Estado || 'ACTIVO').toUpperCase() === 'ACTIVO');
+    setEstadoActivo((insumo.estado || (insumo as any).Estado || 'ACTIVO').toUpperCase() === 'ACTIVO');
     setShowEditModal(true);
   };
 

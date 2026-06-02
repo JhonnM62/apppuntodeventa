@@ -120,7 +120,7 @@ const HomeTabs = () => {
     String(user?.permisos?.pedidos?.read) === 'true';
 
   return (
-    <Tab.Navigator
+    <Tab.Navigator id="TabNav"
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
@@ -229,7 +229,7 @@ const RootNavigator = () => {
           }
         }}
       >
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator id="StackNav" screenOptions={{ headerShown: false }}>
         {token == null ? (
           <>
             <Stack.Screen name="Login" component={LoginScreen as any} />

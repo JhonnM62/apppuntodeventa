@@ -12,15 +12,15 @@ Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true, // Muestra el popup visual arriba
     shouldPlaySound: true, // Suena
-    shouldSetBadge: true,
+    shouldSetBadge: true, shouldShowBanner: true, shouldShowList: true,
   }),
 });
 
 export function usePushNotifications() {
   const [expoPushToken, setExpoPushToken] = useState<string>('');
   const [notification, setNotification] = useState<Notifications.Notification | false>(false);
-  const notificationListener = useRef<Notifications.EventSubscription>();
-  const responseListener = useRef<Notifications.EventSubscription>();
+  const notificationListener = useRef<Notifications.EventSubscription | null>(null);
+  const responseListener = useRef<Notifications.EventSubscription | null>(null);
 
   const { user } = useAuthStore();
   const { incrementUnread } = useNotificationStore();

@@ -200,6 +200,7 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
 
       const payload = {
         venta: {
+          mesa: 'CAJA',
           estado,
           medioDePago,
           efectivoRecibido: total,
@@ -212,7 +213,9 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
           return {
             productoId: item.productoId,
             nombre: item.nombre,
+            nombreProducto: item.nombre,
             categoria: item.categoria,
+            categoriaProducto: item.categoria,
             cantidad: item.cantidad,
             precio: item.precio,
             precioTotal: itemBaseTotal + modsTotal,

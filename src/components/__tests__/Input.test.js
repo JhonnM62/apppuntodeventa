@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, fireEvent, waitFor } from '@testing-library/react-native';
-import { Input } from '../input';
+import Input from '../Input';
 
 jest.mock('@expo/vector-icons', () => ({
   Ionicons: 'Ionicons',
