@@ -28,6 +28,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import VerifyInsumosModal from '../../components/caja/VerifyInsumosModal';
 import AutoCuadrePreviewModal from '../../components/caja/AutoCuadrePreviewModal';
 import { cn } from '../../lib/utils';
+import AdminSaleFormModal from '../orders/AdminSaleFormModal';
 
 const { width } = Dimensions.get('window');
 
@@ -171,6 +172,9 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [isSearchingCuadre, setIsSearchingCuadre] = useState(false);
   const [cuadreProduct, setCuadreProduct] = useState<any>(null);
   const [cuadreDiff, setCuadreDiff] = useState<number>(0);
+  const [selectedVenta, setSelectedVenta] = useState<any>(null);
+  const [adminFormVisible, setAdminFormVisible] = useState(false);
+  const [fetchingSaleId, setFetchingSaleId] = useState<string | null>(null);
 
   const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -279,6 +283,24 @@ export default function CajaFormScreen({ route, navigation }: any) {
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudieron cargar los pedidos' });
     } finally {
       setIsSearchingCuadre(false);
+    }
+  };
+
+  const handleEditSale = async (ventaId: string) => {
+    if (!ventaId) return;
+    setFetchingSaleId(ventaId);
+    try {
+      const res = await api.get(`/ventas/${ventaId}`);
+      const sale = res.data?.data || res.data;
+      if (sale) {
+        setSelectedVenta(sale);
+        setAdminFormVisible(true);
+      }
+    } catch (e) {
+      console.error(e);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cargar la información del pedido' });
+    } finally {
+      setFetchingSaleId(null);
     }
   };
 
@@ -1956,29 +1978,45 @@ export default function CajaFormScreen({ route, navigation }: any) {
                   <Text className="flex-1 text-[10px] font-bold text-orange-800 uppercase tracking-wider ml-1">Pedido / Notas</Text>
                 </View>
                 {resumenData.notasAnalysis.map((nota: any, index: number) => (
-                  <View key={index} className={`flex-row p-3 border-b border-gray-100 bg-white`}>
-                    <Text className="w-16 text-xs font-bold text-gray-700">{formatTime12h(nota.hora) || '-'}</Text>
-                    <View className="flex-1">
-                      <View className="flex-row items-center mb-1">
-                        <Ionicons name="receipt-outline" size={14} color="#6b7280" />
-                        <Text className="text-xs font-bold text-gray-800 ml-1">{nota.pedido}</Text>
-                      </View>
-                      {nota.productosConNotas.map((prod: any, pIdx: number) => (
-                        <View key={pIdx} className="mb-2 ml-1">
-                          <Text className="text-xs font-bold text-gray-700">{prod.cantidad}x {prod.producto}</Text>
-                          {prod.notas.map((n: any, nIdx: number) => (
-                            <Text key={nIdx} className="text-[11px] text-gray-600 ml-2 mt-0.5">
-                              • {n.cantidad || 1}x {n.name || n.nombre || n.Nombre}
-                              {(n.price || n.precio || n.Precio) > 0 && (
-                                <Text className="text-[10px] text-amber-600 font-bold">
-                                  {` (+${formatCurrency(n.price || n.precio || n.Precio)})`}
-                                </Text>
-                              )}
-                            </Text>
-                          ))}
+                  <View key={index} className={`flex-row p-3 border-b border-gray-100 bg-white justify-between items-center`}>
+                    <View className="flex-row flex-1 mr-2">
+                      <Text className="w-16 text-xs font-bold text-gray-700">{formatTime12h(nota.hora) || '-'}</Text>
+                      <View className="flex-1">
+                        <View className="flex-row items-center mb-1">
+                          <Ionicons name="receipt-outline" size={14} color="#6b7280" />
+                          <Text className="text-xs font-bold text-gray-800 ml-1">{nota.pedido}</Text>
                         </View>
-                      ))}
+                        {nota.productosConNotas.map((prod: any, pIdx: number) => (
+                          <View key={pIdx} className="mb-2 ml-1">
+                            <Text className="text-xs font-bold text-gray-700">{prod.cantidad}x {prod.producto}</Text>
+                            {prod.notas.map((n: any, nIdx: number) => (
+                              <Text key={nIdx} className="text-[11px] text-gray-600 ml-2 mt-0.5">
+                                • {n.cantidad || 1}x {n.name || n.nombre || n.Nombre}
+                                {(n.price || n.precio || n.Precio) > 0 && (
+                                  <Text className="text-[10px] text-amber-600 font-bold">
+                                    {` (+${formatCurrency(n.price || n.precio || n.Precio)})`}
+                                  </Text>
+                                )}
+                              </Text>
+                            ))}
+                          </View>
+                        ))}
+                      </View>
                     </View>
+                    
+                    {nota.ventaId && (
+                      <TouchableOpacity 
+                        onPress={() => handleEditSale(nota.ventaId)}
+                        disabled={fetchingSaleId === nota.ventaId}
+                        className="p-2 justify-center items-center self-center"
+                      >
+                        {fetchingSaleId === nota.ventaId ? (
+                          <ActivityIndicator size="small" color="#4f46e5" />
+                        ) : (
+                          <Ionicons name="chevron-forward" size={20} color="#4f46e5" />
+                        )}
+                      </TouchableOpacity>
+                    )}
                   </View>
                 ))}
               </View>
@@ -2350,6 +2388,16 @@ export default function CajaFormScreen({ route, navigation }: any) {
             </View>
           </View>
         </Modal>
+
+        <AdminSaleFormModal 
+          visible={adminFormVisible}
+          onClose={() => setAdminFormVisible(false)}
+          onSuccess={() => {
+            setAdminFormVisible(false);
+            fetchResumenSilenciosamente();
+          }}
+          saleData={selectedVenta}
+        />
     </View>
   );
 }
