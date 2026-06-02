@@ -243,6 +243,14 @@ export default function HistorialVentasScreen({ navigation }: any) {
           if (a.ordenVentas?.some((p: any) => p.nombre?.toLowerCase().includes(searchLower) || p.nombreProducto?.toLowerCase().includes(searchLower))) scoreA += 40;
           if (b.ordenVentas?.some((p: any) => p.nombre?.toLowerCase().includes(searchLower) || p.nombreProducto?.toLowerCase().includes(searchLower))) scoreB += 40;
 
+          // Check comments/comentarios
+          if (a.ordenVentas?.some((p: any) => p.comentarios?.toLowerCase().includes(searchLower))) scoreA += 45;
+          if (b.ordenVentas?.some((p: any) => p.comentarios?.toLowerCase().includes(searchLower))) scoreB += 45;
+
+          // Check main sale message/notes
+          if (a.mensaje?.toLowerCase().includes(searchLower)) scoreA += 35;
+          if (b.mensaje?.toLowerCase().includes(searchLower)) scoreB += 35;
+
           return scoreB - scoreA;
         });
       }
@@ -1252,7 +1260,7 @@ export default function HistorialVentasScreen({ navigation }: any) {
                                     <View key={nIdx} className="bg-amber-100 px-1.5 py-0.5 rounded mr-1 mb-1 flex-row items-center">
                                       <Text className="text-[9px] text-amber-700 font-bold">
                                         {qty > 1 ? `${qty}x ` : ''}{name}
-                                        {price < 0 ? ` (-${formatCurrency(Math.abs(price))})` : (price > 0 ? ` (+${formatCurrency(price)})` : '')}
+                                        {price < 0 ? ` (-${formatCurrency(Math.abs(price * qty))})` : (price > 0 ? ` (+${formatCurrency(price * qty)})` : '')}
                                       </Text>
                                     </View>
                                   );

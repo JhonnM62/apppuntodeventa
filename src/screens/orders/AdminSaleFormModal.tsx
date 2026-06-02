@@ -16,6 +16,27 @@ interface AdminSaleFormModalProps {
   saleData?: any; // If provided, we are in edit mode
 }
 
+const parseLegacyComment = (comment: string) => {
+  let price = 0;
+  const name = comment.trim();
+  
+  if (name.includes('$') || name.includes('+') || name.includes('-')) {
+    const match = name.match(/(-|\+)?\s*\$?\s*(\d+([.,]\d+)?)/);
+    if (match) {
+      const sign = match[1] === '-' ? -1 : 1;
+      const numStr = match[2].replace(/[.,]/g, '');
+      let num = parseFloat(numStr);
+      
+      if (num < 100 && num > 0) {
+        num = num * 1000;
+      }
+      price = sign * num;
+    }
+  }
+  
+  return { name, price, quantity: 1 };
+};
+
 export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleData }: AdminSaleFormModalProps) {
   const insets = useSafeAreaInsets();
   const isEdit = !!saleData;
@@ -53,10 +74,16 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
               try {
                 parsedModifiers = JSON.parse(ov.comentarios);
                 if (!Array.isArray(parsedModifiers)) {
-                  parsedModifiers = [{ name: ov.comentarios, price: 0 }];
+                  parsedModifiers = [parseLegacyComment(ov.comentarios)];
+                } else {
+                  parsedModifiers = parsedModifiers.map((m: any) => ({
+                    name: m.name || m.comentarios || m.Nombre || '',
+                    price: Number(m.price ?? m.precio ?? m.Precio ?? 0),
+                    quantity: Number(m.quantity ?? m.cantidad ?? 1)
+                  }));
                 }
               } catch (e) {
-                parsedModifiers = [{ name: ov.comentarios, price: 0 }];
+                parsedModifiers = [parseLegacyComment(ov.comentarios)];
               }
             }
             return {
@@ -125,9 +152,9 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
     });
   };
 
-  const handleIncrementModifier = (mod: any) => {
-    if (selectedCartItemId === null) return;
-    const idx = selectedCartItemId;
+  const handleIncrementModifier = (mod: any, explicitCartIdx?: number) => {
+    const idx = explicitCartIdx !== undefined ? explicitCartIdx : selectedCartItemId;
+    if (idx === null) return;
     const item = cart[idx];
     if (!item) return;
 
@@ -155,9 +182,9 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
     });
   };
 
-  const handleDecrementModifier = (mod: any) => {
-    if (selectedCartItemId === null) return;
-    const idx = selectedCartItemId;
+  const handleDecrementModifier = (mod: any, explicitCartIdx?: number) => {
+    const idx = explicitCartIdx !== undefined ? explicitCartIdx : selectedCartItemId;
+    if (idx === null) return;
     const item = cart[idx];
     if (!item) return;
 
@@ -200,7 +227,7 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
 
       const payload = {
         venta: {
-          mesa: 'CAJA',
+          mesa: isEdit && saleData.mesa ? saleData.mesa : 'V.R',
           estado,
           medioDePago,
           efectivoRecibido: total,
@@ -242,7 +269,11 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
     }
   };
 
-  const total = cart.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+  const total = cart.reduce((sum, item) => {
+    const itemBaseTotal = item.precio * item.cantidad;
+    const modsTotal = (item.modifiers || []).reduce((mSum: number, mod: any) => mSum + (Number(mod.price) * (mod.quantity || 1)), 0);
+    return sum + itemBaseTotal + modsTotal;
+  }, 0);
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
@@ -355,14 +386,27 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
                   </View>
                   {item.modifiers && item.modifiers.length > 0 && (
                     <View className="mt-2 pl-2">
-                      {item.modifiers.map((mod: any, mIdx: number) => (
-                        <View key={mIdx} className="flex-row justify-between items-center mb-1 bg-amber-50 rounded-md p-1 px-2 border border-amber-200">
-                          <Text className="text-amber-800 text-xs flex-1">{mod.name}</Text>
-                          <Text className="text-amber-700 text-xs font-bold mr-3">
-                            {mod.price < 0 ? `-$${Math.abs(mod.price).toLocaleString()}` : (mod.price > 0 ? `+$${mod.price.toLocaleString()}` : '')}
-                          </Text>
-                        </View>
-                      ))}
+                      {item.modifiers.map((mod: any, mIdx: number) => {
+                        const qty = mod.quantity || 1;
+                        return (
+                          <View key={mIdx} className="flex-row justify-between items-center mb-1 bg-amber-50 rounded-md p-1 px-2 border border-amber-200">
+                            <Text className="text-amber-800 text-xs flex-1">{qty > 1 ? `${qty}x ` : ''}{mod.name}</Text>
+                            <View className="flex-row items-center">
+                              <Text className="text-amber-700 text-xs font-bold mr-3">
+                                {mod.price < 0 ? `-$${Math.abs(Number(mod.price) * qty).toLocaleString()}` : (mod.price > 0 ? `+$${(Number(mod.price) * qty).toLocaleString()}` : '')}
+                              </Text>
+                              <View className="flex-row items-center bg-white rounded-md border border-amber-200 p-0.5">
+                                <TouchableOpacity onPress={() => handleDecrementModifier({ comentarios: mod.name }, idx)} className="p-1 px-2">
+                                  <Ionicons name="remove" size={14} color="#b45309" />
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => handleIncrementModifier({ comentarios: mod.name, precio: mod.price }, idx)} className="p-1 px-2 border-l border-amber-100">
+                                  <Ionicons name="add" size={14} color="#b45309" />
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          </View>
+                        );
+                      })}
                     </View>
                   )}
 
