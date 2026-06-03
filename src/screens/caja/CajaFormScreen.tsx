@@ -455,6 +455,17 @@ export default function CajaFormScreen({ route, navigation }: any) {
       if (!cleanData.horaDeCierre) delete cleanData.horaDeCierre;
       if (cleanData.efectivoDeCierre === '' || isNaN(cleanData.efectivoDeCierre)) delete cleanData.efectivoDeCierre;
 
+      // Sanitize optional decimal fields — getValues() returns raw strings, Prisma rejects empty strings
+      const optionalDecimalFields = ['plataGuardada', 'valorFaltante', 'valorExcedente', 'cantAAgregar'];
+      for (const field of optionalDecimalFields) {
+        const raw = cleanData[field];
+        if (raw === '' || raw === null || raw === undefined || isNaN(Number(raw))) {
+          delete cleanData[field];
+        } else {
+          cleanData[field] = Number(raw);
+        }
+      }
+
       if (transferenciasContadas !== '' && !isNaN(Number(transferenciasContadas))) {
         cleanData.transferenciasContadas = Number(transferenciasContadas);
       }
