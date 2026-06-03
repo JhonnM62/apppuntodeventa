@@ -51,7 +51,10 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
   const [estado, setEstado] = useState('PAGADO');
   const [medioDePago, setMedioDePago] = useState('EFECTIVO');
   const [cart, setCart] = useState<any[]>([]);
-  const [descuento, setDescuento] = useState<number>(0);
+  const [discountPercent, setDiscountPercent] = useState<number>(0);
+
+  // Pago Mixto
+  const [efectivoInput, setEfectivoInput] = useState('');
 
   // Add Modifier State
   const [modifiersModalVisible, setModifiersModalVisible] = useState(false);
@@ -67,7 +70,7 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
         setFechaManual(saleData.fecha ? new Date(saleData.fecha) : new Date());
         setEstado(saleData.estado || 'PAGADO');
         setMedioDePago(saleData.medioDePago || 'EFECTIVO');
-        setDescuento(Number(saleData.descuento || 0));
+        setDiscountPercent(Number(saleData.porcentajeDeDescuento || 0));
         
         if (saleData.ordenVentas) {
           setCart(saleData.ordenVentas.map((ov: any) => {
@@ -102,11 +105,15 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
         setFechaManual(new Date());
         setEstado('PAGADO');
         setMedioDePago('EFECTIVO');
-        setDescuento(0);
+        setDiscountPercent(0);
         setCart([]);
+        setEfectivoInput('');
       }
     }
   }, [visible, saleData]);
+
+  const parseMoney = (val: string) => Number(val.replace(/\D/g, '')) || 0;
+  const efectivoAmount = parseMoney(efectivoInput);
 
   const fetchProducts = async () => {
     try {
@@ -219,24 +226,34 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
       return;
     }
 
+    const baseTotal = cart.reduce((sum, item) => {
+      const itemBaseTotal = item.precio * item.cantidad;
+      const modsTotal = (item.modifiers || []).reduce((mSum: number, mod: any) => mSum + (Number(mod.price) * (mod.quantity || 1)), 0);
+      return sum + itemBaseTotal + modsTotal;
+    }, 0);
+    const calculatedDescuento = baseTotal * discountPercent;
+    const finalTotalInput = Math.max(0, baseTotal - calculatedDescuento);
+
     setLoading(true);
     try {
-      const total = cart.reduce((sum, item) => {
-        const itemBaseTotal = item.precio * item.cantidad;
-        const modsTotal = (item.modifiers || []).reduce((mSum: number, mod: any) => mSum + (Number(mod.price) * (mod.quantity || 1)), 0);
-        return sum + itemBaseTotal + modsTotal;
-      }, 0);
       const fechaString = fechaManual.toISOString().substring(0, 10);
+
+      if (medioDePago === 'EFECTIVO Y OTROS' && efectivoAmount > finalTotalInput) {
+        Toast.show({ type: 'error', text1: 'Error', text2: 'El efectivo no puede superar el total en pago mixto' });
+        setLoading(false);
+        return;
+      }
 
       const payload = {
         venta: {
           mesa: isEdit && saleData.mesa ? saleData.mesa : 'V.R',
           estado,
           medioDePago,
-          efectivoRecibido: Math.max(0, total - descuento),
+          efectivoRecibido: medioDePago === 'EFECTIVO Y OTROS' ? efectivoAmount : finalTotalInput,
           devueltas: 0,
-          totalInput: Math.max(0, total - descuento),
-          descuento: descuento,
+          totalInput: finalTotalInput,
+          descuento: calculatedDescuento,
+          porcentajeDeDescuento: String(discountPercent),
         },
         productos: cart.map(item => {
           const itemBaseTotal = item.precio * item.cantidad;
@@ -278,7 +295,8 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
     const modsTotal = (item.modifiers || []).reduce((mSum: number, mod: any) => mSum + (Number(mod.price) * (mod.quantity || 1)), 0);
     return sum + itemBaseTotal + modsTotal;
   }, 0);
-  const finalTotal = Math.max(0, total - descuento);
+  const calculatedDescuento = total * discountPercent;
+  const finalTotal = Math.max(0, total - calculatedDescuento);
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
@@ -349,18 +367,50 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
                 </TouchableOpacity>
               ))}
             </View>
+            
+            {medioDePago === 'EFECTIVO Y OTROS' && (
+              <View className="mt-4 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                <Text className="text-gray-700 font-bold mb-1">Monto recibido en Efectivo</Text>
+                <View className="flex-row items-center border border-gray-300 rounded-xl px-3 py-1 bg-white mb-2">
+                  <Text className="text-lg font-bold text-gray-500 mr-1">$</Text>
+                  <TextInput
+                    className="flex-1 text-base text-gray-800 h-10 font-bold"
+                    placeholder="0"
+                    keyboardType="numeric"
+                    value={efectivoInput}
+                    onChangeText={(text) => {
+                      const num = text.replace(/\D/g, '');
+                      setEfectivoInput(num ? Number(num).toLocaleString('es-CO') : '');
+                    }}
+                  />
+                </View>
+                <View className="flex-row justify-between items-center bg-amber-50 p-2 rounded-lg border border-amber-100">
+                  <Text className="text-xs font-bold text-amber-800">Restante en Transferencia:</Text>
+                  <Text className="text-xs font-black text-amber-900">${Math.max(0, finalTotal - efectivoAmount).toLocaleString('es-CO')}</Text>
+                </View>
+              </View>
+            )}
           </View>
 
           {/* Descuento */}
           <View className="mb-4">
-            <Text className="text-gray-700 font-bold mb-1">Descuento Global ($)</Text>
-            <TextInput
-              className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800"
-              keyboardType="numeric"
-              placeholder="Ej: 5000"
-              value={descuento > 0 ? String(descuento) : ''}
-              onChangeText={(val) => setDescuento(Number(val.replace(/[^0-9]/g, '')) || 0)}
-            />
+            <Text className="text-gray-700 font-bold mb-1">Descuento Global</Text>
+            <View className="flex-row gap-2">
+              {[0, 0.15, 0.30, 0.50].map((percent) => {
+                const isSelected = discountPercent === percent;
+                return (
+                  <TouchableOpacity
+                    key={percent}
+                    className={`flex-1 py-3 px-2 rounded-xl border items-center justify-center ${isSelected ? 'bg-orange-100 border-orange-500' : 'bg-white border-gray-300'}`}
+                    onPress={() => setDiscountPercent(percent)}
+                  >
+                    <Text className={`font-bold text-xs ${isSelected ? 'text-orange-700' : 'text-gray-600'}`}>
+                      {percent === 0 ? 'SIN DESC.' : `-${percent * 100}%`}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
 
           {/* Productos */}
@@ -441,16 +491,16 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
             )}
             {cart.length > 0 && (
               <View className="bg-gray-50 p-3 border-t border-gray-200 rounded-b-xl">
-                {descuento > 0 && (
+                {calculatedDescuento > 0 && (
                   <View className="flex-row justify-between items-center mb-1">
                     <Text className="font-bold text-gray-500">Subtotal</Text>
                     <Text className="font-bold text-gray-500">${total.toLocaleString()}</Text>
                   </View>
                 )}
-                {descuento > 0 && (
+                {calculatedDescuento > 0 && (
                   <View className="flex-row justify-between items-center mb-2 border-b border-gray-200 pb-2">
-                    <Text className="font-bold text-orange-600">Descuento</Text>
-                    <Text className="font-bold text-orange-600">-${descuento.toLocaleString()}</Text>
+                    <Text className="font-bold text-orange-600">Descuento ({discountPercent * 100}%)</Text>
+                    <Text className="font-bold text-orange-600">-${calculatedDescuento.toLocaleString()}</Text>
                   </View>
                 )}
                 <View className="flex-row justify-between items-center">

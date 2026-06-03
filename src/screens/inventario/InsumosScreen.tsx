@@ -1114,7 +1114,7 @@ if (status !== 'granted') {
                   label="Stock Actual"
                   placeholder="0"
                   keyboardType="numeric"
-                  value={String(formData.disponible ?? 0)}
+                  value={formData.disponible ? String(formData.disponible) : ''}
                   onChangeText={(t) => setFormData(p => ({ ...p, disponible: t.replace(/[^0-9-]/g, '') }))}
                 />
               </View>
@@ -1123,8 +1123,11 @@ if (status !== 'granted') {
                   label="Stock Histórico"
                   placeholder="0"
                   keyboardType="numeric"
-                  value={String(formData.cantidad || 0)}
-                  onChangeText={(t) => setFormData(p => ({ ...p, cantidad: Number(t.replace(/[^0-9]/g, '')) || 0 }))}
+                  value={formData.cantidad ? String(formData.cantidad) : ''}
+                  onChangeText={(t) => {
+                    const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                    setFormData(p => ({ ...p, cantidad: isNaN(n) ? 0 : n }));
+                  }}
                 />
               </View>
             </View>
@@ -1135,8 +1138,11 @@ if (status !== 'granted') {
                   label="Precio"
                   placeholder="$0"
                   keyboardType="numeric"
-                  value={String(formData.precio || 0)}
-                  onChangeText={(t) => setFormData(p => ({ ...p, precio: Number(t.replace(/[^0-9]/g, '')) || 0 }))}
+                  value={formData.precio ? String(formData.precio) : ''}
+                  onChangeText={(t) => {
+                    const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                    setFormData(p => ({ ...p, precio: isNaN(n) ? 0 : n }));
+                  }}
                 />
               </View>
             </View>
@@ -1147,8 +1153,11 @@ if (status !== 'granted') {
                 label="Stock Mínimo (A partir de)"
                 placeholder="10"
                 keyboardType="numeric"
-                value={String(formData.apartir_de_cantidad || 0)}
-                onChangeText={(t) => setFormData(p => ({ ...p, apartir_de_cantidad: Math.max(0, Number(t.replace(/[^0-9]/g, '')) || 0) }))}
+                value={formData.apartir_de_cantidad ? String(formData.apartir_de_cantidad) : ''}
+                onChangeText={(t) => {
+                  const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                  setFormData(p => ({ ...p, apartir_de_cantidad: Math.max(0, isNaN(n) ? 0 : n) }));
+                }}
               />
               </View>
               <View className="flex-1">
@@ -1156,8 +1165,11 @@ if (status !== 'granted') {
                 label="Stock Máximo (Agregar)"
                 placeholder="100"
                 keyboardType="numeric"
-                value={String(formData.agregar_cantidad || 0)}
-                onChangeText={(t) => setFormData(p => ({ ...p, agregar_cantidad: Math.max(0, Number(t.replace(/[^0-9]/g, '')) || 0) }))}
+                value={formData.agregar_cantidad ? String(formData.agregar_cantidad) : ''}
+                onChangeText={(t) => {
+                  const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                  setFormData(p => ({ ...p, agregar_cantidad: Math.max(0, isNaN(n) ? 0 : n) }));
+                }}
               />
               </View>
             </View>
@@ -1410,8 +1422,12 @@ if (status !== 'granted') {
                 <TextInput
                   style={{ flex: 1, fontSize: 24, fontWeight: '800', color: '#111827', textAlign: 'center', padding: 0, margin: 0 }}
                   keyboardType="numeric"
-                  value={String(stockModal.cantidad)}
-                  onChangeText={(t) => setStockModal({ ...stockModal, cantidad: Number(t.replace(/[^0-9]/g, '')) || 0 })}
+                  value={stockModal.cantidad ? String(stockModal.cantidad) : ''}
+                  onChangeText={(t) => {
+                    const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                    setStockModal({ ...stockModal, cantidad: isNaN(n) ? 0 : n });
+                  }}
+                  placeholder="0"
                 />
                 <TouchableOpacity
                   style={{ width: 44, height: 44, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}

@@ -318,8 +318,11 @@ const handleDelete = () => {
               <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
                 <RNText style={styles.label}>Precio de Venta</RNText>
                 <Input
-                  value={String(formData.precioUnitario)}
-                  onChangeText={(t) => handleChange('precioUnitario', t.replace(/[^0-9]/g, ''))}
+                  value={formData.precioUnitario ? String(formData.precioUnitario) : ''}
+                  onChangeText={(t) => {
+                    const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                    handleChange('precioUnitario', isNaN(n) ? 0 : n);
+                  }}
                   keyboardType="numeric"
                   placeholder="0"
                 />
@@ -327,8 +330,11 @@ const handleDelete = () => {
               <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
                 <RNText style={styles.label}>Costo (Referencia)</RNText>
                 <Input
-                  value={String(formData.precioDeCompra)}
-                  onChangeText={(t) => handleChange('precioDeCompra', t.replace(/[^0-9]/g, ''))}
+                  value={formData.precioDeCompra ? String(formData.precioDeCompra) : ''}
+                  onChangeText={(t) => {
+                    const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                    handleChange('precioDeCompra', isNaN(n) ? 0 : n);
+                  }}
                   keyboardType="numeric"
                   placeholder="0"
                 />
@@ -420,7 +426,7 @@ const handleDelete = () => {
                   <View style={styles.recetaItemControls}>
                     <TextInput
                       style={[styles.recetaQtyInput, { backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#e5e7eb' }]}
-                      value={String(ri.cantidad)}
+                      value={ri.cantidad ? String(ri.cantidad) : ''}
                       onChangeText={(t) => {
                         const val = t.replace(/[^0-9]/g, '');
                         const newRecetas = [...formData.recetaInsumos];

@@ -14,7 +14,7 @@ const Input = React.forwardRef<React.ElementRef<typeof TextInput>, InputProps>(
     return (
       <View className="w-full">
         {label && (
-          <Text className="text-sm font-semibold text-foreground mb-2 ml-1 tracking-wide">
+          <Text className="text-sm font-semibold text-gray-800 mb-2 ml-1 tracking-wide">
             {label}
           </Text>
         )}
@@ -22,7 +22,7 @@ const Input = React.forwardRef<React.ElementRef<typeof TextInput>, InputProps>(
           <TextInput
             ref={ref}
             className={cn(
-              'h-12 px-3 pr-10 rounded-xl border text-base bg-background text-foreground',
+              'h-12 px-3 pr-10 rounded-xl border text-base bg-white text-gray-900',
               props.multiline && 'h-auto py-3',
               error
                 ? 'border-destructive focus:border-destructive'

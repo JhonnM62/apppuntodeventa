@@ -2196,7 +2196,7 @@ const InventarioScreen = ({ navigation }: any) => {
                       <TextInput
                         style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: '#111827' }}
                         keyboardType="numeric"
-                        value={String(item.cantidad)}
+                        value={item.cantidad ? String(item.cantidad) : ''}
                         onFocus={() => setActiveInputIndex(index)}
                         onChangeText={(t) => {
                           const newItems = [...addItemsList];
@@ -2212,7 +2212,7 @@ const InventarioScreen = ({ navigation }: any) => {
                         <TextInput
                           style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: '#111827' }}
                           keyboardType="numeric"
-                          value={String(item.precioActual)}
+                          value={item.precioActual ? String(item.precioActual) : ''}
                           onFocus={() => setActiveInputIndex(index)}
                           onChangeText={(t) => {
                             const newItems = [...addItemsList];

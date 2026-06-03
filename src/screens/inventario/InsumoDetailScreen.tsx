@@ -568,8 +568,12 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                 <TextInput
                   style={{ flex: 1, fontSize: 24, fontWeight: '800', color: '#111827', textAlign: 'center', padding: 0, margin: 0 }}
                   keyboardType="numeric"
-                  value={String(movimiento.cantidad)}
-                  onChangeText={(t) => setMovimiento({ ...movimiento, cantidad: Number(t.replace(/[^0-9]/g, '')) || 0 })}
+                  value={movimiento.cantidad ? String(movimiento.cantidad) : ''}
+                  onChangeText={(t) => {
+                    const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                    setMovimiento({ ...movimiento, cantidad: isNaN(n) ? 0 : n });
+                  }}
+                  placeholder="0"
                   onFocus={() => {
                     setTimeout(() => {
                       mainScrollRef.current?.scrollToEnd({ animated: true });
@@ -655,7 +659,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                     label="Stock Actual"
                     placeholder="0"
                     keyboardType="numeric"
-                    value={String(formData.disponible ?? 0)}
+                    value={formData.disponible ? String(formData.disponible) : ''}
                     onChangeText={(t) => setFormData(p => ({ ...p, disponible: t.replace(/[^0-9-]/g, '') }))}
                   />
                 </View>
@@ -664,8 +668,11 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                     label="Stock Histórico"
                     placeholder="0"
                     keyboardType="numeric"
-                    value={String(formData.cantidad || 0)}
-                    onChangeText={(t) => setFormData(p => ({ ...p, cantidad: Number(t.replace(/[^0-9]/g, '')) || 0 }))}
+                    value={formData.cantidad ? String(formData.cantidad) : ''}
+                    onChangeText={(t) => {
+                      const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                      setFormData(p => ({ ...p, cantidad: isNaN(n) ? 0 : n }));
+                    }}
                   />
                 </View>
               </View>
@@ -676,8 +683,11 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                     label="Precio"
                     placeholder="$0"
                     keyboardType="numeric"
-                    value={String(formData.precio || 0)}
-                    onChangeText={(t) => setFormData(p => ({ ...p, precio: Number(t.replace(/[^0-9]/g, '')) || 0 }))}
+                    value={formData.precio ? String(formData.precio) : ''}
+                    onChangeText={(t) => {
+                      const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                      setFormData(p => ({ ...p, precio: isNaN(n) ? 0 : n }));
+                    }}
                   />
                 </View>
               </View>
@@ -688,8 +698,11 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                     label="Stock Mínimo"
                     placeholder="10"
                     keyboardType="numeric"
-                    value={String(formData.apartir_de_cantidad || 0)}
-                    onChangeText={(t) => setFormData(p => ({ ...p, apartir_de_cantidad: Number(t.replace(/[^0-9]/g, '')) || 0 }))}
+                    value={formData.apartir_de_cantidad ? String(formData.apartir_de_cantidad) : ''}
+                    onChangeText={(t) => {
+                      const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                      setFormData(p => ({ ...p, apartir_de_cantidad: isNaN(n) ? 0 : n }));
+                    }}
                   />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -697,8 +710,11 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                     label="Stock Máximo"
                     placeholder="100"
                     keyboardType="numeric"
-                    value={String(formData.agregar_cantidad || 100)}
-                    onChangeText={(t) => setFormData(p => ({ ...p, agregar_cantidad: Number(t.replace(/[^0-9]/g, '')) || 0 }))}
+                    value={formData.agregar_cantidad ? String(formData.agregar_cantidad) : ''}
+                    onChangeText={(t) => {
+                      const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                      setFormData(p => ({ ...p, agregar_cantidad: isNaN(n) ? 0 : n }));
+                    }}
                   />
                 </View>
               </View>
