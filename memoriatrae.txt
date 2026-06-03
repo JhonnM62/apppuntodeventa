@@ -102,3 +102,27 @@ Para resolver problemas de márgenes vacíos y scroll excesivo en vistas detalla
 4. **SafeArea:** Usar `SafeAreaView` DENTRO del `KeyboardAvoidingView`.
 
 Esto garantiza que el teclado no tape los inputs y elimina completamente el scroll vacío y las pantallas en blanco al final de las listas.
+
+# 🚨 DIRECTIVA DE COMPILACIÓN TYPESCRIPT — OBLIGATORIA
+
+La PC del usuario tiene RAM limitada. El comando `npx tsc --noEmit` consume demasiada memoria y congela el sistema.
+
+## Reglas OBLIGATORIAS para verificar TypeScript:
+
+### Frontend (puntodeventafront)
+NUNCA usar: `npx tsc --noEmit`
+SIEMPRE usar: `npm run typecheck`
+→ Ejecuta: `node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit`
+→ tsconfig tiene `incremental: true` y `skipLibCheck: true` para reducir RAM y tiempo
+→ ⚠️ Si Expo está corriendo, el typecheck consume más RAM. 4 GB es el límite seguro con ambos activos.
+
+### Backend (puntodeventabackend)
+NUNCA usar: `npx tsc --noEmit`
+SIEMPRE usar: `npm run typecheck`
+→ Ejecuta: `node --max-old-space-size=2048 ./node_modules/typescript/bin/tsc --noEmit`
+→ tsconfig ya tiene `incremental: true` y `skipLibCheck: true`
+
+## Beneficios del modo incremental:
+- Primera ejecución: crea caché `.tsbuildinfo` en el proyecto
+- Ejecuciones siguientes: solo re-analiza los archivos que cambiaron (mucho más rápido y liviano)
+- `skipLibCheck`: no re-verifica los tipos de `node_modules` (el mayor consumidor de RAM)
