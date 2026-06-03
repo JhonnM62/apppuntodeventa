@@ -66,6 +66,10 @@ const InsumosScreen = ({ navigation }: Props) => {
   const [stockLoading, setStockLoading] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   
+  // Historical stock context
+  const [stockCalculadoInfo, setStockCalculadoInfo] = useState<any>(null);
+  const [loadingStockCalculado, setLoadingStockCalculado] = useState(false);
+  
   // Advanced filters
   const [filterNombre, setFilterNombre] = useState('');
   const [filterCategoria, setFilterCategoria] = useState<string | null>(null);
@@ -373,9 +377,10 @@ if (filterCuadrarInsumos !== 'all') {
   const openCreateModal = () => {
     resetForm();
     setShowModal(true);
+    setStockCalculadoInfo(null);
   };
 
-  const openEditModal = (insumo: InsumoItem) => {
+  const openEditModal = async (insumo: InsumoItem) => {
     setSelectedInsumo(insumo);
     setFormData({
       nombre: insumo.nombre || insumo.Nombre || '',
@@ -399,6 +404,17 @@ if (filterCuadrarInsumos !== 'all') {
     setIsEditing(true);
     setEstadoActivo((insumo.estado || (insumo as any).Estado || 'ACTIVO').toUpperCase() === 'ACTIVO');
     setShowModal(true);
+
+    setStockCalculadoInfo(null);
+    setLoadingStockCalculado(true);
+    try {
+      const data = await insumosService.calcularStockHistorico(insumo.IDalimentos);
+      setStockCalculadoInfo(data);
+    } catch (error) {
+      console.log('[DEBUG] Error calculando stock historico:', error);
+    } finally {
+      setLoadingStockCalculado(false);
+    }
   };
 
   const openStockModal = (insumo: InsumoItem, tipo: 'entrada' | 'salida' = 'entrada') => {
@@ -1131,6 +1147,38 @@ if (status !== 'granted') {
                 />
               </View>
             </View>
+
+            {isEditing && loadingStockCalculado && (
+              <View className="mt-2 flex-row items-center">
+                <ActivityIndicator size="small" color="#3b82f6" />
+                <RNText className="ml-2 text-sm text-gray-500">Calculando stock teórico basado en historial...</RNText>
+              </View>
+            )}
+            
+            {isEditing && !loadingStockCalculado && stockCalculadoInfo && (
+              <View className={`mt-2 p-3 rounded-xl border ${stockCalculadoInfo.alerta ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200'}`}>
+                <View className="flex-row items-center justify-between mb-1">
+                  <View className="flex-row items-center">
+                    <Ionicons name={stockCalculadoInfo.alerta ? 'warning' : 'checkmark-circle'} size={18} color={stockCalculadoInfo.alerta ? '#f97316' : '#22c55e'} />
+                    <RNText className={`ml-2 text-sm font-semibold ${stockCalculadoInfo.alerta ? 'text-orange-700' : 'text-green-700'}`}>
+                      Stock Teórico: {stockCalculadoInfo.stockCalculado}
+                    </RNText>
+                  </View>
+                  {stockCalculadoInfo.alerta && (
+                    <TouchableOpacity 
+                      className="bg-orange-500 px-3 py-1 rounded-lg"
+                      onPress={() => setFormData(p => ({ ...p, disponible: String(stockCalculadoInfo.stockCalculado) }))}
+                    >
+                      <RNText className="text-white text-xs font-bold">Corregir</RNText>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                <RNText className={`text-xs ${stockCalculadoInfo.alerta ? 'text-orange-600' : 'text-green-600'}`}>
+                  Basado en {stockCalculadoInfo.resumen.totalMovimientos} movimientos ({stockCalculadoInfo.resumen.totalEntradas} comprados - {stockCalculadoInfo.resumen.totalSalidas} salientes).
+                </RNText>
+              </View>
+            )}
+
 
             <View className="flex-row mt-4">
               <View className="flex-1 mr-2">

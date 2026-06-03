@@ -265,6 +265,21 @@ export const inventarioService = {
     const resp = await api.post('/inventario/recalcular-stock');
     return extractData(resp);
   },
+
+  async calcularStockHistorico(insumoId: string): Promise<{
+    insumoId: string;
+    nombre: string;
+    stockActual: number;
+    stockCalculado: number;
+    diferencia: number;
+    alerta: boolean;
+    resumen: { totalEntradas: number; totalSalidas: number; totalMovimientos: number };
+    movimientos: Array<{ fecha: string | null; tipo: string; cantidad: number; observacion: string | null }>;
+  }> {
+    const resp = await api.get(`/inventario/insumo/${insumoId}/stock-calculado`);
+    const data = extractData(resp);
+    return data;
+  },
 };
 
 export default inventarioService;
