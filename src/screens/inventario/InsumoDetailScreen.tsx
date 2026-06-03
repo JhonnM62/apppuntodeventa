@@ -647,9 +647,9 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
               <View style={{ marginTop: 16 }}>
                 <RNText style={{ fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 }}>Categoría</RNText>
                 <Input
-                  placeholder="Escribe una categoría..."
+                  placeholder="O escribe una nueva categoría..."
                   value={formData.nombreCategoria}
-                  onChangeText={(t) => setFormData(p => ({ ...p, nombreCategoria: t, categoria: t }))}
+                  onChangeText={(t) => setFormData(p => ({ ...p, nombreCategoria: t, categoria: '' }))}
                 />
               </View>
 

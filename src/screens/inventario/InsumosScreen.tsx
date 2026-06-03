@@ -1104,7 +1104,7 @@ if (status !== 'granted') {
               <Input
                 placeholder="O escribe una nueva categoría..."
                 value={formData.nombreCategoria}
-                onChangeText={(t) => setFormData(p => ({ ...p, nombreCategoria: t, categoria: t }))}
+                onChangeText={(t) => setFormData(p => ({ ...p, nombreCategoria: t, categoria: '' }))}
               />
             </View>
 
