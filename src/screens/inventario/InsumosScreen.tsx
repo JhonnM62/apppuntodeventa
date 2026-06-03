@@ -24,6 +24,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card } from '../../components/ui/card';
 import { insumosService, InsumoItem, CreateInsumoDto } from '../../services/insumos';
+import { inventarioService } from '../../services/inventario';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
@@ -408,7 +409,7 @@ if (filterCuadrarInsumos !== 'all') {
     setStockCalculadoInfo(null);
     setLoadingStockCalculado(true);
     try {
-      const data = await insumosService.calcularStockHistorico(insumo.IDalimentos);
+      const data = await inventarioService.calcularStockHistorico(insumo.IDalimentos);
       setStockCalculadoInfo(data);
     } catch (error) {
       console.log('[DEBUG] Error calculando stock historico:', error);
