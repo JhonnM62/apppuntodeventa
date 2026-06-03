@@ -149,9 +149,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await inventarioService.recalcularStock();
       await loadInsumo();
-      Toast.show({ type: 'success', text1: 'Stock recalculado', text2: 'El stock ha sido actualizado' });
     } catch (error) {
       await loadInsumo();
     } finally {

@@ -361,15 +361,15 @@ const InventarioScreen = ({ navigation }: any) => {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await inventarioService.recalcularStock();
+      await fetchInventarios();
+      if (activeTab === 'registros') {
+        await fetchTodasLasOrdenes(1, false);
+      }
     } catch (e) {
-      console.log('Error recalculating stock:', e);
+      console.log('Error refreshing:', e);
+    } finally {
+      setRefreshing(false);
     }
-    await fetchInventarios();
-    if (activeTab === 'registros') {
-      await fetchTodasLasOrdenes(1, false);
-    }
-    setRefreshing(false);
   };
 
   const getCategoriasInsumos = () => {
