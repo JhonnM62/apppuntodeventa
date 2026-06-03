@@ -1703,7 +1703,8 @@ const InventarioScreen = ({ navigation }: any) => {
                         <TextInput
                           style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: '#111827' }}
                           keyboardType="numeric"
-                          value={String(item.cantidad)}
+                          value={item.cantidad > 0 ? String(item.cantidad) : ''}
+                          placeholder="0"
                           onChangeText={(t) => {
                             const newItems = [...addItemsList];
                             newItems[index].cantidad = Number(t.replace(/[^0-9]/g, '')) || 0;
@@ -1718,7 +1719,8 @@ const InventarioScreen = ({ navigation }: any) => {
                           <TextInput
                             style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: '#111827' }}
                             keyboardType="numeric"
-                            value={String(item.precioActual)}
+                            value={item.precioActual > 0 ? String(item.precioActual) : ''}
+                            placeholder="0"
                             onChangeText={(t) => {
                               const newItems = [...addItemsList];
                               newItems[index].precioActual = Number(t.replace(/[^0-9]/g, '')) || 0;

@@ -51,6 +51,7 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
   const [estado, setEstado] = useState('PAGADO');
   const [medioDePago, setMedioDePago] = useState('EFECTIVO');
   const [cart, setCart] = useState<any[]>([]);
+  const [descuento, setDescuento] = useState<number>(0);
 
   // Add Modifier State
   const [modifiersModalVisible, setModifiersModalVisible] = useState(false);
@@ -66,6 +67,7 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
         setFechaManual(saleData.fecha ? new Date(saleData.fecha) : new Date());
         setEstado(saleData.estado || 'PAGADO');
         setMedioDePago(saleData.medioDePago || 'EFECTIVO');
+        setDescuento(Number(saleData.descuento || 0));
         
         if (saleData.ordenVentas) {
           setCart(saleData.ordenVentas.map((ov: any) => {
@@ -100,6 +102,7 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
         setFechaManual(new Date());
         setEstado('PAGADO');
         setMedioDePago('EFECTIVO');
+        setDescuento(0);
         setCart([]);
       }
     }
@@ -230,9 +233,10 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
           mesa: isEdit && saleData.mesa ? saleData.mesa : 'V.R',
           estado,
           medioDePago,
-          efectivoRecibido: total,
+          efectivoRecibido: Math.max(0, total - descuento),
           devueltas: 0,
-          totalInput: total,
+          totalInput: Math.max(0, total - descuento),
+          descuento: descuento,
         },
         productos: cart.map(item => {
           const itemBaseTotal = item.precio * item.cantidad;
@@ -274,6 +278,7 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
     const modsTotal = (item.modifiers || []).reduce((mSum: number, mod: any) => mSum + (Number(mod.price) * (mod.quantity || 1)), 0);
     return sum + itemBaseTotal + modsTotal;
   }, 0);
+  const finalTotal = Math.max(0, total - descuento);
 
   return (
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
@@ -344,6 +349,18 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
                 </TouchableOpacity>
               ))}
             </View>
+          </View>
+
+          {/* Descuento */}
+          <View className="mb-4">
+            <Text className="text-gray-700 font-bold mb-1">Descuento Global ($)</Text>
+            <TextInput
+              className="bg-white border border-gray-300 rounded-xl px-4 py-3 text-gray-800"
+              keyboardType="numeric"
+              placeholder="Ej: 5000"
+              value={descuento > 0 ? String(descuento) : ''}
+              onChangeText={(val) => setDescuento(Number(val.replace(/[^0-9]/g, '')) || 0)}
+            />
           </View>
 
           {/* Productos */}
@@ -423,9 +440,23 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
               })
             )}
             {cart.length > 0 && (
-              <View className="bg-gray-50 p-3 flex-row justify-between items-center border-t border-gray-200 rounded-b-xl">
-                <Text className="font-bold text-gray-600">TOTAL</Text>
-                <Text className="font-black text-green-600 text-lg">${total.toLocaleString()}</Text>
+              <View className="bg-gray-50 p-3 border-t border-gray-200 rounded-b-xl">
+                {descuento > 0 && (
+                  <View className="flex-row justify-between items-center mb-1">
+                    <Text className="font-bold text-gray-500">Subtotal</Text>
+                    <Text className="font-bold text-gray-500">${total.toLocaleString()}</Text>
+                  </View>
+                )}
+                {descuento > 0 && (
+                  <View className="flex-row justify-between items-center mb-2 border-b border-gray-200 pb-2">
+                    <Text className="font-bold text-orange-600">Descuento</Text>
+                    <Text className="font-bold text-orange-600">-${descuento.toLocaleString()}</Text>
+                  </View>
+                )}
+                <View className="flex-row justify-between items-center">
+                  <Text className="font-bold text-gray-600">TOTAL</Text>
+                  <Text className="font-black text-green-600 text-lg">${finalTotal.toLocaleString()}</Text>
+                </View>
               </View>
             )}
           </View>

@@ -2060,10 +2060,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
                           <Ionicons name="receipt-outline" size={14} color="#6b7280" />
                           <Text className="text-xs font-bold text-gray-800 ml-1">{nota.pedido}</Text>
                         </View>
-                        {nota.productosConNotas.map((prod: any, pIdx: number) => (
+                        {nota.productosConNotas?.map((prod: any, pIdx: number) => (
                           <View key={pIdx} className="mb-2 ml-1">
                             <Text className="text-xs font-bold text-gray-700">{prod.cantidad}x {prod.producto}</Text>
-                            {prod.notas.map((n: any, nIdx: number) => (
+                            {prod.notas?.map((n: any, nIdx: number) => (
                               <Text key={nIdx} className="text-[11px] text-gray-600 ml-2 mt-0.5">
                                 • {n.cantidad || 1}x {n.name || n.nombre || n.Nombre}
                                 {(n.price || n.precio || n.Precio) > 0 && (
@@ -2075,6 +2075,22 @@ export default function CajaFormScreen({ route, navigation }: any) {
                             ))}
                           </View>
                         ))}
+                        {nota.cliente && (
+                          <View className="flex-row items-center ml-1 mb-1 mt-1 bg-indigo-50 px-2 py-1 rounded-md self-start border border-indigo-100">
+                            <Ionicons name="person" size={12} color="#4f46e5" />
+                            <Text className="text-[11px] font-bold text-indigo-700 ml-1">
+                              {nota.cliente.nombre}
+                            </Text>
+                          </View>
+                        )}
+                        {nota.descuento > 0 && (
+                          <View className="flex-row items-center ml-1 mb-1 bg-orange-50 px-2 py-1 rounded-md self-start border border-orange-200">
+                            <Ionicons name="pricetag" size={12} color="#ea580c" />
+                            <Text className="text-[11px] font-bold text-orange-700 ml-1">
+                              Descuento: -{formatCurrency(nota.descuento)} {nota.porcentajeDeDescuento ? `(${nota.porcentajeDeDescuento}%)` : ''}
+                            </Text>
+                          </View>
+                        )}
                       </View>
                     </View>
                     
