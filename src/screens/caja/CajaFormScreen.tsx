@@ -605,23 +605,30 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
   const handleAddInsumo = (insumo: InsumoItem) => {
     const currentInsumos = getValues('insumos') || [];
-    const exists = currentInsumos.find((i: any) => i.nombreInsumo === insumo.IDalimentos);
-    if (!exists) {
-      append({
-        nombreInsumo: insumo.IDalimentos,
-        nombreInsumoReal: insumo.Nombre || insumo.nombre,
-        paraQueProducto: [] as unknown as string[],
-        nombreProductoReal: '',
-        categoria: insumo.Categoria || insumo.categoria || '',
-        unidadDeMedida: insumo.Unidades || insumo.unidades || 'Und',
-        cantApertura: 0,
-        cantDeCierre: 0,
-        observacion: '',
-        imageUrl: insumo.imageUrl || insumo.imagen || ''
+    const existingCount = currentInsumos.filter((i: any) => i.nombreInsumo === insumo.IDalimentos).length;
+
+    append({
+      nombreInsumo: insumo.IDalimentos,
+      nombreInsumoReal: insumo.Nombre || insumo.nombre,
+      paraQueProducto: [] as unknown as string[],
+      nombreProductoReal: '',
+      categoria: insumo.Categoria || insumo.categoria || '',
+      unidadDeMedida: insumo.Unidades || insumo.unidades || 'Und',
+      cantApertura: 0,
+      cantDeCierre: 0,
+      observacion: '',
+      imageUrl: insumo.imageUrl || insumo.imagen || ''
+    });
+
+    if (existingCount > 0) {
+      // El mismo insumo puede usarse para distintos productos — se permite la entrada duplicada
+      Toast.show({
+        type: 'success',
+        text1: 'Agregado (duplicado)',
+        text2: `${insumo.Nombre || insumo.nombre} añadido de nuevo. Asigna el producto correspondiente.`
       });
-      Toast.show({ type: 'success', text1: 'Agregado', text2: 'Insumo añadido a la lista' });
     } else {
-      Toast.show({ type: 'info', text1: 'Aviso', text2: 'El insumo ya está en la lista' });
+      Toast.show({ type: 'success', text1: 'Agregado', text2: 'Insumo añadido a la lista' });
     }
   };
 
