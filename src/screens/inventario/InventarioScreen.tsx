@@ -362,7 +362,10 @@ const InventarioScreen = ({ navigation }: any) => {
     setRefreshing(true);
     try {
       await fetchInventarios();
-      if (activeTab === 'registros') {
+      if (activeTab === 'entrada') {
+        // Recargar insumos para ver el stock actualizado después de marcar entradas
+        await fetchInsumos();
+      } else if (activeTab === 'registros') {
         await fetchTodasLasOrdenes(1, false);
       }
     } catch (e) {
