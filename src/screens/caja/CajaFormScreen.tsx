@@ -1863,9 +1863,14 @@ export default function CajaFormScreen({ route, navigation }: any) {
             </View>
           </View>
 
-          <View className="bg-purple-50 p-5 rounded-xl mb-4 border border-purple-200 shadow-sm flex-row justify-between items-center">
+          <View className="bg-purple-50 p-5 rounded-xl mb-2 border border-purple-200 shadow-sm flex-row justify-between items-center">
             <Text className="text-purple-900 font-black uppercase tracking-wider text-xs">Total Ventas Sistema</Text>
             <Text className="text-purple-700 text-2xl font-black tracking-tight">{formatCurrency(resumenData.resumen.totalVentas || 0)}</Text>
+          </View>
+
+          <View className="bg-emerald-50 p-5 rounded-xl mb-4 border border-emerald-200 shadow-sm flex-row justify-between items-center">
+            <Text className="text-emerald-900 font-black uppercase tracking-wider text-xs">Total Efectivo Sistema</Text>
+            <Text className="text-emerald-700 text-2xl font-black tracking-tight">{formatCurrency((resumenData.resumen.totalVentas || 0) - ((resumenData.resumen.totalTransferencia || 0) + (resumenData.resumen.totalNequi || 0)))}</Text>
           </View>
 
           {/* INSUMOS FÍSICOS - TABLA */}

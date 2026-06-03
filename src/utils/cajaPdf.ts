@@ -175,6 +175,10 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
             <td class="text-right">${formatMoney(resumen.resumen.totalVentas || 0)}</td>
           </tr>
           <tr>
+            <td>Total Efectivo Sistema</td>
+            <td class="text-right">${formatMoney((resumen.resumen.totalVentas || 0) - ((resumen.resumen.totalTransferencia || 0) + (resumen.resumen.totalNequi || 0)))}</td>
+          </tr>
+          <tr>
             <td style="padding-left: 20px; font-size: 11px; color: #555;">• Repartido en Efectivo</td>
             <td class="text-right" style="font-size: 11px; color: #555;">${formatMoney(resumen.resumen.efectivoRepartido || 0)}</td>
           </tr>
