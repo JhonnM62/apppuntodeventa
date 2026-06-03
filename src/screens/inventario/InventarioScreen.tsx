@@ -1125,7 +1125,7 @@ const InventarioScreen = ({ navigation }: any) => {
                 onChangeText={(v) => setEditValues('precioActual', v)}
                 keyboardType="numeric"
                 style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#111827' }}
-                placeholder="0"
+                placeholder="0" placeholderTextColor="#9ca3af"
               />
             </View>
             <View style={{ flex: 1 }}>
@@ -1135,7 +1135,7 @@ const InventarioScreen = ({ navigation }: any) => {
                 onChangeText={(v) => setEditValues('cantidad', v)}
                 keyboardType="numeric"
                 style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#111827' }}
-                placeholder="0"
+                placeholder="0" placeholderTextColor="#9ca3af"
               />
             </View>
           </View>
@@ -1707,7 +1707,7 @@ const InventarioScreen = ({ navigation }: any) => {
                           style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: '#111827' }}
                           keyboardType="numeric"
                           value={item.cantidad > 0 ? String(item.cantidad) : ''}
-                          placeholder="0"
+                          placeholder="0" placeholderTextColor="#9ca3af"
                           onChangeText={(t) => {
                             const newItems = [...addItemsList];
                             newItems[index].cantidad = Number(t.replace(/[^0-9]/g, '')) || 0;
@@ -1723,7 +1723,7 @@ const InventarioScreen = ({ navigation }: any) => {
                             style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: '#111827' }}
                             keyboardType="numeric"
                             value={item.precioActual > 0 ? String(item.precioActual) : ''}
-                            placeholder="0"
+                            placeholder="0" placeholderTextColor="#9ca3af"
                             onChangeText={(t) => {
                               const newItems = [...addItemsList];
                               newItems[index].precioActual = Number(t.replace(/[^0-9]/g, '')) || 0;

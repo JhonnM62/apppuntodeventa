@@ -572,6 +572,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                     setMovimiento({ ...movimiento, cantidad: isNaN(n) ? 0 : n });
                   }}
                   placeholder="0"
+                  placeholderTextColor="#9ca3af"
                   onFocus={() => {
                     setTimeout(() => {
                       mainScrollRef.current?.scrollToEnd({ animated: true });
@@ -655,7 +656,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                 <View style={{ flex: 1, marginRight: 8 }}>
                   <Input
                     label="Stock Actual"
-                    placeholder="0"
+                    placeholder="0" placeholderTextColor="#9ca3af"
                     keyboardType="numeric"
                     value={formData.disponible ? String(formData.disponible) : ''}
                     onChangeText={(t) => setFormData(p => ({ ...p, disponible: t.replace(/[^0-9-]/g, '') }))}
@@ -664,7 +665,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                 <View style={{ flex: 1 }}>
                   <Input
                     label="Stock Histórico"
-                    placeholder="0"
+                    placeholder="0" placeholderTextColor="#9ca3af"
                     keyboardType="numeric"
                     value={formData.cantidad ? String(formData.cantidad) : ''}
                     onChangeText={(t) => {

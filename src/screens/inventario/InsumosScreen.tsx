@@ -1129,7 +1129,7 @@ if (status !== 'granted') {
               <View className="flex-1 mr-2">
                 <Input
                   label="Stock Actual"
-                  placeholder="0"
+                  placeholder="0" placeholderTextColor="#9ca3af"
                   keyboardType="numeric"
                   value={formData.disponible ? String(formData.disponible) : ''}
                   onChangeText={(t) => setFormData(p => ({ ...p, disponible: t.replace(/[^0-9-]/g, '') }))}
@@ -1138,7 +1138,7 @@ if (status !== 'granted') {
               <View className="flex-1">
                 <Input
                   label="Stock Histórico"
-                  placeholder="0"
+                  placeholder="0" placeholderTextColor="#9ca3af"
                   keyboardType="numeric"
                   value={formData.cantidad ? String(formData.cantidad) : ''}
                   onChangeText={(t) => {
@@ -1476,7 +1476,7 @@ if (status !== 'granted') {
                     const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
                     setStockModal({ ...stockModal, cantidad: isNaN(n) ? 0 : n });
                   }}
-                  placeholder="0"
+                  placeholder="0" placeholderTextColor="#9ca3af"
                 />
                 <TouchableOpacity
                   style={{ width: 44, height: 44, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 1 }}

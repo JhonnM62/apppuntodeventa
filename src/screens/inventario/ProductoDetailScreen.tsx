@@ -324,7 +324,7 @@ const handleDelete = () => {
                     handleChange('precioUnitario', isNaN(n) ? 0 : n);
                   }}
                   keyboardType="numeric"
-                  placeholder="0"
+                  placeholder="0" placeholderTextColor="#9ca3af"
                 />
               </View>
               <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
@@ -336,7 +336,7 @@ const handleDelete = () => {
                     handleChange('precioDeCompra', isNaN(n) ? 0 : n);
                   }}
                   keyboardType="numeric"
-                  placeholder="0"
+                  placeholder="0" placeholderTextColor="#9ca3af"
                 />
               </View>
             </View>
@@ -462,7 +462,7 @@ const handleDelete = () => {
 
                 <View style={styles.insumoSearchContainer}>
                   <Ionicons name="search" size={18} color="#9ca3af" style={{ marginRight: 8 }} />
-                  <TextInput
+                  <TextInput placeholderTextColor="#9ca3af"
                     style={styles.insumoSearchInput}
                     placeholder="Buscar insumo por nombre..."
                     value={searchInsumoText}
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
   recetaItemStock: { fontSize: 12, color: '#6b7280' },
   recetaItemPrice: { fontSize: 12, fontWeight: '600', color: '#059669' },
   recetaItemControls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  recetaQtyInput: { width: 50, textAlign: 'center', paddingVertical: 6 },
+  recetaQtyInput: { width: 50, textAlign: 'center', paddingVertical: 6, color: '#111827' },
   recetaItemUnit: { fontSize: 12, color: '#6b7280', width: 45 },
   removeInsumoBtn: { padding: 4 },
   addInsumoBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderStyle: 'dashed', borderWidth: 1, borderColor: '#4CAF50', borderRadius: 12, marginTop: 8 },
