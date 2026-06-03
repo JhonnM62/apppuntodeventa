@@ -88,16 +88,20 @@ export const generateAndShareCajaPDF = async (resumen: any) => {
   ` : '';
 
   const notasRows = resumen.notasAnalysis?.map((nota: any) => {
-    const notasList = nota.productosConNotas.map((prod: any) => {
+    const notasList = nota.productosConNotas?.map((prod: any) => {
       const notasItems = prod.notas.map((n: any) => `<li>${n.cantidad || 1}x ${n.name || n.nombre || n.Nombre} ${(n.price || n.precio || n.Precio) > 0 ? '(+$' + (n.price || n.precio || n.Precio) + ')' : ''}</li>`).join('');
       return `<strong>${prod.cantidad}x ${prod.producto}</strong><ul>${notasItems}</ul>`;
-    }).join('');
+    }).join('') || '';
+
+    const extras = [];
+    if (nota.cliente) extras.push(`<div style="color: #4f46e5; font-size: 11px; margin-top: 4px;">👤 Cliente: ${nota.cliente.nombre}</div>`);
+    if (nota.descuento > 0) extras.push(`<div style="color: #ea580c; font-size: 11px; margin-top: 2px;">💸 Descuento: -$${nota.descuento} ${nota.porcentajeDeDescuento ? `(${nota.porcentajeDeDescuento}%)` : ''}</div>`);
 
     return `
       <tr style="page-break-inside: avoid;">
         <td class="text-center">${formatTime12hPdf(nota.hora) || '-'}</td>
         <td class="text-center"><strong>${nota.pedido || '-'}</strong></td>
-        <td>${notasList}</td>
+        <td>${notasList}${extras.join('')}</td>
       </tr>
     `;
   }).join('') || '<tr><td colspan="3" class="text-center">No se registraron notas o modificadores en este turno</td></tr>';
