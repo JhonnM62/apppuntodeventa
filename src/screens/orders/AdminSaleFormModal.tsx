@@ -50,6 +50,7 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [estado, setEstado] = useState('PAGADO');
   const [medioDePago, setMedioDePago] = useState('EFECTIVO');
+  const [banco, setBanco] = useState<string | null>(null);
   const [cart, setCart] = useState<any[]>([]);
   const [discountPercent, setDiscountPercent] = useState<number>(0);
 
@@ -69,7 +70,16 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
       if (isEdit && saleData) {
         setFechaManual(saleData.fecha ? new Date(saleData.fecha) : new Date());
         setEstado(saleData.estado || 'PAGADO');
-        setMedioDePago(saleData.medioDePago || 'EFECTIVO');
+        
+        let initialMedioDePago = saleData.medioDePago || 'EFECTIVO';
+        let initialBanco = saleData.banco || null;
+        if (['NEQUI', 'DAVIPLATA', 'BANCOLOMBIA'].includes(initialMedioDePago)) {
+          initialBanco = initialMedioDePago;
+          initialMedioDePago = 'TRANSFERENCIA';
+        }
+        setMedioDePago(initialMedioDePago);
+        setBanco(initialBanco);
+        
         setDiscountPercent(Number(saleData.porcentajeDeDescuento || 0));
         
         if (saleData.ordenVentas) {
@@ -105,6 +115,7 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
         setFechaManual(new Date());
         setEstado('PAGADO');
         setMedioDePago('EFECTIVO');
+        setBanco(null);
         setDiscountPercent(0);
         setCart([]);
         setEfectivoInput('');
@@ -251,6 +262,7 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
           medioDePago,
           efectivoRecibido: medioDePago === 'EFECTIVO Y OTROS' ? efectivoAmount : finalTotalInput,
           devueltas: 0,
+          banco,
           totalInput: finalTotalInput,
           descuento: calculatedDescuento,
           porcentajeDeDescuento: String(discountPercent),
@@ -357,16 +369,38 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
           <View className="mb-6">
             <Text className="text-gray-700 font-bold mb-1">Medio de Pago</Text>
             <View className="flex-row flex-wrap gap-2">
-              {['EFECTIVO', 'TRANSFERENCIA', 'NEQUI', 'DAVIPLATA', 'BANCOLOMBIA', 'EFECTIVO Y OTROS'].map(mp => (
+              {['EFECTIVO', 'TRANSFERENCIA', 'TARJETA', 'EFECTIVO Y OTROS'].map(mp => (
                 <TouchableOpacity 
                   key={mp} 
-                  onPress={() => setMedioDePago(mp)}
+                  onPress={() => {
+                    setMedioDePago(mp);
+                    if (!['TRANSFERENCIA', 'TARJETA', 'EFECTIVO Y OTROS'].includes(mp)) {
+                      setBanco(null);
+                    }
+                  }}
                   className={`px-3 py-2 rounded-lg border ${medioDePago === mp ? 'bg-green-100 border-green-500' : 'bg-white border-gray-300'}`}
                 >
                   <Text className={`text-xs font-bold ${medioDePago === mp ? 'text-green-700' : 'text-gray-600'}`}>{mp}</Text>
                 </TouchableOpacity>
               ))}
             </View>
+
+            {['TRANSFERENCIA', 'TARJETA', 'EFECTIVO Y OTROS'].includes(medioDePago) && (
+              <View className="mt-4 mb-2">
+                <Text className="text-gray-700 font-bold mb-1">Banco Destino</Text>
+                <View className="flex-row flex-wrap gap-2">
+                  {['NEQUI', 'DAVIPLATA', 'BANCOLOMBIA'].map(b => (
+                    <TouchableOpacity 
+                      key={b} 
+                      onPress={() => setBanco(b)}
+                      className={`px-3 py-2 rounded-lg border ${banco === b ? 'bg-blue-100 border-blue-500' : 'bg-white border-gray-300'}`}
+                    >
+                      <Text className={`text-xs font-bold ${banco === b ? 'text-blue-700' : 'text-gray-600'}`}>{b}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
             
             {medioDePago === 'EFECTIVO Y OTROS' && (
               <View className="mt-4 bg-gray-50 p-3 rounded-xl border border-gray-200">
