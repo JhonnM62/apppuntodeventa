@@ -239,6 +239,16 @@ const PedidosScreen = () => {
     }
   );
 
+  const handleSocketUpdateFallback = useCallback(() => {
+    fetchVentas(true);
+  }, [fetchVentas]);
+
+  useSocketEvent('ordenRecibida', handleSocketUpdateFallback, [handleSocketUpdateFallback]);
+  useSocketEvent('ordenActualizadaKitchen', handleSocketUpdateFallback, [handleSocketUpdateFallback]);
+  useSocketEvent('ordenActualizadaCaja', handleSocketUpdateFallback, [handleSocketUpdateFallback]);
+  useSocketEvent('ordenActualizada', handleSocketUpdateFallback, [handleSocketUpdateFallback]);
+  useSocketEvent('ordenCompletada', handleSocketUpdateFallback, [handleSocketUpdateFallback]);
+
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
