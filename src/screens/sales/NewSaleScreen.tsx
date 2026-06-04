@@ -1084,13 +1084,30 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     const selectedItem = cart.find(i => i.IDproductos === selectedCartItemId);
     
     // Filtrar los comentarios según la búsqueda
-    const filteredModifiers = comentariosDb.filter(mod => 
+    let filteredModifiers = comentariosDb.filter(mod => 
       mod.comentarios.toLowerCase().includes(modifierSearchQuery.toLowerCase())
     );
 
+    // Agregar notas personalizadas ya aplicadas para que aparezcan en la lista y se puedan gestionar
+    if (selectedItem && selectedItem.modifiers) {
+      const appliedCustoms = selectedItem.modifiers.filter(m => !comentariosDb.some(cdb => cdb.comentarios === m.name));
+      appliedCustoms.forEach((customMod, index) => {
+        if (customMod.name.toLowerCase().includes(modifierSearchQuery.toLowerCase())) {
+          if (!filteredModifiers.some(fm => fm.comentarios === customMod.name)) {
+            filteredModifiers.unshift({
+              ID: `custom-applied-${index}`,
+              comentarios: customMod.name,
+              precio: customMod.price,
+              tipo: 'Nota Personalizada'
+            });
+          }
+        }
+      });
+    }
+
     // Verificar si la búsqueda exacta ya existe
     const isCustomNoteUnique = modifierSearchQuery.trim().length > 0 && 
-      !comentariosDb.some(mod => mod.comentarios.toLowerCase() === modifierSearchQuery.trim().toLowerCase());
+      !filteredModifiers.some(mod => mod.comentarios.toLowerCase() === modifierSearchQuery.trim().toLowerCase());
 
     const handleAddCustomNote = () => {
       if (!selectedCartItemId || !modifierSearchQuery.trim()) return;
@@ -1111,7 +1128,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     return (
       <RNModal visible={modifiersModalVisible} transparent animationType="slide" onRequestClose={() => setModifiersModalVisible(false)}>
         <KeyboardAvoidingView 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior="padding"
           style={styles.modifiersModalOverlay}
         >
           <TouchableOpacity style={{ flex: 1, width: '100%', justifyContent: 'flex-end' }} activeOpacity={1} onPress={() => setModifiersModalVisible(false)}>
@@ -1270,11 +1287,19 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           {item.modifiers && item.modifiers.length > 0 && (
             <View style={styles.appliedModifiersContainerCompact}>
               {item.modifiers.map((mod, idx) => (
-                <View key={idx} style={styles.appliedModifierChipCompact}>
+                <TouchableOpacity 
+                  key={idx} 
+                  style={styles.appliedModifierChipCompact}
+                  onPress={() => {
+                    setSelectedCartItemId(item.IDproductos);
+                    setModifiersModalVisible(true);
+                  }}
+                  activeOpacity={0.7}
+                >
                   <Text style={styles.appliedModifierTextCompact}>
                     {mod.quantity}x {mod.name} {mod.price ? (mod.price > 0 ? `(+$${mod.price})` : `(-$${Math.abs(mod.price)})`) : ''}
                   </Text>
-                </View>
+                </TouchableOpacity>
               ))}
             </View>
           )}
@@ -1402,30 +1427,32 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
           <RNModal visible={mesaModalVisible} transparent animationType="fade" onRequestClose={() => setMesaModalVisible(false)}>
             <TouchableOpacity style={styles.mesaModalOverlay} activeOpacity={1} onPress={() => setMesaModalVisible(false)}>
-              <View style={styles.mesaModalContent}>
+              <View style={[styles.mesaModalContent, { maxHeight: '80%' }]}>
                 <View style={styles.mesaModalHeader}>
                   <Text style={styles.mesaModalTitle}>Seleccionar Mesa</Text>
                   <TouchableOpacity onPress={() => setMesaModalVisible(false)}>
                     <Ionicons name="close" size={20} color="#6b7280" />
                   </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  style={[styles.mesaOption, !selectedMesa && styles.mesaOptionActive]}
-                  onPress={() => { setSelectedMesa(null); setMesaModalVisible(false); }}
-                >
-                  <MaterialCommunityIcons name="flash-outline" size={20} color={!selectedMesa ? '#fff' : '#6b7280'} />
-                  <Text style={[styles.mesaOptionText, !selectedMesa && styles.mesaOptionTextActive]}>Venta Rapida (V.R)</Text>
-                </TouchableOpacity>
-                {mesas.map((mesa) => (
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }}>
                   <TouchableOpacity
-                    key={mesa.IdMesas}
-                    style={[styles.mesaOption, selectedMesa?.IdMesas === mesa.IdMesas && styles.mesaOptionActive]}
-                    onPress={() => { setSelectedMesa(mesa); setMesaModalVisible(false); }}
+                    style={[styles.mesaOption, !selectedMesa && styles.mesaOptionActive]}
+                    onPress={() => { setSelectedMesa(null); setMesaModalVisible(false); }}
                   >
-                    <MaterialCommunityIcons name="table-furniture" size={20} color={selectedMesa?.IdMesas === mesa.IdMesas ? '#fff' : '#6b7280'} />
-                    <RNText style={[styles.mesaOptionText, selectedMesa?.IdMesas === mesa.IdMesas && styles.mesaOptionTextActive]}>{mesa.nombre}</RNText>
+                    <MaterialCommunityIcons name="flash-outline" size={20} color={!selectedMesa ? '#fff' : '#6b7280'} />
+                    <Text style={[styles.mesaOptionText, !selectedMesa && styles.mesaOptionTextActive]}>Venta Rapida (V.R)</Text>
                   </TouchableOpacity>
-                ))}
+                  {mesas.map((mesa) => (
+                    <TouchableOpacity
+                      key={mesa.IdMesas}
+                      style={[styles.mesaOption, selectedMesa?.IdMesas === mesa.IdMesas && styles.mesaOptionActive]}
+                      onPress={() => { setSelectedMesa(mesa); setMesaModalVisible(false); }}
+                    >
+                      <MaterialCommunityIcons name="table-furniture" size={20} color={selectedMesa?.IdMesas === mesa.IdMesas ? '#fff' : '#6b7280'} />
+                      <RNText style={[styles.mesaOptionText, selectedMesa?.IdMesas === mesa.IdMesas && styles.mesaOptionTextActive]}>{mesa.nombre}</RNText>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
               </View>
             </TouchableOpacity>
           </RNModal>
