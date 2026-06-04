@@ -149,6 +149,7 @@ const PedidosScreen = () => {
   const shouldRefetchVentas = useSalesStore((state) => state.shouldRefetch);
   const addVenta = useSalesStore((state) => state.addVenta);
   const updateVenta = useSalesStore((state) => state.updateVenta);
+  const removeVenta = useSalesStore((state) => state.removeVenta);
   const forceFetchRef = useRef<() => void>(() => {});
 
   const tabsWithCounts = useMemo(() => {
@@ -209,6 +210,34 @@ const PedidosScreen = () => {
   useEffect(() => {
     fetchVentas();
   }, []);
+
+  // ── Sockets: escuchar REFRESH_VENTAS del backend ──────────────────────────
+  useSocketEvent<{ action: string; venta?: any; ventaId?: string; ventaIds?: string[] }>(
+    SocketEvent.REFRESH_VENTAS,
+    (data) => {
+      if (!data) return;
+      if (data.action === 'updateEstado' && data.venta) {
+        // Actualización parcial en store (sin re-fetch completo)
+        updateVenta(data.venta.IDventas, data.venta);
+        // Si el modal está mostrando ese pedido, sincronizarlo también
+        setSelectedVenta((prev) =>
+          prev && prev.IDventas === data.venta.IDventas
+            ? { ...prev, ...data.venta }
+            : prev
+        );
+      } else if (data.action === 'create' && data.venta) {
+        addVenta(data.venta);
+      } else if (data.action === 'delete' && data.ventaId) {
+        removeVenta(data.ventaId);
+        if (selectedVenta?.IDventas === data.ventaId) closeModal();
+      } else if (data.action === 'bulkDelete' && data.ventaIds) {
+        data.ventaIds.forEach((id) => removeVenta(id));
+      } else {
+        // Fallback para acciones desconocidas: re-fetch completo
+        fetchVentas(true);
+      }
+    }
+  );
 
 
   const activeFiltersCount = useMemo(() => {
@@ -426,7 +455,9 @@ const PedidosScreen = () => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    fetchVentas();
+    // force=true garantiza que setRefreshing(false) siempre se llame
+    // incluso si la caché todavía es válida
+    fetchVentas(true);
   };
 
   const handleDeleteSingle = (venta: VentaItem) => {
@@ -734,13 +765,17 @@ showAlert({
 
         {productos.length > 0 && (
           <View style={styles.productsPreview}>
-            {productos.slice(0, 3).map((prod, idx) => (
-              <View key={prod.IDorderventas || prod.producto?.IDproductos || idx} style={styles.productChip}>
-                <RNText style={styles.productChipText} numberOfLines={1}>
-                  {prod.cantidad}x {prod.nombreProducto || prod.nombre}
-                </RNText>
-              </View>
-            ))}
+            {productos.slice(0, 3).map((prod, idx) => {
+              const nombre = prod.nombreProducto || prod.nombre || '';
+              const label = `${prod.cantidad}x ${nombre}`;
+              return (
+                <View key={prod.IDorderventas || prod.producto?.IDproductos || idx} style={styles.productChip}>
+                  <RNText style={styles.productChipText}>
+                    {label}
+                  </RNText>
+                </View>
+              );
+            })}
             {productos.length > 3 && (
               <View style={styles.moreProductsChip}>
                 <RNText style={styles.moreProductsText}>+{productos.length - 3}</RNText>
@@ -1879,6 +1914,7 @@ showAlert({
           data={flatListData}
           renderItem={renderListItem}
           keyExtractor={keyExtractor}
+          getItemType={(item) => 'isHeader' in item ? 'header' : 'item'}
           contentContainerStyle={styles.listContent}
           estimatedItemSize={200}
           refreshControl={

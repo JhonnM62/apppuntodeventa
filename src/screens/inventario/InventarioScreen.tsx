@@ -131,28 +131,11 @@ const InventarioScreen = ({ navigation }: any) => {
   const addItemModalScrollRef = useRef<any>(null);
   const [activeInputIndex, setActiveInputIndex] = useState<number | null>(null);
 
-  // Auto-Scroll Dinámico para Resultados de Búsqueda y Formularios (Patrón de Memoria)
-  useEffect(() => {
-    if ((showAddItemModal || showCreateModal) && (addItemSearchText.length > 0 || selectedCategoriaFilter)) {
-      setTimeout(() => {
-        // En lugar de ir al final (donde pueden estar los items ya agregados), 
-        // scrolleamos justo debajo del buscador (aproximadamente a los 100-200px)
-        const scrollRef = showCreateModal ? createModalScrollRef : addItemModalScrollRef;
-        scrollRef.current?.scrollTo({ y: 150, animated: true });
-      }, 300);
-    }
-  }, [addItemSearchText, selectedCategoriaFilter, showAddItemModal, showCreateModal]);
-
   useEffect(() => {
     const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => {
       setKeyboardHeight(e.endCoordinates.height);
       if (showAddItemModal || showCreateModal) {
-        if (addItemSearchText.length > 0) {
-          setTimeout(() => {
-            const scrollRef = showCreateModal ? createModalScrollRef : addItemModalScrollRef;
-            scrollRef.current?.scrollTo({ y: 150, animated: true });
-          }, 300);
-        } else if (activeInputIndex !== null) {
+        if (activeInputIndex !== null) {
           setTimeout(() => {
             const scrollRef = showCreateModal ? createModalScrollRef : addItemModalScrollRef;
             // Calculamos una posición más abajo para los inputs dinámicos de los items
@@ -1265,18 +1248,22 @@ const InventarioScreen = ({ navigation }: any) => {
             </View>
 
             <RNText style={{ fontSize: 11, color: '#10b981', fontWeight: 'bold', marginTop: 2 }}>
-                Stock act: {isComprado && item.cantInsumos !== undefined
+                Stock act: {selectedInventario && item.cantInsumos !== undefined
                   ? (isEntrada
-                    ? item.cantInsumos - (Number(item.cantidad) || 0)
+                    ? (item.seCompro?.toLowerCase() === 'si' ? item.cantInsumos - (Number(item.cantidad) || 0) : item.cantInsumos)
                     : item.cantInsumos + (Number(item.cantidad) || 0))
-                : getInsumoStock(item.nombreDelAlimento)}
+                  : (isComprado && item.cantInsumos !== undefined
+                    ? (isEntrada
+                      ? item.cantInsumos - (Number(item.cantidad) || 0)
+                      : item.cantInsumos + (Number(item.cantidad) || 0))
+                  : getInsumoStock(item.nombreDelAlimento))}
             </RNText>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
                 <RNText style={{ fontSize: 12.5, color: isEntrada ? '#f59e0b' : '#ef4444', fontWeight: 'bold' }}>
                   {isEntrada ? 'Pide' : 'Retira'}: {item.cantidad}
                 </RNText>
                 <RNText style={{ fontSize: 11, color: '#6b7280', marginLeft: 6 }}>
-                  • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {isComprado ? 'Actual' : 'Proy'}: {isComprado && item.cantInsumos !== undefined ? item.cantInsumos : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : -(Number(item.cantidad) || 0)))}</RNText>
+                  • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {((selectedInventario && item.seCompro?.toLowerCase() === 'si') || isComprado) ? 'Final' : 'Proy'}: {((selectedInventario && item.seCompro?.toLowerCase() === 'si') || isComprado) && item.cantInsumos !== undefined ? item.cantInsumos : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : -(Number(item.cantidad) || 0)))}</RNText>
                 </RNText>
               </View>
           </View>
@@ -2493,7 +2480,6 @@ const InventarioScreen = ({ navigation }: any) => {
                   </View>
                 ) : null}
               </View>
-
               {isAdmin && (
                 <TouchableOpacity
                   style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#eff6ff', paddingVertical: 14, borderRadius: 12, marginBottom: 12 }}
