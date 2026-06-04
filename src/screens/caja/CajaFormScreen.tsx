@@ -1981,7 +1981,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                               <TouchableOpacity 
                                 className="bg-blue-600 px-3 py-1.5 rounded-lg flex-row items-center"
                                 onPress={() => {
-                                  navigation.navigate('NewSale' as never, { 
+                                  navigation.navigate('Sales' as never, { 
                                     prefillProduct: prod.nombre,
                                     prefillQuantity: diff 
                                   } as never);
