@@ -54,7 +54,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [comentariosDb, setComentariosDb] = useState<Comentario[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(useProductStore.getState().productos.length === 0);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -142,31 +142,61 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   const fetchData = useCallback(async () => {
     try {
-      setLoading(true);
-      console.log('[NewSaleScreen] Fetching data...');
-      const [productsRes, mesasData, comentariosData] = await Promise.all([
-        getProducts(),
-        getMesas(),
-        getComentarios()
-      ]);
-      const productsData = productsRes?.data || productsRes;
-      console.log('[NewSaleScreen] Products:', Array.isArray(productsData) ? productsData.length : 0);
-      console.log('[NewSaleScreen] Mesas:', Array.isArray(mesasData) ? mesasData.length : 0);
-
-      if (Array.isArray(productsData) && productsData.length > 0) {
-        useProductStore.getState().setProductos(productsData);
+      const hasCachedProducts = useProductStore.getState().productos.length > 0;
+      if (!hasCachedProducts) {
+        setLoading(true);
       }
-      const mesasArray = Array.isArray(mesasData) ? mesasData : [];
-      setMesas(mesasArray);
-      setCachedMesas(mesasArray);
+      console.log('[NewSaleScreen] Fetching data...');
+      
+      const promises: Promise<any>[] = [];
+      let productsPromiseIndex = -1;
+      let mesasPromiseIndex = -1;
+      let comentariosPromiseIndex = -1;
+
+      // Only fetch products if needed
+      if (shouldRefetchProducts() || !hasCachedProducts) {
+        productsPromiseIndex = promises.length;
+        promises.push(getProducts());
+      }
+      
+      // Only fetch mesas if needed
+      if (shouldRefetchMesas() || useMesaStore.getState().mesas.length === 0) {
+        mesasPromiseIndex = promises.length;
+        promises.push(getMesas());
+      }
+      
+      comentariosPromiseIndex = promises.length;
+      promises.push(getComentarios());
+
+      const results = await Promise.all(promises);
+
+      if (productsPromiseIndex !== -1) {
+        const productsRes = results[productsPromiseIndex];
+        const productsData = productsRes?.data || productsRes;
+        console.log('[NewSaleScreen] Fetched Products:', Array.isArray(productsData) ? productsData.length : 0);
+        if (Array.isArray(productsData) && productsData.length > 0) {
+          useProductStore.getState().setProductos(productsData);
+        }
+      }
+
+      if (mesasPromiseIndex !== -1) {
+        const mesasData = results[mesasPromiseIndex];
+        console.log('[NewSaleScreen] Fetched Mesas:', Array.isArray(mesasData) ? mesasData.length : 0);
+        const mesasArray = Array.isArray(mesasData) ? mesasData : [];
+        setMesas(mesasArray);
+        setCachedMesas(mesasArray);
+      }
+
+      const comentariosData = results[comentariosPromiseIndex];
       setComentariosDb(Array.isArray(comentariosData) ? comentariosData : []);
+
     } catch (error: any) {
       console.error('[NewSaleScreen] Error fetching data:', error?.message || error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [setCachedMesas]);
+  }, [setCachedMesas, shouldRefetchProducts, shouldRefetchMesas]);
 
   useEffect(() => {
     const loadInitialData = () => {
