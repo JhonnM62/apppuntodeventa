@@ -358,7 +358,7 @@ export default function EstadisticasScreen({ navigation }: any) {
       </Modal>
 
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />}
       >
         {/* Filtros Rapidos */}

@@ -111,7 +111,7 @@ const PedidosScreen = () => {
   const { canCreate: canCreatePedido } = usePermissions('pedidos');
   const { canCreate: canCreateVenta } = usePermissions('ventas');
   const [activeTab, setActiveTab] = useState('todos');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(useSalesStore.getState().ventas.length === 0);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedVenta, setSelectedVenta] = useState<VentaItem | null>(null);
   const [modalVisible, setModalVisible] = useState(false);

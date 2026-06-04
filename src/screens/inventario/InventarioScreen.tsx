@@ -1247,8 +1247,8 @@ const InventarioScreen = ({ navigation }: any) => {
               )}
             </View>
 
-            <RNText style={{ fontSize: 11, color: '#10b981', fontWeight: 'bold', marginTop: 2 }}>
-                Stock act: {selectedInventario && item.cantInsumos !== undefined
+            <RNText style={{ fontSize: 11, color: '#6b7280', fontWeight: 'bold', marginTop: 2 }}>
+                Stock previo: {selectedInventario && item.cantInsumos !== undefined
                   ? (isEntrada
                     ? (item.seCompro?.toLowerCase() === 'si' ? item.cantInsumos - (Number(item.cantidad) || 0) : item.cantInsumos)
                     : item.cantInsumos + (Number(item.cantidad) || 0))
@@ -1256,14 +1256,14 @@ const InventarioScreen = ({ navigation }: any) => {
                     ? (isEntrada
                       ? item.cantInsumos - (Number(item.cantidad) || 0)
                       : item.cantInsumos + (Number(item.cantidad) || 0))
-                  : getInsumoStock(item.nombreDelAlimento))}
+                  : (isEntrada ? getInsumoStock(item.nombreDelAlimento) : getInsumoStock(item.nombreDelAlimento) + (Number(item.cantidad) || 0)))}
             </RNText>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
                 <RNText style={{ fontSize: 12.5, color: isEntrada ? '#f59e0b' : '#ef4444', fontWeight: 'bold' }}>
                   {isEntrada ? 'Pide' : 'Retira'}: {item.cantidad}
                 </RNText>
                 <RNText style={{ fontSize: 11, color: '#6b7280', marginLeft: 6 }}>
-                  • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {((selectedInventario && item.seCompro?.toLowerCase() === 'si') || isComprado) ? 'Final' : 'Proy'}: {((selectedInventario && item.seCompro?.toLowerCase() === 'si') || isComprado) && item.cantInsumos !== undefined ? item.cantInsumos : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : -(Number(item.cantidad) || 0)))}</RNText>
+                  • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {(!isEntrada || (selectedInventario && item.seCompro?.toLowerCase() === 'si') || isComprado) ? 'Final' : 'Proy'}: {(!isEntrada || (selectedInventario && item.seCompro?.toLowerCase() === 'si') || isComprado) && item.cantInsumos !== undefined ? item.cantInsumos : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : 0))}</RNText>
                 </RNText>
               </View>
           </View>
