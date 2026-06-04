@@ -360,7 +360,10 @@ export default function VerifyInsumosModal({
                     style={{ borderColor: COLORS.warning }}
                   >
                     <Text style={{ color: COLORS.warning, fontWeight: 'bold' }}>
-                      Posponer ({posposicionesRestantes} restante{posposicionesRestantes !== 1 ? 's' : ''})
+                      {posposicionesRestantes === -1 
+                        ? 'Posponer (Ilimitado)' 
+                        : `Posponer (${posposicionesRestantes} restante${posposicionesRestantes !== 1 ? 's' : ''})`
+                      }
                     </Text>
                   </Button>
                 )}
