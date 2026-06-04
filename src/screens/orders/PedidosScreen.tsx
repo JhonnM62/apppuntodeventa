@@ -1091,16 +1091,17 @@ showAlert({
                                 }
 
                                 return (
-                                  <View key={nIdx} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2 }}>
+                                  <View key={nIdx} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 2, flexWrap: 'wrap' }}>
                                     <View style={{ 
                                       backgroundColor: notaPrice < 0 ? '#fce4ec' : '#fef3c7', 
                                       paddingHorizontal: 6, 
                                       paddingVertical: 2, 
                                       borderRadius: 6, 
                                       flexDirection: 'row', 
-                                      alignItems: 'center' 
+                                      alignItems: 'center',
+                                      flexShrink: 1
                                     }}>
-                                      <RNText style={{ fontSize: 10, color: notaPrice < 0 ? '#c62828' : '#b45309', fontWeight: '700' }}>
+                                      <RNText style={{ fontSize: 10, color: notaPrice < 0 ? '#c62828' : '#b45309', fontWeight: '700', flexShrink: 1 }}>
                                         {displayQty}{notaName}{priceLabel}
                                       </RNText>
                                     </View>
