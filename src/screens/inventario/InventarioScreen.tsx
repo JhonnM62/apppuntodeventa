@@ -1627,7 +1627,7 @@ const InventarioScreen = ({ navigation }: any) => {
                         onPress={() => {
                           if (!addItemsList.find(i => i.insumoId === insumo.IDalimentos)) {
                             const precioBase = Number(insumo.precio || insumo.Precio) || 0;
-                            setAddItemsList(prev => [...prev, {
+                            setAddItemsList(prev => [{
                               insumoId: insumo.IDalimentos,
                               nombre: insumo.nombre || insumo.Nombre || '',
                               categoria: insumo.nombreCategoria || insumo.NombreCategoria || '',
@@ -1635,7 +1635,7 @@ const InventarioScreen = ({ navigation }: any) => {
                               precioAnterior: precioBase,
                               precioActual: precioBase,
                               observacion: ''
-                            }]);
+                            }, ...prev]);
                           }
                           setAddItemSearchText('');
                         }}
@@ -1802,7 +1802,7 @@ const InventarioScreen = ({ navigation }: any) => {
                   <RNText style={{ fontSize: 16, fontWeight: '700', color: '#111827', textAlign: 'center' }}>{selectedInventario?.nombre}</RNText>
                   <RNText style={{ fontSize: 12, color: '#6b7280', textAlign: 'center' }}>
                     {selectedInventario?.fechaYHora ? new Date(selectedInventario.fechaYHora).toLocaleDateString('es-CO') : ''}
-                    {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') ? ` • Total: $${(selectedInventario.total !== undefined && selectedInventario.total > 0 ? selectedInventario.total : (ordenes.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0))).toLocaleString('es-CO')}` : ''}
+                    {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') ? ` • Total: $${(ordenes.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0)).toLocaleString('es-CO')}` : ''}
                   </RNText>
                 </View>
                 <View style={{ flexDirection: 'row' }}>
