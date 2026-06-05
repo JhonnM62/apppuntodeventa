@@ -162,7 +162,7 @@ const InsumosScreen = ({ navigation }: Props) => {
     insumos.forEach(i => {
       const cat = i.nombreCategoria || i.NombreCategoria || i.categoriaNombre || i.Categoria;
       if (cat && typeof cat === 'string') {
-        const stock = Number(i.cantidad || i.Cantidad) || 0;
+        const stock = Number(i.disponible || i.Disponible) || 0;
         catsMap.set(cat, (catsMap.get(cat) || 0) + stock);
       }
     });

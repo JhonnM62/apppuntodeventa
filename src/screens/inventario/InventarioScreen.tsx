@@ -2130,7 +2130,7 @@ const InventarioScreen = ({ navigation }: any) => {
                         onPress={() => {
                           if (!addItemsList.find(i => i.insumoId === insumo.IDalimentos)) {
                             const precioBase = Number(insumo.precio || insumo.Precio) || 0;
-                            setAddItemsList(prev => [...prev, {
+                            setAddItemsList(prev => [{
                               insumoId: insumo.IDalimentos,
                               nombre: insumo.nombre || insumo.Nombre || '',
                               categoria: insumo.nombreCategoria || insumo.NombreCategoria || '',
@@ -2138,7 +2138,7 @@ const InventarioScreen = ({ navigation }: any) => {
                               precioAnterior: precioBase,
                               precioActual: precioBase,
                               observacion: ''
-                            }]);
+                            }, ...prev]);
                           }
                           setAddItemSearchText('');
                         }}
