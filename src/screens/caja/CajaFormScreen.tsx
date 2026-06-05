@@ -404,7 +404,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
             categoria: i.categoria || i.insumo?.Categoria || insObj?.Categoria || insObj?.categoria || '',
             unidadDeMedida: i.unidadDeMedida || i.insumo?.Unidades || insObj?.Unidades || insObj?.unidades || 'Und',
             cantApertura: i.cantApertura || 0,
-            cantDeCierre: i.cantDeCierre || 0,
+            cantDeCierre: i.cantDeCierre ?? ('' as any),
             observacion: i.observacion || '',
             imageUrl: i.insumo?.imageUrl || i.insumo?.imagen || insObj?.imageUrl || insObj?.imagen || '',
             historial: i.historial || []
@@ -526,6 +526,15 @@ export default function CajaFormScreen({ route, navigation }: any) {
           ...i,
           cantDeCierre: i.cantDeCierre === '' || isNaN(Number(i.cantDeCierre)) ? undefined : Number(i.cantDeCierre)
         }));
+
+        if (!isNew && isFinalClose) {
+          const faltanInsumos = cleanData.insumos.some((i: any) => i.cantDeCierre === undefined);
+          if (faltanInsumos) {
+            Toast.show({ type: 'error', text1: 'Conteos incompletos', text2: 'Debes ingresar la cantidad final para todos los insumos listados antes de cerrar la caja.' });
+            setSaving(false);
+            return;
+          }
+        }
       }
 
       if (isNew) {

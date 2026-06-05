@@ -36,7 +36,7 @@ interface InsumoState {
   nombre: string;
   unidadDeMedida: string;
   disponibleEnSistema: number;
-  cantContada: number;
+  cantContada: number | string;
   diferencia: number;
 }
 
@@ -102,7 +102,7 @@ export default function VerifyInsumosModal({
           nombre: p.nombre,
           unidadDeMedida: p.unidadDeMedida,
           disponibleEnSistema: p.disponibleEnSistema,
-          cantContada: p.disponibleEnSistema,
+          cantContada: '',
           diferencia: 0,
         }));
       
@@ -125,7 +125,8 @@ export default function VerifyInsumosModal({
     setInsumos(prev =>
       prev.map(insumo => {
         if (insumo.id !== id) return insumo;
-        const nuevaCant = Math.max(0, insumo.cantContada + delta);
+        const actualCant = typeof insumo.cantContada === 'number' ? insumo.cantContada : 0;
+        const nuevaCant = Math.max(0, actualCant + delta);
         const diff = nuevaCant - insumo.disponibleEnSistema;
         return {
           ...insumo,
@@ -143,8 +144,8 @@ export default function VerifyInsumosModal({
     setInsumos(prev =>
       prev.map(insumo => {
         if (insumo.id !== id) return insumo;
-        const nuevaCant = isNaN(numValue) ? 0 : Math.max(0, numValue);
-        const diff = nuevaCant - insumo.disponibleEnSistema;
+        const nuevaCant = value === '' ? '' : (isNaN(numValue) ? 0 : Math.max(0, numValue));
+        const diff = typeof nuevaCant === 'number' ? nuevaCant - insumo.disponibleEnSistema : 0;
         return {
           ...insumo,
           cantContada: nuevaCant,
@@ -155,6 +156,10 @@ export default function VerifyInsumosModal({
   };
 
   const handleConfirmar = async () => {
+    if (insumos.some(i => i.cantContada === '')) {
+      Alert.alert('Error', 'Debes ingresar el conteo para todos los insumos listados.');
+      return;
+    }
     setModalState('LOADING');
 
     try {

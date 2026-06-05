@@ -1615,6 +1615,11 @@ const InventarioScreen = ({ navigation }: any) => {
                       return matchText && matchCat;
                     })
                     .sort((a, b) => {
+                      const isSelectedA = addItemsList.some(i => i.insumoId === a.IDalimentos) ? 1 : 0;
+                      const isSelectedB = addItemsList.some(i => i.insumoId === b.IDalimentos) ? 1 : 0;
+                      if (isSelectedA !== isSelectedB) {
+                        return isSelectedB - isSelectedA; // Seleccionados van primero
+                      }
                       const stockA = Number(a.disponible || a.Disponible || a.cantidad || a.Cantidad || 0);
                       const stockB = Number(b.disponible || b.Disponible || b.cantidad || b.Cantidad || 0);
                       return stockB - stockA;
@@ -2108,6 +2113,11 @@ const InventarioScreen = ({ navigation }: any) => {
                       return matchText && matchCat;
                     })
                     .sort((a, b) => {
+                      const isSelectedA = addItemsList.some(i => i.insumoId === a.IDalimentos) ? 1 : 0;
+                      const isSelectedB = addItemsList.some(i => i.insumoId === b.IDalimentos) ? 1 : 0;
+                      if (isSelectedA !== isSelectedB) {
+                        return isSelectedB - isSelectedA; // Seleccionados van primero
+                      }
                       const stockA = Number(a.disponible || a.Disponible || a.cantidad || a.Cantidad || 0);
                       const stockB = Number(b.disponible || b.Disponible || b.cantidad || b.Cantidad || 0);
                       return stockB - stockA;
