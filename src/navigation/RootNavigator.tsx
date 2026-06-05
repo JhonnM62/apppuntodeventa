@@ -55,7 +55,7 @@ import ConfiguracionAvanzadaScreen from '../screens/settings/ConfiguracionAvanza
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
-  Main: undefined;
+  Main: { screen: string; params?: any } | undefined;
   Sales: { saleId?: string };
   NewSale: { saleId?: string };
   Settings: undefined;
@@ -90,7 +90,7 @@ export type RootStackParamList = {
 
 export type BottomTabParamList = {
   Inicio: undefined;
-  Pedidos: undefined;
+  Pedidos: { ventaId?: string } | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

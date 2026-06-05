@@ -129,19 +129,25 @@ export default function HistorialVentasScreen({ navigation }: any) {
     }
   }, [isConnected, joinRoom]);
 
-  const handleSocketUpdate = useCallback(() => {
-    // Background silent fetch when updates happen, maintaining active filters
-    if (activeTab === 'activas') {
-      fetchVentas(1, 'activas', false, searchText, true, activeFilters);
-      fetchStatsHoy();
+  const handleSocketUpdate = useCallback((data?: any) => {
+    if (data?.action === 'updateEstado' && data?.venta) {
+      // Optimizacion: parcheamos la venta en el estado local en vez de hacer refetch
+      setVentas((prev: any[]) => prev.map(v => v.IDventas === data.venta.IDventas ? data.venta : v));
+    } else if (data?.action === 'delete' && data?.ventaId) {
+      setVentas((prev: any[]) => prev.filter(v => v.IDventas !== data.ventaId));
+    } else if (data?.action === 'bulkDelete' && data?.ventaIds) {
+      setVentas((prev: any[]) => prev.filter(v => !data.ventaIds.includes(v.IDventas)));
+    } else if (data?.action === 'create') {
+      // Background silent fetch solo para creaciones si estamos en la tab de activas
+      if (activeTab === 'activas') {
+        fetchVentas(1, 'activas', false, searchText, true, activeFilters);
+        fetchStatsHoy();
+      }
     }
   }, [activeTab, searchText, activeFilters]);
 
-  useSocketEvent('ordenRecibida', handleSocketUpdate, [handleSocketUpdate]);
-  useSocketEvent('ordenActualizadaKitchen', handleSocketUpdate, [handleSocketUpdate]);
-  useSocketEvent('ordenActualizadaCaja', handleSocketUpdate, [handleSocketUpdate]);
-  useSocketEvent('ordenCompletada', handleSocketUpdate, [handleSocketUpdate]);
-  useSocketEvent(SocketEvent.REFRESH_VENTAS, handleSocketUpdate, [handleSocketUpdate]);
+  // Se remueven los eventos de cocina/caja genéricos ya que REFRESH_VENTAS centraliza los cambios
+  useSocketEvent<{ action: string; venta?: any; ventaId?: string; ventaIds?: string[] }>(SocketEvent.REFRESH_VENTAS, handleSocketUpdate, [handleSocketUpdate]);
 
   // Fallback background sync for stats every 60 seconds
   useEffect(() => {

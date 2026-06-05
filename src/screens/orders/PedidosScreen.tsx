@@ -5,9 +5,9 @@ const FlashList = OriginalFlashList as any;
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { getSales, updateVentaEstado, updateVentaPago, deleteSale, deleteSalesBulk } from '../../services/sales';
+import { getSales, updateVentaEstado, updateVentaPago, deleteSale, deleteSalesBulk, getVentaById } from '../../services/sales';
 import { useSocket, useSocketEvent, useSocketEmitter } from '../../hooks';
 import { Room, SocketEvent } from '../../types/socket.types';
 import Toast from 'react-native-toast-message';
@@ -144,10 +144,34 @@ const PedidosScreen = () => {
   const [selectedToDelete, setSelectedToDelete] = useState<string[]>([]);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
 
+  const route = useRoute<any>();
+
   const cachedVentas = useSalesStore((state) => state.ventas);
   const setCachedVentas = useSalesStore((state) => state.setVentas);
   const shouldRefetchVentas = useSalesStore((state) => state.shouldRefetch);
   const addVenta = useSalesStore((state) => state.addVenta);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (route.params?.ventaId) {
+        // En lugar de buscarla localmente donde podría no estar, la fetcheamos
+        const loadSale = async () => {
+          try {
+            const result = await getVentaById(route.params.ventaId);
+            if (result?.data) {
+              setSelectedVenta(result.data);
+              setModalVisible(true);
+              // Limpiar params para no re-abrir modal
+              navigation.setParams({ ventaId: undefined });
+            }
+          } catch (e) {
+            console.error('Error fetching deep linked venta:', e);
+          }
+        };
+        loadSale();
+      }
+    }, [route.params?.ventaId, navigation])
+  );
   const updateVenta = useSalesStore((state) => state.updateVenta);
   const removeVenta = useSalesStore((state) => state.removeVenta);
   const forceFetchRef = useRef<() => void>(() => {});
@@ -240,15 +264,13 @@ const PedidosScreen = () => {
   );
 
   const handleSocketUpdateFallback = useCallback(() => {
-    fetchVentas(true);
+    // Legacy fallback. Only keep for explicit manual refreshes if needed.
+    // fetchVentas(true);
   }, [fetchVentas]);
 
-  useSocketEvent('ordenRecibida', handleSocketUpdateFallback, [handleSocketUpdateFallback]);
-  useSocketEvent('ordenActualizadaKitchen', handleSocketUpdateFallback, [handleSocketUpdateFallback]);
-  useSocketEvent('ordenActualizadaCaja', handleSocketUpdateFallback, [handleSocketUpdateFallback]);
-  useSocketEvent('ordenActualizada', handleSocketUpdateFallback, [handleSocketUpdateFallback]);
-  useSocketEvent('ordenCompletada', handleSocketUpdateFallback, [handleSocketUpdateFallback]);
-
+  // Se remueven los fallbacks masivos a estos eventos porque provocaban un render loop y crasheaban la app.
+  // El evento SocketEvent.REFRESH_VENTAS (que se maneja arriba) ya actualiza el estado de forma granular en Zustand.
+  
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;

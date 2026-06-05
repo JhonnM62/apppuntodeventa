@@ -7,11 +7,15 @@ import api from '../services/api';
 import useAuthStore from '../store/useAuthStore';
 import { useNotificationStore } from '../store/useNotificationStore';
 
-// Configurar comportamiento nativo cuando la app está en primer plano
+import { navigationRef } from '../navigation/RootNavigator';
+
+// ... other imports ...
+
+// Configure behavior
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true, // Muestra el popup visual arriba
-    shouldPlaySound: true, // Suena
+    shouldShowAlert: true,
+    shouldPlaySound: true,
     shouldSetBadge: true, shouldShowBanner: true, shouldShowList: true,
   }),
 });
@@ -26,7 +30,6 @@ export function usePushNotifications() {
   const { incrementUnread } = useNotificationStore();
 
   useEffect(() => {
-    // Si no hay usuario o no es admin, no pedimos permisos ni mandamos token
     if (!user || (user.rol !== 'Admin app' && user.rol !== 'Admin negocio')) {
       return;
     }
@@ -34,7 +37,6 @@ export function usePushNotifications() {
     registerForPushNotificationsAsync().then(token => {
       if (token) {
         setExpoPushToken(token);
-        // Enviar el token al backend
         api.post('/notifications/token', {
           userId: user.id || user.IDusuarios,
           token: token,
@@ -45,12 +47,19 @@ export function usePushNotifications() {
 
     notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
       setNotification(notification);
-      incrementUnread(); // Incrementamos el badge de la campana en tiempo real
+      incrementUnread();
     });
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
-      // Aquí podemos manejar qué hacer cuando tocan la notificación
-      console.log(response);
+      const data = response.notification.request.content.data;
+      if (data && data.ventaId) {
+        if (navigationRef.isReady()) {
+          navigationRef.navigate('Main', { 
+            screen: 'Pedidos', 
+            params: { ventaId: data.ventaId } 
+          });
+        }
+      }
     });
 
     return () => {

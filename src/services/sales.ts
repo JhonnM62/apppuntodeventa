@@ -35,6 +35,16 @@ export interface SalePayload {
 import { useSyncStore } from '../store/useSyncStore';
 import Toast from 'react-native-toast-message';
 
+export const getVentaById = async (id: string) => {
+  try {
+    const response = await api.get(`/ventas/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching venta by id:', error);
+    throw error;
+  }
+};
+
 export const createSale = async (data: SalePayload) => {
   const startTime = performance.now();
   try {
