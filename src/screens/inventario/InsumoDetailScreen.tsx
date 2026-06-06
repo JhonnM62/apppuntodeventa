@@ -457,7 +457,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
               <View style={styles.statItem}>
                 <RNText style={styles.statLabel}>Total</RNText>
                 <RNText style={styles.statValue} numberOfLines={1} adjustsFontSizeToFit>
-                  ${(Number(insumo.disponible ?? insumo.Disponible ?? 0) * Number(insumo.precio || insumo.Precio || 0)).toLocaleString('es-CO')}
+                  ${(Number(insumo.cantidad ?? insumo.Cantidad ?? 0) * Number(insumo.precio || insumo.Precio || 0)).toLocaleString('es-CO')}
                 </RNText>
               </View>
             </View>

@@ -1612,7 +1612,14 @@ const InventarioScreen = ({ navigation }: any) => {
                       const matchText = (i.nombre || i.Nombre || '').toLowerCase().includes(addItemSearchText.toLowerCase());
                       const cat = i.nombreCategoria || i.NombreCategoria || i.categoriaNombre || i.Categoria;
                       const matchCat = selectedCategoriaFilter ? cat === selectedCategoriaFilter : true;
-                      return matchText && matchCat;
+                      
+                      let matchStock = true;
+                      if (newInventario.tipo && !newInventario.tipo.toLowerCase().includes('entrada')) {
+                        const stock = Number(getInsumoStock(i.IDalimentos)) || 0;
+                        matchStock = stock > 0;
+                      }
+
+                      return matchText && matchCat && matchStock;
                     })
                     .sort((a, b) => {
                       const isSelectedA = addItemsList.some(i => i.insumoId === a.IDalimentos) ? 1 : 0;
@@ -1671,7 +1678,14 @@ const InventarioScreen = ({ navigation }: any) => {
                         const matchText = (i.nombre || i.Nombre || '').toLowerCase().includes(addItemSearchText.toLowerCase());
                         const cat = i.nombreCategoria || i.NombreCategoria || i.categoriaNombre || i.Categoria;
                         const matchCat = selectedCategoriaFilter ? cat === selectedCategoriaFilter : true;
-                        return matchText && matchCat;
+                        
+                        let matchStock = true;
+                        if (newInventario.tipo && !newInventario.tipo.toLowerCase().includes('entrada')) {
+                          const stock = Number(getInsumoStock(i.IDalimentos)) || 0;
+                          matchStock = stock > 0;
+                        }
+
+                        return matchText && matchCat && matchStock;
                       }).length === 0 && (
                       <RNText style={{ padding: 8, color: '#6b7280', textAlign: 'center' }}>No se encontraron insumos</RNText>
                     )}
@@ -2110,7 +2124,14 @@ const InventarioScreen = ({ navigation }: any) => {
                       const matchText = (i.nombre || i.Nombre || '').toLowerCase().includes(addItemSearchText.toLowerCase());
                       const cat = i.nombreCategoria || i.NombreCategoria || i.categoriaNombre || i.Categoria;
                       const matchCat = selectedCategoriaFilter ? cat === selectedCategoriaFilter : true;
-                      return matchText && matchCat;
+                      
+                      let matchStock = true;
+                      if (selectedInventario?.tipo && !selectedInventario.tipo.toLowerCase().includes('entrada')) {
+                        const stock = Number(getInsumoStock(i.IDalimentos)) || 0;
+                        matchStock = stock > 0;
+                      }
+
+                      return matchText && matchCat && matchStock;
                     })
                     .sort((a, b) => {
                       const isSelectedA = addItemsList.some(i => i.insumoId === a.IDalimentos) ? 1 : 0;
@@ -2169,7 +2190,14 @@ const InventarioScreen = ({ navigation }: any) => {
                       const matchText = (i.nombre || i.Nombre || '').toLowerCase().includes(addItemSearchText.toLowerCase());
                       const cat = i.nombreCategoria || i.NombreCategoria || i.categoriaNombre || i.Categoria;
                       const matchCat = selectedCategoriaFilter ? cat === selectedCategoriaFilter : true;
-                      return matchText && matchCat;
+                      
+                      let matchStock = true;
+                      if (selectedInventario?.tipo && !selectedInventario.tipo.toLowerCase().includes('entrada')) {
+                        const stock = Number(getInsumoStock(i.IDalimentos)) || 0;
+                        matchStock = stock > 0;
+                      }
+
+                      return matchText && matchCat && matchStock;
                     }).length === 0 && (
                     <RNText style={{ padding: 8, color: '#6b7280', textAlign: 'center' }}>No se encontraron insumos</RNText>
                   )}

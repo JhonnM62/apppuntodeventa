@@ -176,26 +176,6 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [adminFormVisible, setAdminFormVisible] = useState(false);
   const [fetchingSaleId, setFetchingSaleId] = useState<string | null>(null);
 
-  const allowNavigation = useRef(false);
-  const [pendingNavigationAction, setPendingNavigationAction] = useState<any>(null);
-
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
-      const { dirtyFields } = control._formState;
-      const hasUnsavedChanges = Object.keys(dirtyFields).length > 0;
-      const isCerrada = resumenData?.caja?.cierre?.toLowerCase() === 'cerrada' || verificacionCompletada;
-      
-      if (!hasUnsavedChanges || isReadOnly || saving || isCerrada || allowNavigation.current) {
-        return;
-      }
-
-      e.preventDefault();
-      setPendingNavigationAction(e.data.action);
-      setGuardarModalVisible(true);
-    });
-    return unsubscribe;
-  }, [navigation, control._formState.dirtyFields, isReadOnly, saving, resumenData, verificacionCompletada]);
-
   const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -238,6 +218,29 @@ export default function CajaFormScreen({ route, navigation }: any) {
     control,
     name: 'insumos',
   });
+
+  const allowNavigation = useRef(false);
+  const [pendingNavigationAction, setPendingNavigationAction] = useState<any>(null);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      // In react-hook-form v7, use formState.dirtyFields from useForm destructured object
+      // wait, we destructured it above but we can also use control._formState.dirtyFields as a fallback
+      // but it's safer to watch the dirty fields state directly.
+      const dirtyFields = control._formState.dirtyFields || {};
+      const hasUnsavedChanges = Object.keys(dirtyFields).length > 0;
+      const isCerrada = resumenData?.caja?.cierre?.toLowerCase() === 'cerrada' || verificacionCompletada;
+      
+      if (!hasUnsavedChanges || isReadOnly || saving || isCerrada || allowNavigation.current) {
+        return;
+      }
+
+      e.preventDefault();
+      setPendingNavigationAction(e.data.action);
+      setGuardarModalVisible(true);
+    });
+    return unsubscribe;
+  }, [navigation, control, isReadOnly, saving, resumenData, verificacionCompletada]);
 
   const { joinRoom } = useSocket();
 

@@ -177,21 +177,23 @@ export default function CategoriasInsumosFormScreen({ route, navigation }: any) 
         {!isReadOnly && (
           <View style={styles.footer}>
             <Button
-              title={isNew ? 'Crear Categoría' : 'Guardar Cambios'}
               onPress={handleSubmit(onSubmit)}
               loading={saving}
               disabled={saving || deleting}
               className="w-full bg-emerald-500 hover:bg-emerald-600"
-            />
+            >
+              {isNew ? 'Crear Categoría' : 'Guardar Cambios'}
+            </Button>
             {!isNew && canDelete && (
               <Button
-                title="Eliminar Categoría"
                 onPress={confirmDelete}
                 loading={deleting}
                 disabled={saving || deleting}
                 variant="outline"
                 className="w-full mt-3 border-red-500 text-red-500"
-              />
+              >
+                Eliminar Categoría
+              </Button>
             )}
           </View>
         )}
@@ -252,6 +254,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     padding: 16,
+    paddingBottom: 100,
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
