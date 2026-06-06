@@ -176,6 +176,26 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [adminFormVisible, setAdminFormVisible] = useState(false);
   const [fetchingSaleId, setFetchingSaleId] = useState<string | null>(null);
 
+  const allowNavigation = useRef(false);
+  const [pendingNavigationAction, setPendingNavigationAction] = useState<any>(null);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', (e: any) => {
+      const { dirtyFields } = control._formState;
+      const hasUnsavedChanges = Object.keys(dirtyFields).length > 0;
+      const isCerrada = resumenData?.caja?.cierre?.toLowerCase() === 'cerrada' || verificacionCompletada;
+      
+      if (!hasUnsavedChanges || isReadOnly || saving || isCerrada || allowNavigation.current) {
+        return;
+      }
+
+      e.preventDefault();
+      setPendingNavigationAction(e.data.action);
+      setGuardarModalVisible(true);
+    });
+    return unsubscribe;
+  }, [navigation, control._formState.dirtyFields, isReadOnly, saving, resumenData, verificacionCompletada]);
+
   const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -2294,7 +2314,13 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 className="bg-blue-600 py-3.5 rounded-xl items-center shadow-sm"
                 onPress={() => {
                   setGuardarModalVisible(false);
-                  (handleSubmit as any)((data: any) => onSave(data, false), onError)();
+                  (handleSubmit as any)(async (data: any) => {
+                    await onSave(data, false);
+                    if (pendingNavigationAction) {
+                      allowNavigation.current = true;
+                      navigation.dispatch(pendingNavigationAction);
+                    }
+                  }, onError)();
                 }}
               >
                 <Text className="text-white font-bold">Solo Actualizar Datos</Text>
@@ -2305,7 +2331,13 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 className="bg-red-600 py-3.5 rounded-xl items-center mt-2 shadow-sm"
                 onPress={() => {
                   setGuardarModalVisible(false);
-                  (handleSubmit as any)((data: any) => onSave(data, true), onError)();
+                  (handleSubmit as any)(async (data: any) => {
+                    await onSave(data, true);
+                    if (pendingNavigationAction) {
+                      allowNavigation.current = true;
+                      navigation.dispatch(pendingNavigationAction);
+                    }
+                  }, onError)();
                 }}
               >
                 <Text className="text-white font-bold">Cierre Definitivo de Caja</Text>
@@ -2333,9 +2365,25 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 </TouchableOpacity>
               )}
 
+              {pendingNavigationAction && (
+                <TouchableOpacity 
+                  className="bg-red-100 py-3.5 rounded-xl items-center mt-2"
+                  onPress={() => {
+                    setGuardarModalVisible(false);
+                    allowNavigation.current = true;
+                    navigation.dispatch(pendingNavigationAction);
+                  }}
+                >
+                  <Text className="text-red-700 font-bold">Salir sin Guardar</Text>
+                </TouchableOpacity>
+              )}
+
               <TouchableOpacity 
                 className="bg-gray-200 py-3.5 rounded-xl items-center mt-2"
-                onPress={() => setGuardarModalVisible(false)}
+                onPress={() => {
+                  setGuardarModalVisible(false);
+                  setPendingNavigationAction(null);
+                }}
               >
                 <Text className="text-gray-700 font-bold">Cancelar</Text>
               </TouchableOpacity>
