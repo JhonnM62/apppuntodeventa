@@ -708,6 +708,7 @@ const InventarioScreen = ({ navigation }: any) => {
     return {
       precioActual: orden.precioActual?.toString() || insumo?.precio?.toString() || '',
       cantidad: orden.cantidad?.toString() || '', // Provide the current quantity
+      sumarCantidad: '',
     };
   };
 
@@ -719,7 +720,7 @@ const InventarioScreen = ({ navigation }: any) => {
 
   const handleCancelInlineEdit = () => {
     setInlineEditOrdenId(null);
-    setInlineEditValues({ precioActual: '', cantidad: '' });
+    setInlineEditValues({ precioActual: '', cantidad: '', sumarCantidad: '' });
   };
 
   const handleToggleBulkEdit = () => {
@@ -727,7 +728,7 @@ const InventarioScreen = ({ navigation }: any) => {
       setIsBulkEditing(false);
       setBulkEditValues({});
     } else {
-      const initialValues: Record<string, { precioActual: string; cantidad: string }> = {};
+      const initialValues: Record<string, { precioActual: string; cantidad: string; sumarCantidad: string }> = {};
       ordenes.forEach(o => {
         initialValues[o.IDorderinventario] = getCurrentInsumoValues(o);
       });
@@ -1060,7 +1061,7 @@ const InventarioScreen = ({ navigation }: any) => {
 
     if (isEditing) {
       const editValues = isBulkEditing ? bulkEditValues[item.IDorderinventario] : inlineEditValues;
-      const setEditValues = (field: 'precioActual' | 'cantidad', value: string) => {
+      const setEditValues = (field: 'precioActual' | 'cantidad' | 'sumarCantidad', value: string) => {
         if (isBulkEditing) {
           setBulkEditValues(prev => ({
             ...prev,
@@ -1113,13 +1114,36 @@ const InventarioScreen = ({ navigation }: any) => {
             )}
             <View style={{ flex: 1 }}>
               <RNText style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Cantidad (und)</RNText>
-              <TextInput
-                value={editValues.cantidad}
-                onChangeText={(v) => setEditValues('cantidad', v)}
-                keyboardType="numeric"
-                style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#111827' }}
-                placeholder="0" placeholderTextColor="#9ca3af"
-              />
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TextInput
+                  value={editValues.cantidad}
+                  onChangeText={(v) => setEditValues('cantidad', v)}
+                  keyboardType="numeric"
+                  style={{ flex: 1, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderTopLeftRadius: 8, borderBottomLeftRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#111827' }}
+                  placeholder="0" placeholderTextColor="#9ca3af"
+                />
+                <TextInput
+                  value={editValues.sumarCantidad}
+                  onChangeText={(v) => setEditValues('sumarCantidad', v)}
+                  keyboardType="numeric"
+                  placeholder="+ cant"
+                  placeholderTextColor="#9ca3af"
+                  style={{ width: 65, backgroundColor: '#eff6ff', borderWidth: 1, borderLeftWidth: 0, borderColor: '#bfdbfe', paddingHorizontal: 8, paddingVertical: 8, fontSize: 12, color: '#1d4ed8', textAlign: 'center' }}
+                />
+                <TouchableOpacity
+                  style={{ backgroundColor: '#3b82f6', borderTopRightRadius: 8, borderBottomRightRadius: 8, paddingHorizontal: 12, paddingVertical: 10, justifyContent: 'center' }}
+                  onPress={() => {
+                    const toAdd = Number(editValues.sumarCantidad.replace(/[^0-9]/g, '')) || 0;
+                    if (toAdd > 0) {
+                      const current = Number(editValues.cantidad.replace(/[^0-9]/g, '')) || 0;
+                      setEditValues('cantidad', String(current + toAdd));
+                      setEditValues('sumarCantidad', '');
+                    }
+                  }}
+                >
+                  <Ionicons name="add" size={16} color="#ffffff" />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
           {isEntrada && (
