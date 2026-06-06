@@ -36,6 +36,20 @@ export const formatTime12h = (timeStr: string | null | undefined): string => {
   if (!timeStr) return '';
   if (timeStr.toLowerCase().includes('am') || timeStr.toLowerCase().includes('pm')) return timeStr;
   
+  // Handle ISO strings by converting to local time
+  if (timeStr.includes('T')) {
+    const d = new Date(timeStr);
+    if (!isNaN(d.getTime())) {
+      let h = d.getHours();
+      const m = String(d.getMinutes()).padStart(2, '0');
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12;
+      h = h ? h : 12;
+      const paddedHour = h < 10 ? '0' + h : h.toString();
+      return `${paddedHour}:${m} ${ampm}`;
+    }
+  }
+
   const parts = timeStr.split(':');
   if (parts.length < 2) return timeStr;
   

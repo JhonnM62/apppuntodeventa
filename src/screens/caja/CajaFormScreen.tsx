@@ -260,7 +260,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
         });
       }
       fetchResumenSilenciosamente();
-      fetchInitialData();
+      fetchInitialData(false);
     } else if (data && data.action === 'delete' && data.cajaId === cajaId) {
       Toast.show({ type: 'error', text1: 'Caja Eliminada', text2: 'Esta caja ha sido eliminada por otro usuario' });
       navigation.goBack();
@@ -352,12 +352,12 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchInitialData();
+    await fetchInitialData(false);
     setRefreshing(false);
-  }, []);
+  }, [fetchInitialData]);
 
-  const fetchInitialData = useCallback(async () => {
-    setLoading(true);
+  const fetchInitialData = useCallback(async (showLoader = true) => {
+    if (showLoader) setLoading(true);
     try {
       const [insumosRes, prodRes, configRes] = await Promise.all([
         insumosService.getAll({ limit: 1000 }),
@@ -478,7 +478,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
       console.error(error);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cargar la información' });
     } finally {
-      setLoading(false);
+      if (showLoader) setLoading(false);
     }
   }, [cajaId, isNew, reset, user]);
 
