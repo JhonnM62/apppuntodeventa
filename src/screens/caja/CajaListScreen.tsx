@@ -18,27 +18,31 @@ import { useCustomAlert } from '../../context/CustomAlertContext';
 import Toast from 'react-native-toast-message';
 import { reabrirCaja } from '../../services/caja';
 
+import { useCajaCacheStore } from '../../store/useCajaCacheStore';
+
 export default function CajaListScreen({ navigation }: any) {
   const { canCreate } = usePermissions('caja');
   const { user } = useAuthStore();
   const { showAlert } = useCustomAlert();
 
-  const [cajas, setCajas] = useState<any[]>([]);
-  const [cajaActiva, setCajaActiva] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  // Use global cache store for SWR (Stale-While-Revalidate) pattern
+  const { cajas, cajaActiva, lastFetch } = useCajaCacheStore();
+  
+  // Only show loader if we have absolutely no cache
+  const [loading, setLoading] = useState(lastFetch === 0);
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleScroll = useScrollDirection();
 
-  const fetchCajas = useCallback(async () => {
-    setLoading(true);
+  const fetchCajas = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const [activa, allCajas] = await Promise.all([
         checkCajaActiva(),
         getCajas()
       ]);
-      setCajaActiva(activa);
-      setCajas(allCajas || []);
+      // Update global cache (this triggers re-renders automatically because we consume the store)
+      useCajaCacheStore.getState().setCajas(allCajas || [], activa);
     } catch (error) {
       console.error('Error fetching cajas:', error);
     } finally {
@@ -53,12 +57,14 @@ export default function CajaListScreen({ navigation }: any) {
   }, [joinRoom]);
 
   useSocketEvent('refreshCaja', (data: any) => {
-    fetchCajas();
+    fetchCajas(true); // Silent refresh on background updates
   });
 
   useFocusEffect(
     useCallback(() => {
-      fetchCajas();
+      // If we already have cache, we fetch silently in background
+      const hasCache = useCajaCacheStore.getState().lastFetch > 0;
+      fetchCajas(hasCache);
     }, [fetchCajas])
   );
 
