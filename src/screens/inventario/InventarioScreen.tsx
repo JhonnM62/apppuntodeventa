@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Modal, TextInput, FlatList, KeyboardAvoidingView, Platform, Keyboard, Animated, Dimensions, Image } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Modal, TextInput, FlatList, KeyboardAvoidingView, Platform, Keyboard, Animated, Dimensions, Image, PanResponder } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -154,6 +154,40 @@ const InventarioScreen = ({ navigation }: any) => {
 
   // Animación para el Skeleton
   const skeletonAnim = useRef(new Animated.Value(0.3)).current;
+
+  const handleSwipeNavigate = useCallback((direction: 'next' | 'prev') => {
+    if (!selectedOrdenItem) return;
+    
+    // Identificar cuál lista estamos viendo actualmente (Saco individual o global)
+    const currentList = selectedInventario ? ordenes : todasLasOrdenes;
+    if (!currentList || currentList.length === 0) return;
+    
+    const currentIndex = currentList.findIndex(o => o.IDorderinventario === selectedOrdenItem.IDorderinventario);
+    if (currentIndex === -1) return;
+    
+    if (direction === 'next' && currentIndex < currentList.length - 1) {
+      setSelectedOrdenItem(currentList[currentIndex + 1]);
+    } else if (direction === 'prev' && currentIndex > 0) {
+      setSelectedOrdenItem(currentList[currentIndex - 1]);
+    }
+  }, [selectedOrdenItem, selectedInventario, ordenes, todasLasOrdenes]);
+
+  const detailPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        // Solo capturar el gesto si el deslizamiento horizontal es significativo y más fuerte que el vertical
+        return Math.abs(gestureState.dx) > 40 && Math.abs(gestureState.dy) < 30;
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (gestureState.dx > 50) {
+          handleSwipeNavigate('prev'); // Deslizar derecha (Anterior)
+        } else if (gestureState.dx < -50) {
+          handleSwipeNavigate('next'); // Deslizar izquierda (Siguiente)
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
     Animated.loop(
@@ -2442,11 +2476,12 @@ const InventarioScreen = ({ navigation }: any) => {
           </View>
 
           {selectedOrdenItem && (
-            <ScrollView style={{ flex: 1, padding: 16 }}
-              refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />
-              }
-            >
+            <View style={{ flex: 1 }} {...detailPanResponder.panHandlers}>
+              <ScrollView style={{ flex: 1, padding: 16 }}
+                refreshControl={
+                  <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />
+                }
+              >
               <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#e5e7eb', marginBottom: 16 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                   <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}>
@@ -2574,6 +2609,7 @@ const InventarioScreen = ({ navigation }: any) => {
               
               <View style={{ height: 40 }} />
             </ScrollView>
+          </View>
           )}
         </SafeAreaView>
       </Modal>
