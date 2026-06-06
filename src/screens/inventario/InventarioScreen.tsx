@@ -706,8 +706,8 @@ const InventarioScreen = ({ navigation }: any) => {
     const insumoId = orden.nombreDelAlimento;
     const insumo = insumos.find(i => i.IDalimentos === insumoId || i.IDalimentos?.toString() === insumoId?.toString());
     return {
-      precioActual: insumo?.precio?.toString() || orden.precioActual?.toString() || '',
-      cantidad: '', // Siempre vacío para que el usuario ingrese la nueva cantidad a sumar
+      precioActual: orden.precioActual?.toString() || insumo?.precio?.toString() || '',
+      cantidad: orden.cantidad?.toString() || '', // Provide the current quantity
     };
   };
 
@@ -758,9 +758,8 @@ const InventarioScreen = ({ navigation }: any) => {
           payload.precio = precioNum;
         }
         
-        const cantidadActual = Number(orden.cantidad) || 0;
-        if (!isNaN(cantidadIngresada) && cantidadIngresada > 0 && values.cantidad !== '') {
-          payload.cantidad = cantidadActual + cantidadIngresada;
+        if (!isNaN(cantidadIngresada) && cantidadIngresada >= 0 && values.cantidad !== '') {
+          payload.cantidad = cantidadIngresada;
         }
         
         if (Object.keys(payload).length > 0) {
@@ -821,9 +820,8 @@ const InventarioScreen = ({ navigation }: any) => {
       payload.precio = precioNum;
     }
     
-    const cantidadActual = Number(orden.cantidad) || 0;
-    if (!isNaN(cantidadIngresada) && cantidadIngresada > 0) {
-      payload.cantidad = cantidadActual + cantidadIngresada;
+    if (!isNaN(cantidadIngresada) && cantidadIngresada >= 0) {
+      payload.cantidad = cantidadIngresada;
     }
     
     setSaving(true);
@@ -1101,16 +1099,18 @@ const InventarioScreen = ({ navigation }: any) => {
             </RNText>
           </View>
           <View style={{ flexDirection: 'row', marginBottom: 4 }}>
-            <View style={{ flex: 1, marginRight: 8 }}>
-              <RNText style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Precio ($)</RNText>
-              <TextInput
-                value={editValues.precioActual}
-                onChangeText={(v) => setEditValues('precioActual', v)}
-                keyboardType="numeric"
-                style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#111827' }}
-                placeholder="0" placeholderTextColor="#9ca3af"
-              />
-            </View>
+            {isEntrada && (
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <RNText style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Precio ($)</RNText>
+                <TextInput
+                  value={editValues.precioActual}
+                  onChangeText={(v) => setEditValues('precioActual', v)}
+                  keyboardType="numeric"
+                  style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#111827' }}
+                  placeholder="0" placeholderTextColor="#9ca3af"
+                />
+              </View>
+            )}
             <View style={{ flex: 1 }}>
               <RNText style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Cantidad (und)</RNText>
               <TextInput
@@ -1122,15 +1122,21 @@ const InventarioScreen = ({ navigation }: any) => {
               />
             </View>
           </View>
-          <LoteSuggestion
-            precio={Number(editValues.precioActual.replace(/[^0-9.]/g, '')) || 0}
-            cantidad={Number(editValues.cantidad.replace(/[^0-9]/g, '')) || 0}
-            onApply={(u) => setEditValues('precioActual', String(u))}
-          />
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
-            <RNText style={{ fontSize: 12, color: '#6b7280' }}>
-              Subtotal adic: <RNText style={{ fontWeight: '700', color: '#111827' }}>${previewSubtotal.toLocaleString('es-CO')}</RNText>
-            </RNText>
+          {isEntrada && (
+            <LoteSuggestion
+              precio={Number(editValues.precioActual.replace(/[^0-9.]/g, '')) || 0}
+              cantidad={Number(editValues.cantidad.replace(/[^0-9]/g, '')) || 0}
+              onApply={(u) => setEditValues('precioActual', String(u))}
+            />
+          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: 8 }}>
+            {isEntrada && (
+              <View style={{ flex: 1 }}>
+                <RNText style={{ fontSize: 12, color: '#6b7280' }}>
+                  Nuevo Subtotal: <RNText style={{ fontWeight: '700', color: '#111827' }}>${previewSubtotal.toLocaleString('es-CO')}</RNText>
+                </RNText>
+              </View>
+            )}
             {!isBulkEditing && (
               <TouchableOpacity
                 onPress={() => handleSaveInlineEdit(item)}
