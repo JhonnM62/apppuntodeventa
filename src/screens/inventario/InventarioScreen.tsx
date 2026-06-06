@@ -176,14 +176,44 @@ const InventarioScreen = ({ navigation }: any) => {
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (evt, gestureState) => {
-        // Solo capturar el gesto si el deslizamiento horizontal es significativo y más fuerte que el vertical
         return Math.abs(gestureState.dx) > 40 && Math.abs(gestureState.dy) < 30;
       },
       onPanResponderRelease: (evt, gestureState) => {
         if (gestureState.dx > 50) {
-          handleSwipeNavigate('prev'); // Deslizar derecha (Anterior)
+          handleSwipeNavigate('prev'); 
         } else if (gestureState.dx < -50) {
-          handleSwipeNavigate('next'); // Deslizar izquierda (Siguiente)
+          handleSwipeNavigate('next'); 
+        }
+      },
+    })
+  ).current;
+
+  const handleSwipeInventarioNavigate = useCallback((direction: 'next' | 'prev') => {
+    if (!selectedInventario) return;
+    const currentList = filteredInventarios;
+    if (!currentList || currentList.length === 0) return;
+    
+    const currentIndex = currentList.findIndex(i => i.IDinventario === selectedInventario.IDinventario);
+    if (currentIndex === -1) return;
+    
+    if (direction === 'next' && currentIndex < currentList.length - 1) {
+      handleOpenDetailModal(currentList[currentIndex + 1]);
+    } else if (direction === 'prev' && currentIndex > 0) {
+      handleOpenDetailModal(currentList[currentIndex - 1]);
+    }
+  }, [selectedInventario, filteredInventarios]);
+
+  const inventarioPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        return Math.abs(gestureState.dx) > 40 && Math.abs(gestureState.dy) < 30;
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        if (gestureState.dx > 50) {
+          handleSwipeInventarioNavigate('prev'); 
+        } else if (gestureState.dx < -50) {
+          handleSwipeInventarioNavigate('next'); 
         }
       },
     })
@@ -1312,22 +1342,24 @@ const InventarioScreen = ({ navigation }: any) => {
             </View>
 
             <RNText style={{ fontSize: 11, color: '#6b7280', fontWeight: 'bold', marginTop: 2 }}>
-                Stock previo: {selectedInventario && item.cantInsumos !== undefined
+                Stock previo: {item.cantInsumos !== undefined
                   ? (isEntrada
                     ? (item.seCompro?.toLowerCase() === 'si' ? item.cantInsumos - (Number(item.cantidad) || 0) : item.cantInsumos)
                     : item.cantInsumos + (Number(item.cantidad) || 0))
-                  : (isComprado && item.cantInsumos !== undefined
-                    ? (isEntrada
-                      ? item.cantInsumos - (Number(item.cantidad) || 0)
-                      : item.cantInsumos + (Number(item.cantidad) || 0))
-                  : (isEntrada ? getInsumoStock(item.nombreDelAlimento) : getInsumoStock(item.nombreDelAlimento) + (Number(item.cantidad) || 0)))}
+                  : getInsumoStock(item.nombreDelAlimento)}
             </RNText>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
                 <RNText style={{ fontSize: 12.5, color: isEntrada ? '#f59e0b' : '#ef4444', fontWeight: 'bold' }}>
                   {isEntrada ? 'Pide' : 'Retira'}: {item.cantidad}
                 </RNText>
                 <RNText style={{ fontSize: 11, color: '#6b7280', marginLeft: 6 }}>
-                  • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {(!isEntrada || (selectedInventario && item.seCompro?.toLowerCase() === 'si') || isComprado) ? 'Final' : 'Proy'}: {(!isEntrada || (selectedInventario && item.seCompro?.toLowerCase() === 'si') || isComprado) && item.cantInsumos !== undefined ? item.cantInsumos : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : 0))}</RNText>
+                  • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {(!isEntrada || item.seCompro?.toLowerCase() === 'si') ? 'Final' : 'Proy'}: {
+                    item.cantInsumos !== undefined 
+                      ? (!isEntrada || item.seCompro?.toLowerCase() === 'si' 
+                          ? item.cantInsumos 
+                          : item.cantInsumos + (Number(item.cantidad) || 0)) 
+                      : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : -(Number(item.cantidad) || 0)))
+                  }</RNText>
                 </RNText>
               </View>
           </View>
@@ -1529,7 +1561,7 @@ const InventarioScreen = ({ navigation }: any) => {
                   </View>
                 )}
                 keyExtractor={(item: any) => item.IDorderinventario}
-                contentContainerStyle={{ paddingTop: 16, paddingBottom: 32, flexGrow: 1 }}
+                contentContainerStyle={{ paddingTop: 16, paddingBottom: 100, flexGrow: 1 }}
                 estimatedItemSize={120}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />}
                 onEndReached={handleLoadMoreOrdenes}
@@ -1558,7 +1590,7 @@ const InventarioScreen = ({ navigation }: any) => {
               data={filteredInventarios}
               renderItem={({ item }) => renderInventarioItem({ item: item as InventarioItem })}
               keyExtractor={(item: any) => item.IDinventario}
-              contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+              contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
               estimatedItemSize={100}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />}
               ListEmptyComponent={
@@ -1862,7 +1894,7 @@ const InventarioScreen = ({ navigation }: any) => {
 
       <Modal visible={showDetailModal} animationType="slide" onRequestClose={handleCloseDetailModal}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
-          <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }} edges={['top']}>
+          <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }} edges={['top']} {...inventarioPanResponder.panHandlers}>
           <View className="bg-white px-4 py-4 border-b border-gray-200 flex-row items-center justify-between">
             {selectionMode ? (
               <>

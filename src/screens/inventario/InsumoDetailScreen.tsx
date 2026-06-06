@@ -670,7 +670,13 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                     value={formData.cantidad ? String(formData.cantidad) : ''}
                     onChangeText={(t) => {
                       const n = parseInt(t.replace(/[^0-9]/g, ''), 10);
-                      setFormData(p => ({ ...p, cantidad: isNaN(n) ? 0 : n }));
+                      const newCantidad = isNaN(n) ? 0 : n;
+                      setFormData(p => {
+                        const oldCantidad = p.cantidad || 0;
+                        const diff = newCantidad - oldCantidad;
+                        const newDisponible = Math.max(0, (Number(p.disponible) || 0) + diff);
+                        return { ...p, cantidad: newCantidad, disponible: String(newDisponible) };
+                      });
                     }}
                   />
                 </View>
