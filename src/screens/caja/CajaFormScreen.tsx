@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { View, ScrollView, ActivityIndicator, TouchableOpacity, Image, Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard, Dimensions, Alert } from 'react-native';
+import { View, ScrollView, ActivityIndicator, TouchableOpacity, Image, Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard, Dimensions, Alert, RefreshControl } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
@@ -227,7 +227,17 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
   useSocketEvent('refreshCaja', (data: any) => {
     if (data && data.action !== 'delete' && data.cajaId === cajaId) {
+      if (data.updaterName && data.updaterName !== (user?.nombre || user?.Nombre || user?.usuario)) {
+        Toast.show({
+          type: 'info',
+          text1: 'Caja Actualizada',
+          text2: `${data.updaterName} ha guardado cambios en esta caja.`,
+          position: 'top',
+          topOffset: 50,
+        });
+      }
       fetchResumenSilenciosamente();
+      fetchInitialData();
     } else if (data && data.action === 'delete' && data.cajaId === cajaId) {
       Toast.show({ type: 'error', text1: 'Caja Eliminada', text2: 'Esta caja ha sido eliminada por otro usuario' });
       navigation.goBack();
@@ -315,6 +325,13 @@ export default function CajaFormScreen({ route, navigation }: any) {
       Toast.show({ type: 'error', text1: 'Error', text2: e.response?.data?.message || 'No se pudo ajustar el pedido' });
     }
   };
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchInitialData();
+    setRefreshing(false);
+  }, []);
 
   const fetchInitialData = useCallback(async () => {
     setLoading(true);
@@ -477,7 +494,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
         }));
       }
 
-      const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre } as any;
+      const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre, updaterName: user?.nombre || user?.Nombre || user?.usuario || 'Un usuario' } as any;
 
       // Calculate and sync physical differences in the DB so that preview endpoint gets correct metrics
       const efContado = parseFloat(watch('efectivoDeCierre') as unknown as string) || 0;
@@ -493,6 +510,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
       updateData.valorFaltante = totalD < 0 ? Math.abs(totalD) : 0;
       updateData.valorExcedente = totalD > 0 ? totalD : 0;
       updateData.cuadroCaja = totalD === 0 && diffEf === 0 && diffTr === 0 ? 'SI CUADRO CAJA' : 'NO CUADRO CAJA';
+      updateData.updaterName = user?.nombre || user?.Nombre || user?.usuario || 'Un usuario';
 
       await updateCaja(cajaId, updateData);
       await fetchInitialData();
@@ -559,11 +577,11 @@ export default function CajaFormScreen({ route, navigation }: any) {
           // ERROR HANDLING PATTERN: "Double-Step Save" (Systematic Debugging)
           // Dado que el endpoint de cerrarCaja tiene un ValidationPipe extremadamente estricto en producción que rechaza la trazabilidad compleja,
           // PRIMERO: Guardamos toda la trazabilidad y datos extras usando el endpoint genérico (updateCaja) que es flexible.
-          const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre };
+          const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre, updaterName: user?.nombre || user?.Nombre || user?.usuario || 'Un usuario' };
           await updateCaja(cajaId, updateData);
 
           // SEGUNDO: Enviamos el cierre definitivo SOLO con los campos financieros básicos que el DTO viejo y estricto espera.
-          const closeData: any = {};
+          const closeData: any = { updaterName: user?.nombre || user?.Nombre || user?.usuario || 'Un usuario' };
 
           if (cleanData.efectivoDeCierre !== undefined) closeData.efectivoDeCierre = cleanData.efectivoDeCierre;
           if (cleanData.resumen !== undefined) closeData.resumen = cleanData.resumen;
@@ -589,7 +607,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           Toast.show({ type: 'success', text1: 'Caja Cerrada', text2: 'La caja se ha cerrado definitivamente' });
         } else {
           // Guardado Parcial: El endpoint genérico updateCaja sí espera Idcierreyapertura, cantApertura, etc.
-          const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre };
+          const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre, updaterName: user?.nombre || user?.Nombre || user?.usuario || 'Un usuario' };
           await updateCaja(cajaId, updateData);
           Toast.show({ type: 'success', text1: 'Arqueo Guardado', text2: 'El arqueo parcial se ha guardado' });
         }
@@ -1102,6 +1120,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
         style={{ flex: 1 }}
         className="p-4" 
         keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4f46e5']} />}
         enableOnAndroid={true}
         extraScrollHeight={100}
         extraHeight={100}
@@ -1724,15 +1743,15 @@ export default function CajaFormScreen({ route, navigation }: any) {
                           if (resumenData?.insumos && resumenData.insumos.length > 0) {
                             const insumosDescuadrados = resumenData.insumos.filter((ins: any) => ins.diferencia !== 0);
                             if (insumosDescuadrados.length > 0) {
-                              insumosInfo = '\\nINSUMOS DESCUADRADOS:\\n' + insumosDescuadrados.map((ins: any) => 
+                              insumosInfo = '\nINSUMOS DESCUADRADOS:\n' + insumosDescuadrados.map((ins: any) => 
                                 `- ${ins.nombreReal || ins.nombreInsumo}: ${ins.diferencia > 0 ? '+' : ''}${ins.diferencia} ${ins.diferencia < 0 ? '(Faltan)' : '(Sobran)'}`
-                              ).join('\\n');
+                              ).join('\n');
                             } else {
-                              insumosInfo = '\\nINSUMOS: Todos cuadrados perfectamente.';
+                              insumosInfo = '\nINSUMOS: Todos cuadrados perfectamente.';
                             }
                           }
 
-                          const cuadreText = `\\n\\n--- ARQUEO PARCIAL (${timestampArqueo}) ---${rangoInfo}\\nEFECTIVO FÍSICO: ${formatCurrency(efectivoContado)} (Dif: ${formatCurrency(diffEfectivo)})\\nTRANSFERENCIAS: ${formatCurrency(transContadas)} (Dif: ${formatCurrency(diffTrans)})\\nESTADO: ${isCuadrada ? 'CUADRADA' : 'NO CUADRADA (DIFERENCIA TOTAL: ' + formatCurrency(totalDiff) + ')'}${insumosInfo}\\n----------------------`;
+                          const cuadreText = `\n\n--- ARQUEO PARCIAL (${timestampArqueo}) ---${rangoInfo}\nEFECTIVO FÍSICO: ${formatCurrency(efectivoContado)} (Dif: ${formatCurrency(diffEfectivo)})\nTRANSFERENCIAS: ${formatCurrency(transContadas)} (Dif: ${formatCurrency(diffTrans)})\nESTADO: ${isCuadrada ? 'CUADRADA' : 'NO CUADRADA (DIFERENCIA TOTAL: ' + formatCurrency(totalDiff) + ')'}${insumosInfo}\n----------------------`;
                           setValue('observaciones', currentObs + cuadreText);
 
                           handleSubmit((data) => onSave(data, false), onError)();
@@ -1759,15 +1778,15 @@ export default function CajaFormScreen({ route, navigation }: any) {
                             if (resumenData?.insumos && resumenData.insumos.length > 0) {
                               const insumosDescuadrados = resumenData.insumos.filter((ins: any) => ins.diferencia !== 0);
                               if (insumosDescuadrados.length > 0) {
-                                insumosInfoCierre = '\\nINSUMOS DESCUADRADOS:\\n' + insumosDescuadrados.map((ins: any) => 
+                                insumosInfoCierre = '\nINSUMOS DESCUADRADOS:\n' + insumosDescuadrados.map((ins: any) => 
                                   `- ${ins.nombreReal || ins.nombreInsumo}: ${ins.diferencia > 0 ? '+' : ''}${ins.diferencia} ${ins.diferencia < 0 ? '(Faltan)' : '(Sobran)'}`
-                                ).join('\\n');
+                                ).join('\n');
                               } else {
-                                insumosInfoCierre = '\\nINSUMOS: Todos cuadrados perfectamente.';
+                                insumosInfoCierre = '\nINSUMOS: Todos cuadrados perfectamente.';
                               }
                             }
 
-                            const cuadreText = `\\n\\n--- CIERRE DEFINITIVO (${new Date().toLocaleString('es-CO')}) ---\\nEFECTIVO FÍSICO: ${formatCurrency(efectivoContado)} (Dif: ${formatCurrency(diffEfectivo)})\\nTRANSFERENCIAS: ${formatCurrency(transContadas)} (Dif: ${formatCurrency(diffTrans)})\\nESTADO: ${isCuadrada ? 'CUADRADA' : 'NO CUADRADA'}${insumosInfoCierre}\\n----------------------`;
+                            const cuadreText = `\n\n--- CIERRE DEFINITIVO (${new Date().toLocaleString('es-CO')}) ---\nEFECTIVO FÍSICO: ${formatCurrency(efectivoContado)} (Dif: ${formatCurrency(diffEfectivo)})\nTRANSFERENCIAS: ${formatCurrency(transContadas)} (Dif: ${formatCurrency(diffTrans)})\nESTADO: ${isCuadrada ? 'CUADRADA' : 'NO CUADRADA'}${insumosInfoCierre}\n----------------------`;
                             setValue('observaciones', currentObs + cuadreText);
                             handleSubmit((data) => onSave(data, true), onError)();
                           },
