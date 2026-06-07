@@ -33,6 +33,8 @@ import CategoriasInsumosFormScreen from '../screens/inventario/CategoriasInsumos
 import InventarioScreen from '../screens/inventario/InventarioScreen';
 import InsumoDetailScreen from '../screens/inventario/InsumoDetailScreen';
 import AuditoriaConteoScreen from '../screens/inventario/AuditoriaConteoScreen';
+import AiUploadScreen from '../screens/inventario/AiUploadScreen';
+import AiReviewScreen from '../screens/inventario/AiReviewScreen';
 import CajaListScreen from '../screens/caja/CajaListScreen';
 import CajaFormScreen from '../screens/caja/CajaFormScreen';
 
@@ -76,6 +78,8 @@ export type RootStackParamList = {
   CategoriasInsumos: undefined;
   CategoriasInsumosForm: { id?: string };
   Inventario: undefined;
+  AiUpload: { targetInventarioId?: string } | undefined;
+  AiReview: { extractedData: any[]; rawSource?: string; type?: 'text' | 'image'; targetInventarioId?: string };
   Caja: undefined;
   CajaForm: { cajaId?: string };
   HistorialVentas: undefined;
@@ -256,6 +260,8 @@ const RootNavigator = () => {
             <Stack.Screen name="CategoriasInsumos" component={CategoriasInsumosScreen as any} />
             <Stack.Screen name="CategoriasInsumosForm" component={CategoriasInsumosFormScreen as any} />
             <Stack.Screen name="Inventario" component={InventarioScreen as any} />
+            <Stack.Screen name="AiUpload" component={AiUploadScreen as any} />
+            <Stack.Screen name="AiReview" component={AiReviewScreen as any} />
             <Stack.Screen name="InsumoDetail" component={InsumoDetailScreen as any} />
             <Stack.Screen name="AuditoriaConteo" component={AuditoriaConteoScreen as any} />
             <Stack.Screen name="Caja" component={CajaListScreen as any} />

@@ -2035,20 +2035,34 @@ const InventarioScreen = ({ navigation }: any) => {
                             </TouchableOpacity>
                           )}
                           {((selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') ? canCreateEntradas : canCreateSalidas) && (
-                            <TouchableOpacity
-                              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#22c55e', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}
-                              onPress={() => {
-                                console.log('[DEBUG] Opening add item modal, insumos count:', insumos.length);
-                                if (insumos.length === 0) {
-                                  console.log('[DEBUG] Insumos empty, triggering fetch...');
-                                  fetchInsumos();
-                                }
-                                setShowAddItemModal(true);
-                              }}
-                            >
-                              <Ionicons name="add" size={16} color="#fff" />
-                              <RNText style={{ color: '#fff', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>Agregar</RNText>
-                            </TouchableOpacity>
+                            <>
+                              {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && (
+                                <TouchableOpacity
+                                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#3b82f6', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8 }}
+                                  onPress={() => {
+                                    setShowDetailModal(false);
+                                    navigation.navigate('AiUpload', { targetInventarioId: selectedInventario?.IDinventario });
+                                  }}
+                                >
+                                  <Ionicons name="sparkles" size={16} color="#fff" />
+                                  <RNText style={{ color: '#fff', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>Carga IA</RNText>
+                                </TouchableOpacity>
+                              )}
+                              <TouchableOpacity
+                                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#22c55e', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}
+                                onPress={() => {
+                                  console.log('[DEBUG] Opening add item modal, insumos count:', insumos.length);
+                                  if (insumos.length === 0) {
+                                    console.log('[DEBUG] Insumos empty, triggering fetch...');
+                                    fetchInsumos();
+                                  }
+                                  setShowAddItemModal(true);
+                                }}
+                              >
+                                <Ionicons name="add" size={16} color="#fff" />
+                                <RNText style={{ color: '#fff', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>Agregar</RNText>
+                              </TouchableOpacity>
+                            </>
                           )}
                         </>
                       )}
