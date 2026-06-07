@@ -132,11 +132,23 @@ export default function HistorialVentasScreen({ navigation }: any) {
   const handleSocketUpdate = useCallback((data?: any) => {
     if (data?.action === 'updateEstado' && data?.venta) {
       // Optimizacion: parcheamos la venta en el estado local en vez de hacer refetch
-      setVentas((prev: any[]) => prev.map(v => v.IDventas === data.venta.IDventas ? data.venta : v));
+      setCache(prev => ({
+        ...prev,
+        activas: { ...prev.activas, data: prev.activas.data.map(v => v.IDventas === data.venta.IDventas ? data.venta : v) },
+        eliminadas: { ...prev.eliminadas, data: prev.eliminadas.data.map(v => v.IDventas === data.venta.IDventas ? data.venta : v) }
+      }));
     } else if (data?.action === 'delete' && data?.ventaId) {
-      setVentas((prev: any[]) => prev.filter(v => v.IDventas !== data.ventaId));
+      setCache(prev => ({
+        ...prev,
+        activas: { ...prev.activas, data: prev.activas.data.filter(v => v.IDventas !== data.ventaId) },
+        eliminadas: { ...prev.eliminadas, data: prev.eliminadas.data.filter(v => v.IDventas !== data.ventaId) }
+      }));
     } else if (data?.action === 'bulkDelete' && data?.ventaIds) {
-      setVentas((prev: any[]) => prev.filter(v => !data.ventaIds.includes(v.IDventas)));
+      setCache(prev => ({
+        ...prev,
+        activas: { ...prev.activas, data: prev.activas.data.filter(v => !data.ventaIds.includes(v.IDventas)) },
+        eliminadas: { ...prev.eliminadas, data: prev.eliminadas.data.filter(v => !data.ventaIds.includes(v.IDventas)) }
+      }));
     } else if (data?.action === 'create') {
       // Background silent fetch solo para creaciones si estamos en la tab de activas
       if (activeTab === 'activas') {
