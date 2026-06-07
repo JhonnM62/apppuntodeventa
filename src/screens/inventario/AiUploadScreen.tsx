@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Image, Alert, KeyboardAvoidingView, Platform, Keyboard, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Image, Alert, KeyboardAvoidingView, Platform, Keyboard, ScrollView, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -236,15 +236,15 @@ const AiUploadScreen = () => {
       </ScrollView>
       
       {/* Overlay loading state to block interaction */}
-      {loading && (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 50 }}>
+      <Modal transparent={true} visible={loading} animationType="fade">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }}>
           <View style={{ backgroundColor: '#ffffff', padding: 24, borderRadius: 16, alignItems: 'center', elevation: 5, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4 }}>
             <ActivityIndicator size="large" color="#22c55e" />
             <Text style={{ color: '#1f2937', fontWeight: 'bold', marginTop: 16, fontSize: 18 }}>Procesando con IA...</Text>
             <Text style={{ color: '#6b7280', marginTop: 8, textAlign: 'center' }}>Esto tomará unos segundos.</Text>
           </View>
         </View>
-      )}
+      </Modal>
       </SafeAreaView>
     </KeyboardAvoidingView>
   );

@@ -1,12 +1,54 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import api from '../../services/api';
 import { RootStackParamList } from '../../navigation/RootNavigator';
-import { Picker } from '@react-native-picker/picker';
+
+// Un dropdown custom inline para evitar crasheos de Modal y layout
+const CustomDropdown = ({ selectedValue, onValueChange, items, hasError }: any) => {
+  const [visible, setVisible] = useState(false);
+  const selectedItem = items.find((i: any) => i.value === selectedValue);
+
+  return (
+    <View style={{ backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden' }}>
+      <TouchableOpacity 
+        style={{ padding: 14, backgroundColor: hasError ? '#fef2f2' : '#f9fafb', borderColor: hasError ? '#fca5a5' : '#d1d5db', borderWidth: 1, borderRadius: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }} 
+        onPress={() => setVisible(!visible)}
+      >
+        <Text style={{ color: selectedItem && selectedItem.value !== null ? '#1f2937' : '#ef4444', flex: 1 }} numberOfLines={1}>
+          {selectedItem ? selectedItem.label : '⚠️ Seleccionar insumo...'}
+        </Text>
+        <Ionicons name={visible ? "chevron-up" : "chevron-down"} size={20} color="#6b7280" />
+      </TouchableOpacity>
+
+      {visible && (
+        <View style={{ borderWidth: 1, borderTopWidth: 0, borderColor: '#d1d5db', borderBottomLeftRadius: 12, borderBottomRightRadius: 12, maxHeight: 200, backgroundColor: '#ffffff' }}>
+          <ScrollView nestedScrollEnabled={true} style={{ padding: 8 }}>
+            <TouchableOpacity 
+              style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' }}
+              onPress={() => { onValueChange(null); setVisible(false); }}
+            >
+              <Text style={{ color: '#ef4444', fontWeight: 'bold' }}>⚠️ Desvincular (Ninguno)</Text>
+            </TouchableOpacity>
+            {items.filter((i: any) => i.value !== null).map((ins: any) => (
+              <TouchableOpacity 
+                key={ins.value} 
+                style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6', flexDirection: 'row', justifyContent: 'space-between' }}
+                onPress={() => { onValueChange(ins.value); setVisible(false); }}
+              >
+                <Text style={{ color: '#1f2937', fontWeight: selectedValue === ins.value ? 'bold' : 'normal', flex: 1 }}>{ins.label}</Text>
+                {selectedValue === ins.value && <Ionicons name="checkmark" size={20} color="#22c55e" />}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+    </View>
+  );
+};
 
 type ReviewScreenRouteProp = RouteProp<RootStackParamList, 'AiReview'>;
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'AiReview'>;
@@ -153,7 +195,7 @@ const AiReviewScreen = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'bottom']}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }} edges={['top', 'bottom']}>
       <View className="flex-row items-center justify-between p-4 bg-white shadow-sm border-b border-gray-200 z-10">
         <TouchableOpacity onPress={() => navigation.goBack()} className="flex-row items-center">
           <Ionicons name="arrow-back" size={24} color="#333" />
@@ -166,7 +208,7 @@ const AiReviewScreen = () => {
         style={{ flex: 1 }} 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView className="flex-1 p-4" keyboardShouldPersistTaps="handled">
+        <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1, padding: 16, paddingBottom: 100 }} keyboardShouldPersistTaps="handled">
           
           {/* Chat / Reprompt Area */}
           <View className="bg-white p-4 rounded-2xl shadow-sm border border-green-200 mb-6 flex-row items-end">
@@ -174,7 +216,9 @@ const AiReviewScreen = () => {
               <Text className="text-xs font-bold text-green-600 mb-1">🪄 CORRECCIÓN MÁGICA CON IA</Text>
               <TextInput
                 className="bg-gray-100 rounded-xl p-3 text-sm min-h-[50px] text-gray-800"
+                style={{ color: '#1f2937' }}
                 placeholder="Ej: El lulo estaba a 3000, borra el limón..."
+                placeholderTextColor="#9ca3af"
                 value={correctionPrompt}
                 onChangeText={setCorrectionPrompt}
                 multiline
@@ -209,18 +253,17 @@ const AiReviewScreen = () => {
                   </TouchableOpacity>
                 </View>
 
-                {/* Dropdown de Insumo */}
-                <View className={`border rounded-xl mb-3 overflow-hidden ${hasError ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-gray-50'}`}>
-                  <Picker
+                {/* Dropdown de Insumo Custom */}
+                <View className="mb-3">
+                  <CustomDropdown
+                    hasError={hasError}
                     selectedValue={item.insumoId}
-                    onValueChange={(val) => updateItem(index, 'insumoId', val)}
-                    style={{ height: 50 }}
-                  >
-                    <Picker.Item label="⚠️ Seleccionar insumo..." value={null} color="red" />
-                    {insumosCatalog.map(ins => (
-                      <Picker.Item key={ins.IDalimentos} label={ins.nombre} value={ins.IDalimentos} />
-                    ))}
-                  </Picker>
+                    onValueChange={(val: any) => updateItem(index, 'insumoId', val)}
+                    items={[
+                      { label: '⚠️ Seleccionar insumo...', value: null },
+                      ...insumosCatalog.map(ins => ({ label: ins.nombre, value: ins.IDalimentos }))
+                    ]}
+                  />
                 </View>
 
                 {/* Cantidad y Precio */}
@@ -229,6 +272,7 @@ const AiReviewScreen = () => {
                     <Text className="text-xs text-gray-500 font-bold mb-1 ml-1">CANTIDAD</Text>
                     <TextInput
                       className="bg-gray-100 border border-gray-200 rounded-xl p-3 text-gray-800 text-center font-bold"
+                      style={{ color: '#1f2937' }}
                       keyboardType="numeric"
                       value={item.cantidad.toString()}
                       onChangeText={(val) => updateItem(index, 'cantidad', parseFloat(val) || 0)}
@@ -238,6 +282,7 @@ const AiReviewScreen = () => {
                     <Text className="text-xs text-gray-500 font-bold mb-1 ml-1">PRECIO UNID.</Text>
                     <TextInput
                       className="bg-gray-100 border border-gray-200 rounded-xl p-3 text-gray-800 text-center font-bold"
+                      style={{ color: '#1f2937' }}
                       keyboardType="numeric"
                       value={item.precioUnitario.toString()}
                       onChangeText={(val) => updateItem(index, 'precioUnitario', parseFloat(val) || 0)}
@@ -265,7 +310,7 @@ const AiReviewScreen = () => {
       </KeyboardAvoidingView>
 
       {/* Sticky Bottom Bar */}
-      <View className="bg-white p-4 border-t border-gray-200 shadow-lg">
+      <View className="bg-white p-4 pb-28 border-t border-gray-200 shadow-lg">
         <TouchableOpacity
           className={`rounded-xl py-4 items-center shadow-sm flex-row justify-center ${saving || items.length === 0 ? 'bg-gray-400' : 'bg-green-600'}`}
           onPress={saveAll}
