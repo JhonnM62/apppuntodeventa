@@ -1014,12 +1014,7 @@ if (status !== 'granted') {
                 >
                   <Ionicons name="reader-outline" size={22} color="#fff" />
                 </TouchableOpacity>
-                <TouchableOpacity
-                  className="w-11 h-11 rounded-xl bg-blue-500 items-center justify-center mr-2"
-                  onPress={() => navigation.navigate('AiUpload')}
-                >
-                  <Ionicons name="sparkles" size={20} color="#fff" />
-                </TouchableOpacity>
+
                 <TouchableOpacity
                   className="w-11 h-11 rounded-xl bg-green-500 items-center justify-center"
                   onPress={openCreateModal}

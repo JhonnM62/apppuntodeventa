@@ -117,9 +117,9 @@ const InventarioScreen = ({ navigation }: any) => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showUnsavedChangesModal, setShowUnsavedChangesModal] = useState(false);
   const [inlineEditOrdenId, setInlineEditOrdenId] = useState<string | null>(null);
-  const [inlineEditValues, setInlineEditValues] = useState<{ precioActual: string; cantidad: string }>({ precioActual: '', cantidad: '' });
+  const [inlineEditValues, setInlineEditValues] = useState<{ precioActual: string; cantidad: string; sumarCantidad?: string }>({ precioActual: '', cantidad: '' });
   const [isBulkEditing, setIsBulkEditing] = useState(false);
-  const [bulkEditValues, setBulkEditValues] = useState<Record<string, { precioActual: string; cantidad: string }>>({});
+  const [bulkEditValues, setBulkEditValues] = useState<Record<string, { precioActual: string; cantidad: string; sumarCantidad?: string }>>({});
 
   const [newInventario, setNewInventario] = useState<CreateInventarioDto>({ nombre: '', tipo: 'entrada' });
   const [addItemsList, setAddItemsList] = useState<any[]>([]);
@@ -151,6 +151,28 @@ const InventarioScreen = ({ navigation }: any) => {
     });
     return () => { showSub.remove(); hideSub.remove(); };
   }, [showAddItemModal, addItemSearchText, activeInputIndex]);
+
+  const filteredInventarios = inventarios.filter(inv => {
+    let matchesTab = false;
+    if (activeTab === 'entrada') {
+      matchesTab = inv.tipo?.toUpperCase().includes('ENTRADA') ?? false;
+    } else if (activeTab === 'salida') {
+      matchesTab = inv.tipo?.toUpperCase().includes('SALIDA') ?? false;
+    } else {
+      matchesTab = true; // Not used for 'registros'
+    }
+
+    if (!matchesTab) return false;
+
+    if (debouncedSearchQuery) {
+      const q = debouncedSearchQuery.toLowerCase();
+      const matchesName = (inv.nombre || '').toLowerCase().includes(q);
+      const matchesDate = (inv.fechaYHora ? new Date(inv.fechaYHora).toLocaleDateString('es-CO') : '').includes(q);
+      return matchesName || matchesDate;
+    }
+
+    return true;
+  });
 
   // Animación para el Skeleton
   const skeletonAnim = useRef(new Animated.Value(0.3)).current;
@@ -197,9 +219,9 @@ const InventarioScreen = ({ navigation }: any) => {
     if (currentIndex === -1) return;
     
     if (direction === 'next' && currentIndex < currentList.length - 1) {
-      handleOpenDetailModal(currentList[currentIndex + 1]);
+      handleOpenDetail(currentList[currentIndex + 1]);
     } else if (direction === 'prev' && currentIndex > 0) {
-      handleOpenDetailModal(currentList[currentIndex - 1]);
+      handleOpenDetail(currentList[currentIndex - 1]);
     }
   }, [selectedInventario, filteredInventarios]);
 
@@ -431,28 +453,7 @@ const InventarioScreen = ({ navigation }: any) => {
     return Array.from(cats).sort();
   };
 
-  const filteredInventarios = inventarios.filter(inv => {
-    let matchesTab = false;
-    if (activeTab === 'entrada') {
-      matchesTab = inv.tipo?.toUpperCase().includes('ENTRADA') ?? false;
-    } else if (activeTab === 'salida') {
-      matchesTab = inv.tipo?.toUpperCase().includes('SALIDA') ?? false;
-    } else {
-      matchesTab = true; // Not used for 'registros'
-    }
-
-    if (!matchesTab) return false;
-
-    if (debouncedSearchQuery) {
-      const q = debouncedSearchQuery.toLowerCase();
-      const matchesName = (inv.nombre || '').toLowerCase().includes(q);
-      const matchesDate = (inv.fechaYHora ? new Date(inv.fechaYHora).toLocaleDateString('es-CO') : '').includes(q);
-      return matchesName || matchesDate;
-    }
-
-    return true;
-  });
-
+  // filteredInventarios moved up
   const getInsumoName = (id: string) => {
     if (!id) return 'Sin nombre';
     const insumo = insumos.find(i => i.IDalimentos === id || i.IDalimentos?.toString() === id.toString());
@@ -1421,22 +1422,24 @@ const InventarioScreen = ({ navigation }: any) => {
             <Ionicons name="arrow-back" size={22} color="#374151" />
           </TouchableOpacity>
           <RNText className="text-lg font-bold text-gray-900">Inventario</RNText>
-          {canCreate ? (
-            <TouchableOpacity
-              className="w-10 h-10 rounded-xl bg-primary items-center justify-center"
-              onPress={() => {
-                setNewInventario(prev => ({ 
-                  ...prev, 
-                  tipo: activeTab === 'salida' ? 'salida' : 'entrada' 
-                }));
-                setShowCreateModal(true);
-              }}
-            >
-              <Ionicons name="add" size={22} color="#fff" />
-            </TouchableOpacity>
-          ) : (
-            <View className="w-10 h-10" />
-          )}
+          <View className="flex-row items-center">
+            {canCreate ? (
+              <TouchableOpacity
+                className="w-10 h-10 rounded-xl bg-primary items-center justify-center"
+                onPress={() => {
+                  setNewInventario(prev => ({ 
+                    ...prev, 
+                    tipo: activeTab === 'salida' ? 'salida' : 'entrada' 
+                  }));
+                  setShowCreateModal(true);
+                }}
+              >
+                <Ionicons name="add" size={22} color="#fff" />
+              </TouchableOpacity>
+            ) : (
+              <View className="w-10 h-10" />
+            )}
+          </View>
         </View>
         <View className="bg-white px-4 py-3 border-b border-gray-200">
           <Input 

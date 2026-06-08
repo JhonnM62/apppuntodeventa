@@ -7,46 +7,140 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import api from '../../services/api';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 
-// Un dropdown custom inline para evitar crasheos de Modal y layout
-const CustomDropdown = ({ selectedValue, onValueChange, items, hasError }: any) => {
+const SearchableInsumoDropdown = ({ selectedValue, onValueChange, insumosCatalog, hasError }: any) => {
   const [visible, setVisible] = useState(false);
-  const selectedItem = items.find((i: any) => i.value === selectedValue);
+  const [searchText, setSearchText] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const selectedItem = insumosCatalog.find((i: any) => i.IDalimentos === selectedValue);
+
+  // Extraer categorías únicas
+  const categories = Array.from(new Set(insumosCatalog.map((i: any) => i.categoriaNombre || i.nombreCategoria).filter(Boolean))) as string[];
+
+  const filteredInsumos = insumosCatalog.filter((ins: any) => {
+    const cat = ins.categoriaNombre || ins.nombreCategoria;
+    const matchesSearch = ins.nombre?.toLowerCase().includes(searchText.toLowerCase());
+    const matchesCategory = selectedCategory ? cat === selectedCategory : true;
+    return matchesSearch && matchesCategory;
+  }).sort((a: any, b: any) => {
+    // El elemento seleccionado siempre aparece de primero
+    if (a.IDalimentos === selectedValue) return -1;
+    if (b.IDalimentos === selectedValue) return 1;
+    // Luego ordenamos alfabéticamente
+    return (a.nombre || '').localeCompare(b.nombre || '');
+  });
 
   return (
-    <View style={{ backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden' }}>
+    <>
       <TouchableOpacity 
-        style={{ padding: 14, backgroundColor: hasError ? '#fef2f2' : '#f9fafb', borderColor: hasError ? '#fca5a5' : '#d1d5db', borderWidth: 1, borderRadius: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }} 
-        onPress={() => setVisible(!visible)}
+        style={{ padding: 14, paddingRight: 8, backgroundColor: hasError ? '#fef2f2' : '#f9fafb', borderColor: hasError ? '#fca5a5' : '#d1d5db', borderWidth: 1, borderRadius: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }} 
+        onPress={() => setVisible(true)}
       >
-        <Text style={{ color: selectedItem && selectedItem.value !== null ? '#1f2937' : '#ef4444', flex: 1 }} numberOfLines={1}>
-          {selectedItem ? selectedItem.label : '⚠️ Seleccionar insumo...'}
+        <Text style={{ color: selectedItem ? '#1f2937' : '#ef4444', flex: 1, paddingRight: 8 }} numberOfLines={1}>
+          {selectedItem ? selectedItem.nombre : '⚠️ Seleccionar insumo...'}
         </Text>
-        <Ionicons name={visible ? "chevron-up" : "chevron-down"} size={20} color="#6b7280" />
+        {selectedItem ? (
+          <TouchableOpacity 
+            onPress={(e) => { e.stopPropagation(); onValueChange(null); }} 
+            style={{ padding: 6 }}
+          >
+            <Ionicons name="close-circle" size={22} color="#ef4444" />
+          </TouchableOpacity>
+        ) : (
+          <Ionicons name="search" size={20} color="#6b7280" style={{ padding: 6 }} />
+        )}
       </TouchableOpacity>
 
-      {visible && (
-        <View style={{ borderWidth: 1, borderTopWidth: 0, borderColor: '#d1d5db', borderBottomLeftRadius: 12, borderBottomRightRadius: 12, maxHeight: 200, backgroundColor: '#ffffff' }}>
-          <ScrollView nestedScrollEnabled={true} style={{ padding: 8 }}>
-            <TouchableOpacity 
-              style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' }}
-              onPress={() => { onValueChange(null); setVisible(false); }}
-            >
-              <Text style={{ color: '#ef4444', fontWeight: 'bold' }}>⚠️ Desvincular (Ninguno)</Text>
-            </TouchableOpacity>
-            {items.filter((i: any) => i.value !== null).map((ins: any) => (
-              <TouchableOpacity 
-                key={ins.value} 
-                style={{ paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6', flexDirection: 'row', justifyContent: 'space-between' }}
-                onPress={() => { onValueChange(ins.value); setVisible(false); }}
-              >
-                <Text style={{ color: '#1f2937', fontWeight: selectedValue === ins.value ? 'bold' : 'normal', flex: 1 }}>{ins.label}</Text>
-                {selectedValue === ins.value && <Ionicons name="checkmark" size={20} color="#22c55e" />}
+      <Modal visible={visible} animationType="slide" transparent={true}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, height: '80%', padding: 16 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#1f2937' }}>Seleccionar Insumo</Text>
+              <TouchableOpacity onPress={() => setVisible(false)} style={{ padding: 4 }}>
+                <Ionicons name="close" size={24} color="#6b7280" />
               </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      )}
-    </View>
+            </View>
+
+            {/* Search Bar */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3f4f6', borderRadius: 12, paddingHorizontal: 12, marginBottom: 12 }}>
+              <Ionicons name="search" size={20} color="#9ca3af" />
+              <TextInput
+                style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 8, color: '#1f2937' }}
+                placeholder="Buscar insumo por nombre..."
+                placeholderTextColor="#9ca3af"
+                value={searchText}
+                onChangeText={setSearchText}
+              />
+              {searchText ? (
+                <TouchableOpacity onPress={() => setSearchText('')}>
+                  <Ionicons name="close-circle" size={20} color="#9ca3af" />
+                </TouchableOpacity>
+              ) : null}
+            </View>
+
+            {/* Categories */}
+            {categories.length > 0 && (
+              <View style={{ marginBottom: 12 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 16 }}>
+                  <TouchableOpacity
+                    style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: selectedCategory === null ? '#22c55e' : '#f3f4f6', marginRight: 8 }}
+                    onPress={() => setSelectedCategory(null)}
+                  >
+                    <Text style={{ color: selectedCategory === null ? '#fff' : '#4b5563', fontWeight: 'bold' }}>Todos</Text>
+                  </TouchableOpacity>
+                  {categories.map((cat) => (
+                    <TouchableOpacity
+                      key={cat}
+                      style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: selectedCategory === cat ? '#22c55e' : '#f3f4f6', marginRight: 8 }}
+                      onPress={() => setSelectedCategory(cat)}
+                    >
+                      <Text style={{ color: selectedCategory === cat ? '#fff' : '#4b5563', fontWeight: 'bold' }}>{cat}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* List */}
+            <ScrollView keyboardShouldPersistTaps="handled">
+              <TouchableOpacity 
+                style={{ paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' }}
+                onPress={() => { onValueChange(null); setVisible(false); }}
+              >
+                <Text style={{ color: '#ef4444', fontWeight: 'bold' }}>⚠️ Desvincular (Ninguno)</Text>
+              </TouchableOpacity>
+              
+              {filteredInsumos.map((ins: any) => {
+                const cat = ins.categoriaNombre || ins.nombreCategoria;
+                return (
+                  <TouchableOpacity 
+                    key={ins.IDalimentos} 
+                    style={{ paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f3f4f6', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+                    onPress={() => { onValueChange(ins.IDalimentos); setVisible(false); }}
+                  >
+                    <View style={{ flex: 1, paddingRight: 12 }}>
+                      <Text style={{ color: '#1f2937', fontWeight: selectedValue === ins.IDalimentos ? 'bold' : 'normal' }}>
+                        {ins.nombre}
+                      </Text>
+                      <Text style={{ color: '#6b7280', fontSize: 12, marginTop: 4 }}>
+                        Categoría: {cat || 'Sin categoría'} | Precio: {ins.precio || 0}
+                      </Text>
+                    </View>
+                    {selectedValue === ins.IDalimentos && <Ionicons name="checkmark-circle" size={24} color="#22c55e" />}
+                  </TouchableOpacity>
+                );
+              })}
+              
+              {filteredInsumos.length === 0 && (
+                <View style={{ padding: 24, alignItems: 'center' }}>
+                  <Text style={{ color: '#9ca3af' }}>No se encontraron insumos.</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+    </>
   );
 };
 
@@ -84,8 +178,8 @@ const AiReviewScreen = () => {
   const fetchCatalog = async () => {
     try {
       const response = await api.get('/inventario');
-      // Insumos form part of the response, wait we need to get insumos, not inventario
-      const insResponse = await api.get('/insumos');
+      // Obtener TODOS los insumos para el catálogo local
+      const insResponse = await api.get('/insumos?limit=1000');
       setInsumosCatalog(insResponse.data.data || insResponse.data || []);
     } catch (error) {
       console.error('Error cargando insumos:', error);
@@ -199,9 +293,9 @@ const AiReviewScreen = () => {
       <View className="flex-row items-center justify-between p-4 bg-white shadow-sm border-b border-gray-200 z-10">
         <TouchableOpacity onPress={() => navigation.goBack()} className="flex-row items-center">
           <Ionicons name="arrow-back" size={24} color="#333" />
-          <Text className="text-lg font-bold text-gray-800 ml-2">Revisión de IA</Text>
+          <Text className="text-lg font-bold text-gray-800 ml-2" style={{ color: '#1f2937' }}>Revisión de IA</Text>
         </TouchableOpacity>
-        <Text className="text-gray-500">{items.length} ítems</Text>
+        <Text className="text-gray-500" style={{ color: '#6b7280' }}>{items.length} ítems</Text>
       </View>
 
       <KeyboardAvoidingView 
@@ -245,7 +339,7 @@ const AiReviewScreen = () => {
                 
                 {/* Header: Eliminar */}
                 <View className="flex-row justify-between items-center mb-2">
-                  <Text className="font-bold text-gray-800 flex-1" numberOfLines={1}>
+                  <Text className="font-bold text-gray-800 flex-1" style={{ color: '#1f2937' }} numberOfLines={1}>
                     📝 Original: {item.nombreExtraido}
                   </Text>
                   <TouchableOpacity onPress={() => removeItem(index)} className="p-1">
@@ -255,21 +349,18 @@ const AiReviewScreen = () => {
 
                 {/* Dropdown de Insumo Custom */}
                 <View className="mb-3">
-                  <CustomDropdown
+                  <SearchableInsumoDropdown
                     hasError={hasError}
                     selectedValue={item.insumoId}
                     onValueChange={(val: any) => updateItem(index, 'insumoId', val)}
-                    items={[
-                      { label: '⚠️ Seleccionar insumo...', value: null },
-                      ...insumosCatalog.map(ins => ({ label: ins.nombre, value: ins.IDalimentos }))
-                    ]}
+                    insumosCatalog={insumosCatalog}
                   />
                 </View>
 
                 {/* Cantidad y Precio */}
                 <View className="flex-row justify-between">
                   <View className="flex-1 mr-2">
-                    <Text className="text-xs text-gray-500 font-bold mb-1 ml-1">CANTIDAD</Text>
+                    <Text className="text-xs text-gray-500 font-bold mb-1 ml-1" style={{ color: '#6b7280' }}>CANTIDAD</Text>
                     <TextInput
                       className="bg-gray-100 border border-gray-200 rounded-xl p-3 text-gray-800 text-center font-bold"
                       style={{ color: '#1f2937' }}
@@ -279,7 +370,7 @@ const AiReviewScreen = () => {
                     />
                   </View>
                   <View className="flex-1 ml-2">
-                    <Text className="text-xs text-gray-500 font-bold mb-1 ml-1">PRECIO UNID.</Text>
+                    <Text className="text-xs text-gray-500 font-bold mb-1 ml-1" style={{ color: '#6b7280' }}>PRECIO UNID.</Text>
                     <TextInput
                       className="bg-gray-100 border border-gray-200 rounded-xl p-3 text-gray-800 text-center font-bold"
                       style={{ color: '#1f2937' }}
@@ -291,7 +382,7 @@ const AiReviewScreen = () => {
                 </View>
 
                 {item.observacion ? (
-                  <Text className="text-xs text-gray-400 mt-2 italic">"{item.observacion}"</Text>
+                  <Text className="text-xs text-gray-400 mt-2 italic" style={{ color: '#9ca3af' }}>"{item.observacion}"</Text>
                 ) : null}
 
               </View>

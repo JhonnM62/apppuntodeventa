@@ -165,7 +165,7 @@ export default function VerifyInsumosModal({
     try {
       const payload = insumos.map(i => ({
         idInsumo: i.id,
-        cantContada: i.cantContada,
+        cantContada: Number(i.cantContada) || 0,
         disponibleEnSistema: i.disponibleEnSistema,
       }));
 

@@ -87,6 +87,7 @@ const AiUploadScreen = () => {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: 60000,
       });
 
       navigation.replace('AiReview', { extractedData: response.data, type: 'image', targetInventarioId: route.params?.targetInventarioId });
@@ -109,7 +110,7 @@ const AiUploadScreen = () => {
       const response = await api.post('/ai/extract-text', {
         text: textInput,
         context: 'inventario'
-      });
+      }, { timeout: 60000 });
 
       navigation.replace('AiReview', { extractedData: response.data, rawSource: textInput, type: 'text', targetInventarioId: route.params?.targetInventarioId });
     } catch (error: any) {

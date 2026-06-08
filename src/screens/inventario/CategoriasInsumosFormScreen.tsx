@@ -140,16 +140,17 @@ export default function CategoriasInsumosFormScreen({ route, navigation }: any) 
               control={control}
               name="nombre"
               render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="Nombre de Categoría"
-                  placeholder="Ej. Salsas, Frutas, Licores"
-                  value={value}
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  error={errors.nombre?.message}
-                  editable={!isReadOnly && !saving}
-                  containerStyle={styles.inputContainer}
-                />
+                <View style={styles.inputContainer}>
+                  <Input
+                    label="Nombre de Categoría"
+                    placeholder="Ej. Salsas, Frutas, Licores"
+                    value={value}
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    error={errors.nombre?.message}
+                    editable={!isReadOnly && !saving}
+                  />
+                </View>
               )}
             />
 
@@ -157,16 +158,17 @@ export default function CategoriasInsumosFormScreen({ route, navigation }: any) 
               control={control}
               name="imagen"
               render={({ field: { onChange, onBlur, value } }) => (
-                <Input
-                  label="URL de la Imagen (Opcional)"
-                  placeholder="https://ejemplo.com/imagen.jpg"
-                  value={value}
-                  onBlur={onBlur}
-                  onChangeText={onChange}
-                  error={errors.imagen?.message}
-                  editable={!isReadOnly && !saving}
-                  containerStyle={styles.inputContainer}
-                />
+                <View style={styles.inputContainer}>
+                  <Input
+                    label="URL de la Imagen (Opcional)"
+                    placeholder="https://ejemplo.com/imagen.jpg"
+                    value={value}
+                    onBlur={onBlur}
+                    onChangeText={onChange}
+                    error={errors.imagen?.message}
+                    editable={!isReadOnly && !saving}
+                  />
+                </View>
               )}
             />
           </View>

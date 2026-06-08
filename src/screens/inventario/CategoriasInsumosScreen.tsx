@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, StyleSheet, TouchableOpacity, RefreshControl, Image, Platform, KeyboardAvoidingView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { FlashList } from '@shopify/flash-list';
+import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+const FlashList = OriginalFlashList as any;
 import Toast from 'react-native-toast-message';
 import { Text } from '../../components/ui/text';
 import { Input } from '../../components/ui/input';
@@ -85,13 +86,13 @@ export default function CategoriasInsumosScreen({ navigation }: any) {
 
       {/* Search Bar */}
       <View style={styles.searchContainer}>
-        <Input
-          placeholder="Buscar categoría..."
-          value={search}
-          onChangeText={setSearch}
-          leftIcon={<Ionicons name="search" size={20} color="#9CA3AF" />}
-          containerStyle={styles.searchInput}
-        />
+        <View style={styles.searchInput}>
+          <Input
+            placeholder="Buscar categoría..."
+            value={search}
+            onChangeText={setSearch}
+          />
+        </View>
       </View>
 
       {/* List */}

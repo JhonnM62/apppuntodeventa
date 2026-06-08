@@ -54,7 +54,7 @@ export function usePushNotifications() {
       const data = response.notification.request.content.data;
       if (data && data.ventaId) {
         if (navigationRef.isReady()) {
-          navigationRef.navigate('Main', { 
+          (navigationRef as any).navigate('Main', { 
             screen: 'Pedidos', 
             params: { ventaId: data.ventaId } 
           });

@@ -349,13 +349,6 @@ export default function CajaFormScreen({ route, navigation }: any) {
     }
   };
 
-  const [refreshing, setRefreshing] = useState(false);
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await fetchInitialData(false);
-    setRefreshing(false);
-  }, [fetchInitialData]);
-
   const fetchInitialData = useCallback(async (showLoader = true) => {
     if (showLoader) setLoading(true);
     try {
@@ -484,6 +477,13 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
   useEffect(() => {
     fetchInitialData();
+  }, [fetchInitialData]);
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchInitialData(false);
+    setRefreshing(false);
   }, [fetchInitialData]);
 
   const handleAutoCuadreClick = async () => {
