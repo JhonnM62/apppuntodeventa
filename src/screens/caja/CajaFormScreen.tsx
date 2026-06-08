@@ -517,7 +517,15 @@ export default function CajaFormScreen({ route, navigation }: any) {
         }));
       }
 
+      const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0;
+      const dirtyFields = control._formState.dirtyFields || {} as any;
+      
       const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre, updaterName: user?.nombre || user?.Nombre || user?.usuario || 'Un usuario' } as any;
+      if (!isInsumosDirty) delete updateData.insumos;
+      if (!dirtyFields.observaciones) delete updateData.observaciones;
+      if (!dirtyFields.efectivoDeCierre) delete updateData.efectivoDeCierre;
+      if (!dirtyFields.plataGuardada) delete updateData.plataGuardada;
+      if (transferenciasContadas === String(resumenData?.caja?.transferenciasContadas)) delete updateData.transferenciasContadas;
 
       // Calculate and sync physical differences in the DB so that preview endpoint gets correct metrics
       const efContado = parseFloat(watch('efectivoDeCierre') as unknown as string) || 0;
@@ -600,21 +608,29 @@ export default function CajaFormScreen({ route, navigation }: any) {
           // ERROR HANDLING PATTERN: "Double-Step Save" (Systematic Debugging)
           // Dado que el endpoint de cerrarCaja tiene un ValidationPipe extremadamente estricto en producción que rechaza la trazabilidad compleja,
           // PRIMERO: Guardamos toda la trazabilidad y datos extras usando el endpoint genérico (updateCaja) que es flexible.
+          const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0;
+          const dirtyFields = control._formState.dirtyFields || {} as any;
+          
           const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre, updaterName: user?.nombre || user?.Nombre || user?.usuario || 'Un usuario' };
+          if (!isInsumosDirty) delete updateData.insumos;
+          if (!dirtyFields.observaciones) delete updateData.observaciones;
+          if (!dirtyFields.efectivoDeCierre) delete updateData.efectivoDeCierre;
+          if (!dirtyFields.plataGuardada) delete updateData.plataGuardada;
+          if (transferenciasContadas === String(resumenData?.caja?.transferenciasContadas)) delete updateData.transferenciasContadas;
           await updateCaja(cajaId, updateData);
 
           // SEGUNDO: Enviamos el cierre definitivo SOLO con los campos financieros básicos que el DTO viejo y estricto espera.
           const closeData: any = { updaterName: user?.nombre || user?.Nombre || user?.usuario || 'Un usuario' };
 
-          if (cleanData.efectivoDeCierre !== undefined) closeData.efectivoDeCierre = cleanData.efectivoDeCierre;
+          if (dirtyFields.efectivoDeCierre && cleanData.efectivoDeCierre !== undefined) closeData.efectivoDeCierre = cleanData.efectivoDeCierre;
           if (cleanData.resumen !== undefined) closeData.resumen = cleanData.resumen;
-          if (cleanData.plataGuardada !== undefined) closeData.plataGuardada = cleanData.plataGuardada;
+          if (dirtyFields.plataGuardada && cleanData.plataGuardada !== undefined) closeData.plataGuardada = cleanData.plataGuardada;
           if (cleanData.valorFaltante !== undefined) closeData.valorFaltante = cleanData.valorFaltante;
           if (cleanData.valorExcedente !== undefined) closeData.valorExcedente = cleanData.valorExcedente;
-          if (cleanData.observaciones !== undefined) closeData.observaciones = cleanData.observaciones;
-          if (cleanData.transferenciasContadas !== undefined) closeData.transferenciasContadas = cleanData.transferenciasContadas;
+          if (dirtyFields.observaciones && cleanData.observaciones !== undefined) closeData.observaciones = cleanData.observaciones;
+          if (transferenciasContadas !== String(resumenData?.caja?.transferenciasContadas) && cleanData.transferenciasContadas !== undefined) closeData.transferenciasContadas = cleanData.transferenciasContadas;
           
-          if (cleanData.insumos) {
+          if (cleanData.insumos && isInsumosDirty) {
             closeData.insumos = cleanData.insumos.map((i: any) => ({
               Idcierreyapertura: i.Idcierreyapertura,
               nombreInsumo: i.nombreInsumo,
@@ -630,7 +646,16 @@ export default function CajaFormScreen({ route, navigation }: any) {
           Toast.show({ type: 'success', text1: 'Caja Cerrada', text2: 'La caja se ha cerrado definitivamente' });
         } else {
           // Guardado Parcial: El endpoint genérico updateCaja sí espera Idcierreyapertura, cantApertura, etc.
+          const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0;
+          const dirtyFields = control._formState.dirtyFields || {} as any;
+          
           const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre, updaterName: user?.nombre || user?.Nombre || user?.usuario || 'Un usuario' };
+          if (!isInsumosDirty) delete updateData.insumos;
+          if (!dirtyFields.observaciones) delete updateData.observaciones;
+          if (!dirtyFields.efectivoDeCierre) delete updateData.efectivoDeCierre;
+          if (!dirtyFields.plataGuardada) delete updateData.plataGuardada;
+          if (transferenciasContadas === String(resumenData?.caja?.transferenciasContadas)) delete updateData.transferenciasContadas;
+          
           await updateCaja(cajaId, updateData);
           Toast.show({ type: 'success', text1: 'Arqueo Guardado', text2: 'El arqueo parcial se ha guardado' });
         }
