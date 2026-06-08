@@ -383,10 +383,13 @@ if (filterCuadrarInsumos !== 'all') {
 
   const openEditModal = async (insumo: InsumoItem) => {
     setSelectedInsumo(insumo);
+    
+    const categoriaDisplay = insumo.nombreCategoria || insumo.NombreCategoria || insumo.categoriaNombre || insumo.categoria || insumo.Categoria || '';
+    
     setFormData({
       nombre: insumo.nombre || insumo.Nombre || '',
-      categoria: insumo.categoria || insumo.Categoria || '',
-      nombreCategoria: insumo.nombreCategoria || insumo.NombreCategoria || insumo.categoriaNombre || '',
+      categoria: categoriaDisplay,
+      nombreCategoria: categoriaDisplay,
       unidades: insumo.unidades || insumo.Unidades || '',
       cantidad: insumo.cantidad || insumo.Cantidad || 0,
       precio: insumo.precio || insumo.Precio || 0,

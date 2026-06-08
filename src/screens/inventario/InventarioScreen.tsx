@@ -125,6 +125,11 @@ const InventarioScreen = ({ navigation }: any) => {
   const [addItemsList, setAddItemsList] = useState<any[]>([]);
   const [addItemSearchText, setAddItemSearchText] = useState('');
   const [selectedCategoriaFilter, setSelectedCategoriaFilter] = useState<string | null>(null);
+  
+  const [isChangingInsumo, setIsChangingInsumo] = useState(false);
+  const [changeInsumoSearchText, setChangeInsumoSearchText] = useState('');
+  const [changeInsumoCategoriaFilter, setChangeInsumoCategoriaFilter] = useState<string | null>(null);
+
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const createModalScrollRef = useRef<ScrollView>(null);
   const detailModalScrollRef = useRef<any>(null);
@@ -549,30 +554,145 @@ const InventarioScreen = ({ navigation }: any) => {
   const handleExportImage = async () => {
     try {
       setSaving(true);
-      if (viewShotRef.current && viewShotRef.current.capture) {
-        // Un pequeño timeout para asegurar que el contenedor oculto se renderizó completamente
-        setTimeout(async () => {
-          try {
-            const uri = await viewShotRef.current!.capture!();
-            if (await Sharing.isAvailableAsync()) {
-              await Sharing.shareAsync(uri, {
-                mimeType: 'image/png',
-                dialogTitle: 'Compartir inventario',
-                UTI: 'image/png',
-              });
-            } else {
-              Toast.show({ type: 'error', text1: 'Error', text2: 'No se puede compartir en este dispositivo' });
+      
+      // Si son pocos ítems, generar imagen (captura de pantalla) para una visualización rápida.
+      if (ordenes.length <= 15) {
+        if (viewShotRef.current && viewShotRef.current.capture) {
+          setTimeout(async () => {
+            try {
+              const uri = await viewShotRef.current!.capture!();
+              if (await Sharing.isAvailableAsync()) {
+                await Sharing.shareAsync(uri, {
+                  mimeType: 'image/png',
+                  dialogTitle: 'Compartir inventario',
+                  UTI: 'image/png',
+                });
+              } else {
+                Toast.show({ type: 'error', text1: 'Error', text2: 'No se puede compartir en este dispositivo' });
+              }
+            } catch (e) {
+              Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo generar la imagen' });
+            } finally {
+              setSaving(false);
             }
-          } catch (e) {
-            Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo generar la imagen' });
-          } finally {
-            setSaving(false);
-          }
-        }, 500);
+          }, 500);
+        } else {
+          setSaving(false);
+          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo acceder a la vista para capturar la imagen' });
+        }
+        return;
+      }
+
+      // Si son muchos ítems, generar PDF para evitar compresión y pérdida de calidad
+      let Print: any;
+      try {
+        Print = require('expo-print');
+      } catch (e) {
+        Toast.show({ type: 'error', text1: 'Actualización Requerida', text2: 'Módulo de PDF no disponible. Requiere compilar la app.' });
+        setSaving(false);
+        return;
+      }
+
+      if (!selectedInventario) {
+        setSaving(false);
+        return;
+      }
+
+      const grouped = groupByCategory(ordenes);
+      const isEntrada = selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada';
+      
+      let html = `
+        <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+          <style>
+            body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 20px; color: #1f2937; }
+            h1 { text-align: center; color: #111827; margin-bottom: 5px; font-size: 24px; }
+            p.subtitle { text-align: center; color: #6b7280; margin-top: 0; margin-bottom: 20px; font-size: 14px; }
+            .category { background-color: #f3f4f6; padding: 10px; font-weight: bold; text-transform: uppercase; margin-top: 20px; border-radius: 5px; display: flex; justify-content: space-between; font-size: 14px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+            th, td { padding: 10px; text-align: left; border-bottom: 1px solid #e5e7eb; font-size: 13px; }
+            th { color: #6b7280; text-transform: uppercase; }
+            .comprado { color: #10b981; font-weight: bold; }
+            .pendiente { color: #ef4444; font-weight: bold; }
+          </style>
+        </head>
+        <body>
+          <h1>${selectedInventario.nombre || 'Inventario'}</h1>
+          <p class="subtitle">
+            ${new Date(selectedInventario.fechaYHora || new Date()).toLocaleDateString('es-CO')} &nbsp;&bull;&nbsp; 
+            Total: $${(selectedInventario.total || 0).toLocaleString('es-CO')} &nbsp;&bull;&nbsp; 
+            ${selectedInventario.tipo || 'ENTRADAS'}
+          </p>
+      `;
+
+      let totalGeneral = 0;
+
+      Object.entries(grouped)
+        .sort(([catA], [catB]) => catA.localeCompare(catB))
+        .forEach(([categoria, { items: catItems, total }]) => {
+          totalGeneral += total;
+          
+          html += `
+            <div class="category">
+              <span>${categoria}</span>
+              ${isEntrada ? `<span>$${total.toLocaleString('es-CO')}</span>` : ''}
+            </div>
+            <table>
+              <tr>
+                <th>Item</th>
+                <th>Estado</th>
+                <th>Cant.</th>
+                ${isEntrada ? '<th>Precio Und.</th><th>Subtotal</th>' : ''}
+              </tr>
+          `;
+
+          catItems.forEach(item => {
+            const isComprado = item.seCompro?.toLowerCase() === 'si';
+            const estadoHtml = isComprado ? '<span class="comprado">Comprado</span>' : '<span class="pendiente">Sin comprar</span>';
+            const subtotalItem = item.subtotal || ((item.precioActual || item.precio || 0) * (item.cantidad || 0));
+            const precioUnd = item.precioActual || item.precio || 0;
+            const name = getInsumoName(item.nombreDelAlimento);
+            
+            html += `
+              <tr>
+                <td>${name}</td>
+                <td>${estadoHtml}</td>
+                <td>${item.cantidad || 0}</td>
+                ${isEntrada ? `<td>$${precioUnd.toLocaleString('es-CO')}</td><td>$${subtotalItem.toLocaleString('es-CO')}</td>` : ''}
+              </tr>
+            `;
+          });
+          
+          html += `</table>`;
+        });
+        
+      if (isEntrada) {
+        html += `
+          <div style="margin-top: 30px; text-align: right;">
+            <h2 style="color: #111827;">Total General: $${totalGeneral.toLocaleString('es-CO')}</h2>
+          </div>
+        `;
+      }
+
+      html += `</body></html>`;
+
+      const { uri } = await Print.printToFileAsync({ html, margins: { left: 20, top: 20, right: 20, bottom: 20 } });
+      
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, {
+          mimeType: 'application/pdf',
+          dialogTitle: 'Compartir inventario',
+          UTI: 'com.adobe.pdf',
+        });
+      } else {
+        Toast.show({ type: 'error', text1: 'Error', text2: 'No se puede compartir en este dispositivo' });
       }
     } catch (error) {
+      console.error('Error generando PDF:', error);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo iniciar la exportación a PDF' });
+    } finally {
       setSaving(false);
-      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo iniciar la exportación' });
     }
   };
 
@@ -944,6 +1064,38 @@ const InventarioScreen = ({ navigation }: any) => {
       }
     } catch (error: any) {
       Toast.show({ type: 'error', text1: 'Error', text2: getErrorMessage(error, 'No se pudo actualizar') });
+    }
+  };
+
+  const handleChangeInsumo = async (nuevoInsumoId: string) => {
+    if (!selectedOrdenItem) return;
+    
+    setSaving(true);
+    try {
+      await inventarioService.updateOrdenInventario(selectedOrdenItem.IDorderinventario, {
+        nombreDelAlimento: nuevoInsumoId
+      });
+      
+      // Update local state
+      const updatedItem = { ...selectedOrdenItem, nombreDelAlimento: nuevoInsumoId };
+      setSelectedOrdenItem(updatedItem);
+      
+      setOrdenes(prev => prev.map(o => o.IDorderinventario === updatedItem.IDorderinventario ? updatedItem : o));
+      setTodasLasOrdenes(prev => prev.map(o => o.IDorderinventario === updatedItem.IDorderinventario ? updatedItem : o));
+      
+      // Background silent refresh
+      fetchInventarios();
+      fetchInsumos();
+      
+      Toast.show({ type: 'success', text1: 'Éxito', text2: 'Insumo actualizado correctamente' });
+      setIsChangingInsumo(false);
+      setChangeInsumoSearchText('');
+    } catch (error: any) {
+      console.error('[DEBUG] Error cambiando insumo:', error);
+      const errorMsg = error?.response?.data?.message || error?.message || 'No se pudo actualizar el insumo';
+      Toast.show({ type: 'error', text1: 'Error', text2: Array.isArray(errorMsg) ? errorMsg.join(', ') : String(errorMsg) });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -2531,6 +2683,79 @@ const InventarioScreen = ({ navigation }: any) => {
                   <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />
                 }
               >
+              
+              {isChangingInsumo ? (
+                <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#e5e7eb', marginBottom: 16 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                    <RNText style={{ fontSize: 16, fontWeight: '700', color: '#111827' }}>Seleccionar nuevo insumo</RNText>
+                    <TouchableOpacity onPress={() => setIsChangingInsumo(false)}>
+                      <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Cancelar</RNText>
+                    </TouchableOpacity>
+                  </View>
+                  
+                  <View style={{ marginBottom: 12 }}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      <TouchableOpacity
+                        style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: changeInsumoCategoriaFilter === null ? '#3b82f6' : '#f3f4f6', marginRight: 8 }}
+                        onPress={() => setChangeInsumoCategoriaFilter(null)}
+                      >
+                        <RNText style={{ fontSize: 12, fontWeight: '600', color: changeInsumoCategoriaFilter === null ? '#fff' : '#4b5563' }}>Todos</RNText>
+                      </TouchableOpacity>
+                      {getCategoriasInsumos().map(cat => (
+                        <TouchableOpacity
+                          key={cat}
+                          style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: changeInsumoCategoriaFilter === cat ? '#3b82f6' : '#f3f4f6', marginRight: 8 }}
+                          onPress={() => setChangeInsumoCategoriaFilter(cat)}
+                        >
+                          <RNText style={{ fontSize: 12, fontWeight: '600', color: changeInsumoCategoriaFilter === cat ? '#fff' : '#4b5563' }}>{cat}</RNText>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+
+                  <Input
+                    placeholder="Buscar insumos..."
+                    value={changeInsumoSearchText}
+                    onChangeText={setChangeInsumoSearchText}
+                  />
+
+                  <View style={{ maxHeight: 300, marginTop: 8 }}>
+                    <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
+                      {insumos
+                        .filter(i => {
+                          const matchText = (i.nombre || i.Nombre || '').toLowerCase().includes(changeInsumoSearchText.toLowerCase());
+                          const cat = i.nombreCategoria || i.NombreCategoria || i.categoriaNombre || i.Categoria;
+                          const matchCat = changeInsumoCategoriaFilter ? cat === changeInsumoCategoriaFilter : true;
+                          return matchText && matchCat;
+                        })
+                        .slice(0, 20)
+                        .map(insumo => (
+                          <TouchableOpacity
+                            key={insumo.IDalimentos}
+                            style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#e5e7eb', flexDirection: 'row', alignItems: 'center' }}
+                            onPress={() => handleChangeInsumo(insumo.IDalimentos)}
+                          >
+                            <View style={{ width: 44, height: 44, borderRadius: 8, backgroundColor: '#f3f4f6', marginRight: 12, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+                              {getInsumoImage(insumo.IDalimentos) ? (
+                                <Image
+                                  source={{ uri: getInsumoImage(insumo.IDalimentos) as string }}
+                                  style={{ width: '100%', height: '100%', borderRadius: 8 }}
+                                  resizeMode="cover"
+                                />
+                              ) : (
+                                <MaterialCommunityIcons name="package-variant-closed" size={24} color="#9ca3af" />
+                              )}
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <RNText style={{ fontSize: 15, fontWeight: '600', color: '#1f2937' }}>{insumo.nombre || insumo.Nombre}</RNText>
+                              <RNText style={{ fontSize: 12, color: '#6b7280' }}>{insumo.nombreCategoria || insumo.NombreCategoria}</RNText>
+                            </View>
+                          </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                  </View>
+                </View>
+              ) : (
               <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#e5e7eb', marginBottom: 16 }}>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
                   <View style={{ flexDirection: 'row', flex: 1, alignItems: 'center' }}>
@@ -2632,17 +2857,29 @@ const InventarioScreen = ({ navigation }: any) => {
                   </View>
                 ) : null}
               </View>
-              {isAdmin && (
-                <TouchableOpacity
-                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#eff6ff', paddingVertical: 14, borderRadius: 12, marginBottom: 12 }}
-                  onPress={() => {
-                    setShowOrdenDetailModal(false);
-                    navigation.navigate('InsumoDetail', { id: selectedOrdenItem.nombreDelAlimento });
-                  }}
-                >
-                  <Ionicons name="open-outline" size={18} color="#3b82f6" />
-                  <RNText style={{ fontSize: 15, fontWeight: '600', color: '#3b82f6', marginLeft: 8 }}>Ir al detalle del Insumo</RNText>
-                </TouchableOpacity>
+              )}
+              
+              {!isChangingInsumo && isAdmin && (
+                <>
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0fdf4', paddingVertical: 14, borderRadius: 12, marginBottom: 12, borderWidth: 1, borderColor: '#bbf7d0' }}
+                    onPress={() => setIsChangingInsumo(true)}
+                  >
+                    <Ionicons name="swap-horizontal-outline" size={18} color="#16a34a" />
+                    <RNText style={{ fontSize: 15, fontWeight: '600', color: '#16a34a', marginLeft: 8 }}>Cambiar Insumo</RNText>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#eff6ff', paddingVertical: 14, borderRadius: 12, marginBottom: 12 }}
+                    onPress={() => {
+                      setShowOrdenDetailModal(false);
+                      navigation.navigate('InsumoDetail', { id: selectedOrdenItem.nombreDelAlimento });
+                    }}
+                  >
+                    <Ionicons name="open-outline" size={18} color="#3b82f6" />
+                    <RNText style={{ fontSize: 15, fontWeight: '600', color: '#3b82f6', marginLeft: 8 }}>Ir al detalle del Insumo</RNText>
+                  </TouchableOpacity>
+                </>
               )}
 
               <TouchableOpacity

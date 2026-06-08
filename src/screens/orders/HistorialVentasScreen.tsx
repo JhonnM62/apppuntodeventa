@@ -882,7 +882,7 @@ export default function HistorialVentasScreen({ navigation }: any) {
             <View className="flex-row items-center mb-1">
               <Ionicons name="time-outline" size={14} color="#6b7280" />
               <Text className="text-gray-500 text-xs ml-1 mr-3">
-                {formatDateToDDMMAAAA(item.fecha ? item.fecha.substring(0,10) : '')} {item.fechaYHora ? new Date(item.fechaYHora).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : formatTime12h(item.hora)}
+                {item.fechaYHora ? `${new Date(item.fechaYHora).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${new Date(item.fechaYHora).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}` : `${formatDateToDDMMAAAA(item.fecha ? item.fecha.substring(0,10) : '')} ${formatTime12h(item.hora)}`}
               </Text>
               
               <Ionicons name="cube-outline" size={14} color="#6b7280" />
@@ -1170,7 +1170,7 @@ export default function HistorialVentasScreen({ navigation }: any) {
                   <View className="flex-row justify-between mb-2">
                     <Text className="text-gray-500 font-medium">Fecha:</Text>
                     <Text className="text-gray-800 font-bold">
-                      {formatDateToDDMMAAAA(selectedVenta.fecha?.substring(0,10))} {selectedVenta.fechaYHora ? new Date(selectedVenta.fechaYHora).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) : formatTime12h(selectedVenta.hora)}
+                      {selectedVenta.fechaYHora ? `${new Date(selectedVenta.fechaYHora).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })} ${new Date(selectedVenta.fechaYHora).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}` : `${formatDateToDDMMAAAA(selectedVenta.fecha?.substring(0,10))} ${formatTime12h(selectedVenta.hora)}`}
                     </Text>
                   </View>
 
