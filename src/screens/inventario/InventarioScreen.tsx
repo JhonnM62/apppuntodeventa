@@ -453,9 +453,17 @@ const InventarioScreen = ({ navigation }: any) => {
     const cats = new Set<string>();
     insumos.forEach(i => {
       const cat = i.nombreCategoria || i.NombreCategoria || i.categoriaNombre || i.Categoria;
-      if (cat && typeof cat === 'string') cats.add(cat);
+      if (cat && typeof cat === 'string') {
+        cats.add(cat);
+      } else {
+        cats.add('Sin categoría');
+      }
     });
-    return Array.from(cats).sort();
+    return Array.from(cats).sort((a, b) => {
+      if (a === 'Sin categoría') return 1;
+      if (b === 'Sin categoría') return -1;
+      return a.localeCompare(b);
+    });
   };
 
   // filteredInventarios moved up
@@ -2697,7 +2705,7 @@ const InventarioScreen = ({ navigation }: any) => {
                   </View>
                   
                   <View style={{ marginBottom: 12 }}>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                       <TouchableOpacity
                         style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: changeInsumoCategoriaFilter === null ? '#3b82f6' : '#f3f4f6', marginRight: 8 }}
                         onPress={() => setChangeInsumoCategoriaFilter(null)}
@@ -2728,7 +2736,7 @@ const InventarioScreen = ({ navigation }: any) => {
                         .filter(i => {
                           const matchText = (i.nombre || i.Nombre || '').toLowerCase().includes(changeInsumoSearchText.toLowerCase());
                           const cat = i.nombreCategoria || i.NombreCategoria || i.categoriaNombre || i.Categoria;
-                          const matchCat = changeInsumoCategoriaFilter ? cat === changeInsumoCategoriaFilter : true;
+                          const matchCat = changeInsumoCategoriaFilter ? (cat || 'Sin categoría') === changeInsumoCategoriaFilter : true;
                           return matchText && matchCat;
                         })
                         .slice(0, 20)
@@ -2736,7 +2744,16 @@ const InventarioScreen = ({ navigation }: any) => {
                           <TouchableOpacity
                             key={insumo.IDalimentos}
                             style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#e5e7eb', flexDirection: 'row', alignItems: 'center' }}
-                            onPress={() => handleChangeInsumo(insumo.IDalimentos)}
+                            onPress={() => {
+                              showAlert({
+                                type: 'confirm',
+                                title: 'Confirmar Cambio',
+                                message: `¿Estás seguro de cambiar el insumo actual por "${insumo.nombre || insumo.Nombre}"?`,
+                                confirmText: 'Guardar',
+                                onConfirm: () => handleChangeInsumo(insumo.IDalimentos),
+                                onCancel: () => {}
+                              });
+                            }}
                           >
                             <View style={{ width: 44, height: 44, borderRadius: 8, backgroundColor: '#f3f4f6', marginRight: 12, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                               {getInsumoImage(insumo.IDalimentos) ? (
