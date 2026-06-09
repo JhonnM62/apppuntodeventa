@@ -1084,6 +1084,9 @@ const InventarioScreen = ({ navigation }: any) => {
       setTodasLasOrdenes(prev => prev.map(o => o.IDorderinventario === updatedItem.IDorderinventario ? updatedItem : o));
       
       // Background silent refresh
+      if (selectedInventario) {
+        fetchOrdenes(selectedInventario.IDinventario);
+      }
       fetchInventarios();
       fetchInsumos();
       
@@ -2859,7 +2862,7 @@ const InventarioScreen = ({ navigation }: any) => {
               </View>
               )}
               
-              {!isChangingInsumo && isAdmin && (
+              {!isChangingInsumo && (isAdmin || ((selectedInventario?.tipo?.toUpperCase().includes('ENTRADA') || selectedOrdenItem?.inventario?.tipo?.toUpperCase().includes('ENTRADA')) ? canEditEntradas : canEditSalidas)) && (
                 <>
                   <TouchableOpacity
                     style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0fdf4', paddingVertical: 14, borderRadius: 12, marginBottom: 12, borderWidth: 1, borderColor: '#bbf7d0' }}

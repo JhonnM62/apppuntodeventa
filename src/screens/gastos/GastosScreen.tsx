@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, SectionList, TouchableOpacity, ActivityIndicator, TextInput, Modal } from 'react-native';
+import { View, FlatList, SectionList, TouchableOpacity, ActivityIndicator, TextInput, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components/ui/text';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useGastosStore } from '../../store/useGastosStore';
 import { Gasto } from '../../services/gastos';
 import GastosFormModal from './GastosFormModal';
@@ -31,6 +32,7 @@ export default function GastosScreen({ navigation }: any) {
   const [filterFechaDesde, setFilterFechaDesde] = useState('');
   const [filterFechaHasta, setFilterFechaHasta] = useState('');
   const [filterMedioDePago, setFilterMedioDePago] = useState('Todos');
+  const [showDatePicker, setShowDatePicker] = useState<{show: boolean, type: 'desde' | 'hasta'}>({show: false, type: 'desde'});
 
   const activeFiltersCount = (filterFechaDesde ? 1 : 0) + (filterFechaHasta ? 1 : 0) + (filterMedioDePago !== 'Todos' ? 1 : 0);
 
@@ -256,8 +258,9 @@ export default function GastosScreen({ navigation }: any) {
       />
 
       <Modal visible={showFilterSheet} transparent animationType="slide" onRequestClose={() => setShowFilterSheet(false)}>
-        <TouchableOpacity
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+          <TouchableOpacity
+            style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
           activeOpacity={1}
           onPress={() => setShowFilterSheet(false)}
         >
@@ -275,19 +278,50 @@ export default function GastosScreen({ navigation }: any) {
             <View className="mb-4">
               <Text className="text-sm font-bold text-gray-600 mb-2">Rango de fechas</Text>
               <View className="flex-row items-center justify-between">
-                <TextInput
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mr-2"
-                  placeholder="Desde (YYYY-MM-DD)"
-                  value={filterFechaDesde}
-                  onChangeText={setFilterFechaDesde}
-                />
-                <TextInput
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 ml-2"
-                  placeholder="Hasta (YYYY-MM-DD)"
-                  value={filterFechaHasta}
-                  onChangeText={setFilterFechaHasta}
-                />
+                <TouchableOpacity
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mr-2 flex-row items-center"
+                  onPress={() => setShowDatePicker({ show: true, type: 'desde' })}
+                >
+                  <Ionicons name="calendar-outline" size={16} color="#6b7280" style={{ marginRight: 6 }} />
+                  <Text className={filterFechaDesde ? 'text-gray-800' : 'text-gray-400'}>
+                    {filterFechaDesde || 'Desde (YYYY-MM-DD)'}
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 ml-2 flex-row items-center"
+                  onPress={() => setShowDatePicker({ show: true, type: 'hasta' })}
+                >
+                  <Ionicons name="calendar-outline" size={16} color="#6b7280" style={{ marginRight: 6 }} />
+                  <Text className={filterFechaHasta ? 'text-gray-800' : 'text-gray-400'}>
+                    {filterFechaHasta || 'Hasta (YYYY-MM-DD)'}
+                  </Text>
+                </TouchableOpacity>
               </View>
+
+              {showDatePicker.show && (
+                <DateTimePicker
+                  value={
+                    showDatePicker.type === 'desde' && filterFechaDesde 
+                      ? new Date(filterFechaDesde + 'T12:00:00') 
+                      : showDatePicker.type === 'hasta' && filterFechaHasta 
+                        ? new Date(filterFechaHasta + 'T12:00:00') 
+                        : new Date()
+                  }
+                  mode="date"
+                  display="default"
+                  onChange={(event, selectedDate) => {
+                    setShowDatePicker({ show: false, type: 'desde' });
+                    if (event.type === 'set' && selectedDate) {
+                      const dateString = selectedDate.toISOString().split('T')[0];
+                      if (showDatePicker.type === 'desde') {
+                        setFilterFechaDesde(dateString);
+                      } else {
+                        setFilterFechaHasta(dateString);
+                      }
+                    }
+                  }}
+                />
+              )}
             </View>
 
             <View className="mb-6">
@@ -325,6 +359,7 @@ export default function GastosScreen({ navigation }: any) {
             </View>
           </TouchableOpacity>
         </TouchableOpacity>
+        </KeyboardAvoidingView>
       </Modal>
 
     </SafeAreaView>

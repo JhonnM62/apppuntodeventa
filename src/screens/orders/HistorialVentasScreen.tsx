@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { FlashList as OriginalFlashList } from '@shopify/flash-list';
 const FlashList = OriginalFlashList as any;
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -65,6 +66,7 @@ export default function HistorialVentasScreen({ navigation }: any) {
     categoriaProducto?: string;
   }>({});
   const [tempFilters, setTempFilters] = useState(activeFilters);
+  const [showDatePicker, setShowDatePicker] = useState<{show: boolean, type: 'desde' | 'hasta'}>({show: false, type: 'desde'});
   const isFilterActive = Object.values(activeFilters).some(v => v !== undefined && v !== '');
 
   // Current tab derived state
@@ -1470,7 +1472,8 @@ export default function HistorialVentasScreen({ navigation }: any) {
 
       {/* Filter Modal */}
       <Modal visible={filterModalVisible} transparent animationType="slide" onRequestClose={() => setFilterModalVisible(false)}>
-        <View className="flex-1 bg-black/60 justify-end">
+        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+          <View className="flex-1 bg-black/60 justify-end">
           <View className="bg-white rounded-t-3xl h-[85%]">
             <View className="flex-row justify-between items-center p-4 border-b border-gray-200 bg-white rounded-t-3xl">
               <View className="flex-row items-center">
@@ -1540,30 +1543,59 @@ export default function HistorialVentasScreen({ navigation }: any) {
                 ))}
               </View>
 
-              {/* Rango de Fechas (Text inputs for simplicity, could be replaced with DatePicker) */}
+              {/* Rango de Fechas */}
               <Text className="text-gray-800 font-bold mb-2">Rango de Fechas (YYYY-MM-DD)</Text>
               <View className="flex-row gap-x-3 mb-5">
                 <View className="flex-1">
                   <Text className="text-gray-500 text-xs mb-1">Desde</Text>
-                  <TextInput
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 text-sm"
-                    placeholder="Ej. 2024-01-01"
-                    placeholderTextColor="#9ca3af"
-                    value={tempFilters.fechaDesde || ''}
-                    onChangeText={(t) => setTempFilters(prev => ({ ...prev, fechaDesde: t }))}
-                  />
+                  <TouchableOpacity
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 flex-row items-center"
+                    onPress={() => setShowDatePicker({ show: true, type: 'desde' })}
+                  >
+                    <Ionicons name="calendar-outline" size={16} color="#6b7280" className="mr-2" />
+                    <Text className={`text-sm ${tempFilters.fechaDesde ? 'text-gray-800' : 'text-gray-400'}`}>
+                      {tempFilters.fechaDesde || 'Ej. 2024-01-01'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
                 <View className="flex-1">
                   <Text className="text-gray-500 text-xs mb-1">Hasta</Text>
-                  <TextInput
-                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-gray-800 text-sm"
-                    placeholder="Ej. 2024-12-31"
-                    placeholderTextColor="#9ca3af"
-                    value={tempFilters.fechaHasta || ''}
-                    onChangeText={(t) => setTempFilters(prev => ({ ...prev, fechaHasta: t }))}
-                  />
+                  <TouchableOpacity
+                    className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 flex-row items-center"
+                    onPress={() => setShowDatePicker({ show: true, type: 'hasta' })}
+                  >
+                    <Ionicons name="calendar-outline" size={16} color="#6b7280" className="mr-2" />
+                    <Text className={`text-sm ${tempFilters.fechaHasta ? 'text-gray-800' : 'text-gray-400'}`}>
+                      {tempFilters.fechaHasta || 'Ej. 2024-12-31'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
+              
+              {showDatePicker.show && (
+                <DateTimePicker
+                  value={
+                    showDatePicker.type === 'desde' && tempFilters.fechaDesde 
+                      ? new Date(tempFilters.fechaDesde + 'T12:00:00') 
+                      : showDatePicker.type === 'hasta' && tempFilters.fechaHasta 
+                        ? new Date(tempFilters.fechaHasta + 'T12:00:00') 
+                        : new Date()
+                  }
+                  mode="date"
+                  display="default"
+                  onChange={(event, selectedDate) => {
+                    setShowDatePicker({ show: false, type: 'desde' });
+                    if (event.type === 'set' && selectedDate) {
+                      const dateString = selectedDate.toISOString().split('T')[0];
+                      if (showDatePicker.type === 'desde') {
+                        setTempFilters(prev => ({ ...prev, fechaDesde: dateString }));
+                      } else {
+                        setTempFilters(prev => ({ ...prev, fechaHasta: dateString }));
+                      }
+                    }
+                  }}
+                />
+              )}
 
               {/* Rango de Montos */}
               <Text className="text-gray-800 font-bold mb-2">Rango de Total ($)</Text>
@@ -1612,7 +1644,8 @@ export default function HistorialVentasScreen({ navigation }: any) {
             </View>
 
           </View>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Products Summary Modal */}

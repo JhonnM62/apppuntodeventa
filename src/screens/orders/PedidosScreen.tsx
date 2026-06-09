@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
 import { FlashList as OriginalFlashList } from '@shopify/flash-list';
 const FlashList = OriginalFlashList as any;
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -112,7 +113,9 @@ const PedidosScreen = () => {
   const { canCreate: canCreateVenta } = usePermissions('ventas');
   const [activeTab, setActiveTab] = useState('todos');
   const [loading, setLoading] = useState(useSalesStore.getState().ventas.length === 0);
-  const [refreshing, setRefreshing] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedToDelete, setSelectedToDelete] = useState<string[]>([]);
+  const [showDatePicker, setShowDatePicker] = useState<{show: boolean, type: 'desde' | 'hasta'}>({show: false, type: 'desde'});
   const [selectedVenta, setSelectedVenta] = useState<VentaItem | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
@@ -141,8 +144,6 @@ const PedidosScreen = () => {
 
   const productCategorias = useProductStore((state) => state.categorias);
 
-  const [selectedToDelete, setSelectedToDelete] = useState<string[]>([]);
-  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   const route = useRoute<any>();
 
@@ -1371,7 +1372,8 @@ showAlert({
       onRequestClose={() => setFilterModalVisible(false)}
       presentationStyle="pageSheet"
     >
-      <View style={styles.filterModalContainer}>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
+        <View style={styles.filterModalContainer}>
         <View style={styles.filterModalHeader}>
           <RNText style={styles.filterModalTitle}>Filtros</RNText>
           <TouchableOpacity onPress={() => setFilterModalVisible(false)} style={styles.closeBtn}>
@@ -1488,31 +1490,54 @@ showAlert({
             <View style={styles.dateRangeContainer}>
               <View style={styles.dateInputWrapper}>
                 <RNText style={styles.dateLabel}>Desde</RNText>
-                <View style={styles.filterInputContainer}>
+                <TouchableOpacity 
+                  style={[styles.filterInputContainer, { paddingVertical: 10 }]}
+                  onPress={() => setShowDatePicker({ show: true, type: 'desde' })}
+                >
                   <Ionicons name="calendar-outline" size={18} color="#6b7280" />
-                  <TextInput
-                    style={styles.filterInput}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor="#9ca3af"
-                    value={filters.fechaDesde}
-                    onChangeText={(text) => setFilters(prev => ({ ...prev, fechaDesde: text }))}
-                  />
-                </View>
+                  <RNText style={{ marginLeft: 8, fontSize: 13, color: filters.fechaDesde ? '#1f2937' : '#9ca3af' }}>
+                    {filters.fechaDesde || 'YYYY-MM-DD'}
+                  </RNText>
+                </TouchableOpacity>
               </View>
               <View style={styles.dateInputWrapper}>
                 <RNText style={styles.dateLabel}>Hasta</RNText>
-                <View style={styles.filterInputContainer}>
+                <TouchableOpacity 
+                  style={[styles.filterInputContainer, { paddingVertical: 10 }]}
+                  onPress={() => setShowDatePicker({ show: true, type: 'hasta' })}
+                >
                   <Ionicons name="calendar-outline" size={18} color="#6b7280" />
-                  <TextInput
-                    style={styles.filterInput}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor="#9ca3af"
-                    value={filters.fechaHasta}
-                    onChangeText={(text) => setFilters(prev => ({ ...prev, fechaHasta: text }))}
-                  />
-                </View>
+                  <RNText style={{ marginLeft: 8, fontSize: 13, color: filters.fechaHasta ? '#1f2937' : '#9ca3af' }}>
+                    {filters.fechaHasta || 'YYYY-MM-DD'}
+                  </RNText>
+                </TouchableOpacity>
               </View>
             </View>
+            
+            {showDatePicker.show && (
+              <DateTimePicker
+                value={
+                  showDatePicker.type === 'desde' && filters.fechaDesde 
+                    ? new Date(filters.fechaDesde + 'T12:00:00') 
+                    : showDatePicker.type === 'hasta' && filters.fechaHasta 
+                      ? new Date(filters.fechaHasta + 'T12:00:00') 
+                      : new Date()
+                }
+                mode="date"
+                display="default"
+                onChange={(event, selectedDate) => {
+                  setShowDatePicker({ show: false, type: 'desde' });
+                  if (event.type === 'set' && selectedDate) {
+                    const dateString = selectedDate.toISOString().split('T')[0];
+                    if (showDatePicker.type === 'desde') {
+                      setFilters(prev => ({ ...prev, fechaDesde: dateString }));
+                    } else {
+                      setFilters(prev => ({ ...prev, fechaHasta: dateString }));
+                    }
+                  }
+                }}
+              />
+            )}
           </View>
 
           <View style={styles.filterSection}>
@@ -1583,7 +1608,8 @@ showAlert({
             </RNText>
           </TouchableOpacity>
         </View>
-      </View>
+        </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 
