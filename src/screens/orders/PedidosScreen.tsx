@@ -113,6 +113,7 @@ const PedidosScreen = () => {
   const { canCreate: canCreateVenta } = usePermissions('ventas');
   const [activeTab, setActiveTab] = useState('todos');
   const [loading, setLoading] = useState(useSalesStore.getState().ventas.length === 0);
+  const [refreshing, setRefreshing] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedToDelete, setSelectedToDelete] = useState<string[]>([]);
   const [showDatePicker, setShowDatePicker] = useState<{show: boolean, type: 'desde' | 'hasta'}>({show: false, type: 'desde'});

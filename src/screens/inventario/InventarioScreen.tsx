@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Modal, TextInput, FlatList, KeyboardAvoidingView, Platform, Keyboard, Animated, Dimensions, Image, PanResponder } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -129,6 +129,21 @@ const InventarioScreen = ({ navigation }: any) => {
   const [isChangingInsumo, setIsChangingInsumo] = useState(false);
   const [changeInsumoSearchText, setChangeInsumoSearchText] = useState('');
   const [changeInsumoCategoriaFilter, setChangeInsumoCategoriaFilter] = useState<string | null>(null);
+  const [pendingNewInsumoId, setPendingNewInsumoId] = useState<string | null>(null);
+  const [isEditingDescuento, setIsEditingDescuento] = useState(false);
+  const [descuentoInputValue, setDescuentoInputValue] = useState('');
+
+  const filteredChangeInsumos = useMemo(() => {
+    return insumos
+      .filter(i => {
+        const matchText = (i.nombre || i.Nombre || '').toLowerCase().includes(changeInsumoSearchText.toLowerCase());
+        const cat = i.nombreCategoria || i.NombreCategoria || i.categoriaNombre || i.Categoria;
+        const matchCat = changeInsumoCategoriaFilter ? (cat || 'Sin categoría') === changeInsumoCategoriaFilter : true;
+        return matchText && matchCat;
+      })
+      .slice(0, 20);
+  }, [insumos, changeInsumoSearchText, changeInsumoCategoriaFilter]);
+
 
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const createModalScrollRef = useRef<ScrollView>(null);
@@ -1110,6 +1125,37 @@ const InventarioScreen = ({ navigation }: any) => {
     }
   };
 
+  const handleUpdateDescuento = async () => {
+    console.log('[DEBUG] handleUpdateDescuento iniciado');
+    if (!selectedInventario) {
+      console.warn('[DEBUG] No hay selectedInventario');
+      return;
+    }
+    const desc = Number(descuentoInputValue.replace(/[^0-9]/g, '')) || 0;
+    console.log(`[DEBUG] Actualizando descuento a: ${desc} para Inventario ID: ${selectedInventario.IDinventario}`);
+    
+    setSaving(true);
+    try {
+      console.log('[DEBUG] Llamando inventarioService.update...');
+      const response = await inventarioService.update(selectedInventario.IDinventario, { descuento: desc });
+      console.log('[DEBUG] inventarioService.update completado', response);
+
+      const updatedInventario = { ...selectedInventario, descuento: desc };
+      setSelectedInventario(updatedInventario);
+      setInventarios(prev => prev.map(inv => inv.IDinventario === selectedInventario.IDinventario ? updatedInventario : inv));
+      fetchInventarios();
+      Toast.show({ type: 'success', text1: 'Éxito', text2: 'Descuento actualizado correctamente' });
+      setIsEditingDescuento(false);
+    } catch (error: any) {
+      console.error('[DEBUG] Error en handleUpdateDescuento:', error);
+      console.error('[DEBUG] Detalle del error:', error?.response?.data || error?.message);
+      Toast.show({ type: 'error', text1: 'Error', text2: getErrorMessage(error, 'No se pudo actualizar el descuento') });
+    } finally {
+      console.log('[DEBUG] handleUpdateDescuento finally block');
+      setSaving(false);
+    }
+  };
+
   const handleDeleteOrden = async (orden: OrderInventarioItem) => {
     const isComprado = orden.seCompro?.toLowerCase() === 'si';
     
@@ -1242,7 +1288,7 @@ const InventarioScreen = ({ navigation }: any) => {
                 {isEntrada && (
                   <>
                     <RNText style={{ fontSize: 18, fontWeight: '700', color: '#111827', marginLeft: 12 }}>
-                      ${(item.total !== undefined && item.total > 0 ? item.total : (item.ordenInventario?.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0) || 0)).toLocaleString('es-CO')}
+                      ${(item.total !== undefined && item.total > 0 ? Math.max(0, item.total - (item.descuento || 0)) : Math.max(0, (item.ordenInventario?.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0) || 0) - (item.descuento || 0))).toLocaleString('es-CO')}
                     </RNText>
                     {item.descuento ? (
                       <RNText style={{ fontSize: 11, color: '#ef4444', fontWeight: '600' }}>
@@ -2083,8 +2129,9 @@ const InventarioScreen = ({ navigation }: any) => {
                   <RNText style={{ fontSize: 16, fontWeight: '700', color: '#111827', textAlign: 'center' }}>{selectedInventario?.nombre}</RNText>
                   <RNText style={{ fontSize: 12, color: '#6b7280', textAlign: 'center' }}>
                     {selectedInventario?.fechaYHora ? new Date(selectedInventario.fechaYHora).toLocaleDateString('es-CO') : ''}
-                    {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') ? ` • Total: $${(ordenes.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0)).toLocaleString('es-CO')}` : ''}
+                    {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') ? ` • Total: $${Math.max(0, (selectedInventario.total !== undefined && selectedInventario.total > 0 ? selectedInventario.total : (ordenes.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0))) - (selectedInventario?.descuento || 0)).toLocaleString('es-CO')}` : ''}
                   </RNText>
+
                 </View>
                 <View style={{ flexDirection: 'row' }}>
                   <TouchableOpacity onPress={handleExportImage} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#eff6ff', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
@@ -2120,23 +2167,93 @@ const InventarioScreen = ({ navigation }: any) => {
                 keyboardShouldPersistTaps="handled"
               >
                 {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && (
-                <View style={{ flexDirection: 'row', marginBottom: 16 }}>
-                  <View style={{ flex: 1, marginRight: 8 }}>
-                    <View className="bg-white rounded-xl p-3 items-center">
-                      <RNText className="text-xs text-gray-500">Sin comprar</RNText>
-                      <RNText className="text-lg font-bold text-red-600 mt-1">{ordenesNoComprados.length}</RNText>
-                      <RNText className="text-xs text-gray-400">${totalNoComprados.toLocaleString('es-CO')}</RNText>
+                  <>
+                    <View style={{ flexDirection: 'row', marginBottom: 16 }}>
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <View className="bg-white rounded-xl p-3 items-center">
+                          <RNText className="text-xs text-gray-500">Sin comprar</RNText>
+                          <RNText className="text-lg font-bold text-red-600 mt-1">{ordenesNoComprados.length}</RNText>
+                          <RNText className="text-xs text-gray-400">${totalNoComprados.toLocaleString('es-CO')}</RNText>
+                        </View>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <View className="bg-white rounded-xl p-3 items-center">
+                          <RNText className="text-xs text-gray-500">Comprados</RNText>
+                          <RNText className="text-lg font-bold text-green-600 mt-1">{ordenesComprados.length}</RNText>
+                          <RNText className="text-xs text-gray-400">${totalComprados.toLocaleString('es-CO')}</RNText>
+                        </View>
+                      </View>
                     </View>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <View className="bg-white rounded-xl p-3 items-center">
-                      <RNText className="text-xs text-gray-500">Comprados</RNText>
-                      <RNText className="text-lg font-bold text-green-600 mt-1">{ordenesComprados.length}</RNText>
-                      <RNText className="text-xs text-gray-400">${totalComprados.toLocaleString('es-CO')}</RNText>
+
+                    <View style={{ marginBottom: 16, backgroundColor: '#fff', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#e5e7eb' }}>
+                      {isEditingDescuento ? (
+                        <View>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                            <RNText style={{ fontSize: 14, fontWeight: '600', color: '#374151' }}>Monto del descuento</RNText>
+                            <TouchableOpacity onPress={() => setIsEditingDescuento(false)} style={{ padding: 4 }}>
+                              <Ionicons name="close" size={20} color="#9ca3af" />
+                            </TouchableOpacity>
+                          </View>
+                          
+                          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', borderRadius: 12, paddingHorizontal: 16, height: 64, borderWidth: 1, borderColor: '#d1d5db', marginBottom: 12 }}>
+                            <RNText style={{ color: '#4b5563', fontSize: 24, fontWeight: '600', marginRight: 8 }}>$</RNText>
+                            <TextInput
+                              style={{ flex: 1, color: '#111827', fontSize: 28, fontWeight: 'bold', padding: 0 }}
+                              value={descuentoInputValue}
+                              onChangeText={(text) => {
+                                const numericValue = text.replace(/[^0-9]/g, '');
+                                setDescuentoInputValue(numericValue ? Number(numericValue).toLocaleString('es-CO') : '');
+                              }}
+                              keyboardType="numeric"
+                              placeholder="0"
+                              placeholderTextColor="#9ca3af"
+                              autoFocus
+                            />
+                          </View>
+
+                          <TouchableOpacity 
+                            onPress={handleUpdateDescuento} 
+                            disabled={saving} 
+                            style={{ height: 48, borderRadius: 12, backgroundColor: '#22c55e', alignItems: 'center', justifyContent: 'center', flexDirection: 'row' }}
+                          >
+                            {saving ? <ActivityIndicator size="small" color="#fff" /> : (
+                              <>
+                                <Ionicons name="checkmark-circle" size={20} color="#fff" style={{ marginRight: 8 }} />
+                                <RNText style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Guardar Descuento</RNText>
+                              </>
+                            )}
+                          </TouchableOpacity>
+                        </View>
+                      ) : (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
+                            <View style={{ width: 36, height: 36, borderRadius: 8, backgroundColor: '#fef2f2', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                              <Ionicons name="pricetag" size={18} color="#ef4444" />
+                            </View>
+                            <View style={{ flexShrink: 1 }}>
+                              <RNText style={{ fontSize: 12, color: '#6b7280', fontWeight: '500' }}>Descuento aplicado</RNText>
+                              <RNText style={{ fontSize: 16, fontWeight: '700', color: selectedInventario?.descuento > 0 ? '#ef4444' : '#111827' }} numberOfLines={1}>
+                                {selectedInventario?.descuento > 0 ? `-$${selectedInventario.descuento.toLocaleString('es-CO')}` : '$0'}
+                              </RNText>
+                            </View>
+                          </View>
+
+                          <TouchableOpacity 
+                            onPress={() => {
+                              setDescuentoInputValue(selectedInventario?.descuento ? selectedInventario.descuento.toString() : '');
+                              setIsEditingDescuento(true);
+                            }}
+                            style={{ paddingHorizontal: 16, paddingVertical: 8, backgroundColor: '#f3f4f6', borderRadius: 8, marginLeft: 12 }}
+                          >
+                            <RNText style={{ fontSize: 13, fontWeight: '600', color: '#374151' }}>
+                              {selectedInventario?.descuento > 0 ? 'Editar' : 'Agregar'}
+                            </RNText>
+                          </TouchableOpacity>
+                        </View>
+                      )}
                     </View>
-                  </View>
-                </View>
-              )}
+                  </>
+                )}
 
               {getProveedores().length > 0 && (
                 <View style={{ marginBottom: 16 }}>
@@ -2283,7 +2400,7 @@ const InventarioScreen = ({ navigation }: any) => {
                 </RNText>
                 {(selectedInventario.tipo?.toLowerCase() === 'entradas' || selectedInventario.tipo?.toLowerCase() === 'entrada') && (
                   <RNText style={{ fontSize: 16, fontWeight: '700', color: '#16a34a', marginTop: 8 }}>
-                    Total: ${(selectedInventario.total !== undefined && selectedInventario.total > 0 ? selectedInventario.total : (ordenes.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0))).toLocaleString('es-CO')}
+                    Total: ${(Math.max(0, (selectedInventario.total !== undefined && selectedInventario.total > 0 ? selectedInventario.total : (ordenes.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0))) - (selectedInventario.descuento || 0))).toLocaleString('es-CO')}
                   </RNText>
                 )}
               </View>
@@ -2690,6 +2807,7 @@ const InventarioScreen = ({ navigation }: any) => {
           {selectedOrdenItem && (
             <View style={{ flex: 1 }} {...detailPanResponder.panHandlers}>
               <ScrollView style={{ flex: 1, padding: 16 }}
+                keyboardShouldPersistTaps="handled"
                 refreshControl={
                   <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />
                 }
@@ -2699,7 +2817,7 @@ const InventarioScreen = ({ navigation }: any) => {
                 <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#e5e7eb', marginBottom: 16 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                     <RNText style={{ fontSize: 16, fontWeight: '700', color: '#111827' }}>Seleccionar nuevo insumo</RNText>
-                    <TouchableOpacity onPress={() => setIsChangingInsumo(false)}>
+                    <TouchableOpacity onPress={() => { setIsChangingInsumo(false); setPendingNewInsumoId(null); }}>
                       <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Cancelar</RNText>
                     </TouchableOpacity>
                   </View>
@@ -2732,28 +2850,23 @@ const InventarioScreen = ({ navigation }: any) => {
 
                   <View style={{ maxHeight: 300, marginTop: 8 }}>
                     <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
-                      {insumos
-                        .filter(i => {
-                          const matchText = (i.nombre || i.Nombre || '').toLowerCase().includes(changeInsumoSearchText.toLowerCase());
-                          const cat = i.nombreCategoria || i.NombreCategoria || i.categoriaNombre || i.Categoria;
-                          const matchCat = changeInsumoCategoriaFilter ? (cat || 'Sin categoría') === changeInsumoCategoriaFilter : true;
-                          return matchText && matchCat;
-                        })
-                        .slice(0, 20)
-                        .map(insumo => (
+                      {filteredChangeInsumos.map(insumo => {
+                        const catName = insumo.nombreCategoria || insumo.NombreCategoria || insumo.categoriaNombre || insumo.Categoria || 'Sin categoría';
+                        const isSelected = pendingNewInsumoId === insumo.IDalimentos;
+                        return (
                           <TouchableOpacity
                             key={insumo.IDalimentos}
-                            style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#e5e7eb', flexDirection: 'row', alignItems: 'center' }}
-                            onPress={() => {
-                              showAlert({
-                                type: 'confirm',
-                                title: 'Confirmar Cambio',
-                                message: `¿Estás seguro de cambiar el insumo actual por "${insumo.nombre || insumo.Nombre}"?`,
-                                confirmText: 'Guardar',
-                                onConfirm: () => handleChangeInsumo(insumo.IDalimentos),
-                                onCancel: () => {}
-                              });
+                            style={{ 
+                              paddingVertical: 10, 
+                              borderBottomWidth: 1, 
+                              borderBottomColor: '#e5e7eb', 
+                              flexDirection: 'row', 
+                              alignItems: 'center',
+                              backgroundColor: isSelected ? '#eff6ff' : 'transparent',
+                              paddingHorizontal: isSelected ? 8 : 0,
+                              borderRadius: isSelected ? 8 : 0
                             }}
+                            onPress={() => setPendingNewInsumoId(insumo.IDalimentos)}
                           >
                             <View style={{ width: 44, height: 44, borderRadius: 8, backgroundColor: '#f3f4f6', marginRight: 12, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                               {getInsumoImage(insumo.IDalimentos) ? (
@@ -2768,12 +2881,35 @@ const InventarioScreen = ({ navigation }: any) => {
                             </View>
                             <View style={{ flex: 1 }}>
                               <RNText style={{ fontSize: 15, fontWeight: '600', color: '#1f2937' }}>{insumo.nombre || insumo.Nombre}</RNText>
-                              <RNText style={{ fontSize: 12, color: '#6b7280' }}>{insumo.nombreCategoria || insumo.NombreCategoria}</RNText>
+                              <RNText style={{ fontSize: 12, color: '#6b7280' }}>{catName}</RNText>
                             </View>
+                            {isSelected && (
+                              <Ionicons name="checkmark-circle" size={24} color="#3b82f6" />
+                            )}
                           </TouchableOpacity>
-                        ))}
+                        );
+                      })}
                     </ScrollView>
                   </View>
+                  {pendingNewInsumoId && (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 }}>
+                      <TouchableOpacity 
+                        style={{ flex: 1, backgroundColor: '#f3f4f6', paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginRight: 8 }}
+                        onPress={() => setPendingNewInsumoId(null)}
+                      >
+                        <RNText style={{ color: '#4b5563', fontWeight: '600', fontSize: 15 }}>Cancelar</RNText>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={{ flex: 1, backgroundColor: '#3b82f6', paddingVertical: 12, borderRadius: 12, alignItems: 'center', marginLeft: 8 }}
+                        onPress={() => {
+                          handleChangeInsumo(pendingNewInsumoId);
+                          setPendingNewInsumoId(null);
+                        }}
+                      >
+                        <RNText style={{ color: '#fff', fontWeight: '600', fontSize: 15 }}>Guardar</RNText>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                 </View>
               ) : (
               <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#e5e7eb', marginBottom: 16 }}>
