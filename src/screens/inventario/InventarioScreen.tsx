@@ -2202,7 +2202,7 @@ const InventarioScreen = ({ navigation }: any) => {
                               value={descuentoInputValue}
                               onChangeText={(text) => {
                                 const numericValue = text.replace(/[^0-9]/g, '');
-                                setDescuentoInputValue(numericValue ? Number(numericValue).toLocaleString('es-CO') : '');
+                                setDescuentoInputValue(numericValue ? numericValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".") : '');
                               }}
                               keyboardType="numeric"
                               placeholder="0"
