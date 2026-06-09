@@ -8,6 +8,8 @@ import { getComentarios, createComentario, updateComentario, deleteComentario, C
 import Toast from 'react-native-toast-message';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useCustomAlert } from '../../context/CustomAlertContext';
+import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+const FlashList = OriginalFlashList as any;
 
 const ComentariosScreen = ({ navigation }: any) => {
   const { showAlert } = useCustomAlert();
@@ -188,15 +190,6 @@ const handleDelete = (id: string) => {
                   placeholder="ej: Adicional"
                   placeholderTextColor="#9ca3af"
                 />
-                {uniqueTipos.length > 0 && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
-                    {uniqueTipos.map(t => (
-                      <TouchableOpacity key={t} style={styles.tipoChip} onPress={() => setTipo(t)}>
-                        <Text style={styles.tipoChipText}>{t}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </ScrollView>
-                )}
               </View>
               <View style={[styles.inputGroup, { flex: 1, marginLeft: 8 }]}>
                 <Text style={styles.label}>Precio (+ o -)</Text>
@@ -210,6 +203,16 @@ const handleDelete = (id: string) => {
                 />
               </View>
             </View>
+
+            {uniqueTipos.length > 0 && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={[styles.chipsScroll, { marginBottom: 16, marginTop: -8 }]}>
+                {uniqueTipos.map(t => (
+                  <TouchableOpacity key={t} style={styles.tipoChip} onPress={() => setTipo(t)}>
+                    <Text style={styles.tipoChipText}>{t}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
 
             <View style={styles.formActions}>
               {editingId && (
@@ -227,13 +230,16 @@ const handleDelete = (id: string) => {
         {loading ? (
           <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 20 }} />
         ) : (
-          <FlatList
-            data={filteredComentarios}
-            keyExtractor={(item) => item.ID}
-            renderItem={renderItem}
-            contentContainerStyle={styles.listContent}
-            showsVerticalScrollIndicator={false}
-          />
+          <View style={{ flex: 1 }}>
+            <FlashList
+              data={filteredComentarios}
+              keyExtractor={(item: Comentario) => item.ID}
+              renderItem={renderItem}
+              estimatedItemSize={80}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+            />
+          </View>
         )}
       </KeyboardAvoidingView>
     </View>

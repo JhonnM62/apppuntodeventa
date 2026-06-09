@@ -9,6 +9,8 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { useSocketEvent } from '../../hooks/useSocketEvent';
 import { SocketEvent } from '../../types/socket.types';
 import { useCustomAlert } from '../../context/CustomAlertContext';
+import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+const FlashList = OriginalFlashList as any;
 
 const CategoriasScreen = () => {
   const { showAlert } = useCustomAlert();
@@ -176,10 +178,10 @@ const CategoriasScreen = () => {
         )}
       </View>
 
-      <FlatList
+      <FlashList
         data={categorias}
         renderItem={renderCategoria}
-        keyExtractor={(item) => item.IDcategoria}
+        keyExtractor={(item: CategoriaItem) => item.IDcategoria}
         contentContainerStyle={styles.listContent}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListEmptyComponent={

@@ -11,6 +11,8 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import NotificationCenterModal from '../../components/ui/NotificationCenterModal';
 import useCartStore from '../../store/useCartStore';
+import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+const FlashList = OriginalFlashList as any;
 
 const CARD_MARGIN = 10;
 
@@ -29,7 +31,7 @@ type MenuItem = {
 
 const MENU_ITEMS: MenuItem[] = [
   { id: '1', title: 'NUEVA VENTA', label: 'Agregar Producto', icon: 'cart', iconType: 'ionicons', route: 'NewSale', color: '#22C55E', permissionKey: 'ventas', permissionAction: 'create' },
-  { id: '11', title: 'PRODUCTOS', label: 'Gestión Productos', icon: 'food', iconType: 'materialcommunity', route: 'Productos', color: '#06B6D4', permissionKey: 'productos', permissionAction: 'read' },
+  { id: '3', title: 'PRODUCTOS', label: 'Gestión Productos', icon: 'food', iconType: 'materialcommunity', route: 'Productos', color: '#06B6D4', permissionKey: 'productos', permissionAction: 'read' },
   { id: '2', title: 'INSUMOS', label: 'Insumos', icon: 'food-variant', iconType: 'materialcommunity', route: 'Insumos', color: '#F59E0B', permissionKey: 'insumos', permissionAction: 'read' },
   { id: '4', title: 'INVENTARIOS', label: 'Inventario', icon: 'archive', iconType: 'ionicons', route: 'Inventario', color: '#3B82F6', permissionKey: 'inventario', permissionAction: 'read' },
   { id: '5', title: 'APERTURA Y CIERRE DE CAJA', label: 'Caja', icon: 'cash-register', iconType: 'materialcommunity', route: 'Caja', color: '#8B5CF6', permissionKey: 'caja', permissionAction: 'read' },
@@ -42,7 +44,7 @@ const MENU_ITEMS: MenuItem[] = [
 ];
 
 const MenuCard = ({ item, onPress }: { item: MenuItem; onPress: (item: MenuItem) => void }) => (
-  <View style={{ width: '50%', padding: CARD_MARGIN }}>
+  <View style={{ width: '100%', padding: CARD_MARGIN }}>
     <TouchableOpacity
       className="bg-card rounded-[20px] p-[14px] justify-between border shadow-sm"
       style={{ height: 200, borderColor: '#e5e7eb', backgroundColor: '#ffffff' }}
@@ -296,14 +298,14 @@ const HomeScreen = ({ navigation }: Props) => {
       />
 
       <View style={{ flex: 1, width: '100%', paddingTop: 12 }}>
-        <FlatList
+        <FlashList
             data={MENU_ITEMS.filter(checkPermission)}
-            renderItem={({ item }) => <MenuCard item={item} onPress={handlePress} />}
-            keyExtractor={item => item.id}
+            renderItem={({ item }: { item: MenuItem }) => <MenuCard item={item} onPress={handlePress} />}
+            keyExtractor={(item: MenuItem) => item.id}
           numColumns={2}
-          contentContainerStyle={{ paddingBottom: Platform.OS === 'ios' ? 100 : 80 }}
+          estimatedItemSize={220}
+          contentContainerStyle={{ paddingBottom: Platform.OS === 'ios' ? 100 : 80, paddingHorizontal: 10 }}
           showsVerticalScrollIndicator={false}
-          columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: 10 }}
         />
       </View>
     </View>

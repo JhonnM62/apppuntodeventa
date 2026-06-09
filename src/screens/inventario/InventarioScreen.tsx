@@ -214,52 +214,86 @@ const InventarioScreen = ({ navigation }: any) => {
     }
   }, [selectedOrdenItem, selectedInventario, ordenes, todasLasOrdenes]);
 
+  const latestDetailSwipeNavRef = useRef(handleSwipeNavigate);
+  useEffect(() => {
+    latestDetailSwipeNavRef.current = handleSwipeNavigate;
+  }, [handleSwipeNavigate]);
+
   const detailPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        return Math.abs(gestureState.dx) > 40 && Math.abs(gestureState.dy) < 30;
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => {
+        return Math.abs(gestureState.dx) > 30 && Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.5;
       },
       onPanResponderRelease: (evt, gestureState) => {
         if (gestureState.dx > 50) {
-          handleSwipeNavigate('prev'); 
+          latestDetailSwipeNavRef.current('prev'); 
         } else if (gestureState.dx < -50) {
-          handleSwipeNavigate('next'); 
+          latestDetailSwipeNavRef.current('next'); 
         }
       },
     })
   ).current;
 
   const handleSwipeInventarioNavigate = useCallback((direction: 'next' | 'prev') => {
-    if (!selectedInventario) return;
+    console.log('[DEBUG-SWIPE] handleSwipeInventarioNavigate called with direction:', direction);
+    if (!selectedInventario) {
+      console.log('[DEBUG-SWIPE] No selectedInventario');
+      return;
+    }
     const currentList = filteredInventarios;
-    if (!currentList || currentList.length === 0) return;
+    if (!currentList || currentList.length === 0) {
+      console.log('[DEBUG-SWIPE] currentList is empty or null');
+      return;
+    }
     
     const currentIndex = currentList.findIndex(i => i.IDinventario === selectedInventario.IDinventario);
-    if (currentIndex === -1) return;
+    console.log('[DEBUG-SWIPE] currentIndex:', currentIndex, 'list length:', currentList.length);
+    if (currentIndex === -1) {
+      console.log('[DEBUG-SWIPE] Current inventario not found in list');
+      return;
+    }
     
     if (direction === 'next' && currentIndex < currentList.length - 1) {
+      console.log('[DEBUG-SWIPE] Navigating NEXT to index:', currentIndex + 1);
       handleOpenDetail(currentList[currentIndex + 1]);
     } else if (direction === 'prev' && currentIndex > 0) {
+      console.log('[DEBUG-SWIPE] Navigating PREV to index:', currentIndex - 1);
       handleOpenDetail(currentList[currentIndex - 1]);
+    } else {
+      console.log('[DEBUG-SWIPE] At boundary, cannot navigate', direction);
     }
   }, [selectedInventario, filteredInventarios]);
 
-  const inventarioPanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        return Math.abs(gestureState.dx) > 40 && Math.abs(gestureState.dy) < 30;
-      },
-      onPanResponderRelease: (evt, gestureState) => {
-        if (gestureState.dx > 50) {
-          handleSwipeInventarioNavigate('prev'); 
-        } else if (gestureState.dx < -50) {
-          handleSwipeInventarioNavigate('next'); 
-        }
-      },
-    })
-  ).current;
+  const latestInventarioSwipeNavRef = useRef(handleSwipeInventarioNavigate);
+  useEffect(() => {
+    latestInventarioSwipeNavRef.current = handleSwipeInventarioNavigate;
+  }, [handleSwipeInventarioNavigate]);
+
+  const [swipeStartX, setSwipeStartX] = useState<number | null>(null);
+  const [swipeStartY, setSwipeStartY] = useState<number | null>(null);
+
+  const handleTouchStart = useCallback((e: any) => {
+    setSwipeStartX(e.nativeEvent.pageX);
+    setSwipeStartY(e.nativeEvent.pageY);
+  }, []);
+
+  const handleTouchEnd = useCallback((e: any) => {
+    if (swipeStartX === null || swipeStartY === null) return;
+    const dx = e.nativeEvent.pageX - swipeStartX;
+    const dy = e.nativeEvent.pageY - swipeStartY;
+    
+    // Si es un deslizamiento predominantemente horizontal
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx > 50) {
+        latestInventarioSwipeNavRef.current('prev'); 
+      } else if (dx < -50) {
+        latestInventarioSwipeNavRef.current('next'); 
+      }
+    }
+    setSwipeStartX(null);
+    setSwipeStartY(null);
+  }, [swipeStartX, swipeStartY]);
 
   useEffect(() => {
     Animated.loop(
@@ -2106,7 +2140,8 @@ const InventarioScreen = ({ navigation }: any) => {
 
       <Modal visible={showDetailModal} animationType="slide" onRequestClose={handleCloseDetailModal}>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}>
-          <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }} edges={['top']} {...inventarioPanResponder.panHandlers}>
+          <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }} edges={['top']}>
+            <View style={{ flex: 1 }} onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
           <View className="bg-white px-4 py-4 border-b border-gray-200 flex-row items-center justify-between">
             {selectionMode ? (
               <>
@@ -2383,8 +2418,9 @@ const InventarioScreen = ({ navigation }: any) => {
               <View style={{ height: 20 }} />
             </ScrollView>
             )}
+            </View>
           </View>
-        </SafeAreaView>
+          </SafeAreaView>
         </KeyboardAvoidingView>
       </Modal>
 

@@ -23,6 +23,8 @@ import { Text } from '../../components/ui/text';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Card } from '../../components/ui/card';
+import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+const FlashList = OriginalFlashList as any;
 import { insumosService, InsumoItem, CreateInsumoDto } from '../../services/insumos';
 import { inventarioService } from '../../services/inventario';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -62,6 +64,14 @@ const InsumosScreen = ({ navigation }: Props) => {
   });
   const [showStockModal, setShowStockModal] = useState(false);
   const [filterStock, setFilterStock] = useState<'all' | 'critico' | 'normal' | 'sobrante'>('all');
+  const flashListRef = useRef<any>(null);
+
+  const handleFilterStockChange = (newFilter: 'all' | 'critico' | 'normal' | 'sobrante') => {
+    setFilterStock(newFilter);
+    if (flashListRef.current) {
+      flashListRef.current.scrollToOffset({ offset: 0, animated: true });
+    }
+  };
   const [selectedCategoriaFilter, setSelectedCategoriaFilter] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [stockLoading, setStockLoading] = useState(false);
@@ -796,7 +806,7 @@ if (status !== 'granted') {
               borderWidth: 1,
               borderColor: filterStock === 'all' ? '#10b981' : '#e5e7eb',
             }}
-            onPress={() => setFilterStock('all')}
+            onPress={() => handleFilterStockChange('all')}
           >
             <Ionicons name="layers-outline" size={16} color={filterStock === 'all' ? '#fff' : '#6b7280'} style={{ marginRight: 6 }} />
             <RNText style={{ fontSize: 13, fontWeight: '700', color: filterStock === 'all' ? '#fff' : '#4b5563' }}>
@@ -821,7 +831,7 @@ if (status !== 'granted') {
               borderWidth: 1,
               borderColor: filterStock === 'critico' ? '#ef4444' : '#e5e7eb',
             }}
-            onPress={() => setFilterStock('critico')}
+            onPress={() => handleFilterStockChange('critico')}
           >
             <Ionicons name="warning-outline" size={16} color={filterStock === 'critico' ? '#fff' : '#6b7280'} style={{ marginRight: 6 }} />
             <RNText style={{ fontSize: 13, fontWeight: '700', color: filterStock === 'critico' ? '#fff' : '#4b5563' }}>
@@ -846,7 +856,7 @@ if (status !== 'granted') {
               borderWidth: 1,
               borderColor: filterStock === 'normal' ? '#22c55e' : '#e5e7eb',
             }}
-            onPress={() => setFilterStock('normal')}
+            onPress={() => handleFilterStockChange('normal')}
           >
             <Ionicons name="checkmark-circle-outline" size={16} color={filterStock === 'normal' ? '#fff' : '#6b7280'} style={{ marginRight: 6 }} />
             <RNText style={{ fontSize: 13, fontWeight: '700', color: filterStock === 'normal' ? '#fff' : '#4b5563' }}>
@@ -870,7 +880,7 @@ if (status !== 'granted') {
               borderWidth: 1,
               borderColor: filterStock === 'sobrante' ? '#3b82f6' : '#e5e7eb',
             }}
-            onPress={() => setFilterStock('sobrante')}
+            onPress={() => handleFilterStockChange('sobrante')}
           >
             <Ionicons name="trending-up-outline" size={16} color={filterStock === 'sobrante' ? '#fff' : '#6b7280'} style={{ marginRight: 6 }} />
             <RNText style={{ fontSize: 13, fontWeight: '700', color: filterStock === 'sobrante' ? '#fff' : '#4b5563' }}>
@@ -1030,15 +1040,16 @@ if (status !== 'granted') {
         </View>
       </SafeAreaView>
 
-      <FlatList
+      <FlashList
+        ref={flashListRef}
         data={filteredInsumos}
         renderItem={renderInsumoItem}
-        keyExtractor={(item) => item.IDalimentos}
+        keyExtractor={(item: InsumoItem) => item.IDalimentos}
         onScroll={handleScroll}
         keyboardShouldPersistTaps="handled"
         ListHeaderComponent={renderHeader()}
-        contentContainerStyle={{ paddingBottom: 100 }}
-        style={{ flex: 1, paddingHorizontal: 16 }}
+        estimatedItemSize={180}
+        contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: 16 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />}
         ListEmptyComponent={
           <View className="items-center justify-center py-16">
@@ -1335,7 +1346,7 @@ if (status !== 'granted') {
       </Modal>
 
       <Modal visible={showAlerts} animationType="slide" onRequestClose={() => setShowAlerts(false)} presentationStyle="pageSheet">
-        <SafeAreaView className="flex-1 bg-white">
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
           <View className="px-4 py-4 border-b border-gray-200 flex-row items-center justify-between">
             <RNText className="text-lg font-bold text-gray-900">Alertas de Stock</RNText>
             <TouchableOpacity onPress={() => setShowAlerts(false)} className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center">
@@ -1343,28 +1354,31 @@ if (status !== 'granted') {
             </TouchableOpacity>
           </View>
 
-          <FlatList
-            data={alertas}
-            keyExtractor={(item: any) => item.id}
-            contentContainerClassName="p-4"
-            renderItem={({ item }: any) => (
-              <Card className="mb-2 p-4 bg-red-50 border border-red-100">
-                <View className="flex-row items-center">
-                  <MaterialCommunityIcons name="alert-circle" size={24} color="#ef4444" />
-                  <View className="ml-3 flex-1">
-                    <RNText className="font-semibold text-gray-900">{item.insumo}</RNText>
-                    <RNText className="text-sm text-red-600 mt-1">{item.mensaje}</RNText>
+          <View style={{ flex: 1 }}>
+            <FlashList
+              data={alertas}
+              keyExtractor={(item: any) => item.id}
+              contentContainerStyle={{ padding: 16 }}
+              estimatedItemSize={80}
+              renderItem={({ item }: any) => (
+                <Card className="mb-2 p-4 bg-red-50 border border-red-100">
+                  <View className="flex-row items-center">
+                    <MaterialCommunityIcons name="alert-circle" size={24} color="#ef4444" />
+                    <View className="ml-3 flex-1">
+                      <RNText className="font-semibold text-gray-900">{item.insumo}</RNText>
+                      <RNText className="text-sm text-red-600 mt-1">{item.mensaje}</RNText>
+                    </View>
                   </View>
+                </Card>
+              )}
+              ListEmptyComponent={
+                <View className="items-center py-8">
+                  <MaterialCommunityIcons name="check-circle" size={48} color="#22c55e" />
+                  <RNText className="mt-2 text-gray-600 font-medium">No hay alertas</RNText>
                 </View>
-              </Card>
-            )}
-            ListEmptyComponent={
-              <View className="items-center py-8">
-                <MaterialCommunityIcons name="check-circle" size={48} color="#22c55e" />
-                <RNText className="mt-2 text-gray-600 font-medium">No hay alertas</RNText>
-              </View>
-            }
-          />
+              }
+            />
+          </View>
         </SafeAreaView>
       </Modal>
 

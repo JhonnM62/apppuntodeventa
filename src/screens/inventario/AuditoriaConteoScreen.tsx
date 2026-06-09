@@ -21,6 +21,8 @@ import { insumosService } from '../../services/insumos';
 import { useSocketEvent } from '../../hooks/useSocketEvent';
 import { SocketEvent } from '../../types/socket.types';
 import { useCustomAlert } from '../../context/CustomAlertContext';
+import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+const FlashList = OriginalFlashList as any;
 
 interface ConteoItem {
   fecha: string;
@@ -644,11 +646,11 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
             </Text>
           </View>
         ) : (
-          <FlatList
+          <FlashList
             style={{ flex: 1 }}
             data={filteredAndSortedInsumos}
             renderItem={renderInsumo}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item: InsumoAuditItem) => item.id}
             contentContainerStyle={{ padding: SPACING.md, paddingBottom: 80 }}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />

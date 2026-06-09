@@ -19,6 +19,8 @@ try { Print = require('expo-print'); } catch (e) { console.log('expo-print no di
 try { Sharing = require('expo-sharing'); } catch (e) { console.log('expo-sharing no disponible'); }
 
 import { useScrollDirection } from '../../hooks/useScrollDirection';
+import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+const FlashList = OriginalFlashList as any;
 
 export default function ReportesScreen({ navigation }: any) {
   const { reportesDineroGuardado, isLoading, fetchReportesDineroGuardado, crearReporte, eliminarReporte } = useReportesStore();
@@ -256,9 +258,9 @@ export default function ReportesScreen({ navigation }: any) {
           <ActivityIndicator size="large" color="#16a34a" />
         </View>
       ) : activeTab === 'DINERO_GUARDADO' ? (
-        <FlatList
+        <FlashList
           data={filteredCajas}
-          keyExtractor={(item) => item.FilterID}
+          keyExtractor={(item: ReporteFilter) => item.FilterID}
           onScroll={handleScroll}
           renderItem={renderItem}
           contentContainerStyle={{ padding: 16 }}
