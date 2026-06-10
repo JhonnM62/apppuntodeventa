@@ -23,8 +23,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "Iniciando compilacion remota en el VPS ($VpsIp) con perfil: $Profile..." -ForegroundColor Cyan
-# Ejecutamos el script remoto pasándole el perfil
-ssh ${VpsUser}@${VpsIp} "cd $VpsProjectDir && bash scripts/compile-vps.sh $Profile"
+# Ejecutamos el script remoto pasándole el perfil con ServerAliveInterval para evitar desconexiones por inactividad
+ssh -o ServerAliveInterval=30 -o ServerAliveCountMax=120 ${VpsUser}@${VpsIp} "cd $VpsProjectDir && bash scripts/compile-vps.sh $Profile"
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ERROR: La compilacion en el VPS fallo o el script no existe. Abortando proceso." -ForegroundColor Red
