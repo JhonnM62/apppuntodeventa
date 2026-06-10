@@ -13,6 +13,15 @@ if (!(Test-Path -Path $LocalApkFolder)) {
     New-Item -ItemType Directory -Force -Path $LocalApkFolder
 }
 
+Write-Host "Sincronizando el codigo fuente en el VPS..." -ForegroundColor Cyan
+# Traemos los cambios del repo y le damos permisos al script desde Windows directamente
+ssh ${VpsUser}@${VpsIp} "cd $VpsProjectDir && git reset --hard && git pull && chmod +x scripts/compile-vps.sh"
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERROR: No se pudo sincronizar el codigo con GitHub en el VPS." -ForegroundColor Red
+    exit 1
+}
+
 Write-Host "Iniciando compilacion remota en el VPS ($VpsIp) con perfil: $Profile..." -ForegroundColor Cyan
 # Ejecutamos el script remoto pasándole el perfil
 ssh ${VpsUser}@${VpsIp} "cd $VpsProjectDir && bash scripts/compile-vps.sh $Profile"

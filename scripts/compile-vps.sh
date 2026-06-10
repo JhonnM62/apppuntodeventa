@@ -39,11 +39,7 @@ fi
 
 cd $PROJECT_DIR
 
-echo "[3/6] Actualizando código fuente (git pull)..."
-git reset --hard
-git pull
-
-echo "[4/6] Instalando dependencias de NPM..."
+echo "[3/6] Instalando dependencias de NPM..."
 # Intentar instalación normal. Si falla, limpiar caché y reinstalar forzado.
 npm install || { 
   echo "⚠️ Falló la instalación de paquetes. Limpiando caché y reintentando..."
@@ -52,14 +48,14 @@ npm install || {
   npm install
 }
 
-echo "[5/6] Construyendo APK (EAS Build Local)..."
+echo "[4/6] Construyendo APK (EAS Build Local)..."
 # Borramos APKs viejos para evitar confusiones
 rm -f *.apk
 npx eas-cli build --platform android --profile "$PROFILE" --local --non-interactive
 
 LATEST_APK=$(ls -t *.apk | head -n 1)
 
-echo "[6/6] Limpiando memoria RAM residual..."
+echo "[5/6] Limpiando memoria RAM residual..."
 pkill -9 -f java || true
 swapoff -a && swapon -a || true
 
