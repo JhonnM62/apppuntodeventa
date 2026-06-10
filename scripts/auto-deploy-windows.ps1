@@ -31,16 +31,13 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-Write-Host "Buscando el nombre del APK generado..." -ForegroundColor Cyan
-$ApkName = ssh ${VpsUser}@${VpsIp} "cd $VpsProjectDir && ls -t *.apk | head -n 1"
+Write-Host "Descargando el APK a tu computadora local..." -ForegroundColor Cyan
+scp "${VpsUser}@${VpsIp}:${VpsProjectDir}/*.apk" "$LocalApkFolder\"
 
-if ([string]::IsNullOrWhiteSpace($ApkName)) {
-    Write-Host "ERROR: No se encontro ningun APK en el servidor." -ForegroundColor Red
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERROR: No se pudo descargar el APK del servidor." -ForegroundColor Red
     exit 1
 }
-
-Write-Host "Descargando el archivo $ApkName a tu computadora local..." -ForegroundColor Cyan
-scp "${VpsUser}@${VpsIp}:${VpsProjectDir}/${ApkName}" "$LocalApkFolder\"
 
 Write-Host "=============================================" -ForegroundColor Green
 Write-Host "¡EXITO! Tu APK esta listo en:" -ForegroundColor Green

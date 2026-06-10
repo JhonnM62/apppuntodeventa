@@ -80,9 +80,8 @@ npx eas-cli build --platform android --profile "$PROFILE" --local --non-interact
 
 LATEST_APK=$(ls -t *.apk | head -n 1)
 
-echo "[7/7] Limpiando memoria RAM residual..."
+echo "[7/7] Limpiando procesos pesados de RAM..."
 pkill -9 -f java || true
-swapoff -a && swapon -a || true
 
 echo "================================================="
 echo "✅ COMPILACIÓN FINALIZADA: $LATEST_APK"
