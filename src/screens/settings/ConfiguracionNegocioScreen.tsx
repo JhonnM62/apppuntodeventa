@@ -10,6 +10,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getConfiguracion, updateConfiguracion, getConfiguracionWhatsapp, updateConfiguracionWhatsapp } from '../../services/configuracion';
 import { getConfiguracionIA, updateConfiguracionIA } from '../../services/api';
 
+let Location: any;
+try {
+  Location = require('expo-location');
+} catch (e) {
+  console.warn('expo-location no está disponible de forma nativa aún');
+}
+
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'ConfiguracionNegocio'>;
 };
@@ -26,6 +33,9 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const [nit, setNit] = useState('');
   const [direccion, setDireccion] = useState('');
   const [telefono, setTelefono] = useState('');
+  const [latitudNegocio, setLatitudNegocio] = useState('');
+  const [longitudNegocio, setLongitudNegocio] = useState('');
+  const [radioGeocercaM, setRadioGeocercaM] = useState('100');
   
   // Estados para IA
   const [iaConfig, setIaConfig] = useState({
@@ -90,6 +100,9 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         if (dataNegocio.nit) setNit(dataNegocio.nit);
         if (dataNegocio.direccion) setDireccion(dataNegocio.direccion);
         if (dataNegocio.telefono) setTelefono(dataNegocio.telefono);
+        if (dataNegocio.latitudNegocio !== null && dataNegocio.latitudNegocio !== undefined) setLatitudNegocio(String(dataNegocio.latitudNegocio));
+        if (dataNegocio.longitudNegocio !== null && dataNegocio.longitudNegocio !== undefined) setLongitudNegocio(String(dataNegocio.longitudNegocio));
+        if (dataNegocio.radioGeocercaM !== null && dataNegocio.radioGeocercaM !== undefined) setRadioGeocercaM(String(dataNegocio.radioGeocercaM));
       }
 
       const dataIA = resIA.data ? resIA.data : resIA;
@@ -126,7 +139,12 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     try {
       setSaving(true);
       await Promise.all([
-        updateConfiguracion({ horaCorteDia, modoOperacion, nombreComercial, nit, direccion, telefono }),
+        updateConfiguracion({ 
+          horaCorteDia, modoOperacion, nombreComercial, nit, direccion, telefono,
+          latitudNegocio: latitudNegocio ? parseFloat(latitudNegocio) : undefined,
+          longitudNegocio: longitudNegocio ? parseFloat(longitudNegocio) : undefined,
+          radioGeocercaM: radioGeocercaM ? parseInt(radioGeocercaM, 10) : 100
+        }),
         updateConfiguracionIA({
           apiKey: iaConfig.apiKey,
           modeloDefecto: iaConfig.modeloDefecto,
@@ -165,6 +183,25 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
 
   const openTimePicker = () => {
     setShowTimePicker(true);
+  };
+
+  const getLocation = async () => {
+    if (!Location) {
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Módulo de ubicación no disponible' });
+      return;
+    }
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      return Toast.show({ type: 'error', text1: 'Error', text2: 'Permiso de ubicación denegado' });
+    }
+    try {
+      const loc = await Location.getCurrentPositionAsync({});
+      setLatitudNegocio(String(loc.coords.latitude));
+      setLongitudNegocio(String(loc.coords.longitude));
+      Toast.show({ type: 'success', text1: 'Ubicación obtenida', text2: 'Coordenadas actualizadas' });
+    } catch (error) {
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo obtener la ubicación' });
+    }
   };
 
   if (loading) {
@@ -278,6 +315,62 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 8 }}>
             El modo Restaurante habilita el control de insumos por plato en los reportes de caja.
           </Text>
+        </View>
+
+        {/* GEOCERCA NÓMINA */}
+        <View style={[styles.card, { marginTop: 20, borderColor: '#fef08a', borderWidth: 1 }]}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+            <View style={[styles.iaIconContainer, { backgroundColor: '#fef9c3' }]}>
+              <Ionicons name="location" size={20} color="#ca8a04" />
+            </View>
+            <Text style={[styles.sectionTitleIA, { color: '#ca8a04' }]}>
+              Geocerca de Nómina
+            </Text>
+          </View>
+          
+          <View style={[styles.infoCardIA, { backgroundColor: '#fefce8' }]}>
+            <Ionicons name="information-circle" size={24} color="#ca8a04" />
+            <Text style={[styles.infoTextIA, { color: '#a16207' }]}>
+              Configura las coordenadas del negocio para validar que los empleados estén en el sitio al momento de registrar su asistencia (Check-In / Check-Out).
+            </Text>
+          </View>
+
+          <TouchableOpacity style={[styles.timePickerButton, { backgroundColor: '#fef9c3', borderColor: '#fde047', marginBottom: 16 }]} onPress={getLocation}>
+            <Ionicons name="locate" size={24} color="#ca8a04" style={{ marginRight: 10 }} />
+            <Text style={[styles.timePickerText, { color: '#ca8a04', fontSize: 16 }]}>Fijar con mi ubicación actual</Text>
+          </TouchableOpacity>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={styles.label}>Latitud</Text>
+              <TextInput
+                style={styles.input}
+                value={latitudNegocio}
+                onChangeText={setLatitudNegocio}
+                placeholder="Ej. 6.2442"
+                keyboardType="numeric"
+              />
+            </View>
+            <View style={{ flex: 1, marginLeft: 8 }}>
+              <Text style={styles.label}>Longitud</Text>
+              <TextInput
+                style={styles.input}
+                value={longitudNegocio}
+                onChangeText={setLongitudNegocio}
+                placeholder="Ej. -75.5812"
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
+          
+          <Text style={[styles.label, { marginTop: 12 }]}>Radio de tolerancia (Metros)</Text>
+          <TextInput
+            style={styles.input}
+            value={radioGeocercaM}
+            onChangeText={(text) => setRadioGeocercaM(text.replace(/[^0-9]/g, ''))}
+            placeholder="Ej. 100"
+            keyboardType="numeric"
+          />
         </View>
 
         {/* INTELIGENCIA ARTIFICIAL */}

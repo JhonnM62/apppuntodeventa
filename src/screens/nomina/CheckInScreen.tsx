@@ -95,8 +95,8 @@ export default function CheckInScreen({ navigation }: any) {
   };
 
   const handleAction = async () => {
-    if (!turnoActivo && !fotoUri) {
-      return showAlert({ type: 'error', title: 'Foto Requerida', message: 'Debes tomarte una foto para iniciar el turno' });
+    if (!fotoUri) {
+      return showAlert({ type: 'error', title: 'Foto Requerida', message: 'Debes tomarte una foto para registrar tu asistencia (tanto al iniciar como al finalizar el turno).' });
     }
 
     if (turnoActivo && ceno === null) {
@@ -117,12 +117,18 @@ export default function CheckInScreen({ navigation }: any) {
         showAlert({ type: 'success', title: 'Éxito', message: 'Turno iniciado correctamente' });
       } else {
         // FIN TURNO
-        await registrarSalida(turnoActivo.IDturno, {
+        const res = await registrarSalida(turnoActivo.IDturno, {
           latitud: currentLoc?.latitud,
           longitud: currentLoc?.longitud,
-          ceno: ceno!
+          ceno: ceno!,
+          fotoUri: fotoUri
         });
-        showAlert({ type: 'success', title: 'Éxito', message: 'Turno finalizado correctamente' });
+        
+        if (res?.alertaGeocerca) {
+          showAlert({ type: 'warning', title: 'Atención: Ubicación', message: res.alertaGeocerca });
+        } else {
+          showAlert({ type: 'success', title: 'Éxito', message: 'Turno finalizado correctamente' });
+        }
       }
       
       setFotoUri(null);
@@ -170,10 +176,8 @@ export default function CheckInScreen({ navigation }: any) {
           </Card>
 
           <View style={styles.actionSection}>
-            <Text style={styles.sectionTitle}>PASO 1: FOTO (Opcional en salida)</Text>
-            {!turnoActivo && (
-              <Text style={styles.instruction}>Obligatorio para iniciar turno. Muestra tu rostro claramente.</Text>
-            )}
+            <Text style={styles.sectionTitle}>PASO 1: FOTO OBLIGATORIA</Text>
+            <Text style={styles.instruction}>Obligatorio para iniciar y cerrar turno. Muestra tu rostro claramente.</Text>
             
             <TouchableOpacity style={styles.photoBox} onPress={takePhoto}>
               {fotoUri ? (

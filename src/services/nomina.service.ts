@@ -86,10 +86,32 @@ export const registrarEntrada = async (params: {
 export const registrarSalida = async (id: string, params: {
   latitud?: number;
   longitud?: number;
+  fotoUri?: string;
   ceno: boolean;
   notaDeCena?: string;
 }) => {
-  const { data } = await api.patch(`/nomina/turno/${id}/salida`, params);
+  const formData = new FormData();
+  formData.append('ceno', String(params.ceno));
+  
+  if (params.latitud !== undefined) formData.append('latitud', String(params.latitud));
+  if (params.longitud !== undefined) formData.append('longitud', String(params.longitud));
+  if (params.notaDeCena) formData.append('observacion', params.notaDeCena);
+
+  if (params.fotoUri) {
+    const filename = params.fotoUri.split('/').pop() || 'selfie_out.jpg';
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : 'image/jpeg';
+    
+    formData.append('foto', {
+      uri: params.fotoUri,
+      name: filename,
+      type,
+    } as any);
+  }
+
+  const { data } = await api.patch(`/nomina/turno/${id}/salida`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
   return data;
 };
 

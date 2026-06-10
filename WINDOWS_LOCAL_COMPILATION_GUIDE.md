@@ -53,6 +53,13 @@ cd C:\APIS_v2.3\puntodeventafront\scripts
 .\auto-deploy-windows.ps1
 ```
 
+Si necesitas compilar un perfil específico (por ejemplo, el entorno de desarrollo), puedes pasar el parámetro `-Profile` así:
+
+```powershell
+cd C:\APIS_v2.3\puntodeventafront\scripts
+.\auto-deploy-windows.ps1 -Profile development
+```
+
 *(Si PowerShell te dice "No se puede cargar el archivo porque la ejecución de scripts está deshabilitada", corre este comando una sola vez como Administrador: `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`)*.
 
-El script se conectará al VPS, compilará, limpiará la RAM, descargará el APK automáticamente a `C:\Users\Administrador\Documents\apk's` y terminará.
+El script se conectará al VPS, compilará con el perfil especificado (o "preview" por defecto), limpiará la RAM, descargará el APK automáticamente a `C:\Users\Administrador\Documents\apk's` y terminará.

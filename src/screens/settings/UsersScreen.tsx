@@ -6,6 +6,7 @@ import useAuthStore from '../../store/useAuthStore';
 import { Text } from '../../components/ui/text';
 import api from '../../services/api';
 import { useCustomAlert } from '../../context/CustomAlertContext';
+import { getCargos, Cargo } from '../../services/cargos.service';
 
 const ROLES_DISPONIBLES = [
   { key: 'Admin app', label: 'Admin App', description: 'Administrador de la aplicación' },
@@ -67,6 +68,7 @@ type UsuarioItem = {
   direccion?: string;
   rol: string;
   isActive: boolean;
+  cargoId?: string;
   permisos?: Record<string, ModuloPermissions>;
   createdAt?: string;
 };
@@ -86,6 +88,7 @@ type EditFormData = {
   direccion: string;
   rol: string;
   isActive: boolean;
+  cargoId?: string;
   modulos: Record<string, ModuloPermissions>;
 };
 
@@ -109,6 +112,7 @@ const UsersScreen = ({ navigation }: any) => {
     password: '',
     telefono: '',
     rol: '',
+    cargoId: '',
   });
 
   const [editFormData, setEditFormData] = useState<EditFormData>({
@@ -119,6 +123,7 @@ const UsersScreen = ({ navigation }: any) => {
     direccion: '',
     rol: '',
     isActive: true,
+    cargoId: '',
     modulos: {},
   });
 
@@ -126,13 +131,26 @@ const UsersScreen = ({ navigation }: any) => {
   const [editFormErrors, setEditFormErrors] = useState<Record<string, string>>({});
   const [selectedRol, setSelectedRol] = useState<string | null>(null);
   const [showRolDropdown, setShowRolDropdown] = useState(false);
+  const [cargos, setCargos] = useState<Cargo[]>([]);
+  const [showCargoDropdown, setShowCargoDropdown] = useState(false);
+  const [showEditCargoDropdown, setShowEditCargoDropdown] = useState(false);
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (isAdminApp) {
       fetchUsers();
+      fetchCargos();
     }
   }, [isAdminApp]);
+
+  const fetchCargos = async () => {
+    try {
+      const res = await getCargos();
+      setCargos(res.data || []);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -226,6 +244,7 @@ const UsersScreen = ({ navigation }: any) => {
         password: formData.password,
         telefono: formData.telefono.trim() || undefined,
         rol: formData.rol,
+        cargoId: formData.cargoId || undefined,
       });
 
       if (response?.data?.success || (response as any)?.success) {
@@ -265,6 +284,7 @@ const UsersScreen = ({ navigation }: any) => {
             direccion: editFormData.direccion.trim() || undefined,
             rol: editFormData.rol,
             isActive: editFormData.isActive,
+            cargoId: editFormData.cargoId || undefined,
             permisos: editFormData.modulos,
           });
 
@@ -323,6 +343,7 @@ const UsersScreen = ({ navigation }: any) => {
       direccion: userItem.direccion || '',
       rol: userItem.rol || '',
       isActive: userItem.isActive !== false,
+      cargoId: userItem.cargoId || '',
       modulos: userItem.permisos || {},
     });
     setEditFormErrors({});
@@ -339,6 +360,7 @@ const UsersScreen = ({ navigation }: any) => {
       telefono: user.telefono || undefined,
       rol: user.rol || '',
       isActive: true,
+      cargoId: (user as any).cargoId || '',
     };
 
     openEditModal(currentUserItem);
@@ -351,10 +373,12 @@ const UsersScreen = ({ navigation }: any) => {
       password: '',
       telefono: '',
       rol: '',
+      cargoId: '',
     });
     setSelectedRol(null);
     setFormErrors({});
     setShowPassword(false);
+    setShowCargoDropdown(false);
   };
 
   const generateRandomPassword = () => {
@@ -388,9 +412,11 @@ const UsersScreen = ({ navigation }: any) => {
       direccion: '',
       rol: '',
       isActive: true,
+      cargoId: '',
       modulos: {},
     });
     setEditFormErrors({});
+    setShowEditCargoDropdown(false);
   };
 
   const handleLogout = () => {
@@ -659,6 +685,48 @@ const UsersScreen = ({ navigation }: any) => {
               )}
             </View>
 
+            <View style={styles.inputGroup}>
+              <RNText style={styles.inputLabel}>Cargo (Nómina) - Opcional</RNText>
+              <TouchableOpacity
+                style={styles.inputContainer}
+                onPress={() => setShowCargoDropdown(!showCargoDropdown)}
+              >
+                <Ionicons name="card-outline" size={18} color="#6b7280" />
+                <RNText style={[styles.dropdownText, !formData.cargoId && styles.dropdownPlaceholder]}>
+                  {cargos.find(c => c.IDcargo === formData.cargoId)?.nombre || 'Sin cargo asignado'}
+                </RNText>
+                <Ionicons name="chevron-down" size={18} color="#6b7280" />
+              </TouchableOpacity>
+
+              {showCargoDropdown && (
+                <View style={styles.dropdownMenu}>
+                  <TouchableOpacity
+                    style={[styles.dropdownItem, !formData.cargoId && styles.dropdownItemActive]}
+                    onPress={() => {
+                      setFormData(prev => ({ ...prev, cargoId: '' }));
+                      setShowCargoDropdown(false);
+                    }}
+                  >
+                    <RNText style={[styles.dropdownItemText, !formData.cargoId && styles.dropdownItemTextActive]}>Sin cargo asignado</RNText>
+                  </TouchableOpacity>
+                  {cargos.map(cargo => (
+                    <TouchableOpacity
+                      key={cargo.IDcargo}
+                      style={[styles.dropdownItem, formData.cargoId === cargo.IDcargo && styles.dropdownItemActive]}
+                      onPress={() => {
+                        setFormData(prev => ({ ...prev, cargoId: cargo.IDcargo }));
+                        setShowCargoDropdown(false);
+                      }}
+                    >
+                      <RNText style={[styles.dropdownItemText, formData.cargoId === cargo.IDcargo && styles.dropdownItemTextActive]}>
+                        {cargo.nombre}
+                      </RNText>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+
             <View style={{ height: 120 }} />
           </ScrollView>
 
@@ -810,6 +878,48 @@ const UsersScreen = ({ navigation }: any) => {
                         {rol.label}
                       </RNText>
                       <RNText style={styles.dropdownItemDesc}>{rol.description}</RNText>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            <View style={styles.inputGroup}>
+              <RNText style={styles.inputLabel}>Cargo (Nómina) - Opcional</RNText>
+              <TouchableOpacity
+                style={styles.inputContainer}
+                onPress={() => setShowEditCargoDropdown(!showEditCargoDropdown)}
+              >
+                <Ionicons name="card-outline" size={18} color="#6b7280" />
+                <RNText style={[styles.dropdownText, !editFormData.cargoId && styles.dropdownPlaceholder]}>
+                  {cargos.find(c => c.IDcargo === editFormData.cargoId)?.nombre || 'Sin cargo asignado'}
+                </RNText>
+                <Ionicons name="chevron-down" size={18} color="#6b7280" />
+              </TouchableOpacity>
+
+              {showEditCargoDropdown && (
+                <View style={styles.dropdownMenu}>
+                  <TouchableOpacity
+                    style={[styles.dropdownItem, !editFormData.cargoId && styles.dropdownItemActive]}
+                    onPress={() => {
+                      setEditFormData(prev => ({ ...prev, cargoId: '' }));
+                      setShowEditCargoDropdown(false);
+                    }}
+                  >
+                    <RNText style={[styles.dropdownItemText, !editFormData.cargoId && styles.dropdownItemTextActive]}>Sin cargo asignado</RNText>
+                  </TouchableOpacity>
+                  {cargos.map(cargo => (
+                    <TouchableOpacity
+                      key={cargo.IDcargo}
+                      style={[styles.dropdownItem, editFormData.cargoId === cargo.IDcargo && styles.dropdownItemActive]}
+                      onPress={() => {
+                        setEditFormData(prev => ({ ...prev, cargoId: cargo.IDcargo }));
+                        setShowEditCargoDropdown(false);
+                      }}
+                    >
+                      <RNText style={[styles.dropdownItemText, editFormData.cargoId === cargo.IDcargo && styles.dropdownItemTextActive]}>
+                        {cargo.nombre}
+                      </RNText>
                     </TouchableOpacity>
                   ))}
                 </View>
