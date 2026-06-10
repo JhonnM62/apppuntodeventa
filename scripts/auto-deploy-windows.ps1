@@ -17,6 +17,11 @@ Write-Host "Iniciando compilacion remota en el VPS ($VpsIp) con perfil: $Profile
 # Ejecutamos el script remoto pasándole el perfil
 ssh ${VpsUser}@${VpsIp} "cd $VpsProjectDir && bash scripts/compile-vps.sh $Profile"
 
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ERROR: La compilacion en el VPS fallo o el script no existe. Abortando proceso." -ForegroundColor Red
+    exit 1
+}
+
 Write-Host "Buscando el nombre del APK generado..." -ForegroundColor Cyan
 $ApkName = ssh ${VpsUser}@${VpsIp} "cd $VpsProjectDir && ls -t *.apk | head -n 1"
 
