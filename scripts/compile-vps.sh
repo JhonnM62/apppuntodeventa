@@ -8,10 +8,16 @@ PROFILE=${1:-preview}
 cd $PROJECT_DIR
 
 echo "1. Traer ultimos cambios..."
+git reset --hard
 git pull
 
 echo "2. Instalar dependencias..."
-npm install
+npm install || { 
+  echo "⚠️ Falló la instalación de paquetes (posible caché corrupto). Limpiando e intentando de nuevo..."
+  npm cache clean --force
+  rm -rf node_modules package-lock.json
+  npm install
+}
 
 echo "3. Compilando APK (perfil: $PROFILE)..."
 npx eas-cli build --platform android --profile "$PROFILE" --local --non-interactive
