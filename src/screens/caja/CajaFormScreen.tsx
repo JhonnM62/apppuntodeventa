@@ -125,10 +125,24 @@ export default function CajaFormScreen({ route, navigation }: any) {
   
   const [isFreezeModalVisible, setIsFreezeModalVisible] = useState(false);
   const [pendingTab, setPendingTab] = useState<'form' | 'analysis' | 'cuadre' | null>(null);
+  const [pendingTabChange, setPendingTabChange] = useState<'form' | 'analysis' | 'cuadre' | null>(null);
   const pendingSaveRef = useRef<{ data: any, isFinalClose: boolean } | null>(null);
 
   const handleTabChange = (tab: 'form' | 'analysis' | 'cuadre') => {
-    const isCerrada = resumenData?.caja?.cierre?.toLowerCase() === 'cerrada';
+    // Check if there are unsaved changes in the form
+    const hasUnsavedChanges = Object.keys(dirtyFields || {}).length > 0;
+    
+    // Also check if any insumo is pending to be removed but not yet saved
+    const hasInsumosAEliminar = insumosAEliminar.length > 0;
+
+    const isCerrada = resumenData?.caja?.cierre?.toLowerCase() === 'cerrada' || verificacionCompletada;
+
+    if ((hasUnsavedChanges || hasInsumosAEliminar) && !isReadOnly && !saving && !isCerrada) {
+      setPendingTabChange(tab);
+      setGuardarModalVisible(true);
+      return;
+    }
+
     if ((tab === 'cuadre' || tab === 'analysis') && !isNew && !verificacionCompletada && !isCerrada) {
       setPendingTab(tab);
       setVerifyModalVisible(true);
@@ -204,7 +218,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [addQtyIndex, setAddQtyIndex] = useState<number | null>(null);
   const [addQtyAmount, setAddQtyAmount] = useState<string>('');
   
-  const { control, handleSubmit, reset, watch, formState: { errors }, setValue, getValues } = useForm({
+  const { control, handleSubmit, reset, watch, formState: { errors, dirtyFields }, setValue, getValues } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
       nombre: '',
@@ -2347,6 +2361,16 @@ export default function CajaFormScreen({ route, navigation }: any) {
                     if (pendingNavigationAction) {
                       allowNavigation.current = true;
                       navigation.dispatch(pendingNavigationAction);
+                    } else if (pendingTabChange) {
+                      const nextTab = pendingTabChange;
+                      setPendingTabChange(null);
+                      const isCerrada = resumenData?.caja?.cierre?.toLowerCase() === 'cerrada';
+                      if ((nextTab === 'cuadre' || nextTab === 'analysis') && !isNew && !verificacionCompletada && !isCerrada) {
+                        setPendingTab(nextTab);
+                        setVerifyModalVisible(true);
+                      } else {
+                        setActiveTab(nextTab);
+                      }
                     }
                   }, onError)();
                 }}
@@ -2364,6 +2388,16 @@ export default function CajaFormScreen({ route, navigation }: any) {
                     if (pendingNavigationAction) {
                       allowNavigation.current = true;
                       navigation.dispatch(pendingNavigationAction);
+                    } else if (pendingTabChange) {
+                      const nextTab = pendingTabChange;
+                      setPendingTabChange(null);
+                      const isCerrada = resumenData?.caja?.cierre?.toLowerCase() === 'cerrada';
+                      if ((nextTab === 'cuadre' || nextTab === 'analysis') && !isNew && !verificacionCompletada && !isCerrada) {
+                        setPendingTab(nextTab);
+                        setVerifyModalVisible(true);
+                      } else {
+                        setActiveTab(nextTab);
+                      }
                     }
                   }, onError)();
                 }}
@@ -2411,6 +2445,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 onPress={() => {
                   setGuardarModalVisible(false);
                   setPendingNavigationAction(null);
+                  setPendingTabChange(null);
                 }}
               >
                 <Text className="text-gray-700 font-bold">Cancelar</Text>

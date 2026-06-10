@@ -89,6 +89,40 @@ const MODULES = [
     color: '#ec4899',
     route: 'Comentarios',
   },
+  {
+    id: 'nomina_admin',
+    title: 'Nómina Admin',
+    description: 'Gestión de turnos y liquidaciones',
+    icon: 'cash-multiple',
+    color: '#10b981',
+    route: 'AdminNomina',
+    adminOnly: true,
+  },
+  {
+    id: 'cargos_admin',
+    title: 'Cargos y Salarios',
+    description: 'Definir cargos de empleados',
+    icon: 'badge-account-horizontal-outline',
+    color: '#f59e0b',
+    route: 'CargosList',
+    adminOnly: true,
+  },
+  {
+    id: 'mis_turnos',
+    title: 'Mis Turnos',
+    description: 'Historial de turnos y asistencias',
+    icon: 'calendar-clock',
+    color: '#3b82f6',
+    route: 'MisTurnos',
+  },
+  {
+    id: 'check_in',
+    title: 'Check-In / Salida',
+    description: 'Registrar entrada y salida',
+    icon: 'clock-check-outline',
+    color: '#8b5cf6',
+    route: 'CheckIn',
+  },
 ];
 
 const SettingsScreen = ({ navigation }: Props) => {

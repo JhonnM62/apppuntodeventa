@@ -55,6 +55,13 @@ import NotificationSettingsScreen from '../screens/settings/NotificationSettings
 import ConfiguracionNegocioScreen from '../screens/settings/ConfiguracionNegocioScreen';
 import ConfiguracionAvanzadaScreen from '../screens/settings/ConfiguracionAvanzadaScreen';
 
+// Nomina / Payroll
+import CheckInScreen from '../screens/nomina/CheckInScreen';
+import MisTurnosScreen from '../screens/nomina/MisTurnosScreen';
+import AdminNominaScreen from '../screens/nomina/AdminNominaScreen';
+import RepartoDescuentosScreen from '../screens/nomina/RepartoDescuentosScreen';
+import CargosListScreen from '../screens/cargos/CargosListScreen';
+
 export type RootStackParamList = {
   Login: undefined;
   Register: undefined;
@@ -92,6 +99,11 @@ export type RootStackParamList = {
   Clientes: undefined;
   ClienteDetail: { id: string } | undefined;
   ClienteForm: { id?: string } | undefined;
+  CheckIn: undefined;
+  MisTurnos: undefined;
+  AdminNomina: undefined;
+  RepartoDescuentos: undefined;
+  CargosList: undefined;
 };
 
 export type BottomTabParamList = {
@@ -279,6 +291,13 @@ const RootNavigator = () => {
             <Stack.Screen name="ReporteDetalle" component={ReporteDetalleScreen as any} />
             <Stack.Screen name="Productos" component={ProductosScreen as any} />
             <Stack.Screen name="ProductoDetail" component={ProductoDetailScreen as any} />
+
+            {/* Nómina */}
+            <Stack.Screen name="CheckIn" component={CheckInScreen as any} />
+            <Stack.Screen name="MisTurnos" component={MisTurnosScreen as any} />
+            <Stack.Screen name="AdminNomina" component={AdminNominaScreen as any} />
+            <Stack.Screen name="RepartoDescuentos" component={RepartoDescuentosScreen as any} />
+            <Stack.Screen name="CargosList" component={CargosListScreen as any} />
           </>
         )}
       </Stack.Navigator>
