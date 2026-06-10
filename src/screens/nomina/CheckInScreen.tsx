@@ -30,6 +30,7 @@ export default function CheckInScreen({ navigation }: any) {
   const [fotoUri, setFotoUri] = useState<string | null>(null);
   const [location, setLocation] = useState<{ latitud: number, longitud: number } | null>(null);
   const [ceno, setCeno] = useState<boolean | null>(null); // Only used when checking out
+  const [gettingLocation, setGettingLocation] = useState(false);
 
   const [saving, setSaving] = useState(false);
 
@@ -59,15 +60,20 @@ export default function CheckInScreen({ navigation }: any) {
       return showAlert({ type: 'error', title: 'Permiso Denegado', message: 'Se necesita acceso a la cámara para el registro facial' });
     }
 
-    const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.5,
-    });
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.5,
+        cameraType: ImagePicker.CameraType.front,
+      });
 
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      setFotoUri(result.assets[0].uri);
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setFotoUri(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.error(error);
+      showAlert({ type: 'error', title: 'Error Cámara', message: 'Hubo un problema al usar la cámara.' });
     }
   };
 
@@ -81,16 +87,21 @@ export default function CheckInScreen({ navigation }: any) {
       return showAlert({ type: 'error', title: 'Permiso Denegado', message: 'Se necesita ubicación para el check-in' });
     }
 
+    setGettingLocation(true);
     try {
-      const loc = await Location.getCurrentPositionAsync({});
+      // Intentamos con precisión alta
+      let loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
       setLocation({
         latitud: loc.coords.latitude,
         longitud: loc.coords.longitude
       });
       return { latitud: loc.coords.latitude, longitud: loc.coords.longitude };
     } catch (error) {
-      showAlert({ type: 'error', title: 'Error GPS', message: 'No se pudo obtener la ubicación actual' });
+      console.error(error);
+      showAlert({ type: 'error', title: 'Error GPS', message: 'No se pudo obtener la ubicación actual. Verifica que el GPS esté activo.' });
       return null;
+    } finally {
+      setGettingLocation(false);
     }
   };
 
@@ -156,7 +167,7 @@ export default function CheckInScreen({ navigation }: any) {
       {loading ? (
         <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 40 }} />
       ) : (
-        <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 120 }}>
+        <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 180 }}>
           <Card style={styles.statusCard}>
             <View style={styles.statusIconContainer}>
               <Ionicons 
@@ -192,12 +203,20 @@ export default function CheckInScreen({ navigation }: any) {
 
             <View style={{ marginTop: 24 }} />
             <Text style={styles.sectionTitle}>PASO 2: UBICACIÓN</Text>
-            <Button style={styles.locationBtn} onPress={getLocation} disabled={saving}>
-              <Ionicons name="location" size={20} color="#3b82f6" />
+            <TouchableOpacity 
+              style={[styles.locationBtn, (saving || gettingLocation) && { opacity: 0.7 }]} 
+              onPress={getLocation} 
+              disabled={saving || gettingLocation}
+            >
+              {gettingLocation ? (
+                <ActivityIndicator size="small" color="#3b82f6" />
+              ) : (
+                <Ionicons name="location" size={20} color="#3b82f6" />
+              )}
               <Text style={{ color: '#3b82f6', marginLeft: 8, fontWeight: '600' }}>
-                {location ? 'Ubicación capturada' : 'Obtener ubicación actual'}
+                {location ? `Ubicación: ${location.latitud.toFixed(5)}, ${location.longitud.toFixed(5)}` : 'Obtener ubicación actual'}
               </Text>
-            </Button>
+            </TouchableOpacity>
 
             {turnoActivo && (
               <>
@@ -221,15 +240,21 @@ export default function CheckInScreen({ navigation }: any) {
               </>
             )}
 
-            <Button 
-              style={[styles.mainActionBtn, { backgroundColor: turnoActivo ? '#ef4444' : '#4CAF50' }]} 
+            <TouchableOpacity 
+              style={[
+                styles.mainActionBtn, 
+                { backgroundColor: turnoActivo ? '#ef4444' : '#4CAF50' },
+                (!fotoUri || !location || (turnoActivo && ceno === null)) && { opacity: 0.5 },
+                { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }
+              ]} 
               onPress={handleAction} 
-              isLoading={saving}
+              disabled={!fotoUri || !location || (turnoActivo ? ceno === null : false) || saving}
             >
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
+              {saving && <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />}
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', includeFontPadding: false }}>
                 {turnoActivo ? 'FINALIZAR TURNO' : 'INICIAR TURNO'}
               </Text>
-            </Button>
+            </TouchableOpacity>
           </View>
         </ScrollView>
       )}
