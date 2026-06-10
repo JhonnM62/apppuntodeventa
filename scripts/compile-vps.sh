@@ -39,7 +39,30 @@ fi
 
 cd $PROJECT_DIR
 
-echo "[3/6] Instalando dependencias de NPM..."
+echo "[3/6] Verificando Java 17 y Memoria RAM (Swap)..."
+# 1. Chequear Java 17
+if ! command -v java &> /dev/null || ! java -version 2>&1 | grep -q '17\.'; then
+    echo "⚠️ Java 17 no encontrado. Instalando OpenJDK 17..."
+    apt-get update && apt-get install -y openjdk-17-jdk
+    echo "✅ Java 17 instalado."
+fi
+
+# 2. Chequear y crear Swap de 4GB si no existe (Evita que Gradle explote por falta de RAM)
+SWAP_TOTAL=$(free -m | awk '/^Swap:/ {print $2}')
+if [ "$SWAP_TOTAL" -lt 3000 ]; then
+    echo "⚠️ Memoria Swap insuficiente ($SWAP_TOTAL MB). Creando un archivo Swap temporal de 4GB para Gradle..."
+    fallocate -l 4G /swapfile || dd if=/dev/zero of=/swapfile bs=1M count=4096
+    chmod 600 /swapfile
+    mkswap /swapfile || true
+    swapon /swapfile || true
+    echo "✅ Memoria virtual Swap expandida a 4GB."
+fi
+
+echo "[4/6] Actualizando código fuente (git pull)..."
+git reset --hard
+git pull
+
+echo "[5/6] Instalando dependencias de NPM..."
 # Intentar instalación normal. Si falla, limpiar caché y reinstalar forzado.
 npm install || { 
   echo "⚠️ Falló la instalación de paquetes. Limpiando caché y reintentando..."
@@ -48,14 +71,16 @@ npm install || {
   npm install
 }
 
-echo "[4/6] Construyendo APK (EAS Build Local)..."
+echo "[6/6] Construyendo APK (EAS Build Local)..."
 # Borramos APKs viejos para evitar confusiones
 rm -f *.apk
+# Forzamos límite de RAM en Gradle para que no colapse el VPS
+export GRADLE_OPTS="-Xmx2048m -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs='-Xmx2048m -XX:MaxMetaspaceSize=512m'"
 npx eas-cli build --platform android --profile "$PROFILE" --local --non-interactive
 
 LATEST_APK=$(ls -t *.apk | head -n 1)
 
-echo "[5/6] Limpiando memoria RAM residual..."
+echo "[7/7] Limpiando memoria RAM residual..."
 pkill -9 -f java || true
 swapoff -a && swapon -a || true
 
