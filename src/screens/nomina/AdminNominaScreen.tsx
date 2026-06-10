@@ -30,7 +30,7 @@ export default function AdminNominaScreen({ navigation }: any) {
     try {
       setLoading(true);
       // Solo cargar usuarios activos y de roles operativos
-      const res = await api.get('/auth/users');
+      const res = await api.get('/usuarios');
       // Filtramos para ignorar algunos si es necesario, o mostramos todos los activos
       setEmpleados((res.data?.data || []).filter((u: any) => u.isActive));
     } catch (error) {
@@ -123,7 +123,7 @@ export default function AdminNominaScreen({ navigation }: any) {
               </TouchableOpacity>
             </Card>
           ))}
-          <View style={{ height: 40 }} />
+          <View style={{ height: 120 }} />
         </ScrollView>
       )}
 

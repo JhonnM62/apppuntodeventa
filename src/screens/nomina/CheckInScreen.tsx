@@ -7,8 +7,19 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getTurnoActivo, registrarEntrada, registrarSalida, Turno } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
-import * as ImagePicker from 'expo-image-picker';
-import * as Location from 'expo-location';
+let ImagePicker: any;
+try {
+  ImagePicker = require('expo-image-picker');
+} catch (e) {
+  console.warn('expo-image-picker no está disponible de forma nativa aún');
+}
+
+let Location: any;
+try {
+  Location = require('expo-location');
+} catch (e) {
+  console.warn('expo-location no está disponible de forma nativa aún');
+}
 
 export default function CheckInScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -40,6 +51,9 @@ export default function CheckInScreen({ navigation }: any) {
   };
 
   const takePhoto = async () => {
+    if (!ImagePicker) {
+      return showAlert({ type: 'error', title: 'Módulo no disponible', message: 'La cámara requiere una recompilación de la app para funcionar.' });
+    }
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
       return showAlert({ type: 'error', title: 'Permiso Denegado', message: 'Se necesita acceso a la cámara para el registro facial' });
@@ -58,6 +72,10 @@ export default function CheckInScreen({ navigation }: any) {
   };
 
   const getLocation = async () => {
+    if (!Location) {
+      showAlert({ type: 'error', title: 'Módulo no disponible', message: 'El GPS requiere una recompilación de la app para funcionar.' });
+      return null;
+    }
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
       return showAlert({ type: 'error', title: 'Permiso Denegado', message: 'Se necesita ubicación para el check-in' });
@@ -132,7 +150,7 @@ export default function CheckInScreen({ navigation }: any) {
       {loading ? (
         <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 40 }} />
       ) : (
-        <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 40 }}>
+        <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 120 }}>
           <Card style={styles.statusCard}>
             <View style={styles.statusIconContainer}>
               <Ionicons 

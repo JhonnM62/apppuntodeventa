@@ -108,6 +108,15 @@ const MODULES = [
     adminOnly: true,
   },
   {
+    id: 'reparto_descuentos',
+    title: 'Reparto Descuentos',
+    description: 'Gestionar bolsa y reparto',
+    icon: 'percent-circle-outline',
+    color: '#ec4899',
+    route: 'RepartoDescuentos',
+    adminOnly: true,
+  },
+  {
     id: 'mis_turnos',
     title: 'Mis Turnos',
     description: 'Historial de turnos y asistencias',

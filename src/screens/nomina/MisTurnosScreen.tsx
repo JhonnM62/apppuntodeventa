@@ -100,7 +100,7 @@ export default function MisTurnosScreen({ navigation }: any) {
               </Card>
             ))
           )}
-          <View style={{ height: 40 }} />
+          <View style={{ height: 120 }} />
         </ScrollView>
       )}
     </View>

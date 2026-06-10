@@ -117,10 +117,16 @@ export const createDescuento = async (descuento: {
   return data;
 };
 
+export const getDescuentos = async (params?: { usuarioId?: string; fechaDesde?: string; fechaHasta?: string; estado?: string; page?: number; limit?: number }) => {
+  const { data } = await api.get('/nomina/descuentos', { params });
+  return data;
+};
+
 export const repartirDescuento = async (reparto: {
-  usuariosIds: string[];
+  usuarioIds: string[];
+  montoTotal: number;
   concepto: string;
-  valorTotal: number;
+  descripcion: string;
 }) => {
   const { data } = await api.post('/nomina/descuento/repartir', reparto);
   return data;

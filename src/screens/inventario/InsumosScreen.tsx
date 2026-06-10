@@ -1081,17 +1081,18 @@ if (status !== 'granted') {
       />
 
       <Modal visible={showModal} animationType="slide" onRequestClose={() => setShowModal(false)} presentationStyle="pageSheet">
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
-          <View className="px-4 py-4 border-b border-gray-200 flex-row items-center justify-between">
-            <RNText className="text-lg font-bold text-gray-900">
-              {isEditing ? 'Editar Insumo' : 'Nuevo Insumo'}
-            </RNText>
-            <TouchableOpacity onPress={() => setShowModal(false)} className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center">
-              <Ionicons name="close" size={22} color="#374151" />
-            </TouchableOpacity>
-          </View>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <SafeAreaView style={[{ flex: 1, backgroundColor: '#ffffff' }, Platform.OS === 'android' && { paddingBottom: keyboardHeight }]} edges={['top']}>
+            <View className="px-4 py-4 border-b border-gray-200 flex-row items-center justify-between">
+              <RNText className="text-lg font-bold text-gray-900">
+                {isEditing ? 'Editar Insumo' : 'Nuevo Insumo'}
+              </RNText>
+              <TouchableOpacity onPress={() => setShowModal(false)} className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center">
+                <Ionicons name="close" size={22} color="#374151" />
+              </TouchableOpacity>
+            </View>
 
-          <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} contentContainerStyle={{ paddingVertical: 16 }}>
+            <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} contentContainerStyle={{ flexGrow: 1, paddingBottom: 32, paddingVertical: 16 }}>
             <View className="items-center mb-6">
               <TouchableOpacity onPress={handleSelectImage} activeOpacity={0.8}>
                 <View className="w-24 h-24 rounded-full bg-white items-center justify-center border-2 border-dashed border-gray-300 overflow-hidden">
@@ -1355,7 +1356,8 @@ if (status !== 'granted') {
               </RNText>
             </Button>
           </View>
-        </SafeAreaView>
+          </SafeAreaView>
+        </KeyboardAvoidingView>
       </Modal>
 
       <Modal visible={showAlerts} animationType="slide" onRequestClose={() => setShowAlerts(false)} presentationStyle="pageSheet">
@@ -1550,15 +1552,16 @@ if (status !== 'granted') {
 
       {/* Filter Modal */}
       <Modal visible={showFilterModal} animationType="slide" onRequestClose={() => setShowFilterModal(false)}>
-        <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }} edges={['top']}>
-          <View className="px-4 py-4 border-b border-gray-200 flex-row items-center justify-between">
-            <RNText className="text-lg font-bold text-gray-900">Filtros Avanzados</RNText>
-            <TouchableOpacity onPress={() => setShowFilterModal(false)} className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center">
-              <Ionicons name="close" size={22} color="#374151" />
-            </TouchableOpacity>
-          </View>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <SafeAreaView style={[{ flex: 1, backgroundColor: '#ffffff' }, Platform.OS === 'android' && { paddingBottom: keyboardHeight }]} edges={['top']}>
+            <View className="px-4 py-4 border-b border-gray-200 flex-row items-center justify-between">
+              <RNText className="text-lg font-bold text-gray-900">Filtros Avanzados</RNText>
+              <TouchableOpacity onPress={() => setShowFilterModal(false)} className="w-10 h-10 rounded-full bg-gray-100 items-center justify-center">
+                <Ionicons name="close" size={22} color="#374151" />
+              </TouchableOpacity>
+            </View>
 
-          <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} contentContainerStyle={{ paddingVertical: 16 }}>
+            <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} contentContainerStyle={{ flexGrow: 1, paddingBottom: 32, paddingVertical: 16 }}>
 <RNText className="text-sm font-semibold text-gray-500 uppercase mb-2">Nombre</RNText>
             <TextInput
               className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base text-gray-900 mb-4"
@@ -1893,7 +1896,8 @@ if (status !== 'granted') {
               <RNText className="text-base font-semibold text-white">Aplicar Filtros</RNText>
             </TouchableOpacity>
           </View>
-        </SafeAreaView>
+          </SafeAreaView>
+        </KeyboardAvoidingView>
       </Modal>
 
     </View>

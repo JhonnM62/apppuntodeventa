@@ -3,15 +3,35 @@ import api from './api';
 export interface Cargo {
   IDcargo: string;
   nombre: string;
-  salarioBase: number;
-  esFijo: boolean;
+  // Tarifas por día de la semana
+  tarifaLunes?: number;
+  tarifaMartes?: number;
+  tarifaMiercoles?: number;
+  tarifaJueves?: number;
+  tarifaViernes?: number;
+  tarifaSabado?: number;
+  tarifaDomingo?: number;
+  // Descuento si el empleado cena en el turno
+  descuentoCena?: number;
   createdAt: string;
   updatedAt: string;
 }
 
+export const DIAS_SEMANA = [
+  { key: 'tarifaLunes',      label: 'Lunes' },
+  { key: 'tarifaMartes',     label: 'Martes' },
+  { key: 'tarifaMiercoles',  label: 'Miércoles' },
+  { key: 'tarifaJueves',     label: 'Jueves' },
+  { key: 'tarifaViernes',    label: 'Viernes' },
+  { key: 'tarifaSabado',     label: 'Sábado' },
+  { key: 'tarifaDomingo',    label: 'Domingo' },
+] as const;
+
+export type DiaKey = typeof DIAS_SEMANA[number]['key'];
+
 export const getCargos = async () => {
   const { data } = await api.get('/cargos');
-  return data; // { success: true, data: Cargo[] }
+  return data;
 };
 
 export const getCargoById = async (id: string) => {
