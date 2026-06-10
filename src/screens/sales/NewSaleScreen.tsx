@@ -561,7 +561,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             setTimeout(() => {
                const finalMethod = payload.venta.medioDePago;
                const printStore = usePrinterStore.getState();
-               if (printStore.shouldPrint(payload.venta.estado)) {
+               if (printStore.shouldPrintComanda(payload.venta.estado) || printStore.shouldPrintFactura(payload.venta.estado)) {
                  let cleanOrderId = editingVenta?.pedido || editingSaleId;
                  if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
                    cleanOrderId = cleanOrderId.substring(7);
@@ -671,7 +671,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           setTimeout(() => {
              const finalMethod = payload.venta.medioDePago;
              const printStore = usePrinterStore.getState();
-             if (printStore.shouldPrint(payload.venta.estado)) {
+             if (printStore.shouldPrintComanda(payload.venta.estado) || printStore.shouldPrintFactura(payload.venta.estado)) {
                
                let cleanOrderId = pedidoGenerado;
                if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
@@ -852,7 +852,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               emitNuevaOrden(ordenData);
 
               const printStore = usePrinterStore.getState();
-              if (printStore.shouldPrint(data.estado)) {
+              if (printStore.shouldPrintComanda(data.estado) || printStore.shouldPrintFactura(data.estado)) {
                 let cleanOrderId = pedidoGenerado;
                 if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
                   cleanOrderId = cleanOrderId.substring(7);

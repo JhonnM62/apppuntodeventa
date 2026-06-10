@@ -2,7 +2,8 @@ import api from './api';
 
 export interface PrinterConfig {
   estadoOrden: string;
-  imprimir: boolean;
+  imprimirComanda: boolean;
+  imprimirFactura: boolean;
 }
 
 export const getPrinterConfigs = async (): Promise<PrinterConfig[]> => {

@@ -276,10 +276,108 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
   return payload;
 };
 
+export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): string => {
+  const width = paperSize === 58 ? 32 : 48;
+  const separator = '-'.repeat(width);
+
+  let payload = '';
+
+  // HEADER (TICKET DE PREPARACIÓN)
+  payload += ESC_CMD.ALIGN_CT;
+  payload += ESC_CMD.TXT_4SQUARE;
+  payload += ESC_CMD.TXT_BOLD_ON;
+  payload += alignCenter('NUEVA ORDEN (COCINA)', width) + '\n';
+  payload += ESC_CMD.TXT_NORMAL;
+  payload += ESC_CMD.TXT_BOLD_OFF;
+  payload += ESC_CMD.ALIGN_LT;
+  payload += separator + '\n';
+
+  // INFO DE ORDEN
+  if (data.orderId) {
+    payload += ESC_CMD.ALIGN_CT;
+    payload += ESC_CMD.TXT_4SQUARE;
+    payload += ESC_CMD.TXT_BOLD_ON;
+    payload += cleanText(data.orderId.toUpperCase()) + '\n';
+    payload += ESC_CMD.TXT_NORMAL;
+    payload += ESC_CMD.TXT_BOLD_OFF;
+    payload += ESC_CMD.ALIGN_LT;
+    payload += separator + '\n';
+  }
+  
+  payload += alignLeft(cleanText(`Fecha: ${data.fecha}`), width) + '\n';
+  if (data.cliente) payload += alignLeft(cleanText(`Cliente: ${data.cliente}`), width) + '\n';
+  payload += separator + '\n';
+
+  // PRODUCTOS (SIN PRECIOS)
+  const qtyW = 6;
+  const nameW = width - qtyW;
+
+  payload += alignLeft(
+    padRight('CANT.', qtyW) + 
+    padRight('PRODUCTO', nameW)
+  , width) + '\n';
+  payload += separator + '\n';
+
+  data.productos.forEach((p, index) => {
+    const cleanName = cleanText(p.nombre);
+    const nameLines = wordWrap(cleanName, nameW - 1);
+    
+    const qtyStr = padRight(p.cantidad.toString(), qtyW);
+    const emptyQty = padRight('', qtyW);
+    
+    if (nameLines.length === 0) return;
+
+    payload += ESC_CMD.TXT_BOLD_ON;
+    if (nameLines.length === 1) {
+      payload += alignLeft(`${qtyStr}${nameLines[0]}`, width) + '\n';
+    } else {
+      payload += alignLeft(`${qtyStr}${nameLines[0]}`, width) + '\n';
+      for (let i = 1; i < nameLines.length; i++) {
+        payload += alignLeft(`${emptyQty}${nameLines[i]}`, width) + '\n';
+      }
+    }
+    payload += ESC_CMD.TXT_BOLD_OFF;
+
+    if (p.modifiers && p.modifiers.length > 0) {
+      p.modifiers.forEach(mod => {
+        const modQty = mod.quantity || 1;
+        const modName = cleanText(`  * ${modQty}x ${mod.name}`);
+        const modNameLines = wordWrap(modName, nameW - 1);
+        
+        if (modNameLines.length === 1) {
+          payload += alignLeft(`${emptyQty}${modNameLines[0]}`, width) + '\n';
+        } else {
+          payload += alignLeft(`${emptyQty}${modNameLines[0]}`, width) + '\n';
+          for (let i = 1; i < modNameLines.length; i++) {
+            payload += alignLeft(`${emptyQty}${modNameLines[i]}`, width) + '\n';
+          }
+        }
+      });
+    }
+
+    if (index < data.productos.length - 1) {
+      payload += '\n';
+    }
+  });
+
+  payload += separator + '\n';
+  if (data.observaciones) {
+    payload += ESC_CMD.TXT_BOLD_ON;
+    payload += alignLeft(cleanText(`NOTAS: ${data.observaciones}`), width) + '\n';
+    payload += ESC_CMD.TXT_BOLD_OFF;
+    payload += separator + '\n';
+  }
+  
+  payload += '\n\n\n\n';
+
+  return payload;
+};
+
 export const executePrint = async (
   ticketData: TicketData,
   paperSize: 58 | 80,
-  macAddress: string
+  macAddress: string,
+  type: 'comanda' | 'factura' = 'factura'
 ): Promise<boolean> => {
   try {
     try {
@@ -297,7 +395,8 @@ export const executePrint = async (
       console.log('Error fetching configuracion for ticket:', err);
     }
     if (!BLEPrinter) {
-      console.log('Simulando impresión (No hay BLEPrinter)\n', generateTicketPayload(ticketData, paperSize));
+      const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
+      console.log(`Simulando impresión (${type}) (No hay BLEPrinter)\n`, payload);
       return true; // Simulado
     }
 
@@ -310,7 +409,7 @@ export const executePrint = async (
       return false;
     }
 
-    const payload = generateTicketPayload(ticketData, paperSize);
+    const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
     await BLEPrinter.printText(payload);
     return true;
   } catch (error) {

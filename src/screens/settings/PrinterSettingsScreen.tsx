@@ -41,16 +41,25 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
     fetchConfigs();
   }, []);
 
-  const handleToggleConfig = async (statusKey: string, newValue: boolean) => {
+  const handleToggleConfig = async (statusKey: string, field: 'imprimirComanda' | 'imprimirFactura', newValue: boolean) => {
     // Optimistic update
     const currentConfigs = [...configs];
-    const newConfigs = currentConfigs.map(c => 
-      c.estadoOrden === statusKey ? { ...c, imprimir: newValue } : c
-    );
+    let found = false;
+    const newConfigs = currentConfigs.map(c => {
+      if (c.estadoOrden === statusKey) {
+        found = true;
+        return { ...c, [field]: newValue };
+      }
+      return c;
+    });
     
     // Si no existía, lo agregamos
-    if (!newConfigs.find(c => c.estadoOrden === statusKey)) {
-      newConfigs.push({ estadoOrden: statusKey, imprimir: newValue });
+    if (!found) {
+      newConfigs.push({ 
+        estadoOrden: statusKey, 
+        imprimirComanda: field === 'imprimirComanda' ? newValue : false,
+        imprimirFactura: field === 'imprimirFactura' ? newValue : false
+      });
     }
     
     setConfigs(newConfigs);
@@ -385,18 +394,36 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
           </RNText>
 
           <View style={styles.switchesContainer}>
+            <View style={styles.switchHeaderRow}>
+              <RNText style={[styles.switchLabel, { flex: 2 }]}></RNText>
+              <RNText style={[styles.switchLabel, { flex: 1, textAlign: 'center', fontSize: 12, color: '#6b7280' }]}>Comanda</RNText>
+              <RNText style={[styles.switchLabel, { flex: 1, textAlign: 'center', fontSize: 12, color: '#6b7280' }]}>Factura</RNText>
+            </View>
             {ORDER_STATUSES.map((status) => {
-              const isEnabled = configs.find(c => c.estadoOrden === status.key)?.imprimir || false;
+              const config = configs.find(c => c.estadoOrden === status.key);
+              const isComandaEnabled = config?.imprimirComanda || false;
+              const isFacturaEnabled = config?.imprimirFactura || false;
               return (
                 <View key={status.key} style={styles.switchRow}>
-                  <RNText style={styles.switchLabel}>{status.label}</RNText>
-                  <Switch
-                    value={isEnabled}
-                    onValueChange={(val) => handleToggleConfig(status.key, val)}
-                    trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
-                    thumbColor={isEnabled ? '#3b82f6' : '#f3f4f6'}
-                    disabled={isSavingConfigs}
-                  />
+                  <RNText style={[styles.switchLabel, { flex: 2 }]}>{status.label}</RNText>
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <Switch
+                      value={isComandaEnabled}
+                      onValueChange={(val) => handleToggleConfig(status.key, 'imprimirComanda', val)}
+                      trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
+                      thumbColor={isComandaEnabled ? '#3b82f6' : '#f3f4f6'}
+                      disabled={isSavingConfigs}
+                    />
+                  </View>
+                  <View style={{ flex: 1, alignItems: 'center' }}>
+                    <Switch
+                      value={isFacturaEnabled}
+                      onValueChange={(val) => handleToggleConfig(status.key, 'imprimirFactura', val)}
+                      trackColor={{ false: '#d1d5db', true: '#c4b5fd' }}
+                      thumbColor={isFacturaEnabled ? '#8b5cf6' : '#f3f4f6'}
+                      disabled={isSavingConfigs}
+                    />
+                  </View>
                 </View>
               );
             })}
@@ -462,6 +489,7 @@ const styles = StyleSheet.create({
   autoPrintHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   cardDescription: { fontSize: 13, color: '#6b7280', marginBottom: 16, lineHeight: 18 },
   switchesContainer: { gap: 12, backgroundColor: '#f9fafb', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#e5e7eb' },
+  switchHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
   switchRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 6 },
   switchLabel: { fontSize: 15, fontWeight: '600', color: '#374151' },
   snackbar: {

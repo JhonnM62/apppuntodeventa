@@ -12,7 +12,8 @@ export interface PrinterDevice {
 
 export interface PrinterConfig {
   estadoOrden: string;
-  imprimir: boolean;
+  imprimirComanda: boolean;
+  imprimirFactura: boolean;
 }
 
 interface PrinterState {
@@ -25,7 +26,8 @@ interface PrinterState {
   setConnected: (status: boolean) => void;
   setConfigs: (configs: PrinterConfig[]) => void;
   fetchConfigs: () => Promise<void>;
-  shouldPrint: (estadoOrden: string) => boolean;
+  shouldPrintComanda: (estadoOrden: string) => boolean;
+  shouldPrintFactura: (estadoOrden: string) => boolean;
   printTicket: (ticketData: any) => Promise<void>;
 }
 
@@ -51,9 +53,13 @@ const usePrinterStore = create<PrinterState>()(
           console.error('Error fetching printer configs:', error);
         }
       },
-      shouldPrint: (estadoOrden: string) => {
+      shouldPrintComanda: (estadoOrden: string) => {
         const config = get().configs.find((c) => c.estadoOrden === estadoOrden);
-        return config ? config.imprimir : false;
+        return config ? config.imprimirComanda : false;
+      },
+      shouldPrintFactura: (estadoOrden: string) => {
+        const config = get().configs.find((c) => c.estadoOrden === estadoOrden);
+        return config ? config.imprimirFactura : false;
       },
       printTicket: async (ticketData: any) => {
         const state = get();
@@ -61,9 +67,28 @@ const usePrinterStore = create<PrinterState>()(
           Toast.show({ type: 'warning', text1: 'Impresión Fallida', text2: 'No hay impresora conectada', position: 'top' });
           return;
         }
-        const success = await executePrint(ticketData, state.paperSize, state.currentPrinter.inner_mac_address);
-        if (!success) {
-          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo imprimir el ticket', position: 'top' });
+
+        const printComanda = state.shouldPrintComanda(ticketData.estado);
+        const printFactura = state.shouldPrintFactura(ticketData.estado);
+
+        if (!printComanda && !printFactura) return;
+
+        let errorCount = 0;
+        if (printComanda) {
+          const successComanda = await executePrint(ticketData, state.paperSize, state.currentPrinter.inner_mac_address, 'comanda');
+          if (!successComanda) errorCount++;
+        }
+
+        if (printFactura) {
+          if (printComanda) {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+          }
+          const successFactura = await executePrint(ticketData, state.paperSize, state.currentPrinter.inner_mac_address, 'factura');
+          if (!successFactura) errorCount++;
+        }
+
+        if (errorCount > 0) {
+          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo imprimir correctamente', position: 'top' });
         }
       }
     }),

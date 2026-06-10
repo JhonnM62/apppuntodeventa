@@ -66,11 +66,24 @@ const InsumosScreen = ({ navigation }: Props) => {
   const [filterStock, setFilterStock] = useState<'all' | 'critico' | 'normal' | 'sobrante'>('all');
   const flashListRef = useRef<any>(null);
 
+  const scrollToTop = () => {
+    if (flashListRef.current) {
+      setTimeout(() => {
+        if (flashListRef.current) {
+          flashListRef.current.scrollToOffset({ offset: 0, animated: true });
+        }
+      }, 100);
+    }
+  };
+
   const handleFilterStockChange = (newFilter: 'all' | 'critico' | 'normal' | 'sobrante') => {
     setFilterStock(newFilter);
-    if (flashListRef.current) {
-      flashListRef.current.scrollToOffset({ offset: 0, animated: true });
-    }
+    scrollToTop();
+  };
+
+  const handleCategoriaChange = (cat: string | null) => {
+    setSelectedCategoriaFilter(cat);
+    scrollToTop();
   };
   const [selectedCategoriaFilter, setSelectedCategoriaFilter] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -923,7 +936,7 @@ if (status !== 'granted') {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
             <TouchableOpacity
               style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: selectedCategoriaFilter === null ? '#3b82f6' : '#f3f4f6', marginRight: 8 }}
-              onPress={() => setSelectedCategoriaFilter(null)}
+              onPress={() => handleCategoriaChange(null)}
             >
               <RNText style={{ fontSize: 12, fontWeight: '600', color: selectedCategoriaFilter === null ? '#fff' : '#4b5563' }}>Todas</RNText>
             </TouchableOpacity>
@@ -931,7 +944,7 @@ if (status !== 'granted') {
               <TouchableOpacity
                 key={cat.nombre}
                 style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: selectedCategoriaFilter === cat.nombre ? '#3b82f6' : '#f3f4f6', marginRight: 8 }}
-                onPress={() => setSelectedCategoriaFilter(cat.nombre)}
+                onPress={() => handleCategoriaChange(cat.nombre)}
               >
                 <RNText style={{ fontSize: 12, fontWeight: '600', color: selectedCategoriaFilter === cat.nombre ? '#fff' : '#4b5563' }}>
                   {cat.nombre} ({cat.stock})

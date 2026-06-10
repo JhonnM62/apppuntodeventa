@@ -99,7 +99,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [slideAnim] = useState(new Animated.Value(2000));
 
   // Printer integration
-  const { currentPrinter, paperSize, isConnected, shouldPrint } = usePrinterStore();
+  const { currentPrinter, paperSize, isConnected, shouldPrintComanda, shouldPrintFactura } = usePrinterStore();
   const { cart, discountPercent, setDiscountPercent, getDiscountAmount, getFinalTotalPrice } = useCartStore();
   const actualTotal = getFinalTotalPrice();
 
@@ -201,7 +201,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     efectivoRec?: number,
     cambio?: number
   ) => {
-    if (!shouldPrint(estado)) return;
+    const printComanda = shouldPrintComanda(estado);
+    const printFactura = shouldPrintFactura(estado);
+    
+    if (!printComanda && !printFactura) return;
+    
     if (!isConnected || !currentPrinter) {
       Toast.show({ type: 'warning', text1: 'Impresión Fallida', text2: 'No hay impresora conectada', position: 'top' });
       return;
@@ -226,7 +230,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           nombre: item.nombre,
           precioUnitario: precioUnitario,
           subtotal: subtotal,
-          modifiers: item.modifiers?.map((m: any) => ({ name: m.name, price: m.price })),
+          modifiers: item.modifiers?.map((m: any) => ({ name: m.name, price: m.price, quantity: m.quantity })),
         };
       }),
       estado: estado,
@@ -235,9 +239,24 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       devueltas: cambio,
     };
 
-    const success = await executePrint(ticketData, paperSize, currentPrinter.inner_mac_address);
-    if (!success) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo imprimir el ticket', position: 'top' });
+    let errorCount = 0;
+
+    if (printComanda) {
+      const successComanda = await executePrint(ticketData, paperSize, currentPrinter.inner_mac_address, 'comanda');
+      if (!successComanda) errorCount++;
+    }
+
+    if (printFactura) {
+      // Pequeña pausa para no saturar el buffer de la impresora Bluetooth si se mandan ambos
+      if (printComanda) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+      const successFactura = await executePrint(ticketData, paperSize, currentPrinter.inner_mac_address, 'factura');
+      if (!successFactura) errorCount++;
+    }
+
+    if (errorCount > 0) {
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo imprimir correctamente', position: 'top' });
     }
   };
 
