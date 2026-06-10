@@ -40,7 +40,7 @@ const AiUploadScreen = () => {
         }
         result = await ImagePicker.launchCameraAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          quality: 0.8,
+          quality: 0.4,
         });
       } else {
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -50,7 +50,7 @@ const AiUploadScreen = () => {
         }
         result = await ImagePicker.launchImageLibraryAsync({
           mediaTypes: ImagePicker.MediaTypeOptions.Images,
-          quality: 0.8,
+          quality: 0.4,
         });
       }
 

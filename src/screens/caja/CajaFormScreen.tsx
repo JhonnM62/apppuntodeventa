@@ -470,11 +470,9 @@ export default function CajaFormScreen({ route, navigation }: any) {
           cuadroCaja: caja.cuadroCaja || '',
           valorFaltante: caja.valorFaltante != null ? String(caja.valorFaltante) : ('' as any),
           valorExcedente: caja.valorExcedente != null ? String(caja.valorExcedente) : ('' as any),
-          observaciones: caja.observaciones || ''
+          observaciones: caja.observaciones || '',
+          insumos: mappedInsumos
         });
-        
-        // Explicitly replace the field array to prevent react-hook-form duplication bugs
-        replace(mappedInsumos);
         
         // Recuperar el valor guardado de transferencias contadas si existe
         if (caja.transferenciasContadas != null) {
