@@ -52,11 +52,6 @@ jobs:
             # 3. Inyectar las variables de entorno desde los secretos de GitHub
             echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
             
-            # === DIAGNÓSTICO: verificar que .env se creó correctamente ===
-            echo "=== DEBUG VPS: Contenido de .env ==="
-            cat .env
-            echo "=== FIN DEBUG VPS ==="
-            
             # 4. Construir la nueva imagen de Docker (sin cache)
             echo "Construyendo imagen Docker para web..."
             docker build --no-cache -t qhubomor-frontend .
