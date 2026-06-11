@@ -100,6 +100,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [searchProducto, setSearchProducto] = useState('');
   const [selectedIndexForProduct, setSelectedIndexForProduct] = useState<number | null>(null);
   const [insumosAEliminar, setInsumosAEliminar] = useState<string[]>([]);
+  const [modifiedInsumoIndexes, setModifiedInsumoIndexes] = useState<Set<number>>(new Set());
 
   const [resumenData, setResumenData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'form' | 'analysis' | 'cuadre'>('form');
@@ -673,6 +674,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
         }
         
         await fetchInitialData();
+        setModifiedInsumoIndexes(new Set());
       }
     } catch (error: any) {
       console.error(error);
@@ -1476,7 +1478,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
                 {/* Items */}
                 {fields.map((item, index) => (
-                  <View key={item.id} className="border-b border-gray-100 p-2 bg-white">
+                  <View key={item.id} className={`border-b border-gray-100 p-2 ${modifiedInsumoIndexes.has(index) ? 'bg-amber-50' : 'bg-white'}`}>
                     <View className="flex-row items-center">
                       {canDelete && !isReadOnly ? (
                         <TouchableOpacity onPress={() => handleRemoveInsumo(index)} className="w-10 items-center justify-center p-2">
@@ -1539,7 +1541,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
                                 editable={!isReadOnly && isAdmin}
                                 keyboardType="numeric"
                                 value={value !== undefined ? String(value) : ''}
-                                onChangeText={onChange}
+                                onChangeText={(val) => {
+                                  onChange(val);
+                                  setModifiedInsumoIndexes(prev => new Set(prev).add(index));
+                                }}
                                 className={`flex-1 text-center font-bold bg-gray-50 border ${errors.insumos?.[index]?.cantApertura ? 'border-red-500' : 'border-gray-200'} rounded py-1 text-gray-900`}
                               />
                               {!isReadOnly && isAdmin && (
@@ -1569,7 +1574,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
                                 editable={!isReadOnly}
                                 keyboardType="numeric"
                                 value={value !== undefined ? String(value) : ''}
-                                onChangeText={onChange}
+                                onChangeText={(val) => {
+                                  onChange(val);
+                                  setModifiedInsumoIndexes(prev => new Set(prev).add(index));
+                                }}
                                 className={`text-center font-bold bg-gray-50 border ${errors.insumos?.[index]?.cantDeCierre ? 'border-red-500' : 'border-gray-200'} rounded py-1 text-gray-900`}
                                 placeholder="-"
                               />
