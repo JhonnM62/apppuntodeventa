@@ -63,3 +63,17 @@ cd C:\APIS_v2.3\puntodeventafront\scripts
 *(Si PowerShell te dice "No se puede cargar el archivo porque la ejecución de scripts está deshabilitada", corre este comando una sola vez como Administrador: `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`)*.
 
 El script se conectará al VPS, compilará con el perfil especificado (o "preview" por defecto), limpiará la RAM, descargará el APK automáticamente a `C:\Users\Administrador\Documents\apk's` y terminará.
+
+---
+
+## 📥 PASO 4: Descargar el APK manualmente (En caso de fallo de conexión)
+
+Si dejaste compilando la app por mucho tiempo y Windows cerró tu conexión por inactividad justo al final (error "Connection closed" o "No se pudo descargar el APK del servidor"), ¡no te preocupes! El APK sí se compiló y está a salvo en el VPS. 
+
+Para descargarlo manualmente, solo abre PowerShell y ejecuta este comando de copia (asegúrate de incluir el `*.apk`):
+
+```powershell
+scp root@100.42.185.2:/opt/build-farm/apppuntodeventa/*.apk "C:\Users\Administrador\Documents\apk's\"
+```
+
+Esto se conectará al servidor, tomará el archivo `.apk` recién creado, y lo pegará en tu carpeta local de APKs.
