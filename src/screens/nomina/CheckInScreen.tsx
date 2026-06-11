@@ -181,7 +181,7 @@ export default function CheckInScreen({ navigation }: any) {
             </Text>
             {turnoActivo && (
               <Text style={styles.statusSubtitle}>
-                Hora de entrada: {turnoActivo.horaEntrada}
+                Hora de entrada: {new Date(turnoActivo.horaEntrada).toLocaleString('es-CO', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
               </Text>
             )}
           </Card>

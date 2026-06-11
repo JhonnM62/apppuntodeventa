@@ -1,0 +1,74 @@
+name: CI/CD Frontend Q Hubo Mor
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Parse SSH Credentials
+        id: parse
+        env:
+          AUTH_SERVER: ${{ secrets.AUTH_SERVER }}
+        run: |
+          if [[ "$AUTH_SERVER" == *"@"* ]]; then
+            echo "username=$(echo $AUTH_SERVER | cut -d'@' -f1)" >> $GITHUB_OUTPUT
+            echo "host=$(echo $AUTH_SERVER | cut -d'@' -f2)" >> $GITHUB_OUTPUT
+          else
+            echo "username=root" >> $GITHUB_OUTPUT
+            echo "host=$AUTH_SERVER" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to Contabo VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ steps.parse.outputs.host }}
+          username: ${{ steps.parse.outputs.username }}
+          password: ${{ secrets.AUTH_PASS }}
+          script: |
+            set -e
+            
+            # 1. Crear directorio del proyecto si no existe
+            mkdir -p /root/frontend-qhubomor
+            cd /root/frontend-qhubomor
+            
+            # 2. Clonar el repositorio o actualizarlo si ya existe
+            if [ ! -d ".git" ]; then
+              echo "Clonando repositorio por primera vez..."
+              # Reemplaza 'JhonnM62/frontend-repo' por el nombre real de tu repositorio en GitHub
+              git clone https://${{ secrets.TOKEN_REACTNATIVEQHUBOMOR }}@github.com/JhonnM62/PUNTODEVENTA.git .
+            else
+              echo "Actualizando repositorio existente..."
+              # Asegúrate de colocar la ruta correcta de tu repositorio en GitHub
+              git remote set-url origin https://${{ secrets.TOKEN_REACTNATIVEQHUBOMOR }}@github.com/JhonnM62/PUNTODEVENTA.git
+              git fetch --all
+              git reset --hard origin/main
+              git clean -fd
+            fi
+            
+            # 3. Inyectar las variables de entorno desde los secretos de GitHub
+            cat << 'EOF' > .env
+            ${{ secrets.ENV_FILE_CONTENT }}
+            EOF
+            
+            # 4. Construir la nueva imagen de Docker (sin cache)
+            echo "Construyendo imagen Docker para web..."
+            docker build --no-cache -t qhubomor-frontend .
+            
+            # 5. Detener y eliminar el contenedor anterior si existe
+            echo "Deteniendo contenedor anterior..."
+            docker stop qhubomor-frontend-app || true
+            docker rm qhubomor-frontend-app || true
+            
+            # 6. Levantar el nuevo contenedor en el puerto 8062
+            echo "Levantando nuevo contenedor..."
+            docker run -d \
+              --name qhubomor-frontend-app \
+              -p 8062:80 \
+              --restart unless-stopped \
+              qhubomor-frontend
+            
+            echo "¡Despliegue del Frontend completado exitosamente!"

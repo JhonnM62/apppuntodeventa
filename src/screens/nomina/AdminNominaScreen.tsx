@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/button';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../../services/api';
-import { getResumenEmpleadoAdmin, liquidarEmpleado } from '../../services/nomina.service';
+import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 
 export default function AdminNominaScreen({ navigation }: any) {
@@ -14,28 +14,50 @@ export default function AdminNominaScreen({ navigation }: any) {
   const { showAlert } = useCustomAlert();
   
   const [empleados, setEmpleados] = useState<any[]>([]);
+  const [turnosHoy, setTurnosHoy] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filterTab, setFilterTab] = useState<'Todos' | 'Activos'>('Todos');
   
-  // Modal states
+  // Modal states for Liquidación / Resumen
   const [selectedEmpleado, setSelectedEmpleado] = useState<any>(null);
   const [resumen, setResumen] = useState<any>(null);
   const [loadingResumen, setLoadingResumen] = useState(false);
   const [liquidando, setLiquidando] = useState(false);
 
+  // Modal states for Historial de Turnos
+  const [historyEmpleado, setHistoryEmpleado] = useState<any>(null);
+  const [historyTurnos, setHistoryTurnos] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   useEffect(() => {
-    loadEmpleados();
+    loadData();
   }, []);
 
-  const loadEmpleados = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      // Solo cargar usuarios activos y de roles operativos
-      const res = await api.get('/usuarios');
-      // Filtramos para ignorar algunos si es necesario, o mostramos todos los activos
-      setEmpleados((res.data?.data || []).filter((u: any) => u.isActive));
+      
+      // 1. Cargar usuarios activos y de roles operativos
+      const resUsuarios = await api.get('/usuarios');
+      const usuariosActivos = (resUsuarios.data?.data || []).filter((u: any) => u.isActive);
+      setEmpleados(usuariosActivos);
+
+      // 2. Cargar los turnos de hoy para monitoreo
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      const finHoy = new Date();
+      finHoy.setHours(23, 59, 59, 999);
+
+      const resTurnos = await getTurnos({ 
+        fechaDesde: hoy.toISOString(), 
+        fechaHasta: finHoy.toISOString(),
+        limit: 100
+      });
+      setTurnosHoy(resTurnos.data || []);
+
     } catch (error) {
       console.error(error);
-      showAlert({ type: 'error', title: 'Error', message: 'No se pudieron cargar los empleados' });
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudieron cargar los datos' });
     } finally {
       setLoading(false);
     }
@@ -56,6 +78,21 @@ export default function AdminNominaScreen({ navigation }: any) {
     }
   };
 
+  const openHistory = async (empleado: any) => {
+    setHistoryEmpleado(empleado);
+    try {
+      setLoadingHistory(true);
+      const res = await getTurnos({ usuarioId: empleado.IDusuarios, limit: 30 });
+      setHistoryTurnos(res.data || []);
+    } catch (error) {
+      console.error(error);
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo cargar el historial de turnos' });
+      setHistoryEmpleado(null);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
   const handleLiquidar = () => {
     if (!resumen || !resumen.turnosPendientes || resumen.turnosPendientes.length === 0) {
       return showAlert({ type: 'error', title: 'Aviso', message: 'No hay turnos pendientes por liquidar' });
@@ -69,7 +106,6 @@ export default function AdminNominaScreen({ navigation }: any) {
       onConfirm: async () => {
         try {
           setLiquidando(true);
-          // Por defecto liquidamos todo el periodo disponible
           const fechas = resumen.turnosPendientes.map((t: any) => new Date(t.fechaContable).getTime());
           const minDate = new Date(Math.min(...fechas)).toISOString();
           const maxDate = new Date(Math.max(...fechas)).toISOString();
@@ -92,13 +128,31 @@ export default function AdminNominaScreen({ navigation }: any) {
     });
   };
 
+  const getStatusTurnoHoy = (usuarioId: string) => {
+    const turno = turnosHoy.find(t => t.usuarioId === usuarioId);
+    if (!turno) return { text: 'No ha iniciado turno hoy', color: '#ef4444', icon: 'close-circle' };
+    if (turno.estado === 'ACTIVO') return { 
+      text: `En turno (Inició ${new Date(turno.horaEntrada).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})})`, 
+      color: '#10b981', 
+      icon: 'checkmark-circle' 
+    };
+    return { text: 'Turno cerrado hoy', color: '#6b7280', icon: 'time' };
+  };
+
+  // Filtrado de empleados
+  const empleadosFiltrados = empleados.filter(emp => {
+    if (filterTab === 'Todos') return true;
+    const turno = turnosHoy.find(t => t.usuarioId === emp.IDusuarios);
+    return turno?.estado === 'ACTIVO';
+  });
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color="#111827" />
         </TouchableOpacity>
-        <Text style={styles.title}>Nómina y Pagos</Text>
+        <Text style={styles.title}>Nómina y Asistencia</Text>
         <TouchableOpacity 
           onPress={() => navigation.navigate('RepartoDescuentos')} 
           style={styles.headerActionBtn}
@@ -107,27 +161,55 @@ export default function AdminNominaScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
+      <View style={styles.tabContainer}>
+        <TouchableOpacity 
+          style={[styles.tabBtn, filterTab === 'Todos' && styles.tabBtnActive]} 
+          onPress={() => setFilterTab('Todos')}
+        >
+          <Text style={[styles.tabBtnText, filterTab === 'Todos' && styles.tabBtnTextActive]}>Todos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tabBtn, filterTab === 'Activos' && styles.tabBtnActive]} 
+          onPress={() => setFilterTab('Activos')}
+        >
+          <Text style={[styles.tabBtnText, filterTab === 'Activos' && styles.tabBtnTextActive]}>Turnos Activos</Text>
+        </TouchableOpacity>
+      </View>
+
       {loading ? (
         <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 40 }} />
       ) : (
         <ScrollView style={styles.content}>
-          {empleados.map((empleado) => (
-            <Card key={empleado.IDusuarios} style={styles.card}>
-              <View style={styles.cardInfo}>
-                <Text style={styles.cardTitle}>{empleado.nombre}</Text>
-                <Text style={styles.cardSubtitle}>{empleado.rol} • {empleado.cargo?.nombre || 'Sin cargo asignado'}</Text>
-              </View>
-              <TouchableOpacity style={styles.actionBtn} onPress={() => openResumen(empleado)}>
-                <Text style={styles.actionBtnText}>Ver Resumen</Text>
-                <Ionicons name="chevron-forward" size={16} color="#3b82f6" />
-              </TouchableOpacity>
-            </Card>
-          ))}
+          {empleadosFiltrados.length === 0 ? (
+            <Text style={{ textAlign: 'center', marginTop: 40, color: '#6b7280' }}>No hay empleados en esta lista.</Text>
+          ) : (
+            empleadosFiltrados.map((empleado) => {
+              const status = getStatusTurnoHoy(empleado.IDusuarios);
+              return (
+                <Card key={empleado.IDusuarios} style={styles.card}>
+                  <TouchableOpacity style={styles.cardInfo} onPress={() => openHistory(empleado)} activeOpacity={0.7}>
+                    <Text style={styles.cardTitle}>{empleado.nombre}</Text>
+                    <Text style={styles.cardSubtitle}>{empleado.rol} • {empleado.cargo?.nombre || 'Sin cargo asignado'}</Text>
+                    
+                    <View style={styles.statusBadge}>
+                      <Ionicons name={status.icon as any} size={14} color={status.color} />
+                      <Text style={[styles.statusText, { color: status.color }]}>{status.text}</Text>
+                    </View>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity style={styles.actionBtn} onPress={() => openResumen(empleado)}>
+                    <Text style={styles.actionBtnText}>Ver Resumen</Text>
+                    <Ionicons name="chevron-forward" size={16} color="#3b82f6" />
+                  </TouchableOpacity>
+                </Card>
+              );
+            })
+          )}
           <View style={{ height: 120 }} />
         </ScrollView>
       )}
 
-      {/* Modal Resumen */}
+      {/* Modal Resumen (Sin cambios lógicos) */}
       <Modal visible={!!selectedEmpleado} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -192,6 +274,70 @@ export default function AdminNominaScreen({ navigation }: any) {
           </View>
         </View>
       </Modal>
+
+      {/* Modal Historial de Turnos */}
+      <Modal visible={!!historyEmpleado} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { height: '80%' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <View>
+                <Text style={styles.modalTitle}>Historial de Turnos</Text>
+                <Text style={styles.modalSubtitle}>{historyEmpleado?.nombre}</Text>
+              </View>
+              <TouchableOpacity onPress={() => setHistoryEmpleado(null)} style={{ padding: 4 }}>
+                <Ionicons name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            {loadingHistory ? (
+              <ActivityIndicator size="large" color="#4CAF50" style={{ margin: 40 }} />
+            ) : (
+              <ScrollView style={{ flex: 1 }}>
+                {historyTurnos.length === 0 ? (
+                  <Text style={{ textAlign: 'center', marginTop: 20, color: '#6b7280' }}>No hay turnos registrados</Text>
+                ) : (
+                  historyTurnos.map(turno => (
+                    <View key={turno.IDturno} style={styles.historyCard}>
+                      <View style={styles.historyHeader}>
+                        <Text style={styles.historyDate}>
+                          {new Date(turno.horaEntrada).toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short' })}
+                        </Text>
+                        <View style={[styles.statusTag, { backgroundColor: turno.estado === 'ACTIVO' ? '#dcfce7' : '#f3f4f6' }]}>
+                          <Text style={[styles.statusTagText, { color: turno.estado === 'ACTIVO' ? '#16a34a' : '#6b7280' }]}>
+                            {turno.estado}
+                          </Text>
+                        </View>
+                      </View>
+                      
+                      <View style={styles.historyDetails}>
+                        <View style={styles.timeBox}>
+                          <Text style={styles.timeLabel}>Entrada</Text>
+                          <Text style={styles.timeValue}>{new Date(turno.horaEntrada).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})}</Text>
+                        </View>
+                        <Ionicons name="arrow-forward" size={16} color="#9ca3af" />
+                        <View style={styles.timeBox}>
+                          <Text style={styles.timeLabel}>Salida</Text>
+                          <Text style={styles.timeValue}>{turno.horaSalida ? new Date(turno.horaSalida).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'}) : '--:--'}</Text>
+                        </View>
+                      </View>
+
+                      <View style={styles.historyFooter}>
+                        <Text style={styles.historyFooterText}>
+                          {turno.ceno ? '🍔 Cenó' : '❌ No cenó'}
+                        </Text>
+                        <Text style={styles.historyFooterValue}>
+                          ${Number(turno.valorTurno || 0).toLocaleString('es-CO')}
+                        </Text>
+                      </View>
+                    </View>
+                  ))
+                )}
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -202,13 +348,24 @@ const styles = StyleSheet.create({
   backBtn: { padding: 8 },
   headerActionBtn: { padding: 8, backgroundColor: '#eff6ff', borderRadius: 8 },
   title: { fontSize: 20, fontWeight: '700', color: '#111827' },
+  
+  tabContainer: { flexDirection: 'row', padding: 16, paddingBottom: 0 },
+  tabBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
+  tabBtnActive: { borderBottomColor: '#3b82f6' },
+  tabBtnText: { fontSize: 14, fontWeight: '600', color: '#6b7280' },
+  tabBtnTextActive: { color: '#3b82f6' },
+
   content: { padding: 16 },
   
   card: { flexDirection: 'row', alignItems: 'center', padding: 16, marginBottom: 12, backgroundColor: '#fff', borderRadius: 12, elevation: 1 },
   cardInfo: { flex: 1 },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 4 },
-  cardSubtitle: { fontSize: 14, color: '#6b7280' },
-  actionBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eff6ff', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  cardTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 2 },
+  cardSubtitle: { fontSize: 13, color: '#6b7280', marginBottom: 8 },
+  
+  statusBadge: { flexDirection: 'row', alignItems: 'center' },
+  statusText: { fontSize: 12, marginLeft: 4, fontWeight: '500' },
+
+  actionBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eff6ff', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginLeft: 8 },
   actionBtnText: { color: '#3b82f6', fontWeight: '600', marginRight: 4, fontSize: 13 },
   
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
@@ -222,5 +379,19 @@ const styles = StyleSheet.create({
   summaryValue: { fontSize: 15, fontWeight: '700', color: '#111827' },
   
   itemRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
-  modalActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 }
+  modalActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 },
+
+  // History Card Styles
+  historyCard: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, padding: 12, marginBottom: 12 },
+  historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  historyDate: { fontSize: 14, fontWeight: '700', color: '#374151', textTransform: 'capitalize' },
+  statusTag: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+  statusTagText: { fontSize: 11, fontWeight: '700' },
+  historyDetails: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f9fafb', padding: 12, borderRadius: 8, marginBottom: 12 },
+  timeBox: { alignItems: 'center' },
+  timeLabel: { fontSize: 11, color: '#6b7280', marginBottom: 2 },
+  timeValue: { fontSize: 14, fontWeight: '600', color: '#111827' },
+  historyFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#f3f4f6', paddingTop: 8 },
+  historyFooterText: { fontSize: 12, color: '#4b5563', fontWeight: '500' },
+  historyFooterValue: { fontSize: 14, fontWeight: '700', color: '#10b981' }
 });
