@@ -39,11 +39,11 @@ jobs:
             if [ ! -d ".git" ]; then
               echo "Clonando repositorio por primera vez..."
               # Reemplaza 'JhonnM62/frontend-repo' por el nombre real de tu repositorio en GitHub
-              git clone https://${{ secrets.TOKEN_REACTNATIVEQHUBOMOR }}@github.com/JhonnM62/PUNTODEVENTA.git .
+              git clone https://${{ secrets.TOKEN_REACTNATIVEQHUBOMOR }}@github.com/JhonnM62/apppuntodeventa.git .
             else
               echo "Actualizando repositorio existente..."
               # Asegúrate de colocar la ruta correcta de tu repositorio en GitHub
-              git remote set-url origin https://${{ secrets.TOKEN_REACTNATIVEQHUBOMOR }}@github.com/JhonnM62/PUNTODEVENTA.git
+              git remote set-url origin https://${{ secrets.TOKEN_REACTNATIVEQHUBOMOR }}@github.com/JhonnM62/apppuntodeventa.git
               git fetch --all
               git reset --hard origin/main
               git clean -fd
