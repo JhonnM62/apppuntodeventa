@@ -17,13 +17,17 @@ export default function MisTurnosScreen({ navigation }: any) {
     loadTurnos();
   }, []);
 
+  const [debugRes, setDebugRes] = useState<any>(null);
+
   const loadTurnos = async () => {
     try {
       setLoading(true);
       const res = await getMisTurnos({ limit: 50 }); // Fetch latest 50
-      setTurnos(res.data?.turnos || []);
+      setDebugRes(res);
+      setTurnos(res.data?.turnos || res.data || []);
     } catch (error) {
-      console.error(error);
+      console.error('[MisTurnosScreen] Fetch Error:', error);
+      setDebugRes(error);
       showAlert({ type: 'error', title: 'Error', message: 'No se pudieron cargar los turnos' });
     } finally {
       setLoading(false);
@@ -57,6 +61,8 @@ export default function MisTurnosScreen({ navigation }: any) {
             <View style={styles.emptyContainer}>
               <Ionicons name="calendar-outline" size={48} color="#9ca3af" />
               <Text style={styles.emptyText}>No tienes turnos registrados</Text>
+              <Text style={{ marginTop: 20, color: 'red', fontSize: 10 }}>DEBUG: {JSON.stringify(turnos)}</Text>
+              <Text style={{ marginTop: 10, color: 'blue', fontSize: 10 }}>RES: {JSON.stringify(debugRes)}</Text>
             </View>
           ) : (
             turnos.map((turno) => (
