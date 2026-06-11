@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, TextInput, Switch } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, TextInput, Switch, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text } from '../../components/ui/text';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -33,6 +34,9 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [editingTurno, setEditingTurno] = useState<any>(null);
   const [editForm, setEditForm] = useState<any>({});
   const [savingTurno, setSavingTurno] = useState(false);
+  
+  // Date Picker State
+  const [pickerConfig, setPickerConfig] = useState<{show: boolean, mode: 'date'|'time', field: 'horaEntrada'|'horaSalida'}>({show: false, mode: 'date', field: 'horaEntrada'});
 
   useEffect(() => {
     loadData();
@@ -199,6 +203,51 @@ export default function AdminNominaScreen({ navigation }: any) {
     const turno = turnosHoy.find(t => t.usuarioId === emp.IDusuarios);
     return turno?.estado === 'ACTIVO';
   });
+
+  const handleValorChange = (text: string) => {
+    const numeric = text.replace(/\D/g, '');
+    setEditForm({ ...editForm, valorTurno: numeric });
+  };
+
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    if (event.type === 'dismissed') {
+      setPickerConfig({ ...pickerConfig, show: false });
+      return;
+    }
+    if (selectedDate) {
+      const field = pickerConfig.field;
+      const currentVal = editForm[field] ? new Date(editForm[field]) : new Date();
+      
+      if (pickerConfig.mode === 'date') {
+        currentVal.setFullYear(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+        setEditForm({ ...editForm, [field]: currentVal.toISOString() });
+        // Automatically open time picker for Android
+        if (Platform.OS === 'android') {
+          setPickerConfig({ show: true, mode: 'time', field });
+        } else {
+          setPickerConfig({ ...pickerConfig, show: false });
+        }
+      } else {
+        currentVal.setHours(selectedDate.getHours(), selectedDate.getMinutes(), 0, 0);
+        setEditForm({ ...editForm, [field]: currentVal.toISOString() });
+        setPickerConfig({ ...pickerConfig, show: false });
+      }
+    }
+  };
+
+  const openPicker = (field: 'horaEntrada'|'horaSalida') => {
+    setPickerConfig({ show: true, mode: 'date', field });
+  };
+
+  const formatPrettyDate = (isoString?: string) => {
+    if (!isoString) return 'No seleccionada';
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return 'Fecha inválida';
+    return d.toLocaleString('es-CO', { 
+      year: 'numeric', month: 'short', day: '2-digit', 
+      hour: '2-digit', minute: '2-digit', hour12: true 
+    });
+  };
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -424,31 +473,29 @@ export default function AdminNominaScreen({ navigation }: any) {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Fecha/Hora Entrada (ISO)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={editForm.horaEntrada}
-                  onChangeText={(val) => setEditForm({...editForm, horaEntrada: val})}
-                />
+                <Text style={styles.label}>Entrada</Text>
+                <TouchableOpacity style={styles.datePickerBtn} onPress={() => openPicker('horaEntrada')}>
+                  <Ionicons name="calendar-outline" size={18} color="#4b5563" style={{ marginRight: 8 }} />
+                  <Text style={styles.datePickerText}>{formatPrettyDate(editForm.horaEntrada)}</Text>
+                </TouchableOpacity>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.label}>Fecha/Hora Salida (ISO)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={editForm.horaSalida}
-                  onChangeText={(val) => setEditForm({...editForm, horaSalida: val})}
-                  placeholder="Dejar vacío si no ha salido"
-                />
+                <Text style={styles.label}>Salida</Text>
+                <TouchableOpacity style={styles.datePickerBtn} onPress={() => openPicker('horaSalida')}>
+                  <Ionicons name="calendar-outline" size={18} color="#4b5563" style={{ marginRight: 8 }} />
+                  <Text style={styles.datePickerText}>{formatPrettyDate(editForm.horaSalida)}</Text>
+                </TouchableOpacity>
               </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Valor del Turno ($)</Text>
                 <TextInput
                   style={styles.input}
-                  value={editForm.valorTurno}
-                  onChangeText={(val) => setEditForm({...editForm, valorTurno: val})}
+                  value={editForm.valorTurno ? Number(editForm.valorTurno).toLocaleString('es-CO') : ''}
+                  onChangeText={handleValorChange}
                   keyboardType="numeric"
+                  placeholder="Ej. 60.000"
                 />
               </View>
 
@@ -457,6 +504,8 @@ export default function AdminNominaScreen({ navigation }: any) {
                 <Switch
                   value={editForm.ceno}
                   onValueChange={(val) => setEditForm({...editForm, ceno: val})}
+                  trackColor={{ false: '#d1d5db', true: '#a7f3d0' }}
+                  thumbColor={editForm.ceno ? '#10b981' : '#f4f3f4'}
                 />
               </View>
             </ScrollView>
@@ -472,6 +521,16 @@ export default function AdminNominaScreen({ navigation }: any) {
           </View>
         </View>
       </Modal>
+
+      {pickerConfig.show && (
+        <DateTimePicker
+          value={editForm[pickerConfig.field] ? new Date(editForm[pickerConfig.field]) : new Date()}
+          mode={pickerConfig.mode}
+          is24Hour={false}
+          display="default"
+          onChange={handleDateChange}
+        />
+      )}
 
     </View>
   );
@@ -534,6 +593,9 @@ const styles = StyleSheet.create({
   inputGroup: { marginBottom: 16 },
   label: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 },
   input: { backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 10, fontSize: 14, color: '#111827' },
+  
+  datePickerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 12 },
+  datePickerText: { fontSize: 14, color: '#111827' },
   
   statusChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#f3f4f6', marginRight: 8, marginBottom: 8, borderWidth: 1, borderColor: '#e5e7eb' },
   statusChipActive: { backgroundColor: '#111827', borderColor: '#111827' },
