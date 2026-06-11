@@ -54,7 +54,9 @@ jobs:
             
             # 4. Construir la nueva imagen de Docker (sin cache)
             echo "Construyendo imagen Docker para web..."
-            docker build --no-cache -t qhubomor-frontend .
+            docker build --no-cache \
+              --build-arg ENV_CONTENT="${{ secrets.ENV_FILE_CONTENT }}" \
+              -t qhubomor-frontend .
             
             # 5. Detener y eliminar el contenedor anterior si existe
             echo "Deteniendo contenedor anterior..."

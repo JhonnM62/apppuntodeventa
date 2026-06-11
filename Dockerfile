@@ -10,6 +10,10 @@ RUN npm install --legacy-peer-deps
 # Copiar el código fuente y las variables de entorno
 COPY . .
 
+# Aceptar la variable de entorno desde el build de GitHub y crear el .env internamente
+ARG ENV_CONTENT
+RUN echo "$ENV_CONTENT" > .env
+
 # Construir la aplicación para web
 RUN npx expo export -p web
 
