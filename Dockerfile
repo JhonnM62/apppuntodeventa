@@ -10,12 +10,15 @@ RUN npm install --legacy-peer-deps
 # Copiar el código fuente y las variables de entorno
 COPY . .
 
-# Aceptar la variable de entorno desde el build de GitHub y crear el .env internamente
-ARG ENV_CONTENT
-RUN echo "$ENV_CONTENT" > .env
+# === DIAGNÓSTICO: verificar qué tiene el .env antes del build ===
+RUN echo "=== DEBUG: Contenido de .env ===" && cat .env && echo "=== FIN DEBUG ==="
 
 # Construir la aplicación para web
 RUN npx expo export -p web
+
+# === DIAGNÓSTICO: verificar que la URL quedó embebida en el JS final ===
+RUN echo "=== DEBUG: Buscando URL en JS compilado ===" && grep -o 'https://[^"]*' /app/dist/_expo/static/js/web/*.js | head -5 || echo "NO SE ENCONTRÓ NINGUNA URL HTTPS"
+RUN echo "=== DEBUG: Buscando localhost en JS compilado ===" && grep -c 'localhost:3000' /app/dist/_expo/static/js/web/*.js && echo "ALERTA: localhost ENCONTRADO en el bundle" || echo "OK: localhost NO encontrado"
 
 # Etapa 2: Servidor Web (Nginx)
 FROM nginx:alpine
