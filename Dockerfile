@@ -10,15 +10,28 @@ RUN npm install --legacy-peer-deps
 # Copiar el código fuente y las variables de entorno
 COPY . .
 
-# === DIAGNÓSTICO: verificar qué tiene el .env antes del build ===
+# === DIAGNÓSTICO: verificar qué tiene el .env ===
 RUN echo "=== DEBUG: Contenido de .env ===" && cat .env && echo "=== FIN DEBUG ==="
 
 # Construir la aplicación para web
 RUN npx expo export -p web
 
-# === DIAGNÓSTICO: verificar que la URL quedó embebida en el JS final ===
-RUN echo "=== DEBUG: Buscando URL en JS compilado ===" && grep -o 'https://[^"]*' /app/dist/_expo/static/js/web/*.js | head -5 || echo "NO SE ENCONTRÓ NINGUNA URL HTTPS"
-RUN echo "=== DEBUG: Buscando localhost en JS compilado ===" && grep -c 'localhost:3000' /app/dist/_expo/static/js/web/*.js && echo "ALERTA: localhost ENCONTRADO en el bundle" || echo "OK: localhost NO encontrado"
+# === DIAGNÓSTICO DEFINITIVO ===
+# Test 1: ¿process.env.EXPO_PUBLIC sigue como texto literal en el JS? (Si >0, babel NO lo reemplazó)
+RUN echo "=== TEST 1: process.env.EXPO_PUBLIC en bundle ===" && \
+    grep -c 'process\.env\.EXPO_PUBLIC' /app/dist/_expo/static/js/web/*.js || echo "RESULTADO: 0 ocurrencias (babel SÍ lo reemplazó)"
+
+# Test 2: ¿Cuántas veces aparece localhost:3000? 
+RUN echo "=== TEST 2: localhost:3000 en bundle ===" && \
+    grep -c 'localhost:3000' /app/dist/_expo/static/js/web/*.js || echo "RESULTADO: 0 ocurrencias"
+
+# Test 3: ¿Aparece el dominio del backend? (parcial, no se enmascara)
+RUN echo "=== TEST 3: backendnestpv en bundle ===" && \
+    grep -c 'backendnestpv' /app/dist/_expo/static/js/web/*.js || echo "RESULTADO: 0 ocurrencias"
+
+# Test 4: ¿Aparece autosystemprojects en bundle?
+RUN echo "=== TEST 4: autosystemprojects en bundle ===" && \
+    grep -c 'autosystemprojects' /app/dist/_expo/static/js/web/*.js || echo "RESULTADO: 0 ocurrencias"
 
 # Etapa 2: Servidor Web (Nginx)
 FROM nginx:alpine
