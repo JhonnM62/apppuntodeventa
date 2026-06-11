@@ -22,6 +22,9 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copiar los archivos estáticos generados por Expo al directorio de Nginx
 COPY --from=builder /app/dist /usr/share/nginx/html
 
+# Solucionar error de import.meta agregando type="module" al script principal
+RUN sed -i 's/<script src=/<script type="module" src=/g' /usr/share/nginx/html/index.html
+
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
