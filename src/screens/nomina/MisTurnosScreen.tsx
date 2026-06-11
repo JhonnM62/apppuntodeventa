@@ -33,7 +33,7 @@ export default function MisTurnosScreen({ navigation }: any) {
   const getStatusColor = (estado: string) => {
     switch (estado) {
       case 'ACTIVO': return '#10b981'; // Green
-      case 'CERRADO': return '#6b7280'; // Gray
+      case 'COMPLETADO': return '#6b7280'; // Gray
       case 'LIQUIDADO': return '#3b82f6'; // Blue
       default: return '#f59e0b';
     }
@@ -87,7 +87,7 @@ export default function MisTurnosScreen({ navigation }: any) {
                   </View>
                 </View>
 
-                {turno.estado === 'CERRADO' && (
+                {turno.estado === 'COMPLETADO' && (
                   <View style={styles.cardFooter}>
                     <Text style={styles.infoText}>
                       ¿Cenó?: <Text style={{ fontWeight: 'bold' }}>{turno.ceno ? 'SÍ' : 'NO'}</Text>
