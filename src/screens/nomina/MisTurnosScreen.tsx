@@ -62,11 +62,18 @@ export default function MisTurnosScreen({ navigation }: any) {
             turnos.map((turno) => (
               <Card key={turno.IDturno} style={styles.card}>
                 <View style={styles.cardHeader}>
-                  <Text style={styles.dateText}>
-                    {new Date(turno.fechaContable).toLocaleDateString('es-CO', { 
-                      weekday: 'short', day: '2-digit', month: 'short' 
-                    }).toUpperCase()}
-                  </Text>
+                  <View>
+                    <Text style={styles.dateText}>
+                      {new Date(turno.fechaContable).toLocaleDateString('es-CO', { 
+                        weekday: 'short', day: '2-digit', month: 'short' 
+                      }).toUpperCase()}
+                    </Text>
+                    {turno.usuario && turno.usuario.nombre && (
+                      <Text style={{ fontSize: 13, color: '#6b7280', marginTop: 4, fontWeight: '500' }}>
+                        👤 {turno.usuario.nombre}
+                      </Text>
+                    )}
+                  </View>
                   <View style={[styles.statusBadge, { backgroundColor: getStatusColor(turno.estado) + '20' }]}>
                     <Text style={[styles.statusText, { color: getStatusColor(turno.estado) }]}>
                       {turno.estado}
