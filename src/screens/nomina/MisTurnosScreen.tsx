@@ -104,6 +104,7 @@ export default function MisTurnosScreen({ navigation }: any) {
         <TextInput
           style={styles.searchInput}
           placeholder="Buscar por observación o nombre..."
+          placeholderTextColor="#9ca3af"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -215,7 +216,7 @@ const styles = StyleSheet.create({
   
   searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', margin: 16, marginBottom: 8, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 12, borderWidth: 1, borderColor: '#e5e7eb' },
   searchIcon: { marginRight: 8 },
-  searchInput: { flex: 1, fontSize: 15, color: '#111827' },
+  searchInput: { flex: 1, fontSize: 15, color: '#000' },
   
   filterScroll: { paddingVertical: 8, marginBottom: 8 },
   pill: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#f3f4f6', marginRight: 8, borderWidth: 1, borderColor: '#e5e7eb' },
