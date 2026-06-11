@@ -10,10 +10,6 @@ RUN npm install --legacy-peer-deps
 # Copiar el código fuente y las variables de entorno
 COPY . .
 
-# Aceptar la URL del backend como argumento (como respaldo al .env)
-ARG EXPO_PUBLIC_API_URL
-ENV EXPO_PUBLIC_API_URL=$EXPO_PUBLIC_API_URL
-
 # Construir la aplicación para web
 RUN npx expo export -p web
 
