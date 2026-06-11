@@ -168,6 +168,16 @@ export const getTurnos = async (params?: { usuarioId?: string; fechaDesde?: stri
   return data;
 };
 
+export const updateTurnoAdmin = async (id: string, params: { horaEntrada?: Date; horaSalida?: Date; ceno?: boolean; valorTurno?: number; estado?: string }) => {
+  const { data } = await api.patch(`/nomina/turno/${id}`, params);
+  return data;
+};
+
+export const deleteTurno = async (id: string) => {
+  const { data } = await api.delete(`/nomina/turno/${id}`);
+  return data;
+};
+
 export const getLiquidaciones = async (params?: { usuarioId?: string; page?: number; limit?: number }) => {
   const { data } = await api.get('/nomina/liquidaciones', { params });
   return data;

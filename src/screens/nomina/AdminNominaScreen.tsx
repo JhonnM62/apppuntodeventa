@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, TextInput, Switch } from 'react-native';
 import { Text } from '../../components/ui/text';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../../services/api';
-import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos } from '../../services/nomina.service';
+import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 
 export default function AdminNominaScreen({ navigation }: any) {
@@ -29,6 +29,11 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [historyTurnos, setHistoryTurnos] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
 
+  // Edit Turno State
+  const [editingTurno, setEditingTurno] = useState<any>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [savingTurno, setSavingTurno] = useState(false);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -37,12 +42,10 @@ export default function AdminNominaScreen({ navigation }: any) {
     try {
       setLoading(true);
       
-      // 1. Cargar usuarios activos y de roles operativos
       const resUsuarios = await api.get('/usuarios');
       const usuariosActivos = (resUsuarios.data?.data || []).filter((u: any) => u.isActive);
       setEmpleados(usuariosActivos);
 
-      // 2. Cargar los turnos de hoy para monitoreo
       const hoy = new Date();
       hoy.setHours(0, 0, 0, 0);
       const finHoy = new Date();
@@ -93,6 +96,58 @@ export default function AdminNominaScreen({ navigation }: any) {
     }
   };
 
+  const handleDeleteTurno = (turno: any) => {
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar Turno',
+      message: '¿Estás seguro de que quieres eliminar este turno permanentemente?',
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        try {
+          await deleteTurno(turno.IDturno);
+          showAlert({ type: 'success', title: 'Éxito', message: 'Turno eliminado' });
+          if (historyEmpleado) openHistory(historyEmpleado);
+          loadData(); // Reload main stats too
+        } catch (error) {
+          showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar el turno' });
+        }
+      }
+    });
+  };
+
+  const handleEditTurno = (turno: any) => {
+    setEditingTurno(turno);
+    setEditForm({
+      estado: turno.estado,
+      horaEntrada: new Date(turno.horaEntrada).toISOString(),
+      horaSalida: turno.horaSalida ? new Date(turno.horaSalida).toISOString() : '',
+      ceno: !!turno.ceno,
+      valorTurno: turno.valorTurno?.toString() || '0'
+    });
+  };
+
+  const handleSaveTurno = async () => {
+    try {
+      setSavingTurno(true);
+      await updateTurnoAdmin(editingTurno.IDturno, {
+        estado: editForm.estado,
+        ceno: editForm.ceno,
+        valorTurno: Number(editForm.valorTurno),
+        horaEntrada: new Date(editForm.horaEntrada),
+        horaSalida: editForm.horaSalida ? new Date(editForm.horaSalida) : undefined
+      });
+      showAlert({ type: 'success', title: 'Éxito', message: 'Turno actualizado correctamente' });
+      setEditingTurno(null);
+      if (historyEmpleado) openHistory(historyEmpleado);
+      loadData(); // Reload main stats too
+    } catch (error) {
+      console.error(error);
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo guardar el turno' });
+    } finally {
+      setSavingTurno(false);
+    }
+  };
+
   const handleLiquidar = () => {
     if (!resumen || !resumen.turnosPendientes || resumen.turnosPendientes.length === 0) {
       return showAlert({ type: 'error', title: 'Aviso', message: 'No hay turnos pendientes por liquidar' });
@@ -139,7 +194,6 @@ export default function AdminNominaScreen({ navigation }: any) {
     return { text: 'Turno cerrado hoy', color: '#6b7280', icon: 'time' };
   };
 
-  // Filtrado de empleados
   const empleadosFiltrados = empleados.filter(emp => {
     if (filterTab === 'Todos') return true;
     const turno = turnosHoy.find(t => t.usuarioId === emp.IDusuarios);
@@ -162,16 +216,10 @@ export default function AdminNominaScreen({ navigation }: any) {
       </View>
 
       <View style={styles.tabContainer}>
-        <TouchableOpacity 
-          style={[styles.tabBtn, filterTab === 'Todos' && styles.tabBtnActive]} 
-          onPress={() => setFilterTab('Todos')}
-        >
+        <TouchableOpacity style={[styles.tabBtn, filterTab === 'Todos' && styles.tabBtnActive]} onPress={() => setFilterTab('Todos')}>
           <Text style={[styles.tabBtnText, filterTab === 'Todos' && styles.tabBtnTextActive]}>Todos</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tabBtn, filterTab === 'Activos' && styles.tabBtnActive]} 
-          onPress={() => setFilterTab('Activos')}
-        >
+        <TouchableOpacity style={[styles.tabBtn, filterTab === 'Activos' && styles.tabBtnActive]} onPress={() => setFilterTab('Activos')}>
           <Text style={[styles.tabBtnText, filterTab === 'Activos' && styles.tabBtnTextActive]}>Turnos Activos</Text>
         </TouchableOpacity>
       </View>
@@ -209,7 +257,7 @@ export default function AdminNominaScreen({ navigation }: any) {
         </ScrollView>
       )}
 
-      {/* Modal Resumen (Sin cambios lógicos) */}
+      {/* Modal Resumen */}
       <Modal visible={!!selectedEmpleado} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -296,7 +344,7 @@ export default function AdminNominaScreen({ navigation }: any) {
                 {historyTurnos.length === 0 ? (
                   <Text style={{ textAlign: 'center', marginTop: 20, color: '#6b7280' }}>No hay turnos registrados</Text>
                 ) : (
-                  historyTurnos.map(turno => (
+                  historyTurnos.sort((a, b) => new Date(b.horaEntrada).getTime() - new Date(a.horaEntrada).getTime()).map(turno => (
                     <View key={turno.IDturno} style={styles.historyCard}>
                       <View style={styles.historyHeader}>
                         <Text style={styles.historyDate}>
@@ -322,18 +370,105 @@ export default function AdminNominaScreen({ navigation }: any) {
                       </View>
 
                       <View style={styles.historyFooter}>
-                        <Text style={styles.historyFooterText}>
-                          {turno.ceno ? '🍔 Cenó' : '❌ No cenó'}
-                        </Text>
-                        <Text style={styles.historyFooterValue}>
-                          ${Number(turno.valorTurno || 0).toLocaleString('es-CO')}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Text style={styles.historyFooterText}>
+                            {turno.ceno ? '🍔 Cenó' : '❌ No cenó'}
+                          </Text>
+                          <Text style={[styles.historyFooterValue, { marginLeft: 12 }]}>
+                            ${Number(turno.valorTurno || 0).toLocaleString('es-CO')}
+                          </Text>
+                        </View>
+                        <View style={{ flexDirection: 'row' }}>
+                          <TouchableOpacity style={styles.iconBtn} onPress={() => handleEditTurno(turno)}>
+                            <Ionicons name="pencil" size={18} color="#3b82f6" />
+                          </TouchableOpacity>
+                          <TouchableOpacity style={[styles.iconBtn, { marginLeft: 8 }]} onPress={() => handleDeleteTurno(turno)}>
+                            <Ionicons name="trash" size={18} color="#ef4444" />
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </View>
                   ))
                 )}
               </ScrollView>
             )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal Editar Turno */}
+      <Modal visible={!!editingTurno} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { width: '85%' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={styles.modalTitle}>Editar Turno</Text>
+              <TouchableOpacity onPress={() => setEditingTurno(null)} style={{ padding: 4 }}>
+                <Ionicons name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Estado del turno</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                  {['ACTIVO', 'COMPLETADO', 'LIQUIDADO', 'ANULADO'].map(est => (
+                    <TouchableOpacity 
+                      key={est}
+                      style={[styles.statusChip, editForm.estado === est && styles.statusChipActive]}
+                      onPress={() => setEditForm({...editForm, estado: est})}
+                    >
+                      <Text style={[styles.statusChipText, editForm.estado === est && styles.statusChipTextActive]}>{est}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Fecha/Hora Entrada (ISO)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editForm.horaEntrada}
+                  onChangeText={(val) => setEditForm({...editForm, horaEntrada: val})}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Fecha/Hora Salida (ISO)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editForm.horaSalida}
+                  onChangeText={(val) => setEditForm({...editForm, horaSalida: val})}
+                  placeholder="Dejar vacío si no ha salido"
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Valor del Turno ($)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={editForm.valorTurno}
+                  onChangeText={(val) => setEditForm({...editForm, valorTurno: val})}
+                  keyboardType="numeric"
+                />
+              </View>
+
+              <View style={[styles.inputGroup, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+                <Text style={styles.label}>¿Cenó?</Text>
+                <Switch
+                  value={editForm.ceno}
+                  onValueChange={(val) => setEditForm({...editForm, ceno: val})}
+                />
+              </View>
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <Button style={{ flex: 1, marginRight: 8, backgroundColor: '#f3f4f6' }} onPress={() => setEditingTurno(null)} disabled={savingTurno}>
+                <Text style={{ color: '#111827' }}>Cancelar</Text>
+              </Button>
+              <Button style={{ flex: 1, backgroundColor: '#3b82f6' }} onPress={handleSaveTurno} isLoading={savingTurno}>
+                <Text style={{ color: '#fff' }}>Guardar</Text>
+              </Button>
+            </View>
           </View>
         </View>
       </Modal>
@@ -381,7 +516,6 @@ const styles = StyleSheet.create({
   itemRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
   modalActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 },
 
-  // History Card Styles
   historyCard: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, padding: 12, marginBottom: 12 },
   historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   historyDate: { fontSize: 14, fontWeight: '700', color: '#374151', textTransform: 'capitalize' },
@@ -393,5 +527,16 @@ const styles = StyleSheet.create({
   timeValue: { fontSize: 14, fontWeight: '600', color: '#111827' },
   historyFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#f3f4f6', paddingTop: 8 },
   historyFooterText: { fontSize: 12, color: '#4b5563', fontWeight: '500' },
-  historyFooterValue: { fontSize: 14, fontWeight: '700', color: '#10b981' }
+  historyFooterValue: { fontSize: 14, fontWeight: '700', color: '#10b981' },
+  
+  iconBtn: { padding: 6, backgroundColor: '#f3f4f6', borderRadius: 6 },
+  
+  inputGroup: { marginBottom: 16 },
+  label: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 },
+  input: { backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 10, fontSize: 14, color: '#111827' },
+  
+  statusChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#f3f4f6', marginRight: 8, marginBottom: 8, borderWidth: 1, borderColor: '#e5e7eb' },
+  statusChipActive: { backgroundColor: '#111827', borderColor: '#111827' },
+  statusChipText: { fontSize: 12, fontWeight: '600', color: '#4b5563' },
+  statusChipTextActive: { color: '#fff' }
 });
