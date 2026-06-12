@@ -40,7 +40,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   // Estados para IA
   const [iaConfig, setIaConfig] = useState({
     apiKey: '',
-    modeloDefecto: 'gemini-1.5-flash',
+    modeloDefecto: 'gemini-3.5-flash',
     temperatura: '0.4',
     maxTokens: '2048',
     isActive: true
@@ -109,7 +109,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
       if (dataIA) {
         setIaConfig({
           apiKey: dataIA.apiKey || '',
-          modeloDefecto: dataIA.modeloDefecto || 'gemini-1.5-flash',
+          modeloDefecto: dataIA.modeloDefecto || 'gemini-3.5-flash',
           temperatura: (dataIA.temperatura ?? 0.4).toString(),
           maxTokens: (dataIA.maxTokens ?? 2048).toString(),
           isActive: dataIA.isActive ?? true
@@ -411,7 +411,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
 
           <Text style={styles.label}>Modelo de Visión</Text>
           <View style={styles.modelButtons}>
-            {['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-3-flash-preview'].map((modelo) => (
+            {['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-3.5-flash', 'gemini-3-flash-preview'].map((modelo) => (
               <TouchableOpacity
                 key={modelo}
                 style={[styles.modelBtn, iaConfig.modeloDefecto === modelo && styles.modelBtnActive]}
