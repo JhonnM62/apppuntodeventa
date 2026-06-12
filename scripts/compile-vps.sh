@@ -43,8 +43,25 @@ echo "[3/6] Verificando Java 17 y Memoria RAM (Swap)..."
 # 1. Chequear Java 17
 if ! command -v java &> /dev/null || ! java -version 2>&1 | grep -q '17\.'; then
     echo "⚠️ Java 17 no encontrado. Instalando OpenJDK 17..."
-    apt-get update && apt-get install -y openjdk-17-jdk
+    apt-get update && apt-get install -y openjdk-17-jdk unzip wget
     echo "✅ Java 17 instalado."
+fi
+
+# 1.5 Chequear Android SDK
+if [ ! -d "$ANDROID_HOME/cmdline-tools/latest/bin" ]; then
+    echo "⚠️ Android SDK no encontrado en $ANDROID_HOME. Instalando herramientas..."
+    mkdir -p "$ANDROID_HOME/cmdline-tools"
+    cd "$ANDROID_HOME/cmdline-tools"
+    wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+    unzip -q cmdline-tools.zip
+    mv cmdline-tools latest
+    rm cmdline-tools.zip
+    
+    echo "Aceptando licencias e instalando paquetes de Android..."
+    yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null
+    "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platform-tools" "platforms;android-34" "build-tools;34.0.0" > /dev/null
+    echo "✅ Android SDK instalado."
+    cd "$PROJECT_DIR"
 fi
 
 # 2. Chequear y crear Swap de 4GB si no existe (Evita que Gradle explote por falta de RAM)
