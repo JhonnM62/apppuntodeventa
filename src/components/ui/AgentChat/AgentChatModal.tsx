@@ -3,7 +3,7 @@ import { View, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndi
 import Voice from '@react-native-voice/voice';
 import { useAgentStore } from '../../../store/useAgentStore';
 import ActionConfirmCard from './ActionConfirmCard';
-import axios from 'axios';
+import api from '../../../services/api';
 import { Ionicons } from '@expo/vector-icons';
 
 export default function AgentChatModal() {
@@ -49,24 +49,27 @@ export default function AgentChatModal() {
     setProcessing(true);
 
     try {
-      const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
-      const response = await axios.post(`${apiUrl}/agent/chat`, {
+      const response = await api.post(`/agent/chat`, {
         threadId,
         message: userMsg
       });
       
-      const resData = response.data.data;
-      if (resData.status === 'completed') {
-        addMessage({ id: Date.now().toString(), text: resData.message, sender: 'agent' });
-      } else if (resData.status === 'interrupted') {
+      const resData = response.data; // api interceptor already unwraps response.data, but wait, look at api.ts: it returns response.data. Wait!
+      // In AgentChatModal, it was: const resData = response.data.data;
+      // Let's check api.ts line 55: return response.data;
+      // So response here IS response.data. Then the original code `response.data.data` is just `response.data`.
+      const resDataAgent = response.data;
+      if (resDataAgent?.status === 'completed') {
+        addMessage({ id: Date.now().toString(), text: resDataAgent.message, sender: 'agent' });
+      } else if (resDataAgent?.status === 'interrupted') {
         addMessage({ 
           id: Date.now().toString(), 
-          text: resData.interruptData.message, 
+          text: resDataAgent.interruptData.message, 
           sender: 'agent', 
-          interruptData: resData.interruptData 
+          interruptData: resDataAgent.interruptData 
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       addMessage({ id: Date.now().toString(), text: 'Hubo un error al conectar con el agente.', sender: 'agent' });
     } finally {
