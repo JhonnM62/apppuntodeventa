@@ -12,6 +12,7 @@ import { useSalesStore } from '../store/useSalesStore';
 import { Text } from 'react-native';
 import SessionExpiredModal from '../components/ui/SessionExpiredModal';
 import { useGlobalSalesSync } from '../hooks/useGlobalSalesSync';
+import AgentChatModal from '../components/ui/AgentChat/AgentChatModal';
 
 // Screens
 import LoginScreen from '../screens/auth/LoginScreen';
@@ -303,6 +304,7 @@ const RootNavigator = () => {
       </Stack.Navigator>
       {token != null && <FloatingDock />}
       <SessionExpiredModal />
+      {token != null && <AgentChatModal />}
     </NavigationContainer>
   );
 };

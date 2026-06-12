@@ -49,7 +49,8 @@
           "photosPermission": "Permite acceder a tus fotos para subir imágenes de los insumos.",
           "cameraPermission": "Permite usar la cámara para tomar fotos a los insumos."
         }
-      ]
+      ],
+      "@react-native-voice/voice"
     ],
     "extra": {
       "eas": {

@@ -6,6 +6,7 @@ import { useDockStore, RouteHistoryItem } from '../../store/useDockStore';
 import useAuthStore from '../../store/useAuthStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAgentStore } from '../../store/useAgentStore';
 
 // Mapa de permisos por rol
 const ALLOWED_ROUTES_BY_ROLE: Record<string, string[]> = {
@@ -366,6 +367,19 @@ const FloatingDock = () => {
                   )}
                 </View>
                 <Text style={styles.label}>Recientes</Text>
+              </TouchableOpacity>
+
+              <View style={styles.divider} />
+
+              <TouchableOpacity 
+                style={styles.button} 
+                onPress={() => {
+                  const { openChat } = useAgentStore.getState();
+                  openChat();
+                }}
+              >
+                <Ionicons name="hardware-chip" size={24} color="#6366f1" />
+                <Text style={styles.label}>Agente</Text>
               </TouchableOpacity>
             </View>
           </Animated.View>
