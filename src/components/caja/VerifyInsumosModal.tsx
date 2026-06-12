@@ -68,17 +68,12 @@ export default function VerifyInsumosModal({
     
     setModalState('CHECKING');
     setErrorMessage('');
-    setInsumos([]);
     
     try {
       const response = await getVerificacionPendiente(cajaId);
-      console.log('[VerifyInsumosModal] Response:', JSON.stringify(response, null, 2));
       
       const pendientes = response?.pendientes ?? [];
-      console.log('[VerifyInsumosModal] Pendientes:', pendientes.length, pendientes.map(p => ({ nombre: p.nombre, conteoVerificado: p.conteoVerificado })));
-      
       const todasVerificadas = response?.todasVerificadas ?? false;
-      console.log('[VerifyInsumosModal] TodasVerificadas:', todasVerificadas);
       
       setPuedePosponer(response?.puedePosponer ?? false);
       setPosposicionesRestantes(response?.posposicionesRestantes ?? 0);
@@ -88,25 +83,29 @@ export default function VerifyInsumosModal({
       if (insumosPendientes.length === 0) {
         setInsumos([]);
         setModalState('ALREADY_VERIFIED');
-        if (todasVerificadas) {
-          onVerified();
-        } else {
-          onVerified();
-        }
+        onVerified();
         return;
       }
       
-      const insumosInit = insumosPendientes
-        .map((p: InsumoVerificacion): InsumoState => ({
-          id: p.id,
-          nombre: p.nombre,
-          unidadDeMedida: p.unidadDeMedida,
-          disponibleEnSistema: p.disponibleEnSistema,
-          cantContada: '',
-          diferencia: 0,
-        }));
+      setInsumos(prevInsumos => {
+        return insumosPendientes.map((p: InsumoVerificacion): InsumoState => {
+          const existing = prevInsumos.find(i => i.id === p.id);
+          const cantContada = existing ? existing.cantContada : '';
+          const diff = existing && cantContada !== '' 
+            ? Number(cantContada) - p.disponibleEnSistema 
+            : 0;
+
+          return {
+            id: p.id,
+            nombre: p.nombre,
+            unidadDeMedida: p.unidadDeMedida,
+            disponibleEnSistema: p.disponibleEnSistema,
+            cantContada: cantContada,
+            diferencia: diff,
+          };
+        });
+      });
       
-      setInsumos(insumosInit);
       setModalState('PENDING_VERIFICATION');
     } catch (error: any) {
       console.error('Error cargando verificación:', error);

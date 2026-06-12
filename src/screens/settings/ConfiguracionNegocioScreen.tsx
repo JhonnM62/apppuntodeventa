@@ -43,7 +43,8 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     modeloDefecto: 'gemini-3.5-flash',
     temperatura: '0.4',
     maxTokens: '2048',
-    isActive: true
+    isActive: true,
+    usarRazonamiento: false
   });
 
   // Estados para Whatsapp
@@ -112,7 +113,8 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           modeloDefecto: dataIA.modeloDefecto || 'gemini-3.5-flash',
           temperatura: (dataIA.temperatura ?? 0.4).toString(),
           maxTokens: (dataIA.maxTokens ?? 2048).toString(),
-          isActive: dataIA.isActive ?? true
+          isActive: dataIA.isActive ?? true,
+          usarRazonamiento: dataIA.usarRazonamiento ?? false
         });
       }
 
@@ -148,9 +150,10 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         updateConfiguracionIA({
           apiKey: iaConfig.apiKey,
           modeloDefecto: iaConfig.modeloDefecto,
-          temperatura: parseFloat(iaConfig.temperatura),
-          maxTokens: parseInt(iaConfig.maxTokens, 10),
-          isActive: iaConfig.isActive
+          temperatura: parseFloat(iaConfig.temperatura) || 0.4,
+          maxTokens: parseInt(iaConfig.maxTokens, 10) || 2048,
+          isActive: iaConfig.isActive,
+          usarRazonamiento: iaConfig.usarRazonamiento
         }),
         updateConfiguracionWhatsapp({
           enabled: whatsappConfig.enabled,
@@ -424,7 +427,20 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             ))}
           </View>
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+            <View>
+              <Text style={styles.label}>Usar Modelo de Razonamiento</Text>
+              <Text style={[styles.infoTextIA, { marginTop: 0, fontSize: 12 }]}>Activa el "Thinking Level" para mayor precisión (aumenta el tiempo de espera a 10-30s).</Text>
+            </View>
+            <Switch
+              value={iaConfig.usarRazonamiento}
+              onValueChange={(val) => setIaConfig({...iaConfig, usarRazonamiento: val})}
+              trackColor={{ false: '#d1d5db', true: '#c7d2fe' }}
+              thumbColor={iaConfig.usarRazonamiento ? '#4f46e5' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16 }}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <Text style={styles.label}>Creatividad (Temp)</Text>
               <TextInput

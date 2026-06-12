@@ -79,6 +79,44 @@ const formatDateToLocalYYYYMMDD = (isoString: string) => {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 };
 
+const CurrencyInputWrapper = ({ value, onChange, onFocus, editable, className, placeholder }: any) => {
+  const [localValue, setLocalValue] = useState(() => {
+    return value !== undefined && value !== '' && value !== null && Number(value) !== 0 ? formatCurrency(Number(value)) : '';
+  });
+
+  useEffect(() => {
+    const currentNumeric = parseCurrency(localValue);
+    const newNumeric = value !== undefined && value !== '' && value !== null ? String(Number(value)) : '';
+    if (currentNumeric !== newNumeric) {
+      setLocalValue(value !== undefined && value !== '' && value !== null && Number(value) !== 0 ? formatCurrency(Number(value)) : '');
+    }
+  }, [value]);
+
+  const handleChangeText = (text: string) => {
+    const numeric = parseCurrency(text);
+    const formatted = numeric ? formatCurrency(Number(numeric)) : '';
+    setLocalValue(formatted);
+    onChange(numeric);
+  };
+
+  return (
+    <Input 
+      editable={editable}
+      keyboardType="numeric" 
+      value={localValue} 
+      onChangeText={handleChangeText} 
+      onFocus={(e) => {
+        if (Number(parseCurrency(localValue)) === 0) {
+          handleChangeText('');
+        }
+        if (onFocus) onFocus(e);
+      }}
+      className={className} 
+      placeholder={placeholder}
+    />
+  );
+};
+
 export default function CajaFormScreen({ route, navigation }: any) {
   const { cajaId } = route.params || {};
   const isNew = !cajaId;
@@ -1321,7 +1359,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           <View className="mb-3">
             <Text className="text-gray-600 text-xs font-semibold mb-1 uppercase">Efectivo Inicial <Text className="text-red-500">*</Text></Text>
             <Controller control={control} name="efectivoDeApertura" render={({ field: { onChange, value } }) => (
-              <Input editable={!isReadOnly} keyboardType="numeric" value={formatCurrency(value)} onChangeText={(val) => onChange(parseCurrency(val))} className={cn("font-bold bg-gray-50 border-gray-300 text-gray-900", errors.efectivoDeApertura && "border-red-500")} style={{ fontSize: 15 }} />
+              <CurrencyInputWrapper editable={!isReadOnly} value={value} onChange={onChange} className={cn("font-bold bg-gray-50 border-gray-300 text-gray-900", errors.efectivoDeApertura && "border-red-500")} style={{ fontSize: 15 }} />
             )} />
             {errors.efectivoDeApertura && (
               <Text className="text-red-500 text-xs mt-1 font-medium">{errors.efectivoDeApertura.message as unknown as string}</Text>
@@ -1369,7 +1407,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
               <View className="flex-1 mr-2">
                 <Text className="text-gray-600 text-xs font-semibold mb-1 uppercase">Plata Guardada</Text>
                 <Controller control={control} name="plataGuardada" render={({ field: { onChange, value } }) => (
-                  <Input keyboardType="numeric" value={formatCurrency(value)} onChangeText={(val) => onChange(parseCurrency(val))} className="bg-white border-red-300 text-gray-900" />
+                  <CurrencyInputWrapper value={value} onChange={onChange} className="bg-white border-red-300 text-gray-900" />
                 )} />
               </View>
               <View className="flex-1 ml-2">
@@ -1650,16 +1688,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
               <View className="bg-gray-50 rounded-xl p-3 border border-gray-200">
                 <Text className="text-gray-600 text-xs font-bold mb-2 uppercase">Monto Físico Contado *</Text>
                 <Controller control={control} name="efectivoDeCierre" render={({ field: { onChange, value } }) => (
-                  <Input 
+                  <CurrencyInputWrapper 
                     editable={!isReadOnly}
-                    keyboardType="numeric" 
-                    value={value !== undefined && (value as any) !== '' && value !== null && Number(value) !== 0 ? formatCurrency(Number(value)) : ''} 
-                    onChangeText={(val) => onChange(parseCurrency(val))} 
-                    onFocus={() => {
-                      if (Number(value) === 0) {
-                        onChange('' as any);
-                      }
-                    }}
+                    value={value} 
+                    onChange={onChange} 
                     className="font-black text-lg bg-white border-green-300 text-green-700 text-center" 
                     placeholder="$ 0"
                   />
@@ -1695,16 +1727,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
               </View>
               <View className="bg-gray-50 rounded-xl p-3 border border-gray-200">
                 <Text className="text-gray-600 text-xs font-bold mb-2 uppercase">Monto Contado en la App de BANCO *</Text>
-                <Input 
+                <CurrencyInputWrapper 
                   editable={!isReadOnly}
-                  keyboardType="numeric" 
-                  value={transferenciasContadas !== undefined && transferenciasContadas !== '' && transferenciasContadas !== null && Number(transferenciasContadas) !== 0 ? formatCurrency(transferenciasContadas) : ''} 
-                  onChangeText={(val) => setTransferenciasContadas(String(parseCurrency(val)))} 
-                  onFocus={() => {
-                    if (Number(transferenciasContadas) === 0) {
-                      setTransferenciasContadas('');
-                    }
-                  }}
+                  value={transferenciasContadas} 
+                  onChange={setTransferenciasContadas} 
                   className="font-black text-lg bg-white border-blue-300 text-blue-700 text-center" 
                   placeholder="$ 0"
                 />
@@ -2504,6 +2530,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                       const amountToAdd = Number(addQtyAmount);
                       const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
                       setValue(`insumos.${addQtyIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
+                      setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
                     }
                     setAddQtyModalVisible(false);
                   }}
