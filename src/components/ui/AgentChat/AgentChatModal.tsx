@@ -13,13 +13,13 @@ export default function AgentChatModal() {
 
   useSpeechRecognitionEvent('start', () => setIsListening(true));
   useSpeechRecognitionEvent('end', () => setIsListening(false));
-  useSpeechRecognitionEvent('result', (event) => {
+  useSpeechRecognitionEvent('result', (event: any) => {
     if (event.results && event.results.length > 0) {
       const transcript = event.results[0]?.transcript;
       if (transcript) setInputText(transcript);
     }
   });
-  useSpeechRecognitionEvent('error', (event) => {
+  useSpeechRecognitionEvent('error', (event: any) => {
     console.error('Speech recognition error:', event.error, event.message);
     setIsListening(false);
   });
