@@ -58,7 +58,8 @@ export default function AgentChatModal() {
       // In AgentChatModal, it was: const resData = response.data.data;
       // Let's check api.ts line 55: return response.data;
       // So response here IS response.data. Then the original code `response.data.data` is just `response.data`.
-      const resDataAgent = response.data;
+      const res = response.data;
+      const resDataAgent = res?.data || res; // Extraer la data interna de la respuesta de NestJS
       if (resDataAgent?.status === 'completed') {
         addMessage({ id: Date.now().toString(), text: resDataAgent.message, sender: 'agent' });
       } else if (resDataAgent?.status === 'interrupted') {
@@ -133,6 +134,7 @@ export default function AgentChatModal() {
               <TextInput
                 style={styles.input}
                 placeholder="Habla o escribe aquí..."
+                placeholderTextColor="#6b7280"
                 value={inputText}
                 onChangeText={setInputText}
                 onSubmitEditing={sendMessage}
@@ -149,7 +151,7 @@ export default function AgentChatModal() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f9fafb', marginTop: Platform.OS === 'ios' ? 40 : 0 },
+  container: { flex: 1, backgroundColor: '#f9fafb', paddingTop: Platform.OS === 'android' ? 45 : 0, marginTop: Platform.OS === 'ios' ? 40 : 0 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#111827' },
   closeBtn: { padding: 4 },
@@ -160,7 +162,7 @@ const styles = StyleSheet.create({
   messageText: { fontSize: 15 },
   userText: { color: '#fff' },
   agentText: { color: '#111827' },
-  inputArea: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e5e7eb' },
+  inputArea: { flexDirection: 'row', alignItems: 'center', padding: 12, paddingBottom: Platform.OS === 'android' ? 24 : 12, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e5e7eb' },
   micBtn: { padding: 10, backgroundColor: '#f3f4f6', borderRadius: 20, marginRight: 8 },
   micActive: { backgroundColor: '#fee2e2' },
   input: { flex: 1, backgroundColor: '#f3f4f6', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15 },
