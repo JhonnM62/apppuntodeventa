@@ -126,3 +126,6 @@ SIEMPRE usar: `npm run typecheck`
 - Primera ejecución: crea caché `.tsbuildinfo` en el proyecto
 - Ejecuciones siguientes: solo re-analiza los archivos que cambiaron (mucho más rápido y liviano)
 - `skipLibCheck`: no re-verifica los tipos de `node_modules` (el mayor consumidor de RAM)
+
+
+langchain-rag, langchain-middleware, deep-agents-memory, langgraph-persistence, langgraph-human-in-the-loop, langchain-architecture

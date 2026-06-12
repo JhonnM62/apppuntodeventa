@@ -50,7 +50,12 @@
           "cameraPermission": "Permite usar la cámara para tomar fotos a los insumos."
         }
       ],
-      "@react-native-voice/voice"
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Permite usar el micrófono para interactuar con la IA."
+        }
+      ]
     ],
     "extra": {
       "eas": {

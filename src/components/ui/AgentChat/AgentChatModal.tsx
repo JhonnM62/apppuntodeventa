@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Modal, Text as RNText, Keyboard, SafeAreaView } from 'react-native';
-import Voice from '@react-native-voice/voice';
+import { start, stop, useSpeechRecognitionEvent, ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 import { useAgentStore } from '../../../store/useAgentStore';
 import ActionConfirmCard from './ActionConfirmCard';
 import api from '../../../services/api';
@@ -11,28 +11,31 @@ export default function AgentChatModal() {
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
 
-  useEffect(() => {
-    Voice.onSpeechResults = (e) => {
-      if (e.value && e.value.length > 0) {
-        setInputText(e.value[0]);
-      }
-    };
-    Voice.onSpeechEnd = () => setIsListening(false);
-    Voice.onSpeechError = () => setIsListening(false);
-
-    return () => {
-      Voice.destroy().then(Voice.removeAllListeners);
-    };
-  }, []);
+  useSpeechRecognitionEvent('start', () => setIsListening(true));
+  useSpeechRecognitionEvent('end', () => setIsListening(false));
+  useSpeechRecognitionEvent('result', (event) => {
+    if (event.results && event.results.length > 0) {
+      const transcript = event.results[0]?.transcript;
+      if (transcript) setInputText(transcript);
+    }
+  });
+  useSpeechRecognitionEvent('error', (event) => {
+    console.error('Speech recognition error:', event.error, event.message);
+    setIsListening(false);
+  });
 
   const toggleListening = async () => {
     if (isListening) {
-      await Voice.stop();
+      await stop();
       setIsListening(false);
     } else {
+      const { granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!granted) {
+        console.warn('Permiso de micrófono no concedido');
+        return;
+      }
       setInputText('');
-      await Voice.start('es-CO'); // Defaulting to Spanish Colombia based on previous context
-      setIsListening(true);
+      await start({ lang: 'es-CO', interimResults: true });
     }
   };
 
@@ -41,7 +44,7 @@ export default function AgentChatModal() {
     const userMsg = inputText;
     setInputText('');
     if (isListening) {
-       await Voice.stop();
+       await stop();
        setIsListening(false);
     }
 
