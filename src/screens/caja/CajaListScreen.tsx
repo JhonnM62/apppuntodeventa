@@ -303,10 +303,10 @@ export default function CajaListScreen({ navigation }: any) {
             data={processedData}
             renderItem={renderItem}
             getItemType={(item) => typeof item === 'string' ? 'string' : item.isHeader ? 'sectionHeader' : 'row'}
-            estimatedItemSize={120}
+            estimatedItemSize={160}
             onScroll={handleScroll}
             keyExtractor={(item, index) => item.IDcaja ? item.IDcaja : `key-${index}`}
-            contentContainerStyle={{ paddingBottom: 100 }}
+            ListFooterComponent={<View style={{ height: 100 }} />}
             ListEmptyComponent={
               <View className="items-center justify-center mt-10">
                 <Ionicons name="cash-outline" size={64} color="#d1d5db" />

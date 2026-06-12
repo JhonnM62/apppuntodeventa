@@ -358,8 +358,8 @@ if (filterCuadrarInsumos !== 'all') {
     });
   }, [insumos, searchText, filterStock, selectedCategoriaFilter, filterNombre, filterCategoria, filterEstado, filterLlevarControl, filterCuadrarInsumos, filterMinStock, filterMaxStock]);
 
-  const getCategoriaDisplay = (insumo: InsumoItem) => {
-    return insumo.categoriaNombre || insumo.NombreCategoria || insumo.Categoria || null;
+  const getCategoriaDisplay = (insumo: any) => {
+    return insumo.categoriaNombre || insumo.nombreCategoria || insumo.NombreCategoria || insumo.Categoria || null;
   };
 
   const getEstadoStock = (insumo: InsumoItem) => {
@@ -1140,10 +1140,10 @@ if (status !== 'granted') {
                 {getCategoriasInsumos().map((cat) => (
                   <TouchableOpacity
                     key={cat}
-                    style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginRight: 8, marginBottom: 8, backgroundColor: formData.categoria === cat ? '#3b82f6' : '#f3f4f6' }}
+                    style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginRight: 8, marginBottom: 8, backgroundColor: formData.nombreCategoria === cat ? '#3b82f6' : '#f3f4f6' }}
                     onPress={() => setFormData(p => ({ ...p, categoria: cat, nombreCategoria: cat }))}
                   >
-                    <RNText style={{ fontSize: 12, fontWeight: '500', color: formData.categoria === cat ? '#fff' : '#6b7280' }}>{cat}</RNText>
+                    <RNText style={{ fontSize: 12, fontWeight: '500', color: formData.nombreCategoria === cat ? '#fff' : '#6b7280' }}>{cat}</RNText>
                   </TouchableOpacity>
                 ))}
               </View>
