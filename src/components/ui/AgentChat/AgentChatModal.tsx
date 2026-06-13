@@ -1,15 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Modal, Text as RNText, Keyboard, SafeAreaView } from 'react-native';
-import { start, stop, useSpeechRecognitionEvent, ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
+import { View, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Modal, Text as RNText, Keyboard, SafeAreaView, Alert } from 'react-native';
 import { useAgentStore } from '../../../store/useAgentStore';
 import ActionConfirmCard from './ActionConfirmCard';
 import api from '../../../services/api';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function AgentChatModal() {
-  const { isOpen, closeChat, messages, isProcessing, setProcessing, addMessage, threadId } = useAgentStore();
-  const [inputText, setInputText] = useState('');
-  const [isListening, setIsListening] = useState(false);
+let expoSpeech: any = null;
+try {
+  expoSpeech = require('expo-speech-recognition');
+} catch (e) {
+  console.log("expo-speech-recognition native module not found, speech features will be disabled.");
+}
+
+function SpeechEvents({ isListening, setIsListening, setInputText }: any) {
+  if (!expoSpeech) return null;
+  const { useSpeechRecognitionEvent } = expoSpeech;
 
   useSpeechRecognitionEvent('start', () => setIsListening(true));
   useSpeechRecognitionEvent('end', () => setIsListening(false));
@@ -24,18 +29,37 @@ export default function AgentChatModal() {
     setIsListening(false);
   });
 
+  return null;
+}
+
+export default function AgentChatModal() {
+  const { isOpen, closeChat, messages, isProcessing, setProcessing, addMessage, threadId } = useAgentStore();
+  const [inputText, setInputText] = useState('');
+  const [isListening, setIsListening] = useState(false);
+
   const toggleListening = async () => {
-    if (isListening) {
-      await stop();
-      setIsListening(false);
-    } else {
-      const { granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-      if (!granted) {
-        console.warn('Permiso de micrófono no concedido');
+    try {
+      if (!expoSpeech || !expoSpeech.ExpoSpeechRecognitionModule) {
+        Alert.alert('Funcionalidad no disponible', 'El dictado por voz requiere compilar e instalar el nuevo APK con los módulos nativos.');
         return;
       }
-      setInputText('');
-      await start({ lang: 'es-CO', interimResults: true });
+      const { start, stop, ExpoSpeechRecognitionModule } = expoSpeech;
+
+      if (isListening) {
+        await stop();
+        setIsListening(false);
+      } else {
+        const { granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+        if (!granted) {
+          console.warn('Permiso de micrófono no concedido');
+          return;
+        }
+        setInputText('');
+        await start({ lang: 'es-CO', interimResults: true });
+      }
+    } catch (error) {
+      console.warn('Error al iniciar micrófono:', error);
+      Alert.alert('Error', 'No se pudo iniciar el micrófono. Asegúrate de tener la app compilada correctamente.');
     }
   };
 
@@ -43,8 +67,8 @@ export default function AgentChatModal() {
     if (!inputText.trim()) return;
     const userMsg = inputText;
     setInputText('');
-    if (isListening) {
-       await stop();
+    if (isListening && expoSpeech) {
+       await expoSpeech.stop();
        setIsListening(false);
     }
 
@@ -57,10 +81,6 @@ export default function AgentChatModal() {
         message: userMsg
       });
       
-      const resData = response.data; // api interceptor already unwraps response.data, but wait, look at api.ts: it returns response.data. Wait!
-      // In AgentChatModal, it was: const resData = response.data.data;
-      // Let's check api.ts line 55: return response.data;
-      // So response here IS response.data. Then the original code `response.data.data` is just `response.data`.
       const res = response.data;
       const resDataAgent = res?.data || res; // Extraer la data interna de la respuesta de NestJS
       if (resDataAgent?.status === 'completed') {
@@ -99,9 +119,18 @@ export default function AgentChatModal() {
     };
   }, []);
 
+  const cleanMarkdown = (text: string) => {
+    if (!text) return '';
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '$1') // remove bold asterisks
+      .replace(/^\s*\*\s/gm, '• ')     // replace bullet points asterisks
+      .replace(/\*(.*?)\*/g, '$1');    // remove italic asterisks
+  };
+
   return (
     <Modal visible={isOpen} animationType="slide" transparent>
       <View style={styles.container}>
+        <SpeechEvents isListening={isListening} setIsListening={setIsListening} setInputText={setInputText} />
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={{ flex: 1, paddingBottom: Platform.OS === 'android' ? keyboardHeight : 0 }}
@@ -109,15 +138,20 @@ export default function AgentChatModal() {
           <SafeAreaView style={{ flex: 1 }}>
             <View style={styles.header}>
               <RNText style={styles.headerTitle}>Agente IA 🤖</RNText>
-              <TouchableOpacity onPress={closeChat} style={styles.closeBtn}>
-                 <Ionicons name="close" size={24} color="#111827" />
-              </TouchableOpacity>
+              <View style={{ flexDirection: 'row' }}>
+                <TouchableOpacity onPress={() => useAgentStore.getState().clearChat?.()} style={[styles.closeBtn, { marginRight: 16 }]}>
+                   <Ionicons name="trash-outline" size={24} color="#ef4444" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={closeChat} style={styles.closeBtn}>
+                   <Ionicons name="close" size={24} color="#111827" />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <ScrollView style={styles.chatArea} contentContainerStyle={{ flexGrow: 1, paddingBottom: 32, padding: 16 }}>
               {messages.map((m, i) => (
                 <View key={i} style={[styles.messageBubble, m.sender === 'user' ? styles.userBubble : styles.agentBubble]}>
-                  {m.text ? <RNText style={[styles.messageText, m.sender === 'user' ? styles.userText : styles.agentText]}>{m.text}</RNText> : null}
+                  {m.text ? <RNText style={[styles.messageText, m.sender === 'user' ? styles.userText : styles.agentText]}>{cleanMarkdown(m.text)}</RNText> : null}
                   {m.interruptData && (
                     <ActionConfirmCard interruptData={m.interruptData} messageId={m.id} />
                   )}
@@ -131,7 +165,7 @@ export default function AgentChatModal() {
             </ScrollView>
 
             <View style={styles.inputArea}>
-              <TouchableOpacity onPress={toggleListening} style={[styles.micBtn, isListening && styles.micActive]}>
+              <TouchableOpacity onPress={toggleListening} style={[styles.micBtn, isListening && styles.micActive, !expoSpeech && { opacity: 0.5 }]}>
                  <Ionicons name="mic" size={20} color={isListening ? "#ef4444" : "#4b5563"} />
               </TouchableOpacity>
               <TextInput

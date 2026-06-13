@@ -93,6 +93,11 @@ echo "[6/6] Construyendo APK (EAS Build Local)..."
 rm -f *.apk
 # Forzamos límite de RAM en Gradle para que no colapse el VPS
 export GRADLE_OPTS="-Xmx2048m -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs='-Xmx2048m -XX:MaxMetaspaceSize=512m'"
+# Definir directorio temporal en disco (no en /tmp que puede ser tmpfs/RAM)
+mkdir -p "$PROJECT_DIR/eas-tmp"
+export TMPDIR="$PROJECT_DIR/eas-tmp"
+# Ajustar variable de entorno adicional para Node
+export NODE_OPTIONS="--max-old-space-size=4096"
 npx eas-cli build --platform android --profile "$PROFILE" --local --non-interactive
 
 LATEST_APK=$(ls -t *.apk | head -n 1)
