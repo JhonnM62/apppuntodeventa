@@ -43,10 +43,10 @@ export default function AgentChatModal() {
         Alert.alert('Funcionalidad no disponible', 'El dictado por voz requiere compilar e instalar el nuevo APK con los módulos nativos.');
         return;
       }
-      const { start, stop, ExpoSpeechRecognitionModule } = expoSpeech;
+      const { ExpoSpeechRecognitionModule } = expoSpeech;
 
       if (isListening) {
-        await stop();
+        await ExpoSpeechRecognitionModule.stop();
         setIsListening(false);
       } else {
         const { granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
@@ -55,7 +55,7 @@ export default function AgentChatModal() {
           return;
         }
         setInputText('');
-        await start({ lang: 'es-CO', interimResults: true });
+        await ExpoSpeechRecognitionModule.start({ lang: 'es-CO', interimResults: true });
       }
     } catch (error) {
       console.warn('Error al iniciar micrófono:', error);
@@ -67,8 +67,8 @@ export default function AgentChatModal() {
     if (!inputText.trim()) return;
     const userMsg = inputText;
     setInputText('');
-    if (isListening && expoSpeech) {
-       await expoSpeech.stop();
+    if (isListening && expoSpeech && expoSpeech.ExpoSpeechRecognitionModule) {
+       await expoSpeech.ExpoSpeechRecognitionModule.stop();
        setIsListening(false);
     }
 
