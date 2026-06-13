@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Modal, Text as RNText, Keyboard, SafeAreaView, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Modal, Text as RNText, Keyboard, SafeAreaView, Alert, Image } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useAgentStore } from '../../../store/useAgentStore';
 import ActionConfirmCard from './ActionConfirmCard';
 import api from '../../../services/api';
@@ -36,6 +37,24 @@ export default function AgentChatModal() {
   const { isOpen, closeChat, messages, isProcessing, setProcessing, addMessage, threadId } = useAgentStore();
   const [inputText, setInputText] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const pickImage = async () => {
+    try {
+      let result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.warn('Error picking image:', error);
+      Alert.alert('Error', 'No se pudo seleccionar la imagen.');
+    }
+  };
 
   const toggleListening = async () => {
     try {
@@ -64,22 +83,46 @@ export default function AgentChatModal() {
   };
 
   const sendMessage = async () => {
-    if (!inputText.trim()) return;
+    if (!inputText.trim() && !selectedImage) return;
     const userMsg = inputText;
+    const imgUri = selectedImage;
     setInputText('');
+    setSelectedImage(null);
+
     if (isListening && expoSpeech && expoSpeech.ExpoSpeechRecognitionModule) {
        await expoSpeech.ExpoSpeechRecognitionModule.stop();
        setIsListening(false);
     }
 
-    addMessage({ id: Date.now().toString(), text: userMsg, sender: 'user' });
+    addMessage({ id: Date.now().toString(), text: userMsg, sender: 'user', imageUrl: imgUri || undefined });
     setProcessing(true);
 
     try {
-      const response = await api.post(`/agent/chat`, {
-        threadId,
-        message: userMsg
-      });
+      let response;
+      if (imgUri) {
+        const formData = new FormData();
+        formData.append('threadId', threadId);
+        if (userMsg) formData.append('message', userMsg);
+        
+        const filename = imgUri.split('/').pop() || 'image.jpg';
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+        formData.append('image', {
+          uri: imgUri,
+          name: filename,
+          type
+        } as any);
+
+        response = await api.post(`/agent/chat`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+      } else {
+        response = await api.post(`/agent/chat`, {
+          threadId,
+          message: userMsg
+        });
+      }
       
       const res = response.data;
       const resDataAgent = res?.data || res; // Extraer la data interna de la respuesta de NestJS
@@ -151,7 +194,8 @@ export default function AgentChatModal() {
             <ScrollView style={styles.chatArea} contentContainerStyle={{ flexGrow: 1, paddingBottom: 32, padding: 16 }}>
               {messages.map((m, i) => (
                 <View key={i} style={[styles.messageBubble, m.sender === 'user' ? styles.userBubble : styles.agentBubble]}>
-                  {m.text ? <RNText style={[styles.messageText, m.sender === 'user' ? styles.userText : styles.agentText]}>{cleanMarkdown(m.text)}</RNText> : null}
+                  {m.imageUrl && <Image source={{ uri: m.imageUrl }} style={{ width: 200, height: 200, borderRadius: 8, marginBottom: m.text ? 8 : 0 }} resizeMode="cover" />}
+                  {m.text ? <RNText selectable={true} style={[styles.messageText, m.sender === 'user' ? styles.userText : styles.agentText]}>{cleanMarkdown(m.text)}</RNText> : null}
                   {m.interruptData && (
                     <ActionConfirmCard interruptData={m.interruptData} messageId={m.id} />
                   )}
@@ -164,7 +208,19 @@ export default function AgentChatModal() {
               )}
             </ScrollView>
 
+            {selectedImage && (
+              <View style={styles.imagePreviewContainer}>
+                <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+                <TouchableOpacity onPress={() => setSelectedImage(null)} style={styles.removeImageBtn}>
+                  <Ionicons name="close-circle" size={24} color="#ef4444" />
+                </TouchableOpacity>
+              </View>
+            )}
+
             <View style={styles.inputArea}>
+              <TouchableOpacity onPress={pickImage} style={[styles.micBtn, { marginRight: 8 }]}>
+                 <Ionicons name="image" size={20} color="#4b5563" />
+              </TouchableOpacity>
               <TouchableOpacity onPress={toggleListening} style={[styles.micBtn, isListening && styles.micActive, !expoSpeech && { opacity: 0.5 }]}>
                  <Ionicons name="mic" size={20} color={isListening ? "#ef4444" : "#4b5563"} />
               </TouchableOpacity>
@@ -176,8 +232,8 @@ export default function AgentChatModal() {
                 onChangeText={setInputText}
                 onSubmitEditing={sendMessage}
               />
-              <TouchableOpacity onPress={sendMessage} style={styles.sendBtn} disabled={!inputText.trim() || isProcessing}>
-                 <Ionicons name="send" size={20} color={(!inputText.trim() || isProcessing) ? "#9ca3af" : "#6366f1"} />
+              <TouchableOpacity onPress={sendMessage} style={styles.sendBtn} disabled={(!inputText.trim() && !selectedImage) || isProcessing}>
+                 <Ionicons name="send" size={20} color={((!inputText.trim() && !selectedImage) || isProcessing) ? "#9ca3af" : "#6366f1"} />
               </TouchableOpacity>
             </View>
           </SafeAreaView>
@@ -203,5 +259,8 @@ const styles = StyleSheet.create({
   micBtn: { padding: 10, backgroundColor: '#f3f4f6', borderRadius: 20, marginRight: 8 },
   micActive: { backgroundColor: '#fee2e2' },
   input: { flex: 1, backgroundColor: '#f3f4f6', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15 },
-  sendBtn: { padding: 10, marginLeft: 8 }
+  sendBtn: { padding: 10, marginLeft: 8 },
+  imagePreviewContainer: { padding: 12, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e5e7eb', flexDirection: 'row' },
+  imagePreview: { width: 80, height: 80, borderRadius: 8 },
+  removeImageBtn: { position: 'absolute', top: 4, left: 76, backgroundColor: '#fff', borderRadius: 12 }
 });

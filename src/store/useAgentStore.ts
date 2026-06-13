@@ -7,6 +7,7 @@ export interface AgentMessage {
   text: string;
   sender: 'user' | 'agent';
   interruptData?: any;
+  imageUrl?: string;
 }
 
 interface AgentState {
