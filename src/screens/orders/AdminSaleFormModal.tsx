@@ -242,7 +242,8 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
       const modsTotal = (item.modifiers || []).reduce((mSum: number, mod: any) => mSum + (Number(mod.price) * (mod.quantity || 1)), 0);
       return sum + itemBaseTotal + modsTotal;
     }, 0);
-    const calculatedDescuento = baseTotal * discountPercent;
+    const exactDiscount = baseTotal * discountPercent;
+    const calculatedDescuento = Math.floor(exactDiscount / 1000) * 1000;
     const finalTotalInput = Math.max(0, baseTotal - calculatedDescuento);
 
     setLoading(true);
@@ -307,7 +308,8 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
     const modsTotal = (item.modifiers || []).reduce((mSum: number, mod: any) => mSum + (Number(mod.price) * (mod.quantity || 1)), 0);
     return sum + itemBaseTotal + modsTotal;
   }, 0);
-  const calculatedDescuento = total * discountPercent;
+  const exactDiscount = total * discountPercent;
+  const calculatedDescuento = Math.floor(exactDiscount / 1000) * 1000;
   const finalTotal = Math.max(0, total - calculatedDescuento);
 
   return (

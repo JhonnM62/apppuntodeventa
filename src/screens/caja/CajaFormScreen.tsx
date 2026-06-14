@@ -84,11 +84,13 @@ const CurrencyInputWrapper = ({ value, onChange, onFocus, editable, className, p
     return value !== undefined && value !== '' && value !== null && Number(value) !== 0 ? formatCurrency(Number(value)) : '';
   });
 
+  const lastSentNumeric = useRef<string>('');
+
   useEffect(() => {
-    const currentNumeric = parseCurrency(localValue);
     const newNumeric = value !== undefined && value !== '' && value !== null ? String(Number(value)) : '';
-    if (currentNumeric !== newNumeric) {
+    if (newNumeric !== lastSentNumeric.current) {
       setLocalValue(value !== undefined && value !== '' && value !== null && Number(value) !== 0 ? formatCurrency(Number(value)) : '');
+      lastSentNumeric.current = newNumeric;
     }
   }, [value]);
 
@@ -96,6 +98,7 @@ const CurrencyInputWrapper = ({ value, onChange, onFocus, editable, className, p
     const numeric = parseCurrency(text);
     const formatted = numeric ? formatCurrency(Number(numeric)) : '';
     setLocalValue(formatted);
+    lastSentNumeric.current = numeric;
     onChange(numeric);
   };
 
@@ -1786,11 +1789,11 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 {!isCuadrada && (
                   <View className="bg-white/60 p-3 rounded-lg mt-2 mb-3">
                     <Text className="text-red-800 font-bold text-xs mb-2 uppercase text-center">Detalle de Diferencias</Text>
-                    {diffEfectivo !== 0 && <Text className="text-red-700 text-xs text-center">Efectivo: {diffEfectivo > 0 ? '+' : ''}{formatCurrency(diffEfectivo)}</Text>}
-                    {diffTrans !== 0 && <Text className="text-red-700 text-xs text-center mt-1">Transferencias: {diffTrans > 0 ? '+' : ''}{formatCurrency(diffTrans)}</Text>}
+                    {diffEfectivo !== 0 && <Text className="text-red-700 text-xs text-center font-semibold">Efectivo: {diffEfectivo > 0 ? '+ ' : '- '}{formatCurrency(diffEfectivo)} {diffEfectivo > 0 ? '(SOBRA)' : '(FALTA)'}</Text>}
+                    {diffTrans !== 0 && <Text className="text-red-700 text-xs text-center mt-1 font-semibold">Transferencias: {diffTrans > 0 ? '+ ' : '- '}{formatCurrency(diffTrans)} {diffTrans > 0 ? '(SOBRA)' : '(FALTA)'}</Text>}
                     
                     <View className="border-t border-red-200 mt-2 pt-2">
-                      <Text className="text-red-900 font-black text-center">DIFERENCIA TOTAL: {totalDiff > 0 ? '+' : ''}{formatCurrency(totalDiff)}</Text>
+                      <Text className="text-red-900 font-black text-center text-sm">DIFERENCIA TOTAL: {totalDiff > 0 ? '+ ' : '- '}{formatCurrency(totalDiff)} {totalDiff > 0 ? '(SOBRANTE)' : '(FALTANTE)'}</Text>
                     </View>
                   </View>
                 )}
