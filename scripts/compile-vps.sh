@@ -96,6 +96,7 @@ export GRADLE_OPTS="-Xmx2048m -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs='-X
 # Definir directorio temporal en disco (no en /tmp que puede ser tmpfs/RAM)
 # Debe estar FUERA del directorio del proyecto para evitar error de recursión (EINVAL al copiar)
 EAS_WORK_DIR="/opt/build-farm/eas-tmp"
+rm -rf "$EAS_WORK_DIR"
 mkdir -p "$EAS_WORK_DIR"
 export TMPDIR="$EAS_WORK_DIR"
 export EAS_LOCAL_BUILD_WORKINGDIR="$EAS_WORK_DIR"
