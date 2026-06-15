@@ -1848,10 +1848,13 @@ export default function CajaFormScreen({ route, navigation }: any) {
                             }
                           }
 
-                          const cuadreText = `\n\n--- ARQUEO PARCIAL (${timestampArqueo}) ---${rangoInfo}\nEFECTIVO FÍSICO: ${formatCurrency(efectivoContado)} (Dif: ${formatCurrency(diffEfectivo)})\nTRANSFERENCIAS: ${formatCurrency(transContadas)} (Dif: ${formatCurrency(diffTrans)})\nESTADO: ${isCuadrada ? 'CUADRADA' : 'NO CUADRADA (DIFERENCIA TOTAL: ' + formatCurrency(totalDiff) + ')'}${insumosInfo}\n----------------------`;
-                          setValue('observaciones', currentObs + cuadreText);
+                          const newObs = currentObs + cuadreText;
+                          setValue('observaciones', newObs);
 
-                          handleSubmit((data) => onSave(data, false), onError)();
+                          handleSubmit((data) => {
+                            data.observaciones = newObs;
+                            onSave(data, false);
+                          }, onError)();
                         }}
                       >
                         <Text className="text-white font-bold text-[10px] uppercase text-center leading-tight">Confirmar Arqueo Parcial</Text>
@@ -1883,9 +1886,12 @@ export default function CajaFormScreen({ route, navigation }: any) {
                               }
                             }
 
-                            const cuadreText = `\n\n--- CIERRE DEFINITIVO (${new Date().toLocaleString('es-CO')}) ---\nEFECTIVO FÍSICO: ${formatCurrency(efectivoContado)} (Dif: ${formatCurrency(diffEfectivo)})\nTRANSFERENCIAS: ${formatCurrency(transContadas)} (Dif: ${formatCurrency(diffTrans)})\nESTADO: ${isCuadrada ? 'CUADRADA' : 'NO CUADRADA'}${insumosInfoCierre}\n----------------------`;
-                            setValue('observaciones', currentObs + cuadreText);
-                            handleSubmit((data) => onSave(data, true), onError)();
+                            const newObs = currentObs + cuadreText;
+                            setValue('observaciones', newObs);
+                            handleSubmit((data) => {
+                               data.observaciones = newObs;
+                               onSave(data, true);
+                            }, onError)();
                           },
                           onCancel: () => {},
                         });
