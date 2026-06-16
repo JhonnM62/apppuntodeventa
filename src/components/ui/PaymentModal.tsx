@@ -223,7 +223,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       total: actualTotal,
       productos: cart.map(item => {
         const precioUnitario = Number(item.precioUnitario || item.Precio_Unitario || 0);
-        const modifiersTotal = (item.modifiers || []).reduce((sum: number, mod: any) => sum + mod.price, 0);
+        const modifiersTotal = (item.modifiers || []).reduce((sum: number, mod: any) => sum + (Number(mod.price) * (mod.quantity || 1)), 0);
         const subtotal = (precioUnitario * item.quantity) + modifiersTotal;
         return {
           cantidad: item.quantity,
@@ -621,8 +621,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         <ScrollView style={[styles.cartSummaryList, { maxHeight: windowHeight * 0.18 }]} showsVerticalScrollIndicator={false} nestedScrollEnabled>
           {cart.map((item, index) => {
             const unitPrice = Number(item.precioUnitario || item.Precio_Unitario || 0);
-            const modifiersTotal = (item.modifiers || []).reduce((sum: number, mod: any) => sum + mod.price, 0);
-            const subtotal = (item.quantity * unitPrice) + modifiersTotal;
+            const baseSubtotal = item.quantity * unitPrice;
             return (
               <View key={`${item.IDproductos}-${index}`} style={{ marginBottom: 6, paddingBottom: 4, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' }}>
                 <View style={[styles.cartSummaryItem, { marginBottom: 2 }]}>
@@ -632,22 +631,25 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                     </View>
                     <RNText style={styles.cartSummaryName} numberOfLines={1}>{item.nombre}</RNText>
                   </View>
-                  <RNText style={styles.cartSummaryPrice}>{formatMoney(subtotal)}</RNText>
+                  <RNText style={styles.cartSummaryPrice}>{formatMoney(baseSubtotal)}</RNText>
                 </View>
 
                 {/* MODIFICADORES */}
                 {item.modifiers && item.modifiers.length > 0 && (
                   <View style={{ paddingLeft: 36 }}>
-                    {item.modifiers.map((mod: any, modIdx: number) => (
+                    {item.modifiers.map((mod: any, modIdx: number) => {
+                      const modQty = mod.quantity || 1;
+                      const modTotal = Number(mod.price) * modQty;
+                      return (
                       <View key={`mod-${modIdx}`} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 1 }}>
                         <RNText style={{ fontSize: 10, color: '#6b7280', flex: 1, marginRight: 8 }} numberOfLines={1}>
-                          + {mod.name}
+                          {modQty > 1 ? `${modQty}x ` : ''}+ {mod.name}
                         </RNText>
                         <RNText style={{ fontSize: 10, color: '#9ca3af', fontWeight: 'bold' }}>
-                          {mod.price < 0 ? `-${formatMoney(Math.abs(mod.price))}` : `+${formatMoney(mod.price)}`}
+                          {modTotal < 0 ? `-${formatMoney(Math.abs(modTotal))}` : `+${formatMoney(modTotal)}`}
                         </RNText>
                       </View>
-                    ))}
+                    )})}
                   </View>
                 )}
 
