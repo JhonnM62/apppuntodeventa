@@ -10,7 +10,23 @@ echo "   INICIANDO GRANJA DE COMPILACIÓN EN VPS        "
 echo "   Perfil: $PROFILE                              "
 echo "================================================="
 
-echo "[1/6] Verificando versión de Node.js..."
+echo "[0/7] Limpiando servidor (procesos colgados, RAM, cachés)..."
+# 1. Liberar memoria RAM (PageCache, dentries e inodes)
+sync; echo 3 > /proc/sys/vm/drop_caches || true
+
+# 2. Matar procesos huérfanos de compilaciones fallidas
+pkill -9 -f gradle || true
+pkill -9 -f java || true
+pkill -9 -f "eas-cli" || true
+pkill -9 -f "expo" || true
+pkill -9 -f "metro" || true
+
+# 3. Limpiar cachés pesados y temporales
+rm -rf ~/.gradle/daemon/* || true
+rm -rf /opt/build-farm/eas-tmp/* || true
+echo "✅ Limpieza inicial completada. Servidor listo y fresco."
+
+echo "[1/7] Verificando versión de Node.js..."
 NODE_VER=$(node -v 2>/dev/null | grep -oE '[0-9]+' | head -1 || echo "0")
 if [ "$NODE_VER" -lt 20 ]; then
     echo "⚠️ Versión de Node.js antigua o no instalada detectada (v$NODE_VER). Actualizando a Node 20..."
@@ -106,7 +122,9 @@ npx eas-cli build --platform android --profile "$PROFILE" --local --non-interact
 LATEST_APK=$(ls -t *.apk | head -n 1)
 
 echo "[7/7] Limpiando procesos pesados de RAM..."
+pkill -9 -f gradle || true
 pkill -9 -f java || true
+sync; echo 3 > /proc/sys/vm/drop_caches || true
 
 echo "================================================="
 echo "✅ COMPILACIÓN FINALIZADA: $LATEST_APK"
