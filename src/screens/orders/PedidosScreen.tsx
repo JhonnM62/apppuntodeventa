@@ -1155,7 +1155,14 @@ showAlert({
               <View style={styles.modalSection}>
                 <View style={styles.totalSection}>
                   <RNText style={styles.totalSectionLabel}>TOTAL</RNText>
-                  <RNText style={styles.totalSectionAmount}>{formatMoney(selectedVenta.totalInput)}</RNText>
+                  <RNText style={styles.totalSectionAmount}>
+                    {formatMoney(
+                      // FIX: si totalInput es 0 o nulo, calcularlo desde los productos
+                      (selectedVenta.totalInput && selectedVenta.totalInput > 0)
+                        ? selectedVenta.totalInput
+                        : productos.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0)
+                    )}
+                  </RNText>
                 </View>
               </View>
 
@@ -1691,6 +1698,11 @@ showAlert({
   }) => {
     if (!cobrarVenta) return;
     try {
+      // Calcular el total real de la venta desde los productos si totalInput es 0 o null
+      const totalReal = (cobrarVenta.totalInput && cobrarVenta.totalInput > 0)
+        ? cobrarVenta.totalInput
+        : (cobrarVenta.ordenVentas || []).reduce((sum: number, p: any) => sum + (Number(p.precioTotal) || 0), 0);
+
       setTimeout(() => {
         updateVentaEstado(cobrarVenta.IDventas, 'PAGADO').catch(e => console.error(e));
         const updatedVenta = {
@@ -1701,6 +1713,7 @@ showAlert({
           devueltas: paymentData.devueltas,
           banco: paymentData.banco,
           transferencia: paymentData.transferencia,
+          totalInput: totalReal, // ← FIX: persist the real total
         };
         updateVentaPago(cobrarVenta.IDventas, {
           estado: 'PAGADO',
@@ -1709,6 +1722,7 @@ showAlert({
           devueltas: paymentData.devueltas,
           banco: paymentData.banco,
           transferencia: paymentData.transferencia,
+          totalInput: totalReal, // ← FIX: send totalInput to backend
         });
         emitOrdenActualizada({
           ventaId: cobrarVenta.IDventas,
