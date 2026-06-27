@@ -40,6 +40,9 @@ yarn-error.*
 /ios
 /android
 
+# Excepción: gradle.properties se sube para controlar la memoria en EAS Build
+!/android/gradle.properties
+
 # Archivos zip o empaquetados pesados
 *.zip
 *.tar.gz
