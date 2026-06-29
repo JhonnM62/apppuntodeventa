@@ -1703,34 +1703,36 @@ showAlert({
         ? cobrarVenta.totalInput
         : (cobrarVenta.ordenVentas || []).reduce((sum: number, p: any) => sum + (Number(p.precioTotal) || 0), 0);
 
-      setTimeout(() => {
-        updateVentaEstado(cobrarVenta.IDventas, 'PAGADO').catch(e => console.error(e));
-        const updatedVenta = {
-          ...cobrarVenta,
-          estado: 'PAGADO',
-          medioDePago: paymentData.medioDePago,
-          efectivoRecibido: paymentData.efectivoRecibido,
-          devueltas: paymentData.devueltas,
-          banco: paymentData.banco,
-          transferencia: paymentData.transferencia,
-          totalInput: totalReal, // ← FIX: persist the real total
-        };
-        updateVentaPago(cobrarVenta.IDventas, {
-          estado: 'PAGADO',
-          medioDePago: paymentData.medioDePago,
-          efectivoRecibido: paymentData.efectivoRecibido,
-          devueltas: paymentData.devueltas,
-          banco: paymentData.banco,
-          transferencia: paymentData.transferencia,
-          totalInput: totalReal, // ← FIX: send totalInput to backend
-        });
-        emitOrdenActualizada({
-          ventaId: cobrarVenta.IDventas,
-          IDventas: cobrarVenta.IDventas,
-          venta: updatedVenta,
-          estado: 'PAGADO',
-        });
-      }, 0);
+      // FIX: Esperamos a que termine la petición en vez de enviarla en background sin control
+      // Eliminamos updateVentaEstado para evitar la condición de carrera con updateVentaPago
+      await updateVentaPago(cobrarVenta.IDventas, {
+        estado: 'PAGADO',
+        medioDePago: paymentData.medioDePago,
+        efectivoRecibido: paymentData.efectivoRecibido,
+        devueltas: paymentData.devueltas,
+        banco: paymentData.banco,
+        transferencia: paymentData.transferencia,
+        totalInput: totalReal,
+      });
+
+      // Actualizamos UI localmente de forma opcional (el socket confirmará después)
+      const updatedVenta = {
+        ...cobrarVenta,
+        estado: 'PAGADO',
+        medioDePago: paymentData.medioDePago,
+        efectivoRecibido: paymentData.efectivoRecibido,
+        devueltas: paymentData.devueltas,
+        banco: paymentData.banco,
+        transferencia: paymentData.transferencia,
+        totalInput: totalReal,
+      };
+
+      emitOrdenActualizada({
+        ventaId: cobrarVenta.IDventas,
+        IDventas: cobrarVenta.IDventas,
+        venta: updatedVenta,
+        estado: 'PAGADO',
+      });
 
       closeModal();
       setPaymentModalVisible(false);

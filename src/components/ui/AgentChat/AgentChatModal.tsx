@@ -125,6 +125,11 @@ export default function AgentChatModal() {
       }
       
       const res = response.data;
+      
+      if (res?.success === false) {
+        throw new Error(res.details || res.error || 'Error interno del agente');
+      }
+
       const resDataAgent = res?.data || res; // Extraer la data interna de la respuesta de NestJS
       if (resDataAgent?.status === 'completed') {
         addMessage({ id: Date.now().toString(), text: resDataAgent.message, sender: 'agent' });
@@ -138,7 +143,8 @@ export default function AgentChatModal() {
       }
     } catch (error: any) {
       console.error(error);
-      addMessage({ id: Date.now().toString(), text: 'Hubo un error al conectar con el agente.', sender: 'agent' });
+      const errorMsg = error?.response?.data?.details || error?.response?.data?.message || error?.message || 'Error desconocido';
+      addMessage({ id: Date.now().toString(), text: `⚠️ Hubo un error al ejecutar la tarea:\n\n${errorMsg}`, sender: 'agent' });
     } finally {
       setProcessing(false);
     }
