@@ -1407,9 +1407,9 @@ const InventarioScreen = ({ navigation }: any) => {
               {getInsumoName(item.nombreDelAlimento)}
             </RNText>
           </View>
-          <View style={{ flexDirection: 'row', marginBottom: 4 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 4 }}>
             {isEntrada && (
-              <View style={{ flex: 1, marginRight: 8 }}>
+              <View style={{ flex: 1, minWidth: 130, marginRight: 8, marginBottom: 8 }}>
                 <RNText style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Precio ($)</RNText>
                 <TextInput
                   value={editValues.precioActual}
@@ -1420,7 +1420,7 @@ const InventarioScreen = ({ navigation }: any) => {
                 />
               </View>
             )}
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, minWidth: 200, marginBottom: 8 }}>
               <RNText style={{ fontSize: 10, color: '#6b7280', marginBottom: 4 }}>Cantidad (und)</RNText>
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <TextInput

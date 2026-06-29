@@ -1507,14 +1507,14 @@ export default function CajaFormScreen({ route, navigation }: any) {
             </View>
           ) : (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="w-full">
-              <View className="flex-col min-w-full">
+              <View className="flex-col min-w-[600px] sm:min-w-full">
                 {/* Header Row */}
                 <View className="flex-row items-center bg-gray-100 border-b border-gray-200 p-2">
-                  <View className="w-10 items-center" />
-                  <Text className="w-40 font-bold text-xs text-gray-600">Para qué producto</Text>
-                  <Text className="w-48 font-bold text-xs text-gray-600">Insumos</Text>
-                  <Text className="w-24 font-bold text-xs text-gray-600 text-center">Cant. Apertura</Text>
-                  <Text className="w-24 font-bold text-xs text-gray-600 text-center">Cant. Cierre</Text>
+                  <View className="w-10 shrink-0 items-center" />
+                  <Text className="w-40 shrink-0 font-bold text-xs text-gray-600">Para qué producto</Text>
+                  <Text className="w-48 shrink-0 font-bold text-xs text-gray-600">Insumos</Text>
+                  <Text className="w-24 shrink-0 font-bold text-xs text-gray-600 text-center">Cant. Apertura</Text>
+                  <Text className="w-24 shrink-0 font-bold text-xs text-gray-600 text-center">Cant. Cierre</Text>
                 </View>
 
                 {/* Items */}
@@ -1572,7 +1572,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                         </View>
                       </View>
 
-                      <View className="w-24 px-1">
+                      <View className="w-24 shrink-0 px-1">
                         <Controller
                           control={control}
                           name={`insumos.${index}.cantApertura`}
@@ -1581,12 +1581,13 @@ export default function CajaFormScreen({ route, navigation }: any) {
                               <TextInput
                                 editable={!isReadOnly && isAdmin}
                                 keyboardType="numeric"
-                                value={value !== undefined ? String(value) : ''}
+                                value={value !== undefined && value !== null ? String(value) : ''}
                                 onChangeText={(val) => {
                                   onChange(val);
                                   setModifiedInsumoIndexes(prev => new Set(prev).add(index));
                                 }}
-                                className={`flex-1 text-center font-bold bg-gray-50 border ${errors.insumos?.[index]?.cantApertura ? 'border-red-500' : 'border-gray-200'} rounded py-1 text-gray-900`}
+                                className={`flex-1 min-w-[40px] text-center font-bold bg-gray-50 border ${errors.insumos?.[index]?.cantApertura ? 'border-red-500' : 'border-gray-200'} rounded py-1 text-gray-900`}
+                                placeholder="0"
                               />
                               {!isReadOnly && isAdmin && (
                                 <TouchableOpacity 
@@ -1605,7 +1606,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                         />
                       </View>
 
-                      <View className="w-24 px-1">
+                      <View className="w-24 shrink-0 px-1">
                         <Controller
                           control={control}
                           name={`insumos.${index}.cantDeCierre`}
@@ -1848,6 +1849,12 @@ export default function CajaFormScreen({ route, navigation }: any) {
                             }
                           }
 
+                          const cuadreText = `\n\n--- ARQUEO PARCIAL [${timestampArqueo}] ---\n` +
+                            `Reportado: ${formatCurrency(efectivoContado)} Efectivo | ${formatCurrency(transContadas)} Transferencias\n` +
+                            `Sistema: ${formatCurrency(Number(resumenData?.resumen?.efectivoApertura || 0) + Number(resumenData?.resumen?.totalEfectivo || 0))} Efectivo | ${formatCurrency((resumenData?.resumen?.totalTransferencia || 0) + (resumenData?.resumen?.totalNequi || 0))} Transferencias\n` +
+                            `Diferencia: ${totalDiff > 0 ? '+' : ''}${formatCurrency(totalDiff)}\n` +
+                            `Estado: ${isCuadrada ? 'CUADRADA' : 'DESCUADRADA'}${rangoInfo}${insumosInfo}\n------------------------\n`;
+
                           const newObs = currentObs + cuadreText;
                           setValue('observaciones', newObs);
 
@@ -1885,6 +1892,21 @@ export default function CajaFormScreen({ route, navigation }: any) {
                                 insumosInfoCierre = '\nINSUMOS: Todos cuadrados perfectamente.';
                               }
                             }
+
+                            const timestampArqueo = horaCongelada 
+                              ? `Corte: ${new Date(horaCongelada).toLocaleString('es-CO')}`
+                              : `${new Date().toLocaleString('es-CO')}`;
+                            
+                            let rangoInfo = '';
+                            if (resumenData?.rangoPedidos) {
+                              rangoInfo = `\nRango: Pedido #${resumenData.rangoPedidos.primerPedido} al #${resumenData.rangoPedidos.ultimoPedido} (${resumenData.rangoPedidos.totalVentas} ventas procesadas)`;
+                            }
+
+                            const cuadreText = `\n\n--- CIERRE DEFINITIVO [${timestampArqueo}] ---\n` +
+                              `Reportado: ${formatCurrency(efectivoContado)} Efectivo | ${formatCurrency(transContadas)} Transferencias\n` +
+                              `Sistema: ${formatCurrency(Number(resumenData?.resumen?.efectivoApertura || 0) + Number(resumenData?.resumen?.totalEfectivo || 0))} Efectivo | ${formatCurrency((resumenData?.resumen?.totalTransferencia || 0) + (resumenData?.resumen?.totalNequi || 0))} Transferencias\n` +
+                              `Diferencia: ${totalDiff > 0 ? '+' : ''}${formatCurrency(totalDiff)}\n` +
+                              `Estado: ${isCuadrada ? 'CUADRADA' : 'DESCUADRADA'}${rangoInfo}${insumosInfoCierre}\n------------------------\n`;
 
                             const newObs = currentObs + cuadreText;
                             setValue('observaciones', newObs);

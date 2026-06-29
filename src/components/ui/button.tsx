@@ -34,6 +34,7 @@ export interface ButtonProps
   extends React.ComponentPropsWithoutRef<typeof Pressable>,
     VariantProps<typeof buttonVariants> {
   loading?: boolean;
+  className?: string;
 }
 
 const Button = React.forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>(

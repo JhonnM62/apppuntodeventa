@@ -4,6 +4,7 @@ import { cn } from '../../lib/utils';
 import { COLORS } from '../../lib/theme';
 
 export interface InputProps extends React.ComponentPropsWithoutRef<typeof TextInput> {
+  className?: string;
   error?: string;
   label?: string;
   rightIcon?: React.ReactNode;
