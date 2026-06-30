@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert, ScrollView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert, ScrollView, TextInput } from 'react-native';
 import { Text } from '../../components/ui/text';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getTurnoActivo, registrarEntrada, registrarSalida, Turno } from '../../services/nomina.service';
+import { getConfiguracion } from '../../services/configuracion';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 let ImagePicker: any;
 try {
@@ -21,6 +22,15 @@ try {
   console.warn('expo-location no está disponible de forma nativa aún');
 }
 
+function calcularDistancia(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371e3; // metres
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export default function CheckInScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { showAlert } = useCustomAlert();
@@ -30,22 +40,30 @@ export default function CheckInScreen({ navigation }: any) {
   const [fotoUri, setFotoUri] = useState<string | null>(null);
   const [location, setLocation] = useState<{ latitud: number, longitud: number } | null>(null);
   const [ceno, setCeno] = useState<boolean | null>(null); // Only used when checking out
+  const [observacion, setObservacion] = useState('');
   const [gettingLocation, setGettingLocation] = useState(false);
+  
+  const [configuracion, setConfiguracion] = useState<any>(null);
+  const [distanciaMetros, setDistanciaMetros] = useState<number | null>(null);
 
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    loadTurno();
+    loadData();
   }, []);
 
-  const loadTurno = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
-      const res = await getTurnoActivo();
-      setTurnoActivo(res.data);
+      const [resTurno, resConfig] = await Promise.all([
+        getTurnoActivo(),
+        getConfiguracion()
+      ]);
+      setTurnoActivo(resTurno.data);
+      setConfiguracion(resConfig.data);
     } catch (error) {
       console.error(error);
-      showAlert({ type: 'error', title: 'Error', message: 'No se pudo cargar el estado del turno' });
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo cargar la información necesaria' });
     } finally {
       setLoading(false);
     }
@@ -91,11 +109,21 @@ export default function CheckInScreen({ navigation }: any) {
     try {
       // Intentamos con precisión alta
       let loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      
+      const newLat = loc.coords.latitude;
+      const newLon = loc.coords.longitude;
+      
       setLocation({
-        latitud: loc.coords.latitude,
-        longitud: loc.coords.longitude
+        latitud: newLat,
+        longitud: newLon
       });
-      return { latitud: loc.coords.latitude, longitud: loc.coords.longitude };
+      
+      if (configuracion?.latitudNegocio && configuracion?.longitudNegocio) {
+        const dist = calcularDistancia(newLat, newLon, configuracion.latitudNegocio, configuracion.longitudNegocio);
+        setDistanciaMetros(dist);
+      }
+      
+      return { latitud: newLat, longitud: newLon };
     } catch (error) {
       console.error(error);
       showAlert({ type: 'error', title: 'Error GPS', message: 'No se pudo obtener la ubicación actual. Verifica que el GPS esté activo.' });
@@ -114,10 +142,42 @@ export default function CheckInScreen({ navigation }: any) {
       return showAlert({ type: 'error', title: 'Falta Información', message: 'Debes indicar si cenaste o consumiste alimentos' });
     }
 
+    const radioPermitido = configuracion?.radioGeocercaM || 100;
+    const isOutOfBounds = distanciaMetros !== null && distanciaMetros > radioPermitido;
+
+    if (isOutOfBounds && !turnoActivo) {
+      return showAlert({ type: 'error', title: 'Estás muy lejos', message: `Estás a ${Math.round(distanciaMetros)}m del negocio. El límite permitido es ${radioPermitido}m. No puedes iniciar tu turno desde aquí.` });
+    }
+
+    if (isOutOfBounds && turnoActivo && observacion.length < 10) {
+      return showAlert({ type: 'error', title: 'Falta Justificación', message: 'Como estás fuera del límite permitido, debes ingresar una justificación (mínimo 10 caracteres) para cerrar el turno.' });
+    }
+
     setSaving(true);
     try {
       const currentLoc = location || await getLocation();
       
+      if (!currentLoc) {
+        setSaving(false);
+        return;
+      }
+
+      // Validar distancia nuevamente en caso de que getLocation se llamara aquí
+      if (configuracion?.latitudNegocio && configuracion?.longitudNegocio) {
+        const dist = calcularDistancia(currentLoc.latitud, currentLoc.longitud, configuracion.latitudNegocio, configuracion.longitudNegocio);
+        if (dist > radioPermitido) {
+          setDistanciaMetros(dist);
+          
+          if (!turnoActivo) {
+            setSaving(false);
+            return showAlert({ type: 'error', title: 'Estás muy lejos', message: `Estás a ${Math.round(dist)}m del negocio. El límite permitido es ${radioPermitido}m.` });
+          } else if (observacion.length < 10) {
+            setSaving(false);
+            return showAlert({ type: 'error', title: 'Falta Justificación', message: 'Debes ingresar una justificación para cerrar el turno fuera de rango.' });
+          }
+        }
+      }
+
       if (!turnoActivo) {
         // INICIO TURNO
         await registrarEntrada({
@@ -132,6 +192,7 @@ export default function CheckInScreen({ navigation }: any) {
           latitud: currentLoc?.latitud,
           longitud: currentLoc?.longitud,
           ceno: ceno!,
+          observacion: isOutOfBounds ? observacion : undefined,
           fotoUri: fotoUri
         });
         
@@ -144,7 +205,10 @@ export default function CheckInScreen({ navigation }: any) {
       
       setFotoUri(null);
       setCeno(null);
-      loadTurno();
+      setObservacion('');
+      
+      // En vez de loadTurno, recargamos con loadData para actualizar configuraciones también si hubieran
+      loadData();
     } catch (error: any) {
       console.error(error);
       const msg = error?.response?.data?.message || 'Hubo un error procesando la solicitud';
@@ -218,6 +282,34 @@ export default function CheckInScreen({ navigation }: any) {
               </Text>
             </TouchableOpacity>
 
+            {distanciaMetros !== null && configuracion?.radioGeocercaM && distanciaMetros > configuracion.radioGeocercaM && (
+              <View style={{ backgroundColor: '#fee2e2', padding: 12, borderRadius: 8, marginTop: 12, flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="warning" size={24} color="#ef4444" />
+                <Text style={{ color: '#b91c1c', marginLeft: 8, flex: 1, fontSize: 13, fontWeight: '500' }}>
+                  {turnoActivo 
+                    ? `Estás a ${Math.round(distanciaMetros)}m del local. Para poder cerrar el turno desde aquí, es OBLIGATORIO ingresar una justificación detallada a continuación.`
+                    : `Estás a ${Math.round(distanciaMetros)}m del local. El límite es ${configuracion.radioGeocercaM}m. No puedes registrar turno desde aquí.`}
+                </Text>
+              </View>
+            )}
+
+            {turnoActivo && distanciaMetros !== null && configuracion?.radioGeocercaM && distanciaMetros > configuracion.radioGeocercaM && (
+              <>
+                <View style={{ marginTop: 24 }} />
+                <Text style={[styles.sectionTitle, { color: '#ef4444' }]}>JUSTIFICACIÓN OBLIGATORIA</Text>
+                <Text style={styles.instruction}>Indica por qué estás cerrando el turno fuera del establecimiento (Ej: Emergencia médica, olvido).</Text>
+                <TextInput
+                  style={styles.observacionInput}
+                  placeholder="Escribe el motivo detallado (mín. 10 caracteres)..."
+                  multiline
+                  numberOfLines={3}
+                  value={observacion}
+                  onChangeText={setObservacion}
+                  textAlignVertical="top"
+                />
+              </>
+            )}
+
             {turnoActivo && (
               <>
                 <View style={{ marginTop: 24 }} />
@@ -244,13 +336,17 @@ export default function CheckInScreen({ navigation }: any) {
               style={[
                 styles.mainActionBtn, 
                 { backgroundColor: turnoActivo ? '#ef4444' : '#4CAF50' },
-                (!fotoUri || !location || (turnoActivo && ceno === null)) && { opacity: 0.5 },
+                (!fotoUri || !location || (turnoActivo && ceno === null) || (!turnoActivo && distanciaMetros !== null && configuracion?.radioGeocercaM && distanciaMetros > configuracion.radioGeocercaM) || (turnoActivo && distanciaMetros !== null && configuracion?.radioGeocercaM && distanciaMetros > configuracion.radioGeocercaM && observacion.length < 10)) && { opacity: 0.5 },
                 { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' }
               ]} 
+              disabled={(!fotoUri || !location || (turnoActivo && ceno === null) || (!turnoActivo && distanciaMetros !== null && configuracion?.radioGeocercaM && distanciaMetros > configuracion.radioGeocercaM) || (turnoActivo && distanciaMetros !== null && configuracion?.radioGeocercaM && distanciaMetros > configuracion.radioGeocercaM && observacion.length < 10) || saving)}
               onPress={handleAction} 
-              disabled={!fotoUri || !location || (turnoActivo ? ceno === null : false) || saving}
             >
-              {saving && <ActivityIndicator size="small" color="#fff" style={{ marginRight: 8 }} />}
+              {saving ? (
+                <ActivityIndicator color="#fff" style={{ marginRight: 8 }} />
+              ) : (
+                <Ionicons name={turnoActivo ? "exit-outline" : "log-in-outline"} size={24} color="#fff" style={{ marginRight: 8 }} />
+              )}
               <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold', includeFontPadding: false }}>
                 {turnoActivo ? 'FINALIZAR TURNO' : 'INICIAR TURNO'}
               </Text>
@@ -289,6 +385,8 @@ const styles = StyleSheet.create({
   cenoBtnActiveError: { backgroundColor: '#ef4444', borderColor: '#ef4444' },
   cenoText: { fontSize: 16, fontWeight: '700', color: '#374151' },
   cenoTextActive: { color: '#fff' },
+  
+  observacionInput: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, padding: 12, minHeight: 80, fontSize: 15, color: '#111827' },
   
   mainActionBtn: { marginTop: 32, paddingVertical: 16, borderRadius: 12 }
 });

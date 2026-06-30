@@ -17,6 +17,7 @@ export interface Turno {
   isTest?: boolean;
   isLiquidado?: boolean;
   estado: string;
+  observacion?: string;
   usuario?: any;
   createdAt: string;
   updatedAt: string;
@@ -89,13 +90,16 @@ export const registrarSalida = async (id: string, params: {
   fotoUri?: string;
   ceno: boolean;
   notaDeCena?: string;
+  observacion?: string;
 }) => {
   const formData = new FormData();
   formData.append('ceno', String(params.ceno));
   
   if (params.latitud !== undefined) formData.append('latitud', String(params.latitud));
   if (params.longitud !== undefined) formData.append('longitud', String(params.longitud));
-  if (params.notaDeCena) formData.append('observacion', params.notaDeCena);
+  
+  const obs = params.observacion || params.notaDeCena;
+  if (obs) formData.append('observacion', obs);
 
   if (params.fotoUri) {
     const filename = params.fotoUri.split('/').pop() || 'selfie_out.jpg';
