@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import api from './api';
 
 export interface Turno {
@@ -41,22 +42,36 @@ export const getTurnoActivo = async () => {
   return data; // { success: true, data: Turno | null }
 };
 
+/**
+ * Convierte un URI (file://, blob:, data:) a un Blob real para FormData en Web.
+ * En React Native el FileReader nativo del RN maneja { uri, name, type } directamente.
+ */
+const uriToBlob = async (uri: string, type: string): Promise<Blob> => {
+  const response = await fetch(uri);
+  return response.blob();
+};
+
 export const uploadAsistenciaImage = async (imageUri: string): Promise<string> => {
   const filename = imageUri.split('/').pop() || 'asistencia.jpg';
   const match = /\.(\w+)$/.exec(filename);
   const type = match ? (match[1].toLowerCase() === 'png' ? 'image/png' : `image/jpeg`) : `image/jpeg`;
 
   const formData = new FormData();
-  formData.append('foto', {
-    uri: imageUri,
-    name: filename,
-    type,
-  } as any);
+
+  if (Platform.OS === 'web') {
+    // En Web: convertir URI a Blob real que el browser pueda enviar
+    const blob = await uriToBlob(imageUri, type);
+    formData.append('foto', blob, filename);
+  } else {
+    // En React Native APK: usar la sintaxis nativa { uri, name, type }
+    formData.append('foto', { uri: imageUri, name: filename, type } as any);
+  }
 
   const response = await api.post('/nomina/upload-asistencia', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+    // IMPORTANTE: No establecer Content-Type en web — el browser lo agrega
+    // automáticamente con el boundary correcto para multipart/form-data.
+    // En RN sí hay que forzarlo.
+    headers: Platform.OS === 'web' ? undefined : { 'Content-Type': 'multipart/form-data' },
   });
 
   return response.data?.data?.url || '';
@@ -75,11 +90,20 @@ export const registrarEntrada = async (params: {
     const filename = params.fotoUri.split('/').pop() || 'entrada.jpg';
     const match = /\.(\w+)$/.exec(filename);
     const type = match ? `image/${match[1]}` : `image/jpeg`;
-    formData.append('foto', { uri: params.fotoUri, name: filename, type } as any);
+
+    if (Platform.OS === 'web') {
+      // Web: convertir URI a Blob real
+      const blob = await uriToBlob(params.fotoUri, type);
+      formData.append('foto', blob, filename);
+    } else {
+      // APK React Native: sintaxis nativa
+      formData.append('foto', { uri: params.fotoUri, name: filename, type } as any);
+    }
   }
 
   const { data } = await api.post('/nomina/turno/entrada', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+    // En web NO establecer Content-Type — el browser lo gestiona con boundary correcto
+    headers: Platform.OS === 'web' ? undefined : { 'Content-Type': 'multipart/form-data' },
   });
   return data;
 };
@@ -106,15 +130,19 @@ export const registrarSalida = async (id: string, params: {
     const match = /\.(\w+)$/.exec(filename);
     const type = match ? `image/${match[1]}` : 'image/jpeg';
     
-    formData.append('foto', {
-      uri: params.fotoUri,
-      name: filename,
-      type,
-    } as any);
+    if (Platform.OS === 'web') {
+      // Web: convertir URI a Blob real
+      const blob = await uriToBlob(params.fotoUri, type);
+      formData.append('foto', blob, filename);
+    } else {
+      // APK React Native: sintaxis nativa
+      formData.append('foto', { uri: params.fotoUri, name: filename, type } as any);
+    }
   }
 
   const { data } = await api.patch(`/nomina/turno/${id}/salida`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+    // En web NO establecer Content-Type — el browser lo gestiona con boundary correcto
+    headers: Platform.OS === 'web' ? undefined : { 'Content-Type': 'multipart/form-data' },
   });
   return data;
 };
