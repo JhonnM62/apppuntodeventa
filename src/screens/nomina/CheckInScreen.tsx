@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert, ScrollView, TextInput } from 'react-native';
 import { Text } from '../../components/ui/text';
 import { Button } from '../../components/ui/button';
@@ -51,6 +52,18 @@ export default function CheckInScreen({ navigation }: any) {
   useEffect(() => {
     loadData();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      // Limpiar el estado cada vez que la pantalla gana el foco (por si quedó guardado de antes)
+      setFotoUri(null);
+      setLocation(null);
+      setCeno(null);
+      setObservacion('');
+      setDistanciaMetros(null);
+      loadData();
+    }, [])
+  );
 
   const loadData = async () => {
     try {
@@ -206,6 +219,8 @@ export default function CheckInScreen({ navigation }: any) {
       setFotoUri(null);
       setCeno(null);
       setObservacion('');
+      setLocation(null);
+      setDistanciaMetros(null);
       
       // En vez de loadTurno, recargamos con loadData para actualizar configuraciones también si hubieran
       loadData();
