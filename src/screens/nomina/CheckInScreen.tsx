@@ -211,7 +211,11 @@ export default function CheckInScreen({ navigation }: any) {
       loadData();
     } catch (error: any) {
       console.error(error);
-      const msg = error?.response?.data?.message || 'Hubo un error procesando la solicitud';
+      let errorDetail = error.message || String(error);
+      if (error?.response?.data) {
+        errorDetail = JSON.stringify(error.response.data);
+      }
+      const msg = error?.response?.data?.message || `Error local: ${errorDetail}`;
       showAlert({ type: 'error', title: 'Error', message: Array.isArray(msg) ? msg[0] : msg });
     } finally {
       setSaving(false);
