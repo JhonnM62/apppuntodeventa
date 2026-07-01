@@ -10,6 +10,7 @@ import {
   RefreshControl,
   StyleSheet,
   FlatList,
+  Text as RNText,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -476,23 +477,23 @@ export default function ReportesScreen({ navigation }: any) {
 
               <View style={S.dateRow}>
                 <View style={{ flex: 1, marginRight: 8 }}>
-                  <Text style={S.dateLabel}>Fecha de Inicio</Text>
+                  <RNText style={S.dateLabel}>Fecha de Inicio</RNText>
                   <TouchableOpacity
                     style={S.datePicker}
                     onPress={() => setShowStartPicker(true)}
                   >
                     <Ionicons name="calendar-outline" size={18} color="#16a34a" />
-                    <Text style={S.datePickerText}>{format(tempStartDate, 'dd/MM/yyyy')}</Text>
+                    <RNText style={S.datePickerText}>{format(tempStartDate, 'dd/MM/yyyy')}</RNText>
                   </TouchableOpacity>
                 </View>
                 <View style={{ flex: 1, marginLeft: 8 }}>
-                  <Text style={S.dateLabel}>Fecha Fin</Text>
+                  <RNText style={S.dateLabel}>Fecha Fin</RNText>
                   <TouchableOpacity
                     style={S.datePicker}
                     onPress={() => setShowEndPicker(true)}
                   >
                     <Ionicons name="calendar-outline" size={18} color="#16a34a" />
-                    <Text style={S.datePickerText}>{format(tempEndDate, 'dd/MM/yyyy')}</Text>
+                    <RNText style={S.datePickerText}>{format(tempEndDate, 'dd/MM/yyyy')}</RNText>
                   </TouchableOpacity>
                 </View>
               </View>

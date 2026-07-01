@@ -17,9 +17,12 @@ interface CajaItem {
   plataGuardada: number;
   cuadroCaja: string;
   observaciones: string;
-  resumen: number;
+  // Campos pre-calculados al cierre de caja (fuente de verdad)
+  resumen: number;                  // Total efectivo contado en caja física
+  transferenciasContadas: number;   // Total transferencias contadas en caja
   valorFaltante: number;
   valorExcedente: number;
+  // Ventas individuales (puede estar vacío si no se vincularon al cierre)
   venta: VentaCaja[];
 }
 
@@ -166,7 +169,20 @@ export const generateAndShareDineroGuardadoPDF = async (detalle: DetalleDineroGu
       const resumen = Number(c.resumen || 0);
       totalResumen += resumen;
 
-      const { efectivoApp, transferenciaApp } = calcEfectivoYTransferencias(c.venta);
+      // Fuente primaria: campos pre-calculados al cierre de caja
+      // `resumen` = efectivo contado en caja física
+      // `transferenciasContadas` = total transferencias del período
+      let efectivoApp = resumen;
+      let transferenciaApp = Number(c.transferenciasContadas || 0);
+
+      // Si hay ventas individuales vinculadas Y la caja no tiene transferencias contadas,
+      // calcular desde las ventas para mayor detalle
+      if ((c.venta || []).length > 0 && transferenciaApp === 0) {
+        const calc = calcEfectivoYTransferencias(c.venta);
+        efectivoApp = calc.efectivoApp;
+        transferenciaApp = calc.transferenciaApp;
+      }
+
       const descuadre = resumen - efectivoApp;
 
       totalEfectivoApp += efectivoApp;
