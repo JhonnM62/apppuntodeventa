@@ -1,5 +1,16 @@
 import React, { useCallback, useState } from 'react';
-import { View, FlatList, TouchableOpacity, ActivityIndicator, Dimensions, TextInput, Modal, Platform, Keyboard, Alert, RefreshControl } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  ActivityIndicator,
+  TextInput,
+  Modal,
+  Platform,
+  Alert,
+  RefreshControl,
+  StyleSheet,
+  FlatList,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,38 +23,192 @@ import Toast from 'react-native-toast-message';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useFocusEffect } from '@react-navigation/native';
+import { useScrollDirection } from '../../hooks/useScrollDirection';
 
-// Carga dinámica de módulos nativos para exportar
+// ─── Estilos nativos (sin NativeWind para estructuras críticas) ───────────────
+const S = StyleSheet.create({
+  // Contenedores raíz
+  root: { flex: 1, backgroundColor: '#f9fafb' },
+  // ⚠️ REGLA 2: SafeAreaView siempre con style, nunca className
+  safeArea: { flex: 1 },
+
+  // Header verde
+  header: {
+    backgroundColor: '#16a34a',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexWrap: 'nowrap',
+    // ⚠️ REGLA 1: elevation (Android) en lugar de shadow-sm (NativeWind)
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    zIndex: 10,
+  },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 },
+  backBtn: { marginRight: 10, padding: 4 },
+  searchBox: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    borderRadius: 99,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 8,
+    color: 'white',
+    paddingVertical: Platform.OS === 'web' ? 4 : 2,
+    fontSize: 15,
+    minWidth: 0,
+  },
+  addBtn: {
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    padding: 8,
+    borderRadius: 99,
+    flexShrink: 0,
+  },
+
+  // Tabs
+  tabsWrapper: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(229,231,235,0.6)',
+    padding: 4,
+    borderRadius: 16,
+  },
+  tab: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 12 },
+  // ⚠️ REGLA 1: Tab activo con elevation, sin shadow-sm NativeWind
+  tabActive: {
+    backgroundColor: 'white',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+  },
+  tabText: { fontSize: 11, fontWeight: 'bold', textTransform: 'uppercase', textAlign: 'center', color: '#6b7280' },
+  tabTextActive: { color: '#16a34a' },
+
+  // Lista
+  listContent: { padding: 16, flexGrow: 1 },
+
+  // Tarjeta de reporte
+  // ⚠️ REGLA 1: SIN overflow-hidden. Sombra vía elevation.
+  card: {
+    backgroundColor: 'white',
+    padding: 16,
+    marginBottom: 12,
+    borderRadius: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 2,
+  },
+  cardTitle: { fontSize: 15, fontWeight: 'bold', color: '#1f2937' },
+  cardSub: { fontSize: 13, color: '#6b7280', marginTop: 4 },
+  cardAmount: { fontSize: 17, fontWeight: '900', color: '#1f2937', textAlign: 'right' },
+  cardActions: { flexDirection: 'row', marginTop: 8, justifyContent: 'flex-end' },
+  actionBtn: { padding: 6, backgroundColor: '#f3f4f6', borderRadius: 8, marginLeft: 8 },
+
+  // Empty state
+  empty: { alignItems: 'center', justifyContent: 'center', marginTop: 60, flex: 1 },
+  emptyText: { color: '#9ca3af', marginTop: 16, fontSize: 16, textAlign: 'center' },
+  emptyBtn: {
+    marginTop: 20,
+    backgroundColor: '#16a34a',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  emptyBtnText: { color: 'white', fontWeight: 'bold', fontSize: 15 },
+
+  // Loading
+  loadingBox: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+
+  // Modal
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
+  modalCard: { backgroundColor: 'white', width: '90%', borderRadius: 24, padding: 24 },
+  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#1f2937', textAlign: 'center', marginBottom: 6 },
+  modalSub: { fontSize: 13, color: '#6b7280', textAlign: 'center', marginBottom: 24 },
+  dateRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
+  datePicker: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 12,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  datePickerText: { color: '#1f2937', marginLeft: 8 },
+  dateLabel: { fontSize: 10, fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase', marginBottom: 8 },
+  btnGreen: {
+    backgroundColor: '#16a34a',
+    borderRadius: 12,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  btnDark: {
+    backgroundColor: '#1f2937',
+    borderRadius: 12,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  btnText: { color: 'white', fontWeight: 'bold', marginLeft: 8, fontSize: 15 },
+});
+
+// ─── Módulos PDF (carga dinámica) ─────────────────────────────────────────────
 let Print: any = null;
 let Sharing: any = null;
-try { Print = require('expo-print'); } catch (e) { console.log('expo-print no disponible'); }
-try { Sharing = require('expo-sharing'); } catch (e) { console.log('expo-sharing no disponible'); }
+try { Print = require('expo-print'); } catch { /* no disponible */ }
+try { Sharing = require('expo-sharing'); } catch { /* no disponible */ }
 
-import { useScrollDirection } from '../../hooks/useScrollDirection';
-import { FlashList as OriginalFlashList } from '@shopify/flash-list';
-const FlashList = OriginalFlashList as any;
-
+// ─── Componente ───────────────────────────────────────────────────────────────
 export default function ReportesScreen({ navigation }: any) {
-  const { reportesDineroGuardado, isLoading, fetchReportesDineroGuardado, crearReporte, eliminarReporte } = useReportesStore();
+  const {
+    reportesDineroGuardado,
+    isLoading,
+    fetchReportesDineroGuardado,
+    crearReporte,
+    eliminarReporte,
+  } = useReportesStore();
+
   const { canCreate, canDelete } = usePermissions('reportes');
-  
-  // Por defecto el mes actual
+
   const [startDate, setStartDate] = useState(startOfMonth(new Date()));
   const [endDate, setEndDate] = useState(endOfMonth(new Date()));
   const [searchQuery, setSearchQuery] = useState('');
   const [creating, setCreating] = useState(false);
-  
   const [activeTab, setActiveTab] = useState<'DINERO_GUARDADO' | 'VENTAS'>('DINERO_GUARDADO');
-
   const [modalVisible, setModalVisible] = useState(false);
   const [tempStartDate, setTempStartDate] = useState(startOfMonth(new Date()));
   const [tempEndDate, setTempEndDate] = useState(endOfMonth(new Date()));
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
-
-  const handleScroll = useScrollDirection();
   const [refreshing, setRefreshing] = useState(false);
 
+  const handleScroll = useScrollDirection();
+
+  // ⚠️ useFocusEffect en lugar de useEffect: recarga cada vez que la pantalla gana foco
   useFocusEffect(
     useCallback(() => {
       fetchReportesDineroGuardado();
@@ -59,38 +224,33 @@ export default function ReportesScreen({ navigation }: any) {
     }
   }, [fetchReportesDineroGuardado]);
 
-  const formatMoney = (amount: number) => {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(amount);
+  const fMoney = (amount: number) =>
+    new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP',
+      minimumFractionDigits: 0,
+    }).format(Number(amount) || 0);
+
+  // ── Eliminar ────────────────────────────────────────────────────────────────
+  const handleDeleteReporte = (item: ReporteFilter) => {
+    const fechaDesde = item.desde
+      ? format(new Date(item.desde), "d 'de' MMMM", { locale: es })
+      : 'N/A';
+    const fechaHasta = item.hasta
+      ? format(new Date(item.hasta), "d 'de' MMMM", { locale: es })
+      : 'N/A';
+
+    Alert.alert(
+      'Eliminar Reporte',
+      `Reporte del ${fechaDesde} hasta el ${fechaHasta}.\n\n¿Está seguro que desea eliminarlo permanentemente?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Eliminar', style: 'destructive', onPress: () => eliminarReporte(item.FilterID) },
+      ]
+    );
   };
 
-  const exportToPDF = async (item: ReporteFilter) => {
-    if (!Print || !Sharing) {
-      Toast.show({ type: 'error', text1: 'Módulo Faltante', text2: 'Debes recompilar la app para exportar PDFs' });
-      return;
-    }
-    try {
-      const html = `
-        <html>
-          <body style="font-family: Helvetica, sans-serif; padding: 20px;">
-            <h1 style="color: #16a34a;">Reporte de Dinero Guardado</h1>
-            <p><strong>Fecha de Creación:</strong> ${item.desde ? format(new Date(item.desde), "d 'de' MMMM 'de' yyyy", { locale: es }) : 'Desconocida'}</p>
-            <p><strong>Referencia:</strong> ${item.FilterID || 'General'}</p>
-            <hr />
-            <h2>Resumen</h2>
-            <ul>
-              <li><strong>Plata Guardada Acumulada:</strong> <span style="color: #16a34a;">${formatMoney(Number(item.totalDePlataGuardada || 0))}</span></li>
-            </ul>
-            <p><small>Generado desde la App de Punto de Venta</small></p>
-          </body>
-        </html>
-      `;
-      const { uri } = await Print.printToFileAsync({ html });
-      await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
-    } catch (error) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo generar el PDF' });
-    }
-  };
-
+  // ── PDF Consolidado (lista) ─────────────────────────────────────────────────
   const exportConsolidatedPDF = async () => {
     if (!filteredCajas.length) {
       Toast.show({ type: 'info', text1: 'Sin datos', text2: 'No hay reportes para exportar' });
@@ -100,103 +260,96 @@ export default function ReportesScreen({ navigation }: any) {
       Toast.show({ type: 'error', text1: 'Módulo Faltante', text2: 'Debes recompilar la app para exportar PDFs' });
       return;
     }
-
     try {
-      const totalGlobal = filteredCajas.reduce((sum, item) => sum + Number(item.totalDePlataGuardada || 0), 0);
-      
-      const rows = filteredCajas.map(item => `
-        <tr>
-          <td style="border-bottom: 1px solid #eee; padding: 8px;">${item.desde ? format(new Date(item.desde), "dd/MM/yyyy", { locale: es }) : 'N/A'}</td>
-          <td style="border-bottom: 1px solid #eee; padding: 8px;">${item.FilterID || 'General'}</td>
-          <td style="border-bottom: 1px solid #eee; padding: 8px; text-align: right; color: #16a34a; font-weight: bold;">${formatMoney(Number(item.totalDePlataGuardada || 0))}</td>
-        </tr>
-      `).join('');
+      const totalGlobal = filteredCajas.reduce(
+        (sum, item) => sum + Number(item.totalDePlataGuardada || 0),
+        0
+      );
+      const rows = filteredCajas
+        .map(
+          (item) => `
+          <tr>
+            <td style="border-bottom:1px solid #eee;padding:8px">
+              ${item.desde ? format(new Date(item.desde), 'dd/MM/yyyy', { locale: es }) : 'N/A'}
+            </td>
+            <td style="border-bottom:1px solid #eee;padding:8px;text-align:right;color:#16a34a;font-weight:bold">
+              ${fMoney(Number(item.totalDePlataGuardada || 0))}
+            </td>
+          </tr>`
+        )
+        .join('');
 
-      const html = `
-        <html>
-          <body style="font-family: Helvetica, sans-serif; padding: 20px;">
-            <h1 style="color: #16a34a; text-align: center;">Reporte Consolidado de Dinero Guardado</h1>
-            <p style="text-align: center; color: #666;">
-              Desde: ${format(startDate, "d 'de' MMMM 'de' yyyy", { locale: es })}<br>
-              Hasta: ${format(endDate, "d 'de' MMMM 'de' yyyy", { locale: es })}
-            </p>
-            <hr />
-            <h2 style="color: #333;">Total Acumulado: <span style="color: #16a34a;">${formatMoney(totalGlobal)}</span></h2>
-            <br>
-            <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 14px;">
-              <thead>
-                <tr style="background-color: #f8fafc;">
-                  <th style="border-bottom: 2px solid #ddd; padding: 10px;">Fecha Creación</th>
-                  <th style="border-bottom: 2px solid #ddd; padding: 10px;">Referencia</th>
-                  <th style="border-bottom: 2px solid #ddd; padding: 10px; text-align: right;">Dinero Guardado Acumulado</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${rows}
-              </tbody>
-            </table>
-            <br>
-            <p style="text-align: center; font-size: 12px; color: #999;">Generado desde la App de Punto de Venta</p>
-          </body>
-        </html>
-      `;
+      const html = `<html><body style="font-family:Helvetica,sans-serif;padding:20px">
+        <h1 style="color:#16a34a;text-align:center">Reporte Consolidado de Dinero Guardado</h1>
+        <p style="text-align:center;color:#666">
+          Desde: ${format(startDate, "d 'de' MMMM 'de' yyyy", { locale: es })}<br>
+          Hasta: ${format(endDate, "d 'de' MMMM 'de' yyyy", { locale: es })}
+        </p>
+        <hr/>
+        <h2>Total: ${fMoney(totalGlobal)}</h2>
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr>
+            <th style="border-bottom:2px solid #ddd;padding:10px;text-align:left">Fecha</th>
+            <th style="border-bottom:2px solid #ddd;padding:10px;text-align:right">Dinero Guardado</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </body></html>`;
+
       const { uri } = await Print.printToFileAsync({ html });
       await Sharing.shareAsync(uri, { UTI: '.pdf', mimeType: 'application/pdf' });
-    } catch (error) {
+    } catch {
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo generar el PDF consolidado' });
     }
   };
 
-  const handleDeleteReporte = (item: ReporteFilter) => {
-    const fechaDesde = item.desde ? format(new Date(item.desde), "d 'de' MMMM", { locale: es }) : 'N/A';
-    const fechaHasta = item.hasta ? format(new Date(item.hasta), "d 'de' MMMM", { locale: es }) : 'N/A';
-    
-    Alert.alert(
-      "Eliminar Reporte",
-      `Reporte del ${fechaDesde} hasta el ${fechaHasta}.\n\n¿Está seguro que desea eliminar este reporte de manera permanente?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Eliminar", 
-          style: "destructive",
-          onPress: () => eliminarReporte(item.FilterID) 
-        }
-      ]
+  // ── Filtro ──────────────────────────────────────────────────────────────────
+  const filteredCajas = reportesDineroGuardado.filter((caja) => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return true;
+    return (
+      (caja.tipoDeFiltro && caja.tipoDeFiltro.toLowerCase().includes(q)) ||
+      (caja.totalDePlataGuardada && caja.totalDePlataGuardada.toString().includes(q))
     );
-  };
+  });
 
+  // ── Render tarjeta ──────────────────────────────────────────────────────────
   const renderItem = ({ item }: { item: ReporteFilter }) => (
     <TouchableOpacity
-      className="bg-white p-4 mb-3 rounded-xl shadow-sm border border-gray-100 flex-row justify-between items-center"
+      style={S.card}
+      activeOpacity={0.75}
       onPress={() => {
-        if (item.FilterID) {
-          navigation.navigate('ReporteDetalle', { filterId: item.FilterID });
-        }
+        if (item.FilterID) navigation.navigate('ReporteDetalle', { filterId: item.FilterID });
       }}
     >
-      <View>
-        <Text className="text-base font-bold text-gray-800">
-          {item.desde ? format(new Date(item.desde), "d 'de' MMM. 'de' yyyy", { locale: es }) : 'N/A'}
+      <View style={{ flex: 1, marginRight: 12 }}>
+        <Text style={S.cardTitle}>
+          {item.desde
+            ? format(new Date(item.desde), "d 'de' MMM. 'de' yyyy", { locale: es })
+            : 'N/A'}
         </Text>
-        <Text className="text-sm text-gray-500 mt-1">
-          {item.hasta ? format(new Date(item.hasta), "d 'de' MMM. 'de' yyyy", { locale: es }) : 'N/A'}
+        <Text style={S.cardSub}>
+          Hasta:{' '}
+          {item.hasta
+            ? format(new Date(item.hasta), "d 'de' MMM. 'de' yyyy", { locale: es })
+            : 'N/A'}
         </Text>
       </View>
-      <View className="items-end">
-        <Text className="text-lg font-black text-gray-800">
-          {formatMoney(Number(item.totalDePlataGuardada || 0))}
-        </Text>
-        <View className="flex-row mt-2">
+
+      <View style={{ alignItems: 'flex-end' }}>
+        <Text style={S.cardAmount}>{fMoney(Number(item.totalDePlataGuardada || 0))}</Text>
+        <View style={S.cardActions}>
           {canDelete && (
-            <TouchableOpacity onPress={() => handleDeleteReporte(item)} className="p-1 mr-2 bg-gray-100 rounded">
+            <TouchableOpacity style={S.actionBtn} onPress={() => handleDeleteReporte(item)}>
               <Ionicons name="trash-outline" size={20} color="#ef4444" />
             </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={() => {
-            if (item.FilterID) {
-              navigation.navigate('ReporteDetalle', { filterId: item.FilterID });
-            }
-          }} className="p-1 bg-gray-100 rounded">
+          <TouchableOpacity
+            style={S.actionBtn}
+            onPress={() => {
+              if (item.FilterID) navigation.navigate('ReporteDetalle', { filterId: item.FilterID });
+            }}
+          >
             <Ionicons name="document-text-outline" size={20} color="#4b5563" />
           </TouchableOpacity>
         </View>
@@ -204,217 +357,214 @@ export default function ReportesScreen({ navigation }: any) {
     </TouchableOpacity>
   );
 
-  const filteredCajas = reportesDineroGuardado.filter(caja => {
-    const query = searchQuery.toLowerCase();
-    return query === '' || 
-      (caja.tipoDeFiltro && caja.tipoDeFiltro.toLowerCase().includes(query)) ||
-      (caja.totalDePlataGuardada && caja.totalDePlataGuardada.toString().includes(query));
-  });
+  // ── Empty state ─────────────────────────────────────────────────────────────
+  const renderEmpty = () => (
+    <View style={S.empty}>
+      <Ionicons name="document-outline" size={64} color="#d1d5db" />
+      <Text style={S.emptyText}>No hay reportes creados aún</Text>
+      {canCreate && (
+        <TouchableOpacity style={S.emptyBtn} onPress={() => setModalVisible(true)}>
+          <Text style={S.emptyBtnText}>+ Crear Reporte</Text>
+        </TouchableOpacity>
+      )}
+    </View>
+  );
 
+  // ── JSX ─────────────────────────────────────────────────────────────────────
   return (
-    <View className="flex-1 bg-gray-50">
-      <StatusBar style="dark" backgroundColor="transparent" translucent />
-      <SafeAreaView className="flex-1" edges={['top']}>
-      <View
-        style={{
-          backgroundColor: '#16a34a',
-          paddingHorizontal: 16,
-          paddingVertical: 12,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 3,
-          elevation: 3,
-          zIndex: 10,
-          flexWrap: 'nowrap',
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: canCreate ? 8 : 0 }}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 10, padding: 4 }}>
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          
-          <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 99, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6 }}>
-            <Ionicons name="search" size={18} color="white" />
-            <TextInput 
-              placeholder="Buscar reporte..."
-              placeholderTextColor="rgba(255,255,255,0.7)"
-              style={{ flex: 1, marginLeft: 8, color: 'white', paddingVertical: Platform.OS === 'web' ? 4 : 2, fontSize: 15, minWidth: 0 }}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            <TouchableOpacity onPress={() => setModalVisible(true)} style={{ padding: 2 }}>
-              <Ionicons name="options-outline" size={18} color="white" />
+    // ⚠️ REGLA 2: root container con style puro, SafeAreaView con style puro
+    <View style={S.root}>
+      <StatusBar style="light" backgroundColor="#16a34a" translucent={false} />
+      <SafeAreaView style={S.safeArea} edges={['top']}>
+
+        {/* ── Header ─────────────────────────────────────────────────────── */}
+        <View style={S.header}>
+          <View style={S.headerLeft}>
+            <TouchableOpacity style={S.backBtn} onPress={() => navigation.goBack()}>
+              <Ionicons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
+            <View style={S.searchBox}>
+              <Ionicons name="search" size={18} color="white" />
+              <TextInput
+                placeholder="Buscar reporte..."
+                placeholderTextColor="rgba(255,255,255,0.7)"
+                style={S.searchInput}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              <TouchableOpacity style={{ padding: 2 }} onPress={() => setModalVisible(true)}>
+                <Ionicons name="options-outline" size={18} color="white" />
+              </TouchableOpacity>
+            </View>
+          </View>
+          {canCreate && (
+            <TouchableOpacity style={S.addBtn} onPress={() => setModalVisible(true)}>
+              <Ionicons name="add" size={24} color="white" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* ── Tabs ───────────────────────────────────────────────────────── */}
+        <View style={S.tabsWrapper}>
+          <View style={S.tabsContainer}>
+            {(['DINERO_GUARDADO', 'VENTAS'] as const).map((tab) => {
+              const isActive = activeTab === tab;
+              return (
+                <TouchableOpacity
+                  key={tab}
+                  style={[S.tab, isActive && S.tabActive]}
+                  onPress={() => setActiveTab(tab)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[S.tabText, isActive && S.tabTextActive]}>
+                    {tab === 'DINERO_GUARDADO' ? 'Dinero Guardado' : 'Ventas'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
-        {canCreate && (
-          <TouchableOpacity 
-            onPress={() => setModalVisible(true)}
-            style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 99, flexShrink: 0 }}
-          >
-            <Ionicons name="add" size={24} color="white" />
-          </TouchableOpacity>
+
+        {/* ── Contenido ──────────────────────────────────────────────────── */}
+        {isLoading ? (
+          <View style={S.loadingBox}>
+            <ActivityIndicator size="large" color="#16a34a" />
+          </View>
+        ) : activeTab === 'DINERO_GUARDADO' ? (
+          <FlatList
+            data={filteredCajas}
+            keyExtractor={(item: ReporteFilter) => item.FilterID}
+            renderItem={renderItem}
+            onScroll={handleScroll}
+            // ⚠️ REGLA 3: flexGrow:1 para que el contenedor se expanda
+            contentContainerStyle={S.listContent}
+            style={{ flex: 1 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={['#16a34a']}
+                tintColor="#16a34a"
+              />
+            }
+            ListEmptyComponent={renderEmpty}
+          />
+        ) : (
+          <View style={[S.loadingBox, { marginTop: 0 }]}>
+            <Ionicons name="construct-outline" size={64} color="#d1d5db" />
+            <Text style={S.emptyText}>Módulo en construcción</Text>
+          </View>
         )}
-      </View>
 
-      {/* Tabs Modernos (Segmented Control) */}
-      <View className="px-4 pt-4 pb-2 z-0">
-        <View className="flex-row bg-gray-200/60 p-1 rounded-2xl">
-          {(['DINERO_GUARDADO', 'VENTAS'] as const).map((tab) => {
-            const isActive = activeTab === tab;
-            
-            return (
-              <TouchableOpacity
-                key={tab}
-                onPress={() => setActiveTab(tab)}
-                className={`flex-1 py-3 items-center rounded-xl ${isActive ? 'bg-white shadow-sm' : ''}`}
-              >
-                <Text className={`text-[11px] font-bold uppercase text-center ${isActive ? 'text-green-600' : 'text-gray-500'}`}>
-                  {tab === 'DINERO_GUARDADO' ? 'Dinero Guardado' : 'Ventas'}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
+        {/* ── Modal: Generar Reporte ──────────────────────────────────────── */}
+        <Modal
+          visible={modalVisible}
+          transparent
+          animationType="slide"
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <TouchableOpacity
+            style={S.modalOverlay}
+            activeOpacity={1}
+            onPress={() => setModalVisible(false)}
+          >
+            <TouchableOpacity activeOpacity={1} style={S.modalCard}>
+              <Text style={S.modalTitle}>Generar Reporte</Text>
+              <Text style={S.modalSub}>
+                Selecciona el rango de fechas para cargar los reportes de Dinero Guardado.
+              </Text>
 
-      {isLoading ? (
-        <View className="flex-1 justify-center items-center">
-          <ActivityIndicator size="large" color="#16a34a" />
-        </View>
-      ) : activeTab === 'DINERO_GUARDADO' ? (
-        <FlashList
-          data={filteredCajas}
-          keyExtractor={(item: ReporteFilter) => item.FilterID}
-          onScroll={handleScroll}
-          renderItem={renderItem}
-          contentContainerStyle={{ padding: 16 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              colors={['#16a34a']}
-              tintColor="#16a34a"
-            />
-          }
-          ListEmptyComponent={
-            !isLoading ? (
-              <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 40 }}>
-                <Ionicons name="document-outline" size={60} color="#d1d5db" />
-                <Text style={{ color: '#9ca3af', marginTop: 16, fontSize: 16 }}>No hay reportes creados aún</Text>
-                {canCreate && (
+              <View style={S.dateRow}>
+                <View style={{ flex: 1, marginRight: 8 }}>
+                  <Text style={S.dateLabel}>Fecha de Inicio</Text>
                   <TouchableOpacity
-                    onPress={() => setModalVisible(true)}
-                    style={{ marginTop: 16, backgroundColor: '#16a34a', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12 }}
+                    style={S.datePicker}
+                    onPress={() => setShowStartPicker(true)}
                   >
-                    <Text style={{ color: 'white', fontWeight: 'bold' }}>+ Crear Reporte</Text>
+                    <Ionicons name="calendar-outline" size={18} color="#16a34a" />
+                    <Text style={S.datePickerText}>{format(tempStartDate, 'dd/MM/yyyy')}</Text>
                   </TouchableOpacity>
+                </View>
+                <View style={{ flex: 1, marginLeft: 8 }}>
+                  <Text style={S.dateLabel}>Fecha Fin</Text>
+                  <TouchableOpacity
+                    style={S.datePicker}
+                    onPress={() => setShowEndPicker(true)}
+                  >
+                    <Ionicons name="calendar-outline" size={18} color="#16a34a" />
+                    <Text style={S.datePickerText}>{format(tempEndDate, 'dd/MM/yyyy')}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[S.btnGreen, creating && { opacity: 0.7 }]}
+                disabled={creating}
+                onPress={async () => {
+                  setCreating(true);
+                  try {
+                    await crearReporte(
+                      format(tempStartDate, 'yyyy-MM-dd'),
+                      format(tempEndDate, 'yyyy-MM-dd')
+                    );
+                    setModalVisible(false);
+                    Toast.show({ type: 'success', text1: 'Éxito', text2: 'Reporte generado' });
+                  } catch {
+                    Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo crear el reporte' });
+                  } finally {
+                    setCreating(false);
+                  }
+                }}
+              >
+                {creating ? (
+                  <ActivityIndicator color="white" />
+                ) : (
+                  <Ionicons name="search" size={20} color="white" />
                 )}
-              </View>
-            ) : null
-          }
-        />
-      ) : (
-        <View className="flex-1 items-center justify-center mt-10">
-          <Ionicons name="construct-outline" size={60} color="#d1d5db" />
-          <Text className="text-gray-400 mt-4 text-base">Módulo en construcción</Text>
-        </View>
-      )}
+                <Text style={S.btnText}>Generar Reporte</Text>
+              </TouchableOpacity>
 
-      {/* Modal para Generar Reporte Consolidado */}
-      <Modal visible={modalVisible} transparent animationType="slide" onRequestClose={() => setModalVisible(false)}>
-        <TouchableOpacity style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }} activeOpacity={1} onPress={() => setModalVisible(false)}>
-          <TouchableOpacity activeOpacity={1} style={{ backgroundColor: 'white', width: '90%', borderRadius: 24, padding: 24 }}>
-            <Text className="text-xl font-bold text-gray-800 mb-2 text-center">Generar Reporte</Text>
-            <Text className="text-sm text-gray-500 mb-6 text-center">Selecciona el rango de fechas para cargar los reportes de Dinero Guardado.</Text>
-
-            <View className="flex-row justify-between mb-6">
-              <View className="flex-1 mr-2">
-                <Text className="text-xs font-bold text-gray-500 uppercase mb-2">Fecha de Inicio</Text>
-                <TouchableOpacity onPress={() => setShowStartPicker(true)} className="bg-gray-50 border border-gray-300 rounded-xl p-3 flex-row items-center">
-                  <Ionicons name="calendar-outline" size={18} color="#16a34a" className="mr-2" />
-                  <Text className="text-gray-800 ml-2">{format(tempStartDate, 'dd/MM/yyyy')}</Text>
-                </TouchableOpacity>
-              </View>
-
-              <View className="flex-1 ml-2">
-                <Text className="text-xs font-bold text-gray-500 uppercase mb-2">Fecha Fin</Text>
-                <TouchableOpacity onPress={() => setShowEndPicker(true)} className="bg-gray-50 border border-gray-300 rounded-xl p-3 flex-row items-center">
-                  <Ionicons name="calendar-outline" size={18} color="#16a34a" className="mr-2" />
-                  <Text className="text-gray-800 ml-2">{format(tempEndDate, 'dd/MM/yyyy')}</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              className="bg-green-600 rounded-xl py-4 flex-row justify-center items-center mb-3"
-              onPress={async () => {
-                setCreating(true);
-                try {
-                  await crearReporte(format(tempStartDate, 'yyyy-MM-dd'), format(tempEndDate, 'yyyy-MM-dd'));
-                  setModalVisible(false);
-                  Toast.show({ type: 'success', text1: 'Éxito', text2: 'Reporte generado' });
-                } catch (e) {
-                  Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo crear el reporte' });
-                } finally {
-                  setCreating(false);
-                }
-              }}
-              disabled={creating}
-            >
-              {creating ? <ActivityIndicator color="white" /> : <Ionicons name="search" size={20} color="white" className="mr-2" />}
-              <Text className="text-white font-bold ml-2">Generar Reporte</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-                className="bg-gray-800 rounded-xl py-4 flex-row justify-center items-center"
+              <TouchableOpacity
+                style={S.btnDark}
                 onPress={() => {
                   setStartDate(tempStartDate);
                   setEndDate(tempEndDate);
                   setModalVisible(false);
-                  setTimeout(() => exportConsolidatedPDF(), 500); // Dar tiempo a que cierre el modal
+                  setTimeout(() => exportConsolidatedPDF(), 500);
                 }}
               >
-                <Ionicons name="document-text-outline" size={20} color="white" className="mr-2" />
-                <Text className="text-white font-bold ml-2">Generar PDF Consolidado</Text>
+                <Ionicons name="document-text-outline" size={20} color="white" />
+                <Text style={S.btnText}>Generar PDF Consolidado</Text>
               </TouchableOpacity>
-
+            </TouchableOpacity>
           </TouchableOpacity>
-        </TouchableOpacity>
-      </Modal>
+        </Modal>
 
-      {/* Date Pickers de Android/iOS */}
-      {showStartPicker && (
-        <DateTimePicker
-          value={tempStartDate}
-          mode="date"
-          display="default"
-          onChange={(event, selectedDate) => {
-            setShowStartPicker(Platform.OS === 'ios');
-            if (event.type === 'set' && selectedDate) {
-              setTempStartDate(selectedDate);
-            }
-          }}
-        />
-      )}
-      {showEndPicker && (
-        <DateTimePicker
-          value={tempEndDate}
-          mode="date"
-          display="default"
-          onChange={(event, selectedDate) => {
-            setShowEndPicker(Platform.OS === 'ios');
-            if (event.type === 'set' && selectedDate) {
-              setTempEndDate(selectedDate);
-            }
-          }}
-        />
-      )}
-    </SafeAreaView>
+        {/* ── Date Pickers ────────────────────────────────────────────────── */}
+        {showStartPicker && (
+          <DateTimePicker
+            value={tempStartDate}
+            mode="date"
+            display="default"
+            onChange={(event, selectedDate) => {
+              setShowStartPicker(Platform.OS === 'ios');
+              if (event.type === 'set' && selectedDate) setTempStartDate(selectedDate);
+            }}
+          />
+        )}
+        {showEndPicker && (
+          <DateTimePicker
+            value={tempEndDate}
+            mode="date"
+            display="default"
+            onChange={(event, selectedDate) => {
+              setShowEndPicker(Platform.OS === 'ios');
+              if (event.type === 'set' && selectedDate) setTempEndDate(selectedDate);
+            }}
+          />
+        )}
+
+      </SafeAreaView>
     </View>
   );
 }
