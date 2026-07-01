@@ -47,8 +47,16 @@ export const getTurnoActivo = async () => {
  * En React Native el FileReader nativo del RN maneja { uri, name, type } directamente.
  */
 const uriToBlob = async (uri: string, type: string): Promise<Blob> => {
-  const response = await fetch(uri);
-  return response.blob();
+  console.log(`[DEBUG uriToBlob] Iniciando fetch para URI:`, uri);
+  try {
+    const response = await fetch(uri);
+    const blob = await response.blob();
+    console.log(`[DEBUG uriToBlob] Fetch exitoso. Blob size:`, blob.size, `type:`, blob.type);
+    return blob;
+  } catch (error) {
+    console.error(`[DEBUG uriToBlob] ERROR al hacer fetch del URI:`, error);
+    throw error;
+  }
 };
 
 export const uploadAsistenciaImage = async (imageUri: string): Promise<string> => {
@@ -82,6 +90,7 @@ export const registrarEntrada = async (params: {
   longitud?: number; 
   fotoUri?: string 
 }) => {
+  console.log(`[DEBUG registrarEntrada] Iniciando... Platform:`, Platform.OS);
   const formData = new FormData();
   if (params.latitud) formData.append('latitud', params.latitud.toString());
   if (params.longitud) formData.append('longitud', params.longitud.toString());
@@ -92,20 +101,30 @@ export const registrarEntrada = async (params: {
     const type = match ? `image/${match[1]}` : `image/jpeg`;
 
     if (Platform.OS === 'web') {
+      console.log(`[DEBUG registrarEntrada] Convirtiendo URI a Blob en Web...`);
       // Web: convertir URI a Blob real
       const blob = await uriToBlob(params.fotoUri, type);
       formData.append('foto', blob, filename);
+      console.log(`[DEBUG registrarEntrada] Blob agregado al FormData en Web`);
     } else {
+      console.log(`[DEBUG registrarEntrada] Usando sintaxis nativa de RN para FormData`);
       // APK React Native: sintaxis nativa
       formData.append('foto', { uri: params.fotoUri, name: filename, type } as any);
     }
   }
 
-  const { data } = await api.post('/nomina/turno/entrada', formData, {
-    // En web NO establecer Content-Type — el browser lo gestiona con boundary correcto
-    headers: Platform.OS === 'web' ? undefined : { 'Content-Type': 'multipart/form-data' },
-  });
-  return data;
+  console.log(`[DEBUG registrarEntrada] Enviando petición a /nomina/turno/entrada`);
+  try {
+    const { data } = await api.post('/nomina/turno/entrada', formData, {
+      // En web NO establecer Content-Type — el browser lo gestiona con boundary correcto
+      headers: Platform.OS === 'web' ? undefined : { 'Content-Type': 'multipart/form-data' },
+    });
+    console.log(`[DEBUG registrarEntrada] Petición exitosa:`, data);
+    return data;
+  } catch (error: any) {
+    console.error(`[DEBUG registrarEntrada] ERROR en petición:`, error?.response?.data || error);
+    throw error;
+  }
 };
 
 export const registrarSalida = async (id: string, params: {
@@ -131,20 +150,30 @@ export const registrarSalida = async (id: string, params: {
     const type = match ? `image/${match[1]}` : 'image/jpeg';
     
     if (Platform.OS === 'web') {
+      console.log(`[DEBUG registrarSalida] Convirtiendo URI a Blob en Web...`);
       // Web: convertir URI a Blob real
       const blob = await uriToBlob(params.fotoUri, type);
       formData.append('foto', blob, filename);
+      console.log(`[DEBUG registrarSalida] Blob agregado al FormData en Web`);
     } else {
+      console.log(`[DEBUG registrarSalida] Usando sintaxis nativa de RN para FormData`);
       // APK React Native: sintaxis nativa
       formData.append('foto', { uri: params.fotoUri, name: filename, type } as any);
     }
   }
 
-  const { data } = await api.patch(`/nomina/turno/${id}/salida`, formData, {
-    // En web NO establecer Content-Type — el browser lo gestiona con boundary correcto
-    headers: Platform.OS === 'web' ? undefined : { 'Content-Type': 'multipart/form-data' },
-  });
-  return data;
+  console.log(`[DEBUG registrarSalida] Enviando petición a /nomina/turno/${id}/salida`);
+  try {
+    const { data } = await api.patch(`/nomina/turno/${id}/salida`, formData, {
+      // En web NO establecer Content-Type — el browser lo gestiona con boundary correcto
+      headers: Platform.OS === 'web' ? undefined : { 'Content-Type': 'multipart/form-data' },
+    });
+    console.log(`[DEBUG registrarSalida] Petición exitosa:`, data);
+    return data;
+  } catch (error: any) {
+    console.error(`[DEBUG registrarSalida] ERROR en petición:`, error?.response?.data || error);
+    throw error;
+  }
 };
 
 export const getMisTurnos = async (params?: { limit?: number; page?: number; fechaDesde?: string; fechaHasta?: string }) => {
