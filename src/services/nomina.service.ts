@@ -55,6 +55,24 @@ const uriToBlob = async (uri: string, type: string): Promise<Blob> => {
     return blob;
   } catch (error) {
     console.error(`[DEBUG uriToBlob] ERROR al hacer fetch del URI:`, error);
+    
+    // Fallback: si fetch falla y es un data URI (muy común en base64 de Expo Web)
+    if (uri.startsWith('data:')) {
+      console.log(`[DEBUG uriToBlob] Intentando fallback manual de base64...`);
+      try {
+        const arr = uri.split(',');
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        return new Blob([u8arr], { type });
+      } catch (fallbackError) {
+        console.error(`[DEBUG uriToBlob] Fallback falló:`, fallbackError);
+      }
+    }
+    
     throw error;
   }
 };
