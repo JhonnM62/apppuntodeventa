@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, FlatList, TouchableOpacity, ActivityIndicator, Dimensions, TextInput, Modal, Platform, Keyboard, Alert } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, FlatList, TouchableOpacity, ActivityIndicator, Dimensions, TextInput, Modal, Platform, Keyboard, Alert, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,7 @@ import { ReporteFilter } from '../../services/reportes';
 import Toast from 'react-native-toast-message';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { usePermissions } from '../../hooks/usePermissions';
+import { useFocusEffect } from '@react-navigation/native';
 
 // Carga dinámica de módulos nativos para exportar
 let Print: any = null;
@@ -41,10 +42,22 @@ export default function ReportesScreen({ navigation }: any) {
   const [showEndPicker, setShowEndPicker] = useState(false);
 
   const handleScroll = useScrollDirection();
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    fetchReportesDineroGuardado();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchReportesDineroGuardado();
+    }, [])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await fetchReportesDineroGuardado();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchReportesDineroGuardado]);
 
   const formatMoney = (amount: number) => {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(amount);
@@ -202,22 +215,38 @@ export default function ReportesScreen({ navigation }: any) {
     <View className="flex-1 bg-gray-50">
       <StatusBar style="dark" backgroundColor="transparent" translucent />
       <SafeAreaView className="flex-1" edges={['top']}>
-      <View className="bg-green-600 px-4 py-4 flex-row items-center justify-between shadow-sm z-10">
-        <View className="flex-row items-center flex-1">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3 p-1">
+      <View
+        style={{
+          backgroundColor: '#16a34a',
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 3,
+          elevation: 3,
+          zIndex: 10,
+          flexWrap: 'nowrap',
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: canCreate ? 8 : 0 }}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 10, padding: 4 }}>
             <Ionicons name="arrow-back" size={24} color="white" />
           </TouchableOpacity>
           
-          <View className="flex-1 bg-white/20 rounded-full flex-row items-center px-3 py-1.5 mr-3">
+          <View style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 99, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6 }}>
             <Ionicons name="search" size={18} color="white" />
             <TextInput 
               placeholder="Buscar reporte..."
               placeholderTextColor="rgba(255,255,255,0.7)"
-              className="flex-1 ml-2 text-white py-1"
+              style={{ flex: 1, marginLeft: 8, color: 'white', paddingVertical: Platform.OS === 'web' ? 4 : 2, fontSize: 15, minWidth: 0 }}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
-            <TouchableOpacity onPress={() => {}}>
+            <TouchableOpacity onPress={() => setModalVisible(true)} style={{ padding: 2 }}>
               <Ionicons name="options-outline" size={18} color="white" />
             </TouchableOpacity>
           </View>
@@ -225,7 +254,7 @@ export default function ReportesScreen({ navigation }: any) {
         {canCreate && (
           <TouchableOpacity 
             onPress={() => setModalVisible(true)}
-            className="bg-white/20 p-2 rounded-full"
+            style={{ backgroundColor: 'rgba(255,255,255,0.2)', padding: 8, borderRadius: 99, flexShrink: 0 }}
           >
             <Ionicons name="add" size={24} color="white" />
           </TouchableOpacity>
@@ -264,11 +293,29 @@ export default function ReportesScreen({ navigation }: any) {
           onScroll={handleScroll}
           renderItem={renderItem}
           contentContainerStyle={{ padding: 16 }}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={['#16a34a']}
+              tintColor="#16a34a"
+            />
+          }
           ListEmptyComponent={
-            <View className="items-center justify-center mt-10">
-              <Ionicons name="document-outline" size={60} color="#d1d5db" />
-              <Text className="text-gray-400 mt-4 text-base">No hay reportes en este rango de fechas</Text>
-            </View>
+            !isLoading ? (
+              <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 40 }}>
+                <Ionicons name="document-outline" size={60} color="#d1d5db" />
+                <Text style={{ color: '#9ca3af', marginTop: 16, fontSize: 16 }}>No hay reportes creados aún</Text>
+                {canCreate && (
+                  <TouchableOpacity
+                    onPress={() => setModalVisible(true)}
+                    style={{ marginTop: 16, backgroundColor: '#16a34a', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12 }}
+                  >
+                    <Text style={{ color: 'white', fontWeight: 'bold' }}>+ Crear Reporte</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : null
           }
         />
       ) : (

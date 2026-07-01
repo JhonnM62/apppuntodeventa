@@ -34,15 +34,24 @@ export const useReportesStore = create<ReportesState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const res: any = await getReportesDineroGuardado();
-      let data = res;
-      if (res && res.success !== undefined && res.data) {
-        data = res.data;
-      } else if (res && res.data && res.data.data) {
-        data = res.data.data;
+      // api.ts interceptor returns response.data directly, so res = { success, data: [...] }
+      // But the cache fallback returns the raw stored value which is also response.data
+      // So we always expect res to be either:
+      //   a) { success: true, data: [...] }   → extract res.data
+      //   b) [...] directly (already an array)
+      let data: any[];
+      if (Array.isArray(res)) {
+        data = res;
+      } else if (res && res.data !== undefined) {
+        data = Array.isArray(res.data) ? res.data : (res.data?.data ?? []);
+      } else {
+        data = [];
       }
-      set({ reportesDineroGuardado: data || [], isLoading: false });
+      console.log('[ReportesStore] fetchReportesDineroGuardado → count:', data.length);
+      set({ reportesDineroGuardado: data, isLoading: false });
     } catch (error: any) {
-      set({ error: error.message, isLoading: false });
+      console.error('[ReportesStore] fetchReportesDineroGuardado error:', error);
+      set({ error: error?.message ?? String(error), isLoading: false });
     }
   },
 

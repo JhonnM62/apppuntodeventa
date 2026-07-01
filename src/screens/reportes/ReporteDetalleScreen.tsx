@@ -114,10 +114,7 @@ export default function ReporteDetalleScreen({ route, navigation }: any) {
     }
 
     try {
-      await generateAndShareDineroGuardadoPDF(
-        detalle.reporte,
-        detalle.cajas
-      );
+      await generateAndShareDineroGuardadoPDF(detalle);
     } catch (error) {
       console.error('Error exporting Reporte PDF:', error);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo generar el PDF' });
