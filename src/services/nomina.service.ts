@@ -133,10 +133,7 @@ export const registrarEntrada = async (params: {
 
   console.log(`[DEBUG registrarEntrada] Enviando petición a /nomina/turno/entrada`);
   try {
-    const { data } = await api.post('/nomina/turno/entrada', formData, {
-      // En web NO establecer Content-Type — el browser lo gestiona con boundary correcto
-      headers: Platform.OS === 'web' ? undefined : { 'Content-Type': 'multipart/form-data' },
-    });
+    const { data } = await api.post('/nomina/turno/entrada', formData);
     console.log(`[DEBUG registrarEntrada] Petición exitosa:`, data);
     return data;
   } catch (error: any) {
@@ -182,10 +179,7 @@ export const registrarSalida = async (id: string, params: {
 
   console.log(`[DEBUG registrarSalida] Enviando petición a /nomina/turno/${id}/salida`);
   try {
-    const { data } = await api.patch(`/nomina/turno/${id}/salida`, formData, {
-      // En web NO establecer Content-Type — el browser lo gestiona con boundary correcto
-      headers: Platform.OS === 'web' ? undefined : { 'Content-Type': 'multipart/form-data' },
-    });
+    const { data } = await api.patch(`/nomina/turno/${id}/salida`, formData);
     console.log(`[DEBUG registrarSalida] Petición exitosa:`, data);
     return data;
   } catch (error: any) {

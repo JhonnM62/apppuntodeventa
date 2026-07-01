@@ -31,13 +31,23 @@ function onRefreshFailed() {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Request interceptor — inject Authorization header
+// Request interceptor — inject Authorization header and handle FormData
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const token = await AsyncStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Si estamos enviando un FormData, debemos eliminar el Content-Type por defecto
+    // para que el navegador (o React Native) lo establezca automáticamente con el `boundary` correcto.
+    if (config.data instanceof FormData) {
+      if (config.headers) {
+        delete config.headers['Content-Type'];
+        delete config.headers['content-type'];
+      }
+    }
+    
     return config;
   },
   (error: AxiosError) => Promise.reject(error)
