@@ -49,13 +49,13 @@ export default function CheckInScreen({ navigation }: any) {
 
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // useEffect inicial eliminado — useFocusEffect ya maneja la carga inicial y los re-focos.
 
   useFocusEffect(
     useCallback(() => {
-      // Limpiar el estado cada vez que la pantalla gana el foco (por si quedó guardado de antes)
+      // Limpiar SOLO los campos del formulario (foto, ubicación, ceno).
+      // NO limpiamos turnoActivo de inmediato para evitar que la UI parpadee
+      // mostrando 'iniciar turno' antes de que la API responda.
       setFotoUri(null);
       setLocation(null);
       setCeno(null);
