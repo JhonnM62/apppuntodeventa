@@ -4,6 +4,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '../../components/ui/text';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 // Fallback seguro para expo-image
 let ImageComponent: any = RNImage;
@@ -61,6 +62,10 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [iaConfigured, setIaConfigured] = useState<boolean | null>(null);
+
+  const [fecha, setFecha] = useState<Date>(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
   
   // Animación IA
   const [isScanningIA, setIsScanningIA] = useState(false);
@@ -79,12 +84,14 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         setValor(gastoToEdit.valor ? gastoToEdit.valor.toString() : '');
         setMedioDePago(gastoToEdit.medioDePago || 'Efectivo');
         setFotoUri(gastoToEdit.fotos || null);
+        setFecha(gastoToEdit.fecha ? new Date(gastoToEdit.fecha) : new Date());
       } else {
         setTipo('NEGOCIO');
         setConcepto('');
         setValor('');
         setMedioDePago('Efectivo');
         setFotoUri(null);
+        setFecha(new Date());
       }
     }
   }, [visible, gastoToEdit]);
@@ -150,6 +157,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         valor: Number(valor),
         medioDePago,
         fotos: finalFotoUrl || undefined,
+        fecha: fecha.toISOString(),
       };
 
       if (gastoToEdit) {
@@ -456,6 +464,67 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
                     </TouchableOpacity>
                   </View>
                 </View>
+
+                {/* Fecha y Hora */}
+                <View className="flex-row mb-6">
+                  <View className="flex-1 mr-2">
+                    <Text className="text-sm font-bold text-gray-600 mb-1 ml-1">Fecha</Text>
+                    <TouchableOpacity
+                      className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 items-center flex-row"
+                      onPress={() => setShowDatePicker(true)}
+                    >
+                      <Ionicons name="calendar-outline" size={20} color="#6b7280" />
+                      <Text className="ml-2 text-base text-gray-800 font-bold">
+                        {fecha.toLocaleDateString('es-CO')}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  <View className="flex-1">
+                    <Text className="text-sm font-bold text-gray-600 mb-1 ml-1">Hora</Text>
+                    <TouchableOpacity
+                      className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 items-center flex-row"
+                      onPress={() => setShowTimePicker(true)}
+                    >
+                      <Ionicons name="time-outline" size={20} color="#6b7280" />
+                      <Text className="ml-2 text-base text-gray-800 font-bold">
+                        {fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={fecha}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setShowDatePicker(false);
+                      if (selectedDate) {
+                        const newDate = new Date(fecha);
+                        newDate.setFullYear(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                        setFecha(newDate);
+                      }
+                    }}
+                  />
+                )}
+
+                {showTimePicker && (
+                  <DateTimePicker
+                    value={fecha}
+                    mode="time"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setShowTimePicker(false);
+                      if (selectedDate) {
+                        const newDate = new Date(fecha);
+                        newDate.setHours(selectedDate.getHours(), selectedDate.getMinutes());
+                        setFecha(newDate);
+                      }
+                    }}
+                  />
+                )}
 
                 {/* Boton Escanear con IA */}
                 {!gastoToEdit && !fotoUri && (
