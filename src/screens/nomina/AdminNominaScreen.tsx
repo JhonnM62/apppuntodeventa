@@ -50,18 +50,19 @@ export default function AdminNominaScreen({ navigation }: any) {
       const usuariosActivos = (resUsuarios.data?.data || []).filter((u: any) => u.isActive);
       setEmpleados(usuariosActivos);
 
-      // Usar zona horaria de Colombia para evitar el bug de UTC midnight:
-      // a las 7 PM Colombia (midnight UTC), setHours(0,0,0,0) en UTC apuntaría
-      // al día siguiente y los turnos activos desaparecerían.
-      const ahoraColombia = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));
-      const hoyInicioCol = new Date(ahoraColombia);
-      hoyInicioCol.setHours(0, 0, 0, 0);
-      const hoyFinCol = new Date(ahoraColombia);
-      hoyFinCol.setHours(23, 59, 59, 999);
-      // Convertir de vuelta a UTC para la query
-      const offsetMs = 5 * 60 * 60 * 1000; // Colombia es UTC-5
-      const hoyUTC = new Date(hoyInicioCol.getTime() + offsetMs);
-      const finHoyUTC = new Date(hoyFinCol.getTime() + offsetMs);
+      // Usar lógica manual de UTC-5 (Colombia) para evitar problemas de Intl en Android/Hermes
+      const now = new Date();
+      // Hora actual en Colombia (restando 5 horas al UTC actual)
+      const colombiaTime = new Date(now.getTime() - (5 * 60 * 60 * 1000));
+      
+      const y = colombiaTime.getUTCFullYear();
+      const m = colombiaTime.getUTCMonth();
+      const d = colombiaTime.getUTCDate();
+
+      // Convertir de vuelta a UTC para la query sumando las 5 horas
+      const offsetMs = 5 * 60 * 60 * 1000;
+      const hoyUTC = new Date(Date.UTC(y, m, d, 0, 0, 0, 0) + offsetMs);
+      const finHoyUTC = new Date(Date.UTC(y, m, d, 23, 59, 59, 999) + offsetMs);
 
       const resTurnos = await getTurnos({ 
         fechaDesde: hoyUTC.toISOString(), 

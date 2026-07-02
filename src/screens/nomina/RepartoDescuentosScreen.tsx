@@ -87,9 +87,16 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
   const loadDescuentos = async () => {
     try {
       setLoadingList(true);
+      const [yD, mD, dD] = selectedQuincena.fechaDesde.split('-').map(Number);
+      const [yH, mH, dH] = selectedQuincena.fechaHasta.split('-').map(Number);
+
+      const offsetMs = 5 * 60 * 60 * 1000; // Colombia es UTC-5
+      const inicioUTC = new Date(Date.UTC(yD, mD - 1, dD, 0, 0, 0, 0) + offsetMs);
+      const finUTC = new Date(Date.UTC(yH, mH - 1, dH, 23, 59, 59, 999) + offsetMs);
+
       const res = await getDescuentos({ 
-        fechaDesde: selectedQuincena.fechaDesde,
-        fechaHasta: selectedQuincena.fechaHasta,
+        fechaDesde: inicioUTC.toISOString(),
+        fechaHasta: finUTC.toISOString(),
         limit: 100
       });
       setDescuentos(res.data?.data || []);
