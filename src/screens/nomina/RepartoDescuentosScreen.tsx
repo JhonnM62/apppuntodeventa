@@ -136,8 +136,8 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
   const handleGuardar = () => {
     const montoTotal = Number(montoTotalStr);
     
-    if (selectedIds.size < 2) {
-      return showAlert({ type: 'error', title: 'Error', message: 'Debes seleccionar al menos dos empleados para repartir un descuento' });
+    if (selectedIds.size < 1) {
+      return showAlert({ type: 'error', title: 'Error', message: 'Debes seleccionar al menos un empleado para asignar un descuento' });
     }
     if (!descripcion.trim()) {
       return showAlert({ type: 'error', title: 'Error', message: 'La descripción es obligatoria' });
@@ -147,11 +147,14 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
     }
 
     const valorPorPersona = montoTotal / selectedIds.size;
+    const msg = selectedIds.size === 1
+      ? `Se le descontará $${valorPorPersona.toLocaleString('es-CO')} al empleado seleccionado.\n\n¿Estás seguro?`
+      : `Se descontarán $${valorPorPersona.toLocaleString('es-CO')} a cada uno de los ${selectedIds.size} empleados seleccionados.\n\n¿Estás seguro?`;
 
     showAlert({
       type: 'confirm',
-      title: 'Repartir Descuento',
-      message: `Se descontarán $${valorPorPersona.toLocaleString('es-CO')} a cada uno de los ${selectedIds.size} empleados seleccionados.\n\n¿Estás seguro?`,
+      title: 'Asignar Descuento',
+      message: msg,
       confirmText: 'Aplicar',
       onConfirm: async () => {
         try {
