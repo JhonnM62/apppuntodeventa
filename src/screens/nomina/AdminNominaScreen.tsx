@@ -50,14 +50,22 @@ export default function AdminNominaScreen({ navigation }: any) {
       const usuariosActivos = (resUsuarios.data?.data || []).filter((u: any) => u.isActive);
       setEmpleados(usuariosActivos);
 
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
-      const finHoy = new Date();
-      finHoy.setHours(23, 59, 59, 999);
+      // Usar zona horaria de Colombia para evitar el bug de UTC midnight:
+      // a las 7 PM Colombia (midnight UTC), setHours(0,0,0,0) en UTC apuntaría
+      // al día siguiente y los turnos activos desaparecerían.
+      const ahoraColombia = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+      const hoyInicioCol = new Date(ahoraColombia);
+      hoyInicioCol.setHours(0, 0, 0, 0);
+      const hoyFinCol = new Date(ahoraColombia);
+      hoyFinCol.setHours(23, 59, 59, 999);
+      // Convertir de vuelta a UTC para la query
+      const offsetMs = 5 * 60 * 60 * 1000; // Colombia es UTC-5
+      const hoyUTC = new Date(hoyInicioCol.getTime() + offsetMs);
+      const finHoyUTC = new Date(hoyFinCol.getTime() + offsetMs);
 
       const resTurnos = await getTurnos({ 
-        fechaDesde: hoy.toISOString(), 
-        fechaHasta: finHoy.toISOString(),
+        fechaDesde: hoyUTC.toISOString(), 
+        fechaHasta: finHoyUTC.toISOString(),
         limit: 100
       });
       setTurnosHoy(resTurnos.data || []);
@@ -133,20 +141,31 @@ export default function AdminNominaScreen({ navigation }: any) {
   const handleSaveTurno = async () => {
     try {
       setSavingTurno(true);
-      await updateTurnoAdmin(editingTurno.IDturno, {
+
+      const payload: any = {
         estado: editForm.estado,
         ceno: editForm.ceno,
         valorTurno: Number(editForm.valorTurno),
-        horaEntrada: new Date(editForm.horaEntrada),
-        horaSalida: editForm.horaSalida ? new Date(editForm.horaSalida) : undefined
-      });
+        // El backend espera strings ISO, no objetos Date
+        horaEntrada: editForm.horaEntrada
+          ? new Date(editForm.horaEntrada).toISOString()
+          : undefined,
+        horaSalida: editForm.horaSalida
+          ? new Date(editForm.horaSalida).toISOString()
+          : undefined,
+      };
+      // Eliminar campos undefined para no enviar propiedades vacías
+      Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
+
+      await updateTurnoAdmin(editingTurno.IDturno, payload);
       showAlert({ type: 'success', title: 'Éxito', message: 'Turno actualizado correctamente' });
       setEditingTurno(null);
       if (historyEmpleado) openHistory(historyEmpleado);
-      loadData(); // Reload main stats too
-    } catch (error) {
+      loadData();
+    } catch (error: any) {
       console.error(error);
-      showAlert({ type: 'error', title: 'Error', message: 'No se pudo guardar el turno' });
+      const msg = error?.response?.data?.message || 'No se pudo guardar el turno';
+      showAlert({ type: 'error', title: 'Error', message: Array.isArray(msg) ? msg[0] : msg });
     } finally {
       setSavingTurno(false);
     }
