@@ -24,21 +24,21 @@ import { useCustomAlert } from '../../context/CustomAlertContext';
 import { FlashList as OriginalFlashList } from '@shopify/flash-list';
 const FlashList = OriginalFlashList as any;
 
-interface ConteoItem {
-  fecha: string;
-  cajaId: string;
+interface ConteoEnCaja {
+  insumoId: string;
+  insumoNombre: string;
+  unidadDeMedida: string;
   disponibleEnSistema: number;
   cantContada: number;
   diferencia: number;
-  originalIndex: number; // Necesario para saber qué índice editar/eliminar en la BD
+  originalIndex: number;
 }
 
-interface InsumoAuditItem {
-  id: string;
-  nombre: string;
-  unidadDeMedida: string;
-  totalConteos: number;
-  conteos: ConteoItem[];
+interface CajaAuditItem {
+  cajaId: string;
+  fecha: string;
+  totalInsumos: number;
+  conteos: ConteoEnCaja[];
 }
 
 type EditingItemInfo = {
@@ -57,7 +57,7 @@ interface AuditoriaConteoScreenProps {
 
 export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaConteoScreenProps) {
   const { showAlert } = useCustomAlert();
-  const [todosLosInsumos, setTodosLosInsumos] = useState<InsumoAuditItem[]>([]);
+  const [todasLasCajas, setTodasLasCajas] = useState<CajaAuditItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   
@@ -103,7 +103,7 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
       const data = await insumosService.getAll({ limit: 2000 });
       
       if (data && Array.isArray(data)) {
-        const insumosList: InsumoAuditItem[] = [];
+        const cajasMap = new Map<string, CajaAuditItem>();
         
         data.forEach((insumo: any) => {
           let conteos = insumo.ultimosConteos;
@@ -111,20 +111,43 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
             try { conteos = JSON.parse(conteos); } catch(e) { conteos = []; }
           }
           if (Array.isArray(conteos) && conteos.length > 0) {
-            // Mapear agregando el índice original
-            const conteosConIndex = conteos.map((c: any, i: number) => ({ ...c, originalIndex: i }));
-            
-            insumosList.push({
-              id: insumo.IDalimentos,
-              nombre: insumo.nombre,
-              unidadDeMedida: insumo.unidades || 'und',
-              totalConteos: conteosConIndex.length,
-              conteos: conteosConIndex,
+            conteos.forEach((c: any, i: number) => {
+              if (!c.cajaId) return; // Omitir si no tiene cajaId
+              
+              if (!cajasMap.has(c.cajaId)) {
+                cajasMap.set(c.cajaId, {
+                  cajaId: c.cajaId,
+                  fecha: c.fecha,
+                  totalInsumos: 0,
+                  conteos: [],
+                });
+              }
+              
+              const caja = cajasMap.get(c.cajaId)!;
+              
+              // Agregar este conteo a la caja
+              caja.conteos.push({
+                insumoId: insumo.IDalimentos,
+                insumoNombre: insumo.nombre,
+                unidadDeMedida: insumo.unidades || 'und',
+                disponibleEnSistema: c.disponibleEnSistema,
+                cantContada: c.cantContada,
+                diferencia: c.diferencia,
+                originalIndex: i,
+              });
+              
+              // Mantener la fecha más reciente por si hay discrepancias menores
+              if (c.fecha && new Date(c.fecha) > new Date(caja.fecha)) {
+                caja.fecha = c.fecha;
+              }
             });
           }
         });
         
-        setTodosLosInsumos(insumosList);
+        const cajasList = Array.from(cajasMap.values());
+        cajasList.forEach(c => c.totalInsumos = c.conteos.length);
+        
+        setTodasLasCajas(cajasList);
       }
     } catch (error) {
       console.error('Error cargando auditoría:', error);
@@ -199,21 +222,22 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
   };
 
   // Filter and sort logic
-  const filteredAndSortedInsumos = useMemo(() => {
+  // Filter and sort logic
+  const filteredAndSortedCajas = useMemo(() => {
     // Clonación profunda de arreglos para no mutar el estado original al ordenar
-    let result = todosLosInsumos.map(insumo => ({ ...insumo, conteos: [...insumo.conteos] }));
+    let result = todasLasCajas.map(caja => ({ ...caja, conteos: [...caja.conteos] }));
     
     // 1. Search Filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(insumo => {
-        const matchName = insumo.nombre.toLowerCase().includes(q);
-        const matchingConteos = insumo.conteos.filter(c => c.cajaId && c.cajaId.toLowerCase().includes(q));
+      result = result.filter(caja => {
+        const matchCaja = caja.cajaId.toLowerCase().includes(q);
+        const matchingConteos = caja.conteos.filter(c => c.insumoNombre.toLowerCase().includes(q));
 
-        if (matchName) {
-          return true; // Keep all conteos if insumo name matches
+        if (matchCaja) {
+          return true; // Keep all conteos if caja ID matches
         } else if (matchingConteos.length > 0) {
-          insumo.conteos = matchingConteos; // Only keep matching conteos if caja matches
+          caja.conteos = matchingConteos; // Only keep matching insumos
           return true;
         }
         return false;
@@ -221,20 +245,24 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
     }
     
     // Apply filters to conteos
-    result.forEach(insumo => {
-      insumo.conteos = insumo.conteos.filter(c => {
-        // Fecha desde
-        if (dateFrom) {
-          const from = new Date(dateFrom).setHours(0,0,0,0);
-          const conc = new Date(c.fecha).getTime();
-          if (conc < from) return false;
-        }
-        // Fecha hasta
-        if (dateTo) {
-          const to = new Date(dateTo).setHours(23,59,59,999);
-          const conc = new Date(c.fecha).getTime();
-          if (conc > to) return false;
-        }
+    result.forEach(caja => {
+      let keepCaja = true;
+      // Filtro de Fechas a nivel de Caja
+      if (dateFrom) {
+        const from = new Date(dateFrom).setHours(0,0,0,0);
+        if (new Date(caja.fecha).getTime() < from) keepCaja = false;
+      }
+      if (dateTo) {
+        const to = new Date(dateTo).setHours(23,59,59,999);
+        if (new Date(caja.fecha).getTime() > to) keepCaja = false;
+      }
+
+      if (!keepCaja) {
+        caja.conteos = [];
+        return;
+      }
+
+      caja.conteos = caja.conteos.filter(c => {
         // Filtro por signo de diferencia
         if (diffSignFilter === 'positive' && c.diferencia <= 0) return false;
         if (diffSignFilter === 'negative' && c.diferencia >= 0) return false;
@@ -266,120 +294,112 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
           if (contadaOperator === 'gte' && c.cantContada < v) return false;
           if (contadaOperator === 'lte' && c.cantContada > v) return false;
         }
+        // Filter by unidad de medida
+        if (unidadFilter.trim()) {
+          const q = unidadFilter.toLowerCase();
+          if (!c.unidadDeMedida.toLowerCase().includes(q)) return false;
+        }
         return true;
       });
-      // Remove insumos with no conteos after filter
-      insumo.totalConteos = insumo.conteos.length;
+      caja.totalInsumos = caja.conteos.length;
     });
 
-    result = result.filter(insumo => insumo.conteos.length > 0);
+    result = result.filter(caja => caja.conteos.length > 0);
 
-    // Filter by unidad de medida
-    if (unidadFilter.trim()) {
-      const q = unidadFilter.toLowerCase();
-      result = result.filter(insumo => insumo.unidadDeMedida.toLowerCase().includes(q));
-    }
-
-    // 2. Sort Conteos inside each Insumo
-    result.forEach(insumo => {
-      insumo.conteos.sort((a, b) => {
-        const timeA = new Date(a.fecha || 0).getTime();
-        const timeB = new Date(b.fecha || 0).getTime();
-        return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
-      });
+    // 2. Sort Conteos inside each Caja (Alfabéticamente por insumo)
+    result.forEach(caja => {
+      caja.conteos.sort((a, b) => a.insumoNombre.localeCompare(b.insumoNombre));
     });
 
-    // 3. Sort Insumos based on their most relevant (first) conteo
+    // 3. Sort Cajas based on their date
     result.sort((a, b) => {
-      if (!a.conteos[0] || !b.conteos[0]) return 0;
-      const timeA = new Date(a.conteos[0].fecha || 0).getTime();
-      const timeB = new Date(b.conteos[0].fecha || 0).getTime();
+      const timeA = new Date(a.fecha || 0).getTime();
+      const timeB = new Date(b.fecha || 0).getTime();
       return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
     });
     
     return result;
-  }, [todosLosInsumos, searchQuery, sortOrder, dateFrom, dateTo, diffSignFilter, diffOperator, diffValue, unidadFilter, sistemaOperator, sistemaValue, contadaOperator, contadaValue]);
+  }, [todasLasCajas, searchQuery, sortOrder, dateFrom, dateTo, diffSignFilter, diffOperator, diffValue, unidadFilter, sistemaOperator, sistemaValue, contadaOperator, contadaValue]);
 
-  const renderConteo = (conteo: ConteoItem, insumoId: string, insumoNombre: string) => {
+  const renderInsumoEnCaja = (conteo: ConteoEnCaja, cajaId: string) => {
     const isPositive = conteo.diferencia > 0;
     const isNegative = conteo.diferencia < 0;
     
     return (
       <View
-        key={`${conteo.cajaId}-${conteo.originalIndex}`}
-        className="flex-row items-center justify-between p-3 mb-2 rounded-lg"
-        style={{ backgroundColor: COLORS.surface, borderLeftWidth: 3, borderLeftColor: isPositive ? '#22c55e' : isNegative ? '#ef4444' : '#d1d5db' }}
+        key={`${conteo.insumoId}-${conteo.originalIndex}`}
+        className="flex-row items-center justify-between p-3 mb-2 rounded-lg bg-white border border-gray-100"
+        style={{ borderLeftWidth: 3, borderLeftColor: isPositive ? '#22c55e' : isNegative ? '#ef4444' : '#d1d5db' }}
       >
         <View className="flex-1">
-          <View className="flex-row items-center mb-1">
-            <Ionicons name="calendar-outline" size={14} color={COLORS.textSecondary} />
-            <Text className="text-xs text-gray-500 ml-1 mr-3">
-              {formatDate(conteo.fecha)}
-            </Text>
-            <Ionicons name="time-outline" size={14} color={COLORS.textSecondary} />
-            <Text className="text-xs text-gray-500 ml-1">
-              {formatTime(conteo.fecha)}
-            </Text>
-          </View>
-          <View className="flex-row items-center">
-            <Text className="text-xs text-gray-400 mr-2">Caja:</Text>
-            <Text className="text-xs font-medium text-gray-700">{conteo.cajaId.slice(0, 8)}...</Text>
-          </View>
+          <Text className="text-sm font-bold text-gray-800 mb-1">{conteo.insumoNombre}</Text>
           <View className="flex-row items-center mt-1">
-            <Text className="text-xs text-gray-400 mr-2">Sistema: {conteo.disponibleEnSistema}</Text>
-            <Text className="text-xs text-gray-400">| Contado: {conteo.cantContada}</Text>
+            <Text className="text-xs text-gray-500 mr-2">Sistema: {conteo.disponibleEnSistema}</Text>
+            <Text className="text-xs text-gray-500">| Físico: {conteo.cantContada}</Text>
           </View>
         </View>
         
-        <View className="items-center mr-3">
+        <View className="items-center mr-4 min-w-[30px]">
           <Text
-            className={`text-lg font-bold ${
+            className={`text-base font-bold ${
               isPositive ? 'text-green-500' : isNegative ? 'text-red-500' : 'text-gray-500'
             }`}
           >
             {isPositive ? '+' : ''}{conteo.diferencia}
           </Text>
-          <Text className="text-[10px] text-gray-400">diferencia</Text>
+          <Text className="text-[9px] text-gray-400">dif</Text>
         </View>
 
         <View className="flex-col justify-center space-y-1">
           <TouchableOpacity
-            className="w-8 h-8 rounded-full items-center justify-center mb-1"
+            className="w-7 h-7 rounded items-center justify-center mb-1"
             style={{ backgroundColor: '#f3f4f6' }}
             onPress={() => {
               setEditValue(conteo.cantContada.toString());
               setEditingItem({
-                insumoId,
-                insumoNombre,
-                cajaId: conteo.cajaId,
+                insumoId: conteo.insumoId,
+                insumoNombre: conteo.insumoNombre,
+                cajaId: cajaId,
                 disponibleEnSistema: conteo.disponibleEnSistema,
                 cantContada: conteo.cantContada,
                 originalIndex: conteo.originalIndex,
               });
             }}
           >
-            <Ionicons name="pencil-outline" size={14} color={COLORS.textSecondary} />
+            <Ionicons name="pencil" size={12} color={COLORS.textSecondary} />
           </TouchableOpacity>
           <TouchableOpacity
-            className="w-8 h-8 rounded-full items-center justify-center"
+            className="w-7 h-7 rounded items-center justify-center"
             style={{ backgroundColor: `${COLORS.error}15` }}
-            onPress={() => handleEliminarConteo(insumoId, insumoNombre, conteo.originalIndex, conteo.cajaId)}
+            onPress={() => handleEliminarConteo(conteo.insumoId, conteo.insumoNombre, conteo.originalIndex, cajaId)}
           >
-            <Ionicons name="trash-outline" size={14} color={COLORS.error} />
+            <Ionicons name="trash" size={12} color={COLORS.error} />
           </TouchableOpacity>
         </View>
       </View>
     );
   };
 
-  const renderInsumo = ({ item }: { item: InsumoAuditItem }) => {
+  const renderCaja = ({ item }: { item: CajaAuditItem }) => {
     return (
       <View className="mb-5 shadow-sm rounded-xl bg-white" style={{ elevation: 2 }}>
         <View className="flex-row items-center justify-between p-4 rounded-t-xl" style={{ backgroundColor: COLORS.primary }}>
           <View className="flex-1">
-            <Text className="text-white font-bold text-base">{item.nombre}</Text>
+            <View className="flex-row items-center mb-1">
+              <Ionicons name="calendar-outline" size={14} color="#ffffffcc" />
+              <Text className="text-white font-bold text-sm ml-1 mr-3">
+                {formatDate(item.fecha)}
+              </Text>
+              <Ionicons name="time-outline" size={14} color="#ffffffcc" />
+              <Text className="text-white font-bold text-sm ml-1">
+                {formatTime(item.fecha)}
+              </Text>
+            </View>
             <Text className="text-white/80 text-xs mt-1">
-              {item.conteos.length} conteo{item.conteos.length !== 1 ? 's' : ''} registrado{item.conteos.length !== 1 ? 's' : ''}
+              Caja: <Text className="font-medium text-white">{item.cajaId.slice(0, 8)}...</Text>
+            </Text>
+            <Text className="text-white/80 text-xs mt-1">
+              {item.conteos.length} insumo{item.conteos.length !== 1 ? 's' : ''} contabilizado{item.conteos.length !== 1 ? 's' : ''}
             </Text>
           </View>
           <View className="w-10 h-10 rounded-full items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
@@ -388,7 +408,7 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
         </View>
         
         <View className="p-3 rounded-b-xl" style={{ backgroundColor: '#f9fafb' }}>
-          {item.conteos.map((conteo) => renderConteo(conteo, item.id, item.nombre))}
+          {item.conteos.map((conteo) => renderInsumoEnCaja(conteo, item.cajaId))}
         </View>
       </View>
     );
@@ -624,37 +644,38 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
           )}
           <View className="flex-row items-center justify-between mt-2 px-1">
             <Text className="text-xs text-gray-500 font-medium">
-              {filteredAndSortedInsumos.length} Insumo{filteredAndSortedInsumos.length !== 1 ? 's' : ''}
-              {hasActiveFilters || searchQuery ? ' encontrado' + (filteredAndSortedInsumos.length !== 1 ? 's' : '') : ' agrupado' + (filteredAndSortedInsumos.length !== 1 ? 's' : '')}
+              {filteredAndSortedCajas.length} Caja{filteredAndSortedCajas.length !== 1 ? 's' : ''}
+              {hasActiveFilters || searchQuery ? ' encontrada' + (filteredAndSortedCajas.length !== 1 ? 's' : '') : ' agrupada' + (filteredAndSortedCajas.length !== 1 ? 's' : '')}
             </Text>
             <Text className="text-xs text-gray-500 font-medium">
-              {sortOrder === 'desc' ? 'Más recientes' : 'Más antiguos'}
+              {sortOrder === 'desc' ? 'Más recientes' : 'Más antiguas'}
               {hasActiveFilters ? ' • Filtros activos' : ''}
             </Text>
           </View>
         </View>
 
         {/* Lista Principal */}
-        {filteredAndSortedInsumos.length === 0 ? (
+        {filteredAndSortedCajas.length === 0 ? (
           <View className="flex-1 items-center justify-center px-6">
             <Ionicons name="document-text-outline" size={64} color={COLORS.textSecondary} />
             <Text className="text-gray-500 mt-4 text-center text-lg font-medium">No hay resultados</Text>
             <Text className="text-gray-400 text-sm mt-2 text-center">
-              {todosLosInsumos.length > 0 
-                ? 'Ningún insumo o caja coincide con tu búsqueda.' 
+              {todasLasCajas.length > 0 
+                ? 'Ninguna caja o insumo coincide con tu búsqueda.' 
                 : 'No se encontraron conteos guardados en el sistema.'}
             </Text>
           </View>
         ) : (
           <FlashList
             style={{ flex: 1 }}
-            data={filteredAndSortedInsumos}
-            renderItem={renderInsumo}
-            keyExtractor={(item: InsumoAuditItem) => item.id}
+            data={filteredAndSortedCajas}
+            renderItem={renderCaja}
+            keyExtractor={(item: CajaAuditItem) => item.cajaId}
             contentContainerStyle={{ padding: SPACING.md, paddingBottom: 80 }}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />
             }
+            estimatedItemSize={200}
           />
         )}
 
