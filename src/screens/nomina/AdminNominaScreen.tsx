@@ -69,7 +69,19 @@ export default function AdminNominaScreen({ navigation }: any) {
         fechaHasta: finHoyUTC.toISOString(),
         limit: 100
       });
-      setTurnosHoy(resTurnos.data || []);
+      
+      // Obtener también todos los turnos activos sin importar la fecha
+      // (por si un turno inició ayer pero sigue activo cruzando la medianoche)
+      const resActivos = await getTurnos({
+        estado: 'ACTIVO',
+        limit: 100
+      });
+
+      const combined = [...(resTurnos.data || []), ...(resActivos.data || [])];
+      // Eliminar duplicados por IDturno
+      const uniqueTurnos = Array.from(new Map(combined.map(t => [t.IDturno, t])).values());
+
+      setTurnosHoy(uniqueTurnos);
 
     } catch (error) {
       console.error(error);
@@ -208,20 +220,39 @@ export default function AdminNominaScreen({ navigation }: any) {
   };
 
   const getStatusTurnoHoy = (usuarioId: string) => {
-    const turno = turnosHoy.find(t => t.usuarioId === usuarioId);
-    if (!turno) return { text: 'No ha iniciado turno hoy', color: '#ef4444', icon: 'close-circle' };
-    if (turno.estado === 'ACTIVO') return { 
-      text: `En turno (Inició ${new Date(turno.horaEntrada).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})})`, 
-      color: '#10b981', 
-      icon: 'checkmark-circle' 
-    };
-    return { text: 'Turno cerrado hoy', color: '#6b7280', icon: 'time' };
+    // Primero, si hay un turno activo, ese es el estado actual
+    const turnoActivo = turnosHoy.find(t => t.usuarioId === usuarioId && t.estado === 'ACTIVO');
+    if (turnoActivo) {
+      return { 
+        text: `En turno (Inició ${new Date(turnoActivo.horaEntrada).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})})`, 
+        color: '#10b981', 
+        icon: 'checkmark-circle' 
+      };
+    }
+
+    // Si no hay activo, buscamos un turno cerrado que realmente haya iniciado HOY (hora Colombia)
+    const turnoCerradoHoy = turnosHoy.find(t => {
+      if (t.usuarioId !== usuarioId || t.estado === 'ACTIVO') return false;
+      const entrada = new Date(t.horaEntrada);
+      // Hora de entrada en Colombia
+      const colombiaTime = new Date(entrada.getTime() - (5 * 60 * 60 * 1000));
+      const today = new Date();
+      const todayColombia = new Date(today.getTime() - (5 * 60 * 60 * 1000));
+      return colombiaTime.getUTCFullYear() === todayColombia.getUTCFullYear() &&
+             colombiaTime.getUTCMonth() === todayColombia.getUTCMonth() &&
+             colombiaTime.getUTCDate() === todayColombia.getUTCDate();
+    });
+
+    if (turnoCerradoHoy) {
+      return { text: 'Turno cerrado hoy', color: '#6b7280', icon: 'time' };
+    }
+
+    return { text: 'No ha iniciado turno hoy', color: '#ef4444', icon: 'close-circle' };
   };
 
   const empleadosFiltrados = empleados.filter(emp => {
     if (filterTab === 'Todos') return true;
-    const turno = turnosHoy.find(t => t.usuarioId === emp.IDusuarios);
-    return turno?.estado === 'ACTIVO';
+    return turnosHoy.some(t => t.usuarioId === emp.IDusuarios && t.estado === 'ACTIVO');
   });
 
   const handleValorChange = (text: string) => {
