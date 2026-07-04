@@ -172,12 +172,11 @@ export const generateAndShareDineroGuardadoPDF = async (detalle: DetalleDineroGu
       // Fuente primaria: campos pre-calculados al cierre de caja
       // `resumen` = efectivo contado en caja física
       // `transferenciasContadas` = total transferencias del período
-      let efectivoApp = resumen;
-      let transferenciaApp = Number(c.transferenciasContadas || 0);
+      let efectivoApp = 0;
+      let transferenciaApp = 0;
 
-      // Si hay ventas individuales vinculadas Y la caja no tiene transferencias contadas,
-      // calcular desde las ventas para mayor detalle
-      if ((c.venta || []).length > 0 && transferenciaApp === 0) {
+      // Siempre iterar sobre las ventas para sumar el efectivo según los filtros (fórmula AppSheet)
+      if ((c.venta || []).length > 0) {
         const calc = calcEfectivoYTransferencias(c.venta);
         efectivoApp = calc.efectivoApp;
         transferenciaApp = calc.transferenciaApp;

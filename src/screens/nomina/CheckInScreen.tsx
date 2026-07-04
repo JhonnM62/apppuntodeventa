@@ -196,7 +196,8 @@ export default function CheckInScreen({ navigation }: any) {
         await registrarEntrada({
           latitud: currentLoc?.latitud,
           longitud: currentLoc?.longitud,
-          fotoUri: fotoUri || undefined
+          fotoUri: fotoUri || undefined,
+          observacion: observacion || undefined
         });
         showAlert({ type: 'success', title: 'Éxito', message: 'Turno iniciado correctamente' });
       } else {
@@ -205,8 +206,8 @@ export default function CheckInScreen({ navigation }: any) {
           latitud: currentLoc?.latitud,
           longitud: currentLoc?.longitud,
           ceno: ceno!,
-          observacion: isOutOfBounds ? observacion : undefined,
-          fotoUri: fotoUri
+          observacion: observacion || undefined,
+          fotoUri: fotoUri || undefined
         });
         
         if (res?.alertaGeocerca) {
@@ -312,22 +313,29 @@ export default function CheckInScreen({ navigation }: any) {
               </View>
             )}
 
-            {turnoActivo && distanciaMetros !== null && configuracion?.radioGeocercaM && distanciaMetros > configuracion.radioGeocercaM && (
+            <View style={{ marginTop: 24 }} />
+            {distanciaMetros !== null && configuracion?.radioGeocercaM && distanciaMetros > configuracion.radioGeocercaM ? (
               <>
-                <View style={{ marginTop: 24 }} />
                 <Text style={[styles.sectionTitle, { color: '#ef4444' }]}>JUSTIFICACIÓN OBLIGATORIA</Text>
-                <Text style={styles.instruction}>Indica por qué estás cerrando el turno fuera del establecimiento (Ej: Emergencia médica, olvido).</Text>
-                <TextInput
-                  style={styles.observacionInput}
-                  placeholder="Escribe el motivo detallado (mín. 10 caracteres)..."
-                  multiline
-                  numberOfLines={3}
-                  value={observacion}
-                  onChangeText={setObservacion}
-                  textAlignVertical="top"
-                />
+                <Text style={styles.instruction}>
+                  Indica por qué estás {turnoActivo ? 'cerrando' : 'iniciando'} el turno fuera del establecimiento (Ej: Emergencia médica, olvido).
+                </Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.sectionTitle}>OBSERVACIÓN / NOTA (Opcional)</Text>
+                <Text style={styles.instruction}>Añade algún comentario si lo necesitas (Ej: Olvidé registrar mi turno ayer).</Text>
               </>
             )}
+            <TextInput
+              style={styles.observacionInput}
+              placeholder="Escribe tu comentario o justificación..."
+              multiline
+              numberOfLines={3}
+              value={observacion}
+              onChangeText={setObservacion}
+              textAlignVertical="top"
+            />
 
             {turnoActivo && (
               <>

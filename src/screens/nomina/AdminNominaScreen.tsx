@@ -24,6 +24,7 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [resumen, setResumen] = useState<any>(null);
   const [loadingResumen, setLoadingResumen] = useState(false);
   const [liquidando, setLiquidando] = useState(false);
+  const [recalculando, setRecalculando] = useState(false);
 
   // Modal states for Historial de Turnos
   const [historyEmpleado, setHistoryEmpleado] = useState<any>(null);
@@ -230,6 +231,23 @@ export default function AdminNominaScreen({ navigation }: any) {
     });
   };
 
+  const handleRecalcular = async () => {
+    try {
+      setRecalculando(true);
+      const res = await api.post(`/nomina/recalcular/${selectedEmpleado.IDusuarios}`);
+      showAlert({ type: 'success', title: 'Éxito', message: res.data?.mensaje || 'Turnos recalculados' });
+      // Reload resumen automatically
+      const resUpdated = await getResumenEmpleadoAdmin(selectedEmpleado.IDusuarios);
+      setResumen(resUpdated.data);
+    } catch (error: any) {
+      console.error(error);
+      const msg = error?.response?.data?.message || 'Error al recalcular turnos';
+      showAlert({ type: 'error', title: 'Error', message: Array.isArray(msg) ? msg[0] : msg });
+    } finally {
+      setRecalculando(false);
+    }
+  };
+
   const getStatusTurnoHoy = (usuarioId: string) => {
     // Primero, si hay un turno activo, ese es el estado actual
     const turnoActivo = turnosHoy.find(t => t.usuarioId === usuarioId && t.estado === 'ACTIVO');
@@ -414,7 +432,14 @@ export default function AdminNominaScreen({ navigation }: any) {
                     <Text style={{ fontWeight: '700', marginTop: 16, marginBottom: 8 }}>Descuentos No Vistos ({resumen.descuentos?.length || 0})</Text>
                     {resumen.descuentos?.map((d: any) => (
                       <View key={d.IDdescuento} style={styles.itemRow}>
-                        <Text style={{ flex: 1, fontSize: 13 }}>{d.concepto}</Text>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 13 }}>{d.concepto}</Text>
+                          {d.fecha && (
+                            <Text style={{ fontSize: 11, color: '#6b7280', textTransform: 'capitalize' }}>
+                              {new Date(d.fecha).toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short' })}
+                            </Text>
+                          )}
+                        </View>
                         <Text style={{ fontSize: 13, color: '#ef4444', fontWeight: '600' }}>
                           -${Number(d.valor).toLocaleString('es-CO')}
                         </Text>
@@ -423,11 +448,14 @@ export default function AdminNominaScreen({ navigation }: any) {
                   </ScrollView>
 
                   <View style={styles.modalActions}>
-                    <Button style={{ flex: 1, marginRight: 8, backgroundColor: '#f3f4f6' }} onPress={() => setSelectedEmpleado(null)} disabled={liquidando}>
+                    <Button style={{ flex: 1, marginRight: 8, backgroundColor: '#f3f4f6' }} onPress={() => setSelectedEmpleado(null)} disabled={liquidando || recalculando}>
                       <Text style={{ color: '#111827' }}>Cerrar</Text>
                     </Button>
-                    <Button style={{ flex: 1, backgroundColor: '#4CAF50' }} onPress={handleLiquidar} isLoading={liquidando}>
-                      <Text style={{ color: '#fff' }}>Liquidar Ahora</Text>
+                    <Button style={{ flex: 1, marginRight: 8, backgroundColor: '#eab308' }} onPress={handleRecalcular} loading={recalculando} disabled={liquidando}>
+                      <Text style={{ color: '#fff', fontSize: 13 }}>Recalcular</Text>
+                    </Button>
+                    <Button style={{ flex: 1, backgroundColor: '#4CAF50' }} onPress={handleLiquidar} loading={liquidando} disabled={recalculando}>
+                      <Text style={{ color: '#fff', fontSize: 13 }}>Liquidar</Text>
                     </Button>
                   </View>
                 </>
@@ -579,7 +607,7 @@ export default function AdminNominaScreen({ navigation }: any) {
               <Button style={{ flex: 1, marginRight: 8, backgroundColor: '#f3f4f6' }} onPress={() => setEditingTurno(null)} disabled={savingTurno}>
                 <Text style={{ color: '#111827' }}>Cancelar</Text>
               </Button>
-              <Button style={{ flex: 1, backgroundColor: '#3b82f6' }} onPress={handleSaveTurno} isLoading={savingTurno}>
+              <Button style={{ flex: 1, backgroundColor: '#3b82f6' }} onPress={handleSaveTurno} loading={savingTurno}>
                 <Text style={{ color: '#fff' }}>Guardar</Text>
               </Button>
             </View>

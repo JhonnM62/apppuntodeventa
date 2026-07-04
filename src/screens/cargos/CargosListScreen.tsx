@@ -396,7 +396,7 @@ export default function CargosListScreen({ navigation }: any) {
               <Button
                 style={{ flex: 1, backgroundColor: '#4CAF50' }}
                 onPress={handleSave}
-                isLoading={saving}
+                loading={saving}
               >
                 <Text style={{ color: '#fff' }}>Guardar</Text>
               </Button>

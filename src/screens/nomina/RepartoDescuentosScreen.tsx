@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, FlatList, Modal, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text } from '../../components/ui/text';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
@@ -19,18 +20,18 @@ const getMonthName = (monthIndex: number) => {
 const generateQuincenas = () => {
   const quincenas = [];
   let current = new Date();
-  
+
   for (let i = 0; i < 8; i++) {
     const y = current.getFullYear();
     const m = current.getMonth();
     const isFirstHalf = current.getDate() <= 15;
-    
+
     if (isFirstHalf) {
       quincenas.push({
         id: `${y}-${m}-1`,
         label: `1-15 ${getMonthName(m)} ${y}`,
-        fechaDesde: `${y}-${String(m+1).padStart(2,'0')}-01`,
-        fechaHasta: `${y}-${String(m+1).padStart(2,'0')}-15`,
+        fechaDesde: `${y}-${String(m + 1).padStart(2, '0')}-01`,
+        fechaHasta: `${y}-${String(m + 1).padStart(2, '0')}-15`,
       });
       // Move to previous month, 2nd half
       current = new Date(y, m, 0); // last day of previous month
@@ -39,8 +40,8 @@ const generateQuincenas = () => {
       quincenas.push({
         id: `${y}-${m}-2`,
         label: `16-${lastDay} ${getMonthName(m)} ${y}`,
-        fechaDesde: `${y}-${String(m+1).padStart(2,'0')}-16`,
-        fechaHasta: `${y}-${String(m+1).padStart(2,'0')}-${lastDay}`,
+        fechaDesde: `${y}-${String(m + 1).padStart(2, '0')}-16`,
+        fechaHasta: `${y}-${String(m + 1).padStart(2, '0')}-${lastDay}`,
       });
       // Move to current month, 1st half
       current = new Date(y, m, 15);
@@ -54,7 +55,7 @@ const QUINCENAS = generateQuincenas();
 export default function RepartoDescuentosScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { showAlert } = useCustomAlert();
-  
+
   const [descuentos, setDescuentos] = useState<any[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [selectedQuincena, setSelectedQuincena] = useState(QUINCENAS[0]);
@@ -64,10 +65,12 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
   const [empleados, setEmpleados] = useState<any[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loadingForm, setLoadingForm] = useState(false);
-  
+
   const [concepto, setConcepto] = useState('DESCUADRE_CAJA');
   const [descripcion, setDescripcion] = useState('');
   const [montoTotalStr, setMontoTotalStr] = useState('');
+  const [fechaDescuento, setFechaDescuento] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
@@ -94,7 +97,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
       const inicioUTC = new Date(Date.UTC(yD, mD - 1, dD, 0, 0, 0, 0) + offsetMs);
       const finUTC = new Date(Date.UTC(yH, mH - 1, dH, 23, 59, 59, 999) + offsetMs);
 
-      const res = await getDescuentos({ 
+      const res = await getDescuentos({
         fechaDesde: inicioUTC.toISOString(),
         fechaHasta: finUTC.toISOString(),
         limit: 100
@@ -113,6 +116,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
     setConcepto('DESCUADRE_CAJA');
     setDescripcion('');
     setMontoTotalStr('');
+    setFechaDescuento(new Date());
     setSelectedIds(new Set());
     if (empleados.length === 0) {
       try {
@@ -142,7 +146,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
 
   const handleGuardar = () => {
     const montoTotal = Number(montoTotalStr);
-    
+
     if (selectedIds.size < 1) {
       return showAlert({ type: 'error', title: 'Error', message: 'Debes seleccionar al menos un empleado para asignar un descuento' });
     }
@@ -170,7 +174,8 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
             usuarioIds: Array.from(selectedIds),
             montoTotal,
             concepto,
-            descripcion: descripcion.trim()
+            descripcion: descripcion.trim(),
+            fecha: fechaDescuento.toISOString()
           });
           showAlert({ type: 'success', title: 'Éxito', message: 'Descuento repartido correctamente' });
           setModalVisible(false);
@@ -190,8 +195,8 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
   const renderQuincenaItem = ({ item }: { item: any }) => {
     const isSelected = item.id === selectedQuincena.id;
     return (
-      <TouchableOpacity 
-        style={[styles.quincenaTab, isSelected && styles.quincenaTabActive]} 
+      <TouchableOpacity
+        style={[styles.quincenaTab, isSelected && styles.quincenaTabActive]}
         onPress={() => setSelectedQuincena(item)}
       >
         <Text style={[styles.quincenaText, isSelected && styles.quincenaTextActive]}>{item.label}</Text>
@@ -281,103 +286,126 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
                 {loadingForm ? (
                   <ActivityIndicator size="large" color="#ec4899" style={{ marginVertical: 40 }} />
                 ) : (
-                  <ScrollView 
+                  <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={{ flexGrow: 1, paddingBottom: 32 }}
                   >
-                  <View style={styles.formGroup}>
-                    <Text style={styles.label}>Concepto General</Text>
-                    <View style={styles.conceptosGrid}>
-                      {CONCEPTOS_VALIDOS.map(c => (
-                        <TouchableOpacity 
-                          key={c}
-                          style={[styles.conceptoChip, concepto === c && styles.conceptoChipActive]}
-                          onPress={() => setConcepto(c)}
-                        >
-                          <Text style={[styles.conceptoText, concepto === c && styles.conceptoTextActive]}>
-                            {c.replace('_', ' ')}
-                          </Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
-
-                  <View style={styles.formGroup}>
-                    <Text style={styles.label}>Descripción Detallada</Text>
-                    <Input 
-                      value={descripcion} 
-                      onChangeText={setDescripcion} 
-                      placeholder="Ej: Faltante caja principal turno tarde" 
-                    />
-                  </View>
-
-                  <View style={styles.formGroup}>
-                    <Text style={styles.label}>Monto Total a Repartir ($)</Text>
-                    <Input 
-                      value={montoTotalStr} 
-                      onChangeText={setMontoTotalStr} 
-                      placeholder="Ej: 50000" 
-                      keyboardType="numeric" 
-                    />
-                  </View>
-
-                  {selectedIds.size > 0 && !isNaN(Number(montoTotalStr)) && Number(montoTotalStr) > 0 && (
-                    <View style={styles.summaryBox}>
-                      <Ionicons name="calculator-outline" size={24} color="#ec4899" />
-                      <View style={{ marginLeft: 12, flex: 1 }}>
-                        <Text style={{ fontSize: 13, color: '#ec4899' }}>A descontar por persona:</Text>
-                        <Text style={{ fontSize: 18, fontWeight: '800', color: '#be185d' }}>
-                          ${valorCalculado.toLocaleString('es-CO')}
-                        </Text>
+                    <View style={styles.formGroup}>
+                      <Text style={styles.label}>Concepto General</Text>
+                      <View style={styles.conceptosGrid}>
+                        {CONCEPTOS_VALIDOS.map(c => (
+                          <TouchableOpacity
+                            key={c}
+                            style={[styles.conceptoChip, concepto === c && styles.conceptoChipActive]}
+                            onPress={() => setConcepto(c)}
+                          >
+                            <Text style={[styles.conceptoText, concepto === c && styles.conceptoTextActive]}>
+                              {c.replace('_', ' ')}
+                            </Text>
+                          </TouchableOpacity>
+                        ))}
                       </View>
                     </View>
-                  )}
 
-                  <View style={styles.listHeader}>
-                    <Text style={styles.label}>Seleccionar Empleados ({selectedIds.size}/{empleados.length})</Text>
-                    <TouchableOpacity onPress={selectAll}>
-                      <Text style={styles.selectAllText}>
-                        {selectedIds.size === empleados.length ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                    <View style={styles.formGroup}>
+                      <Text style={styles.label}>Fecha del Descuento</Text>
+                      <TouchableOpacity
+                        style={{ padding: 12, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8 }}
+                        onPress={() => setShowDatePicker(true)}
+                      >
+                        <Text style={{ fontSize: 16, color: '#111827' }}>
+                          {fechaDescuento.toLocaleDateString()}
+                        </Text>
+                      </TouchableOpacity>
+                      {showDatePicker && (
+                        <DateTimePicker
+                          value={fechaDescuento}
+                          mode="date"
+                          display="default"
+                          onChange={(event, selectedDate) => {
+                            setShowDatePicker(false);
+                            if (selectedDate) setFechaDescuento(selectedDate);
+                          }}
+                        />
+                      )}
+                    </View>
+
+                    <View style={styles.formGroup}>
+                      <Text style={styles.label}>Descripción Detallada</Text>
+                      <Input
+                        value={descripcion}
+                        onChangeText={setDescripcion}
+                        placeholder="Ej: Faltante caja principal turno tarde"
+                      />
+                    </View>
+
+                    <View style={styles.formGroup}>
+                      <Text style={styles.label}>Monto Total a Repartir ($)</Text>
+                      <Input
+                        value={montoTotalStr}
+                        onChangeText={setMontoTotalStr}
+                        placeholder="Ej: 50000"
+                        keyboardType="numeric"
+                      />
+                    </View>
+
+                    {selectedIds.size > 0 && !isNaN(Number(montoTotalStr)) && Number(montoTotalStr) > 0 && (
+                      <View style={styles.summaryBox}>
+                        <Ionicons name="calculator-outline" size={24} color="#ec4899" />
+                        <View style={{ marginLeft: 12, flex: 1 }}>
+                          <Text style={{ fontSize: 13, color: '#ec4899' }}>A descontar por persona:</Text>
+                          <Text style={{ fontSize: 18, fontWeight: '800', color: '#be185d' }}>
+                            ${valorCalculado.toLocaleString('es-CO')}
+                          </Text>
+                        </View>
+                      </View>
+                    )}
+
+                    <View style={styles.listHeader}>
+                      <Text style={styles.label}>Seleccionar Empleados ({selectedIds.size}/{empleados.length})</Text>
+                      <TouchableOpacity onPress={selectAll}>
+                        <Text style={styles.selectAllText}>
+                          {selectedIds.size === empleados.length ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.employeeList}>
+                      {empleados.map((empleado) => {
+                        const isSelected = selectedIds.has(empleado.IDusuarios);
+                        return (
+                          <TouchableOpacity
+                            key={empleado.IDusuarios}
+                            style={[styles.employeeItem, isSelected && styles.employeeItemSelected]}
+                            onPress={() => toggleSelect(empleado.IDusuarios)}
+                            activeOpacity={0.7}
+                          >
+                            <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                              {isSelected && <Ionicons name="checkmark" size={16} color="#fff" />}
+                            </View>
+                            <View style={{ marginLeft: 12 }}>
+                              <Text style={styles.empName}>{empleado.nombre}</Text>
+                              <Text style={styles.empRole}>{empleado.rol}</Text>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+
+                    <Button
+                      style={styles.mainBtn}
+                      onPress={handleGuardar}
+                      loading={saving}
+                    >
+                      <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
+                        Aplicar Descuento
                       </Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.employeeList}>
-                    {empleados.map((empleado) => {
-                      const isSelected = selectedIds.has(empleado.IDusuarios);
-                      return (
-                        <TouchableOpacity 
-                          key={empleado.IDusuarios} 
-                          style={[styles.employeeItem, isSelected && styles.employeeItemSelected]}
-                          onPress={() => toggleSelect(empleado.IDusuarios)}
-                          activeOpacity={0.7}
-                        >
-                          <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                            {isSelected && <Ionicons name="checkmark" size={16} color="#fff" />}
-                          </View>
-                          <View style={{ marginLeft: 12 }}>
-                            <Text style={styles.empName}>{empleado.nombre}</Text>
-                            <Text style={styles.empRole}>{empleado.rol}</Text>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-
-                  <Button 
-                    style={styles.mainBtn} 
-                    onPress={handleGuardar} 
-                    isLoading={saving}
-                  >
-                    <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
-                      Aplicar Descuento
-                    </Text>
-                  </Button>
-                  <View style={{ height: 20 }} />
-                </ScrollView>
-              )}
+                    </Button>
+                    <View style={{ height: 20 }} />
+                  </ScrollView>
+                )}
+              </View>
             </View>
-          </View>
           </SafeAreaView>
         </KeyboardAvoidingView>
       </Modal>
@@ -391,17 +419,17 @@ const styles = StyleSheet.create({
   backBtn: { padding: 8, marginRight: 8 },
   title: { fontSize: 20, fontWeight: '700', color: '#111827' },
   addBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#ec4899', justifyContent: 'center', alignItems: 'center' },
-  
+
   filterContainer: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
   quincenaTab: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, backgroundColor: '#f3f4f6', borderWidth: 1, borderColor: 'transparent' },
   quincenaTabActive: { backgroundColor: '#fdf2f8', borderColor: '#fbcfe8' },
   quincenaText: { fontSize: 14, fontWeight: '600', color: '#4b5563' },
   quincenaTextActive: { color: '#ec4899' },
-  
+
   emptyState: { alignItems: 'center', paddingTop: 60 },
   emptyText: { fontSize: 18, fontWeight: '700', color: '#374151', marginTop: 16 },
   emptySubtext: { fontSize: 14, color: '#6b7280', marginTop: 6 },
-  
+
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   cardIconBg: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#fdf2f8', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
@@ -412,16 +440,16 @@ const styles = StyleSheet.create({
   badgeConcepto: { alignSelf: 'flex-start', backgroundColor: '#f3f4f6', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginBottom: 8 },
   badgeText: { fontSize: 11, fontWeight: '700', color: '#4b5563' },
   cardDesc: { fontSize: 13, color: '#374151' },
-  
+
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, maxHeight: '92%' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   modalTitle: { fontSize: 20, fontWeight: '700', color: '#111827' },
-  
+
   formGroup: { marginBottom: 20 },
   label: { fontSize: 14, fontWeight: '700', color: '#374151', marginBottom: 10 },
-  
+
   conceptosGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   conceptoChip: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, backgroundColor: '#f3f4f6', borderWidth: 1, borderColor: '#e5e7eb' },
   conceptoChipActive: { backgroundColor: '#fdf2f8', borderColor: '#ec4899' },
@@ -429,10 +457,10 @@ const styles = StyleSheet.create({
   conceptoTextActive: { color: '#be185d' },
 
   summaryBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fdf2f8', padding: 16, borderRadius: 12, marginBottom: 24, borderWidth: 1, borderColor: '#fbcfe8' },
-  
+
   listHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   selectAllText: { color: '#ec4899', fontSize: 13, fontWeight: '700' },
-  
+
   employeeList: { backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#e5e7eb', marginBottom: 24 },
   employeeItem: { flexDirection: 'row', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
   employeeItemSelected: { backgroundColor: '#fdf2f8' },
@@ -440,6 +468,6 @@ const styles = StyleSheet.create({
   checkboxSelected: { backgroundColor: '#ec4899', borderColor: '#ec4899' },
   empName: { fontSize: 15, fontWeight: '600', color: '#111827' },
   empRole: { fontSize: 12, color: '#6b7280' },
-  
+
   mainBtn: { backgroundColor: '#ec4899', paddingVertical: 16, borderRadius: 12 }
 });

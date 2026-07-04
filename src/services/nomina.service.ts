@@ -106,12 +106,14 @@ export const uploadAsistenciaImage = async (imageUri: string): Promise<string> =
 export const registrarEntrada = async (params: { 
   latitud?: number; 
   longitud?: number; 
-  fotoUri?: string 
+  fotoUri?: string;
+  observacion?: string;
 }) => {
   console.log(`[DEBUG registrarEntrada] Iniciando... Platform:`, Platform.OS);
   const formData = new FormData();
   if (params.latitud) formData.append('latitud', params.latitud.toString());
   if (params.longitud) formData.append('longitud', params.longitud.toString());
+  if (params.observacion) formData.append('observacion', params.observacion);
 
   if (params.fotoUri) {
     const filename = params.fotoUri.split('/').pop() || 'entrada.jpg';
@@ -222,6 +224,7 @@ export const repartirDescuento = async (reparto: {
   montoTotal: number;
   concepto: string;
   descripcion: string;
+  fecha?: string;
 }) => {
   const { data } = await api.post('/nomina/descuento/repartir', reparto);
   return data;

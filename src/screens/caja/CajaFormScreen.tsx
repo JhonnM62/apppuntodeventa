@@ -1400,6 +1400,24 @@ export default function CajaFormScreen({ route, navigation }: any) {
               </View>
             )} />
           </View>
+
+          {/* Cálculo Automático de Resumen */}
+          {(() => {
+            const efApertura = Number(watch('efectivoDeApertura')) || 0;
+            const efCierre = Number(watch('efectivoDeCierre')) || 0;
+            if (efCierre > 0 || (watch('efectivoDeCierre') !== undefined && watch('efectivoDeCierre') !== ('' as any))) {
+              const resumen = efCierre - efApertura;
+              return (
+                <View className="bg-indigo-50 p-4 rounded-xl shadow-sm border border-indigo-200 mt-2">
+                  <Text className="text-indigo-800 font-bold text-xs mb-1 uppercase text-center">Resumen Generado (Cierre - Apertura)</Text>
+                  <Text className="text-indigo-900 font-black text-xl text-center">{formatCurrency(resumen)}</Text>
+                  <Text className="text-indigo-600 text-xs text-center mt-1">Efectivo Cierre ({formatCurrency(efCierre)}) - Efectivo Apertura ({formatCurrency(efApertura)})</Text>
+                </View>
+              );
+            }
+            return null;
+          })()}
+
         </View>
 
         {isAdmin && !isNew && (
