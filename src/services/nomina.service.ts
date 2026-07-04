@@ -272,3 +272,14 @@ export const getResumenEmpleadoAdmin = async (usuarioId: string, params?: { fech
   const { data } = await api.get(`/nomina/resumen/${usuarioId}`, { params });
   return data;
 };
+
+export const updateDescuento = async (id: string, params: { descripcion?: string; valor?: number; estado?: string }) => {
+  const { data } = await api.patch(`/nomina/descuento/${id}`, params);
+  return data;
+};
+
+export const deleteDescuento = async (id: string) => {
+  const { data } = await api.delete(`/nomina/descuento/${id}`);
+  return data;
+};
+

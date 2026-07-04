@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/button';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
-import { repartirDescuento, getDescuentos } from '../../services/nomina.service';
+import { repartirDescuento, getDescuentos, updateDescuento } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 
 const CONCEPTOS_VALIDOS = ['DESCUADRE_CAJA', 'CENA', 'PERDIDA', 'ROBO', 'ADELANTO', 'OTRO'];
@@ -65,6 +65,12 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
   const [empleados, setEmpleados] = useState<any[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loadingForm, setLoadingForm] = useState(false);
+
+  // Edit Modal states
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingDescuento, setEditingDescuento] = useState<any>(null);
+  const [editDescripcion, setEditDescripcion] = useState('');
+  const [editValorStr, setEditValorStr] = useState('');
 
   const [concepto, setConcepto] = useState('DESCUADRE_CAJA');
   const [descripcion, setDescripcion] = useState('');
@@ -192,6 +198,39 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
 
   const valorCalculado = Number(montoTotalStr) / (selectedIds.size || 1);
 
+  const openEditForm = (item: any) => {
+    setEditingDescuento(item);
+    setEditDescripcion(item.descripcion);
+    setEditValorStr(String(item.valor));
+    setEditModalVisible(true);
+  };
+
+  const handleUpdate = async () => {
+    const valor = Number(editValorStr);
+    if (!editDescripcion.trim()) {
+      return showAlert({ type: 'error', title: 'Error', message: 'La descripción es obligatoria' });
+    }
+    if (isNaN(valor) || valor <= 0) {
+      return showAlert({ type: 'error', title: 'Error', message: 'El monto debe ser mayor a cero' });
+    }
+
+    try {
+      setSaving(true);
+      await updateDescuento(editingDescuento.IDdescuento, {
+        descripcion: editDescripcion.trim(),
+        valor
+      });
+      showAlert({ type: 'success', title: 'Éxito', message: 'Descuento actualizado correctamente' });
+      setEditModalVisible(false);
+      loadDescuentos();
+    } catch (error) {
+      console.error(error);
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo actualizar el descuento' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const renderQuincenaItem = ({ item }: { item: any }) => {
     const isSelected = item.id === selectedQuincena.id;
     return (
@@ -206,7 +245,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
 
   const renderDescuento = ({ item }: { item: any }) => {
     return (
-      <View style={styles.card}>
+      <TouchableOpacity style={styles.card} onPress={() => openEditForm(item)}>
         <View style={styles.cardHeader}>
           <View style={styles.cardIconBg}>
             <MaterialCommunityIcons name="percent-circle-outline" size={20} color="#ec4899" />
@@ -223,7 +262,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
           </View>
           <Text style={styles.cardDesc}>{item.descripcion}</Text>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -407,6 +446,52 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
               </View>
             </View>
           </SafeAreaView>
+        </KeyboardAvoidingView>
+      </Modal>
+      {/* MODAL DE EDICIÓN */}
+      <Modal visible={editModalVisible} animationType="fade" transparent statusBarTranslucent>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Editar Descuento</Text>
+                <TouchableOpacity onPress={() => setEditModalVisible(false)}>
+                  <Ionicons name="close" size={24} color="#374151" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Valor del Descuento ($)</Text>
+                <Input
+                  keyboardType="numeric"
+                  value={editValorStr}
+                  onChangeText={setEditValorStr}
+                  placeholder="Ej: 5000"
+                />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Descripción</Text>
+                <Input
+                  value={editDescripcion}
+                  onChangeText={setEditDescripcion}
+                  placeholder="Motivo o detalle del descuento..."
+                  multiline
+                  numberOfLines={2}
+                />
+              </View>
+
+              <Button
+                style={styles.mainBtn}
+                onPress={handleUpdate}
+                loading={saving}
+              >
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
+                  Guardar Cambios
+                </Text>
+              </Button>
+            </View>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
     </View>
