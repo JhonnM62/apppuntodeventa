@@ -99,7 +99,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
         fechaHasta: finUTC.toISOString(),
         limit: 100
       });
-      setDescuentos(res.data?.data || []);
+      setDescuentos(res.data || []);
     } catch (error) {
       console.error(error);
       showAlert({ type: 'error', title: 'Error', message: 'No se pudieron cargar los descuentos' });

@@ -185,8 +185,11 @@ export default function AdminNominaScreen({ navigation }: any) {
   };
 
   const handleLiquidar = () => {
-    if (!resumen || !resumen.turnosPendientes || resumen.turnosPendientes.length === 0) {
-      return showAlert({ type: 'error', title: 'Aviso', message: 'No hay turnos pendientes por liquidar' });
+    const hasTurnos = resumen?.turnos && resumen.turnos.length > 0;
+    const hasDescuentos = resumen?.descuentos && resumen.descuentos.length > 0;
+
+    if (!hasTurnos && !hasDescuentos) {
+      return showAlert({ type: 'error', title: 'Aviso', message: 'No hay turnos ni descuentos pendientes por liquidar' });
     }
 
     showAlert({
@@ -197,9 +200,17 @@ export default function AdminNominaScreen({ navigation }: any) {
       onConfirm: async () => {
         try {
           setLiquidando(true);
-          const fechas = resumen.turnosPendientes.map((t: any) => new Date(t.fechaContable).getTime());
-          const minDate = new Date(Math.min(...fechas)).toISOString();
-          const maxDate = new Date(Math.max(...fechas)).toISOString();
+          let minDate, maxDate;
+          
+          if (hasTurnos) {
+            const fechas = resumen.turnos.map((t: any) => new Date(t.fecha).getTime());
+            minDate = new Date(Math.min(...fechas)).toISOString();
+            maxDate = new Date(Math.max(...fechas)).toISOString();
+          } else {
+            const fechas = resumen.descuentos.map((d: any) => new Date(d.fecha).getTime());
+            minDate = new Date(Math.min(...fechas)).toISOString();
+            maxDate = new Date(Math.max(...fechas)).toISOString();
+          }
 
           await liquidarEmpleado({
             usuarioId: selectedEmpleado.IDusuarios,
@@ -385,20 +396,23 @@ export default function AdminNominaScreen({ navigation }: any) {
                       </View>
                     </View>
 
-                    <Text style={{ fontWeight: '700', marginVertical: 8 }}>Desglose de Turnos ({resumen.turnosPendientes?.length || 0})</Text>
-                    {resumen.turnosPendientes?.map((t: any) => (
+                    <Text style={{ fontWeight: '700', marginVertical: 8 }}>Desglose de Turnos ({resumen.turnos?.length || 0})</Text>
+                    {resumen.turnos?.map((t: any) => (
                       <View key={t.IDturno} style={styles.itemRow}>
                         <Text style={{ flex: 1, fontSize: 13 }}>
-                          {new Date(t.fechaContable).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}
+                          {new Date(t.fecha).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}
                         </Text>
-                        <Text style={{ fontSize: 13, color: '#10b981', fontWeight: '600' }}>
+                        <Text style={{ flex: 1, fontSize: 13, textAlign: 'center' }}>
+                          {t.horaEntrada ? new Date(t.horaEntrada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                        </Text>
+                        <Text style={{ flex: 1, fontSize: 13, textAlign: 'right', color: '#10b981', fontWeight: '600' }}>
                           ${Number(t.valorTurno).toLocaleString('es-CO')}
                         </Text>
                       </View>
                     ))}
 
-                    <Text style={{ fontWeight: '700', marginTop: 16, marginBottom: 8 }}>Descuentos No Vistos ({resumen.descuentosPendientes?.length || 0})</Text>
-                    {resumen.descuentosPendientes?.map((d: any) => (
+                    <Text style={{ fontWeight: '700', marginTop: 16, marginBottom: 8 }}>Descuentos No Vistos ({resumen.descuentos?.length || 0})</Text>
+                    {resumen.descuentos?.map((d: any) => (
                       <View key={d.IDdescuento} style={styles.itemRow}>
                         <Text style={{ flex: 1, fontSize: 13 }}>{d.concepto}</Text>
                         <Text style={{ fontSize: 13, color: '#ef4444', fontWeight: '600' }}>

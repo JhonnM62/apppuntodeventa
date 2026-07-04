@@ -232,7 +232,11 @@ export const liquidarEmpleado = async (params: {
   fechaDesde: string;
   fechaHasta: string;
 }) => {
-  const { data } = await api.post('/nomina/liquidar', params);
+  const { data } = await api.post('/nomina/liquidar', {
+    usuarioId: params.usuarioId,
+    fechaInicio: params.fechaDesde,
+    fechaFin: params.fechaHasta
+  });
   return data;
 };
 
