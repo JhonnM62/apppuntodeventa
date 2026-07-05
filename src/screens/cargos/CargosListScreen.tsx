@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getCargos, createCargo, updateCargo, deleteCargo, Cargo, DIAS_SEMANA } from '../../services/cargos.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 const ROLES_DISPONIBLES = [
   { key: 'Admin app',    label: 'Admin App',     description: 'Administrador de la aplicación' },
@@ -58,7 +59,32 @@ const fmt = (n: number | string | null | undefined): string => {
   if (n == null || n === '' || n === 'null' || n === 'undefined') return '0';
   const num = Math.round(Number(n));
   if (isNaN(num)) return '0';
-  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+};
+
+export const format12Hour = (timeStr?: string | null): string => {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  if (isNaN(h) || isNaN(m)) return timeStr;
+  const period = h >= 12 ? 'PM' : 'AM';
+  const displayH = h % 12 || 12;
+  return `${displayH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${period}`;
+};
+
+export const calculateShiftHours = (start?: string | null, end?: string | null): number | null => {
+  if (!start || !end) return null;
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  if (isNaN(sh) || isNaN(sm) || isNaN(eh) || isNaN(em)) return null;
+  
+  let startDec = sh + sm / 60;
+  let endDec = eh + em / 60;
+  
+  if (endDec < startDec) {
+    endDec += 24;
+  }
+  
+  return Number((endDec - startDec).toFixed(1));
 };
 
 /** Formatea mientras el usuario escribe (acepta string con o sin puntos) */
@@ -96,6 +122,12 @@ export default function CargosListScreen({ navigation }: any) {
   const [descuentoCena, setDescuentoCena] = useState('');
   const [esFijo, setEsFijo]           = useState(false);
   const [saving, setSaving]           = useState(false);
+
+  const [timePickerConfig, setTimePickerConfig] = useState<{ show: boolean, field: string, currentValue: Date }>({
+    show: false,
+    field: '',
+    currentValue: new Date()
+  });
 
   useEffect(() => { loadCargos(); }, []);
 
@@ -151,6 +183,34 @@ export default function CargosListScreen({ navigation }: any) {
     }
     setShowDropdown(false);
     setModalVisible(true);
+  };
+
+  const openTimePicker = (field: string) => {
+    const currentVal = horarios[field];
+    let d = new Date();
+    if (currentVal) {
+      const [h, m] = currentVal.split(':').map(Number);
+      if (!isNaN(h) && !isNaN(m)) {
+        d.setHours(h, m, 0, 0);
+      }
+    }
+    setTimePickerConfig({ show: true, field, currentValue: d });
+  };
+
+  const handleTimePickerChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setTimePickerConfig(prev => ({ ...prev, show: false }));
+    }
+    if (event.type === 'dismissed') {
+      if (Platform.OS === 'ios') setTimePickerConfig(prev => ({ ...prev, show: false }));
+      return;
+    }
+    if (selectedDate && timePickerConfig.field) {
+      const hh = selectedDate.getHours().toString().padStart(2, '0');
+      const mm = selectedDate.getMinutes().toString().padStart(2, '0');
+      setHorarios(prev => ({ ...prev, [timePickerConfig.field]: `${hh}:${mm}` }));
+      setTimePickerConfig(prev => ({ ...prev, currentValue: selectedDate }));
+    }
   };
 
   const handleSave = async () => {
@@ -281,6 +341,7 @@ export default function CargosListScreen({ navigation }: any) {
                       const isWeekend = idx >= 5;
                       const hEnt = (cargo as any)[`horaEntrada${d.key.replace('tarifa', '')}`];
                       const hSal = (cargo as any)[`horaSalida${d.key.replace('tarifa', '')}`];
+                      const shiftHours = calculateShiftHours(hEnt, hSal);
 
                       return (
                         <View key={d.key} style={[styles.dayCell, isWeekend && styles.dayCellWeekend]}>
@@ -295,9 +356,14 @@ export default function CargosListScreen({ navigation }: any) {
                             {hasVal ? `$${fmt(val)}` : '—'}
                           </Text>
                           {hasVal && (hEnt || hSal) && (
-                            <Text style={{ fontSize: 9, color: '#6b7280', marginTop: 2 }}>
-                              {hEnt || '?'} a {hSal || '?'}
+                            <Text style={{ fontSize: 9, color: '#6b7280', marginTop: 2, textAlign: 'center' }}>
+                              {hEnt ? format12Hour(hEnt) : '?'} - {hSal ? format12Hour(hSal) : '?'}
                             </Text>
+                          )}
+                          {hasVal && shiftHours != null && (
+                            <View style={{ position: 'absolute', top: -6, right: -4, backgroundColor: '#3b82f6', borderRadius: 8, paddingHorizontal: 4, paddingVertical: 1, elevation: 1 }}>
+                              <Text style={{ fontSize: 8, color: '#fff', fontWeight: 'bold' }}>{shiftHours}h</Text>
+                            </View>
                           )}
                         </View>
                       );
@@ -418,13 +484,14 @@ export default function CargosListScreen({ navigation }: any) {
                               style: { flex: 1, padding: '8px', backgroundColor: '#f3f4f6', borderWidth: '1px', borderColor: '#e5e7eb', borderRadius: '8px', fontSize: '13px', textAlign: 'center' }
                             })
                           ) : (
-                            <TextInput
-                              style={[styles.diaInput, styles.timeInput, { flex: 1 }]}
-                              placeholder="08:00"
-                              placeholderTextColor="#9ca3af"
-                              value={horarios[`horaEntrada${dia.key.replace('tarifa', '')}`]}
-                              onChangeText={val => setHorarios(prev => ({ ...prev, [`horaEntrada${dia.key.replace('tarifa', '')}`]: val }))}
-                            />
+                            <TouchableOpacity
+                              style={[styles.diaInput, styles.timeInput, { flex: 1, justifyContent: 'center' }]}
+                              onPress={() => openTimePicker(`horaEntrada${dia.key.replace('tarifa', '')}`)}
+                            >
+                              <RNText style={{ color: horarios[`horaEntrada${dia.key.replace('tarifa', '')}`] ? '#111827' : '#9ca3af', textAlign: 'center', fontSize: 13 }}>
+                                {horarios[`horaEntrada${dia.key.replace('tarifa', '')}`] ? format12Hour(horarios[`horaEntrada${dia.key.replace('tarifa', '')}`]) : '08:00 AM'}
+                              </RNText>
+                            </TouchableOpacity>
                           )}
                           <RNText style={{ color: '#6b7280', fontSize: 12 }}>a</RNText>
                           {Platform.OS === 'web' ? (
@@ -435,13 +502,14 @@ export default function CargosListScreen({ navigation }: any) {
                               style: { flex: 1, padding: '8px', backgroundColor: '#f3f4f6', borderWidth: '1px', borderColor: '#e5e7eb', borderRadius: '8px', fontSize: '13px', textAlign: 'center' }
                             })
                           ) : (
-                            <TextInput
-                              style={[styles.diaInput, styles.timeInput, { flex: 1 }]}
-                              placeholder="17:00"
-                              placeholderTextColor="#9ca3af"
-                              value={horarios[`horaSalida${dia.key.replace('tarifa', '')}`]}
-                              onChangeText={val => setHorarios(prev => ({ ...prev, [`horaSalida${dia.key.replace('tarifa', '')}`]: val }))}
-                            />
+                            <TouchableOpacity
+                              style={[styles.diaInput, styles.timeInput, { flex: 1, justifyContent: 'center' }]}
+                              onPress={() => openTimePicker(`horaSalida${dia.key.replace('tarifa', '')}`)}
+                            >
+                              <RNText style={{ color: horarios[`horaSalida${dia.key.replace('tarifa', '')}`] ? '#111827' : '#9ca3af', textAlign: 'center', fontSize: 13 }}>
+                                {horarios[`horaSalida${dia.key.replace('tarifa', '')}`] ? format12Hour(horarios[`horaSalida${dia.key.replace('tarifa', '')}`]) : '05:00 PM'}
+                              </RNText>
+                            </TouchableOpacity>
                           )}
                         </View>
                       </View>
@@ -491,6 +559,16 @@ export default function CargosListScreen({ navigation }: any) {
           </View>{/* /modalOverlay */}
         </KeyboardAvoidingView>
       </Modal>
+
+      {timePickerConfig.show && Platform.OS !== 'web' && (
+        <DateTimePicker
+          value={timePickerConfig.currentValue}
+          mode="time"
+          is24Hour={false}
+          display="default"
+          onChange={handleTimePickerChange}
+        />
+      )}
     </View>
   );
 }

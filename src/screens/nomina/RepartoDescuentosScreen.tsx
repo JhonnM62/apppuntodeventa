@@ -82,6 +82,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [saving, setSaving] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [porcentajeCobro, setPorcentajeCobro] = useState<string>('100');
 
   useEffect(() => {
     loadDescuentos();
@@ -125,6 +126,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
     setConcepto('DESCUADRE_CAJA');
     setDescripcion('');
     setMontoTotalStr('');
+    setPorcentajeCobro('100');
     setFechaDescuento(new Date());
     setSelectedIds(new Set());
     if (empleados.length === 0) {
@@ -155,6 +157,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
 
   const handleGuardar = () => {
     const montoTotal = Number(montoTotalStr);
+    const porcentaje = Number(porcentajeCobro);
 
     if (selectedIds.size < 1) {
       return showAlert({ type: 'error', title: 'Error', message: 'Debes seleccionar al menos un empleado para asignar un descuento' });
@@ -165,11 +168,15 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
     if (isNaN(montoTotal) || montoTotal <= 0) {
       return showAlert({ type: 'error', title: 'Error', message: 'El monto total debe ser un número mayor a cero' });
     }
+    if (isNaN(porcentaje) || porcentaje <= 0 || porcentaje > 100) {
+      return showAlert({ type: 'error', title: 'Error', message: 'El porcentaje de cobro debe ser válido entre 1 y 100' });
+    }
 
-    const valorPorPersona = montoTotal / selectedIds.size;
+    const montoEfectivo = montoTotal * (porcentaje / 100);
+    const valorPorPersona = montoEfectivo / selectedIds.size;
     const msg = selectedIds.size === 1
-      ? `Se le descontará $${valorPorPersona.toLocaleString('es-CO')} al empleado seleccionado.\n\n¿Estás seguro?`
-      : `Se descontarán $${valorPorPersona.toLocaleString('es-CO')} a cada uno de los ${selectedIds.size} empleados seleccionados.\n\n¿Estás seguro?`;
+      ? `Faltante de $${montoTotal.toLocaleString('es-CO')}. Se cobrará el ${porcentaje}%. \n\nSe descontará $${valorPorPersona.toLocaleString('es-CO')} al empleado seleccionado.\n\n¿Estás seguro?`
+      : `Faltante de $${montoTotal.toLocaleString('es-CO')}. Se cobrará el ${porcentaje}%. \n\nSe descontarán $${valorPorPersona.toLocaleString('es-CO')} a cada uno de los ${selectedIds.size} empleados seleccionados.\n\n¿Estás seguro?`;
 
     showAlert({
       type: 'confirm',
@@ -181,9 +188,9 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
           setSaving(true);
           await repartirDescuento({
             usuarioIds: Array.from(selectedIds),
-            montoTotal,
+            montoTotal: montoEfectivo,
             concepto,
-            descripcion: descripcion.trim(),
+            descripcion: `${descripcion.trim()} (Faltante original: $${montoTotal} / Cobro: ${porcentaje}%)`,
             fecha: fechaDescuento.toISOString()
           });
           showAlert({ type: 'success', title: 'Éxito', message: 'Descuento repartido correctamente' });
@@ -435,13 +442,46 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
                       />
                     </View>
 
-                    {selectedIds.size > 0 && !isNaN(Number(montoTotalStr)) && Number(montoTotalStr) > 0 && (
+                    <View style={styles.formGroup}>
+                      <Text style={styles.label}>Porcentaje a cobrar al equipo (%)</Text>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <TouchableOpacity
+                          style={[styles.conceptoChip, porcentajeCobro === '50' && styles.conceptoChipActive, { paddingVertical: 12, paddingHorizontal: 20 }]}
+                          onPress={() => setPorcentajeCobro('50')}
+                        >
+                          <Text style={[styles.conceptoText, porcentajeCobro === '50' && styles.conceptoTextActive, { fontSize: 16 }]}>50%</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.conceptoChip, porcentajeCobro === '100' && styles.conceptoChipActive, { paddingVertical: 12, paddingHorizontal: 20 }]}
+                          onPress={() => setPorcentajeCobro('100')}
+                        >
+                          <Text style={[styles.conceptoText, porcentajeCobro === '100' && styles.conceptoTextActive, { fontSize: 16 }]}>100%</Text>
+                        </TouchableOpacity>
+                        <View style={{ flex: 1, minWidth: 80 }}>
+                          <Input
+                            value={porcentajeCobro}
+                            onChangeText={setPorcentajeCobro}
+                            placeholder="Ej: 30"
+                            keyboardType="numeric"
+                          />
+                        </View>
+                      </View>
+                    </View>
+
+                    {selectedIds.size > 0 && !isNaN(Number(montoTotalStr)) && Number(montoTotalStr) > 0 && !isNaN(Number(porcentajeCobro)) && Number(porcentajeCobro) > 0 && (
                       <View style={styles.summaryBox}>
                         <Ionicons name="calculator-outline" size={24} color="#ec4899" />
                         <View style={{ marginLeft: 12, flex: 1 }}>
-                          <Text style={{ fontSize: 13, color: '#ec4899' }}>A descontar por persona:</Text>
-                          <Text style={{ fontSize: 18, fontWeight: '800', color: '#be185d' }}>
-                            ${valorCalculado.toLocaleString('es-CO')}
+                          <Text style={{ fontSize: 13, color: '#ec4899' }}>
+                            Faltante: ${Number(montoTotalStr).toLocaleString('es-CO')}
+                          </Text>
+                          <Text style={{ fontSize: 14, color: '#be185d', fontWeight: 'bold' }}>
+                            A cobrar ({porcentajeCobro}%): ${(Number(montoTotalStr) * (Number(porcentajeCobro) / 100)).toLocaleString('es-CO')}
+                          </Text>
+                          <View style={{ height: 1, backgroundColor: '#fbcfe8', marginVertical: 6 }} />
+                          <Text style={{ fontSize: 12, color: '#ec4899' }}>A descontar por persona:</Text>
+                          <Text style={{ fontSize: 20, fontWeight: '800', color: '#be185d' }}>
+                            ${((Number(montoTotalStr) * (Number(porcentajeCobro) / 100)) / selectedIds.size).toLocaleString('es-CO')}
                           </Text>
                         </View>
                       </View>
