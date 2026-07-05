@@ -81,7 +81,7 @@ export default function MisTurnosScreen({ navigation }: any) {
 
     const groups: { [key: string]: Turno[] } = {};
     filtered.forEach(turno => {
-      const label = getQuincenaLabel(turno.fecha || turno.horaEntrada || new Date().toISOString());
+      const label = getQuincenaLabel((turno as any).fecha || turno.horaEntrada || new Date().toISOString());
       if (!groups[label]) groups[label] = [];
       groups[label].push(turno);
     });
@@ -189,7 +189,19 @@ export default function MisTurnosScreen({ navigation }: any) {
                           </Text>
                         </View>
                         {turno.estado === 'COMPLETADO' && (
-                          <Text style={styles.moneyText}>${Number(turno.valorTurno || 0).toLocaleString('es-CO')}</Text>
+                          <View>
+                            <Text style={styles.moneyText}>
+                              Bruto: ${Number(turno.valorTurno || 0).toLocaleString('es-CO')}
+                            </Text>
+                            {turno.descuentos && turno.descuentos.length > 0 && (
+                              <Text style={styles.discountText}>
+                                Dtos: -${turno.descuentos.reduce((sum: number, d: any) => sum + Number(d.valor), 0).toLocaleString('es-CO')}
+                              </Text>
+                            )}
+                            <Text style={styles.netMoneyText}>
+                              Neto: ${(Number(turno.valorTurno || 0) - (turno.descuentos ? turno.descuentos.reduce((sum: number, d: any) => sum + Number(d.valor), 0) : 0)).toLocaleString('es-CO')}
+                            </Text>
+                          </View>
                         )}
                         {turno.estado === 'COMPLETADO' && (
                           <Text style={styles.cenoText}>Cenó: {turno.ceno ? 'SÍ' : 'NO'}</Text>
@@ -251,6 +263,8 @@ const styles = StyleSheet.create({
   cardRight: { alignItems: 'flex-end', justifyContent: 'center' },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginBottom: 6 },
   statusText: { fontSize: 10, fontWeight: '800' },
-  moneyText: { fontSize: 14, fontWeight: '800', color: '#10b981' },
+  moneyText: { fontSize: 12, fontWeight: '600', color: '#6b7280' },
+  discountText: { fontSize: 12, fontWeight: '600', color: '#ef4444' },
+  netMoneyText: { fontSize: 14, fontWeight: '800', color: '#10b981', marginTop: 2 },
   cenoText: { fontSize: 11, color: '#6b7280', marginTop: 2 }
 });

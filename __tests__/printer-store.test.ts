@@ -12,12 +12,12 @@ describe('Printer Store & Auto-print Logic', () => {
     // Set initial state
     usePrinterStore.setState({
       configs: [
-        { estadoOrden: 'PAGADO', imprimir: true },
-        { estadoOrden: 'TOMADO', imprimir: false },
+        { estadoOrden: 'PAGADO', imprimir: true } as any,
+        { estadoOrden: 'TOMADO', imprimir: false } as any,
       ]
     });
 
-    const state = usePrinterStore.getState();
+    const state = usePrinterStore.getState() as any;
     
     // Check behavior
     expect(state.shouldPrint('PAGADO')).toBe(true);

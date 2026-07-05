@@ -36,6 +36,23 @@ const emptyTarifas = (): TarifasDias => ({
   tarifaDomingo: '',
 });
 
+const emptyHorarios = (): Record<string, string> => ({
+  horaEntradaLunes: '',
+  horaSalidaLunes: '',
+  horaEntradaMartes: '',
+  horaSalidaMartes: '',
+  horaEntradaMiercoles: '',
+  horaSalidaMiercoles: '',
+  horaEntradaJueves: '',
+  horaSalidaJueves: '',
+  horaEntradaViernes: '',
+  horaSalidaViernes: '',
+  horaEntradaSabado: '',
+  horaSalidaSabado: '',
+  horaEntradaDomingo: '',
+  horaSalidaDomingo: '',
+});
+
 /** Formatea un número con puntos de miles: 50000 → 50.000 (regex, confiable en RN/Android) */
 const fmt = (n: number | string | null | undefined): string => {
   if (n == null || n === '' || n === 'null' || n === 'undefined') return '0';
@@ -75,6 +92,7 @@ export default function CargosListScreen({ navigation }: any) {
   // Form state
   const [nombre, setNombre]           = useState('');
   const [tarifas, setTarifas]         = useState<TarifasDias>(emptyTarifas());
+  const [horarios, setHorarios]       = useState<Record<string, string>>(emptyHorarios());
   const [descuentoCena, setDescuentoCena] = useState('');
   const [esFijo, setEsFijo]           = useState(false);
   const [saving, setSaving]           = useState(false);
@@ -106,11 +124,28 @@ export default function CargosListScreen({ navigation }: any) {
         tarifaSabado:    cargo.tarifaSabado    ? fmt(cargo.tarifaSabado)    : '',
         tarifaDomingo:   cargo.tarifaDomingo   ? fmt(cargo.tarifaDomingo)   : '',
       });
+      setHorarios({
+        horaEntradaLunes: cargo.horaEntradaLunes || '',
+        horaSalidaLunes: cargo.horaSalidaLunes || '',
+        horaEntradaMartes: cargo.horaEntradaMartes || '',
+        horaSalidaMartes: cargo.horaSalidaMartes || '',
+        horaEntradaMiercoles: cargo.horaEntradaMiercoles || '',
+        horaSalidaMiercoles: cargo.horaSalidaMiercoles || '',
+        horaEntradaJueves: cargo.horaEntradaJueves || '',
+        horaSalidaJueves: cargo.horaSalidaJueves || '',
+        horaEntradaViernes: cargo.horaEntradaViernes || '',
+        horaSalidaViernes: cargo.horaSalidaViernes || '',
+        horaEntradaSabado: cargo.horaEntradaSabado || '',
+        horaSalidaSabado: cargo.horaSalidaSabado || '',
+        horaEntradaDomingo: cargo.horaEntradaDomingo || '',
+        horaSalidaDomingo: cargo.horaSalidaDomingo || '',
+      });
       setDescuentoCena(cargo.descuentoCena ? fmt(cargo.descuentoCena) : '');
     } else {
       setEditingCargo(null);
       setNombre('');
       setTarifas(emptyTarifas());
+      setHorarios(emptyHorarios());
       setDescuentoCena('');
       setEsFijo(false);
     }
@@ -132,6 +167,11 @@ export default function CargosListScreen({ navigation }: any) {
         const raw = parsePrice(tarifas[d.key]);
         if (raw !== '' && !isNaN(Number(raw))) {
           (payload as any)[d.key] = Number(raw);
+          const diaName = d.key.replace('tarifa', '');
+          const hEnt = horarios[`horaEntrada${diaName}`];
+          const hSal = horarios[`horaSalida${diaName}`];
+          if (hEnt) (payload as any)[`horaEntrada${diaName}`] = hEnt;
+          if (hSal) (payload as any)[`horaSalida${diaName}`] = hSal;
         }
       });
       const cenaRaw = parsePrice(descuentoCena);
@@ -359,6 +399,24 @@ export default function CargosListScreen({ navigation }: any) {
                           }
                         />
                       </View>
+                      {/* Horarios inputs */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
+                        <TextInput
+                          style={[styles.diaInput, styles.timeInput]}
+                          placeholder="08:00"
+                          placeholderTextColor="#9ca3af"
+                          value={horarios[`horaEntrada${dia.key.replace('tarifa', '')}`]}
+                          onChangeText={val => setHorarios(prev => ({ ...prev, [`horaEntrada${dia.key.replace('tarifa', '')}`]: val }))}
+                        />
+                        <RNText style={{ marginHorizontal: 4, color: '#6b7280' }}>a</RNText>
+                        <TextInput
+                          style={[styles.diaInput, styles.timeInput]}
+                          placeholder="14:00"
+                          placeholderTextColor="#9ca3af"
+                          value={horarios[`horaSalida${dia.key.replace('tarifa', '')}`]}
+                          onChangeText={val => setHorarios(prev => ({ ...prev, [`horaSalida${dia.key.replace('tarifa', '')}`]: val }))}
+                        />
+                      </View>
                     </View>
                   );
                 })}
@@ -471,7 +529,8 @@ const styles = StyleSheet.create({
   diaNombre:        { fontSize: 14, fontWeight: '600', color: '#374151' },
   diaNombreWeekend: { color: '#15803d' },
   weekendBadge:     { fontSize: 10, color: '#22c55e', fontWeight: '600' },
-  diaInputWrapper:  { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3f4f6', borderRadius: 10, paddingHorizontal: 10, minWidth: 120 },
+  diaInputWrapper:  { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3f4f6', borderRadius: 10, paddingHorizontal: 10, minWidth: 80, flex: 1 },
   diaPrefix:        { fontSize: 15, color: '#6b7280', marginRight: 2 },
   diaInput:         { flex: 1, paddingVertical: 10, fontSize: 15, color: '#111827', textAlign: 'right' },
+  timeInput:        { backgroundColor: '#f3f4f6', borderRadius: 8, paddingHorizontal: 6, minWidth: 50, textAlign: 'center', fontSize: 13 },
 });

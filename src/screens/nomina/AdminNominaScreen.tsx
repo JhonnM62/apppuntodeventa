@@ -429,7 +429,7 @@ export default function AdminNominaScreen({ navigation }: any) {
                       </View>
                     ))}
 
-                    <Text style={{ fontWeight: '700', marginTop: 16, marginBottom: 8 }}>Descuentos No Vistos ({resumen.descuentos?.length || 0})</Text>
+                    <Text style={{ fontWeight: '700', marginTop: 16, marginBottom: 8 }}>Descuentos ({resumen.descuentos?.length || 0})</Text>
                     {resumen.descuentos?.map((d: any) => (
                       <View key={d.IDdescuento} style={styles.itemRow}>
                         <View style={{ flex: 1 }}>

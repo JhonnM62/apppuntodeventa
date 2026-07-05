@@ -278,8 +278,7 @@ export const updateDescuento = async (id: string, params: { descripcion?: string
   return data;
 };
 
-export const deleteDescuento = async (id: string) => {
-  const { data } = await api.delete(`/nomina/descuento/${id}`);
+export const deleteDescuento = async (descuentoId: string) => {
+  const { data } = await api.delete(`/nomina/descuento/${descuentoId}`);
   return data;
 };
-

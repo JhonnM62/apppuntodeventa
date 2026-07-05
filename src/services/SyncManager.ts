@@ -93,8 +93,10 @@ export class SyncManager {
       });
       
       // Emitir evento para que las listas globales se recarguen
-      import('../hooks/useGlobalSalesSync').then(({ triggerGlobalSalesRefresh }) => {
-         triggerGlobalSalesRefresh();
+      import('../hooks/useGlobalSalesSync').then((module: any) => {
+         if (module.triggerGlobalSalesRefresh) {
+            module.triggerGlobalSalesRefresh();
+         }
       });
     }
   }

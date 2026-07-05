@@ -7,10 +7,10 @@ import { Button } from '../../components/ui/button';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
-import { repartirDescuento, getDescuentos, updateDescuento } from '../../services/nomina.service';
+import { repartirDescuento, getDescuentos, updateDescuento, deleteDescuento } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 
-const CONCEPTOS_VALIDOS = ['DESCUADRE_CAJA', 'CENA', 'PERDIDA', 'ROBO', 'ADELANTO', 'OTRO'];
+const CONCEPTOS_VALIDOS = ['DESCUADRE_CAJA', 'CENA', 'PERDIDA', 'ROBO', 'ADELANTO', 'LLEGADA_TARDIA', 'OTRO'];
 
 const getMonthName = (monthIndex: number) => {
   const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -224,7 +224,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
         descripcion: editDescripcion.trim(),
         valor,
         fecha: editFecha.toISOString()
-      });
+      } as any);
       showAlert({ type: 'success', title: 'Éxito', message: 'Descuento actualizado correctamente' });
       setEditModalVisible(false);
       loadDescuentos();
@@ -234,6 +234,25 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleDeleteDescuento = (descuento: any) => {
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar Descuento',
+      message: `¿Estás seguro de eliminar el descuento por $${descuento.valor.toLocaleString('es-CO')}?`,
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        try {
+          await deleteDescuento(descuento.IDdescuento);
+          showAlert({ type: 'success', title: 'Éxito', message: 'Descuento eliminado' });
+          if (editModalVisible) setEditModalVisible(false);
+          loadDescuentos();
+        } catch (error) {
+          showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar el descuento' });
+        }
+      }
+    });
   };
 
   const renderQuincenaItem = ({ item }: { item: any }) => {
@@ -259,7 +278,12 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
             <Text style={styles.cardTitle}>{item.usuario?.nombre || 'Empleado'}</Text>
             <Text style={styles.cardSubtitle}>{new Date(item.fecha).toLocaleDateString()}</Text>
           </View>
-          <Text style={styles.cardValor}>-${Number(item.valor).toLocaleString('es-CO')}</Text>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={styles.cardValor}>-${Number(item.valor).toLocaleString('es-CO')}</Text>
+            <TouchableOpacity onPress={() => handleDeleteDescuento(item)} style={{ marginTop: 8 }}>
+              <Ionicons name="trash" size={18} color="#ef4444" />
+            </TouchableOpacity>
+          </View>
         </View>
         <View style={styles.cardBody}>
           <View style={styles.badgeConcepto}>
@@ -539,15 +563,22 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
                 )}
               </View>
 
-              <Button
-                style={styles.mainBtn}
-                onPress={handleUpdate}
-                loading={saving}
-              >
-                <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
-                  Guardar Cambios
-                </Text>
-              </Button>
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+                <Button
+                  style={[styles.mainBtn, { flex: 1, backgroundColor: '#f3f4f6' }]}
+                  onPress={() => handleDeleteDescuento(editingDescuento)}
+                  disabled={saving}
+                >
+                  <Text style={{ color: '#ef4444', fontSize: 16, fontWeight: 'bold' }}>Eliminar</Text>
+                </Button>
+                <Button
+                  style={[styles.mainBtn, { flex: 1 }]}
+                  onPress={handleUpdate}
+                  loading={saving}
+                >
+                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>Guardar</Text>
+                </Button>
+              </View>
             </View>
           </View>
         </KeyboardAvoidingView>

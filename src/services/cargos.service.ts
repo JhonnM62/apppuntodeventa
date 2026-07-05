@@ -5,12 +5,26 @@ export interface Cargo {
   nombre: string;
   // Tarifas por día de la semana
   tarifaLunes?: number;
+  horaEntradaLunes?: string;
+  horaSalidaLunes?: string;
   tarifaMartes?: number;
+  horaEntradaMartes?: string;
+  horaSalidaMartes?: string;
   tarifaMiercoles?: number;
+  horaEntradaMiercoles?: string;
+  horaSalidaMiercoles?: string;
   tarifaJueves?: number;
+  horaEntradaJueves?: string;
+  horaSalidaJueves?: string;
   tarifaViernes?: number;
+  horaEntradaViernes?: string;
+  horaSalidaViernes?: string;
   tarifaSabado?: number;
+  horaEntradaSabado?: string;
+  horaSalidaSabado?: string;
   tarifaDomingo?: number;
+  horaEntradaDomingo?: string;
+  horaSalidaDomingo?: string;
   // Descuento si el empleado cena en el turno
   descuentoCena?: number;
   createdAt: string;

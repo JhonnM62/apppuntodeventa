@@ -146,7 +146,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           latitudNegocio: latitudNegocio ? parseFloat(latitudNegocio) : undefined,
           longitudNegocio: longitudNegocio ? parseFloat(longitudNegocio) : undefined,
           radioGeocercaM: radioGeocercaM ? parseInt(radioGeocercaM, 10) : 100
-        }),
+        } as any),
         updateConfiguracionIA({
           apiKey: iaConfig.apiKey,
           modeloDefecto: iaConfig.modeloDefecto,
