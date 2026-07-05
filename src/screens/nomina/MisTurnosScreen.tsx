@@ -188,21 +188,32 @@ export default function MisTurnosScreen({ navigation }: any) {
                             {turno.estado}
                           </Text>
                         </View>
-                        {turno.estado === 'COMPLETADO' && (
-                          <View>
-                            <Text style={styles.moneyText}>
-                              Bruto: ${Number(turno.valorTurno || 0).toLocaleString('es-CO')}
-                            </Text>
-                            {turno.descuentos && turno.descuentos.length > 0 && (
-                              <Text style={styles.discountText}>
-                                Dtos: -${turno.descuentos.reduce((sum: number, d: any) => sum + Number(d.valor), 0).toLocaleString('es-CO')}
+                        {turno.estado === 'COMPLETADO' && (() => {
+                          const totalDescuentos = turno.descuentos ? turno.descuentos.reduce((sum: number, d: any) => sum + Number(d.valor), 0) : 0;
+                          const costoCena = turno.ceno ? Number(turno.usuario?.cargo?.descuentoCena || 0) : 0;
+                          const neto = Number(turno.valorTurno || 0) - totalDescuentos - costoCena;
+                          
+                          return (
+                            <View>
+                              <Text style={styles.moneyText}>
+                                Bruto: ${Number(turno.valorTurno || 0).toLocaleString('es-CO')}
                               </Text>
-                            )}
-                            <Text style={styles.netMoneyText}>
-                              Neto: ${(Number(turno.valorTurno || 0) - (turno.descuentos ? turno.descuentos.reduce((sum: number, d: any) => sum + Number(d.valor), 0) : 0)).toLocaleString('es-CO')}
-                            </Text>
-                          </View>
-                        )}
+                              {totalDescuentos > 0 && (
+                                <Text style={styles.discountText}>
+                                  Dtos: -${totalDescuentos.toLocaleString('es-CO')}
+                                </Text>
+                              )}
+                              {turno.ceno && costoCena > 0 && (
+                                <Text style={styles.discountText}>
+                                  Cena: -${costoCena.toLocaleString('es-CO')}
+                                </Text>
+                              )}
+                              <Text style={styles.netMoneyText}>
+                                Neto: ${neto.toLocaleString('es-CO')}
+                              </Text>
+                            </View>
+                          );
+                        })()}
                         {turno.estado === 'COMPLETADO' && (
                           <Text style={styles.cenoText}>Cenó: {turno.ceno ? 'SÍ' : 'NO'}</Text>
                         )}
