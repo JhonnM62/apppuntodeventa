@@ -279,6 +279,9 @@ export default function CargosListScreen({ navigation }: any) {
                       const val = Number((cargo as any)[d.key]);
                       const hasVal = !isNaN(val) && val > 0;
                       const isWeekend = idx >= 5;
+                      const hEnt = (cargo as any)[`horaEntrada${d.key.replace('tarifa', '')}`];
+                      const hSal = (cargo as any)[`horaSalida${d.key.replace('tarifa', '')}`];
+
                       return (
                         <View key={d.key} style={[styles.dayCell, isWeekend && styles.dayCellWeekend]}>
                           <Text style={[styles.dayCellLabel, isWeekend && styles.dayCellLabelWeekend]}>
@@ -291,6 +294,11 @@ export default function CargosListScreen({ navigation }: any) {
                           >
                             {hasVal ? `$${fmt(val)}` : '—'}
                           </Text>
+                          {hasVal && (hEnt || hSal) && (
+                            <Text style={{ fontSize: 9, color: '#6b7280', marginTop: 2 }}>
+                              {hEnt || '?'} a {hSal || '?'}
+                            </Text>
+                          )}
                         </View>
                       );
                     })}
@@ -386,36 +394,56 @@ export default function CargosListScreen({ navigation }: any) {
                         </RNText>
                         {esFinSemana && <RNText style={styles.weekendBadge}>Fin de semana</RNText>}
                       </View>
-                      <View style={styles.diaInputWrapper}>
-                        <RNText style={styles.diaPrefix}>$</RNText>
-                        <TextInput
-                          style={styles.diaInput}
-                          placeholder="0"
-                          placeholderTextColor="#9ca3af"
-                          keyboardType="numeric"
-                          value={tarifas[dia.key]}
-                          onChangeText={val =>
-                            setTarifas(prev => ({ ...prev, [dia.key]: formatPrice(val) }))
-                          }
-                        />
-                      </View>
-                      {/* Horarios inputs */}
-                      <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
-                        <TextInput
-                          style={[styles.diaInput, styles.timeInput]}
-                          placeholder="08:00"
-                          placeholderTextColor="#9ca3af"
-                          value={horarios[`horaEntrada${dia.key.replace('tarifa', '')}`]}
-                          onChangeText={val => setHorarios(prev => ({ ...prev, [`horaEntrada${dia.key.replace('tarifa', '')}`]: val }))}
-                        />
-                        <RNText style={{ marginHorizontal: 4, color: '#6b7280' }}>a</RNText>
-                        <TextInput
-                          style={[styles.diaInput, styles.timeInput]}
-                          placeholder="14:00"
-                          placeholderTextColor="#9ca3af"
-                          value={horarios[`horaSalida${dia.key.replace('tarifa', '')}`]}
-                          onChangeText={val => setHorarios(prev => ({ ...prev, [`horaSalida${dia.key.replace('tarifa', '')}`]: val }))}
-                        />
+                      <View style={{ flex: 2, flexDirection: 'column', gap: 6 }}>
+                        <View style={styles.diaInputWrapper}>
+                          <RNText style={styles.diaPrefix}>$</RNText>
+                          <TextInput
+                            style={styles.diaInput}
+                            placeholder="0"
+                            placeholderTextColor="#9ca3af"
+                            keyboardType="numeric"
+                            value={tarifas[dia.key]}
+                            onChangeText={val =>
+                              setTarifas(prev => ({ ...prev, [dia.key]: formatPrice(val) }))
+                            }
+                          />
+                        </View>
+                        {/* Horarios inputs */}
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                          {Platform.OS === 'web' ? (
+                            React.createElement('input', {
+                              type: 'time',
+                              value: horarios[`horaEntrada${dia.key.replace('tarifa', '')}`] || '',
+                              onChange: (e: any) => setHorarios(prev => ({ ...prev, [`horaEntrada${dia.key.replace('tarifa', '')}`]: e.target.value })),
+                              style: { flex: 1, padding: '8px', backgroundColor: '#f3f4f6', borderWidth: '1px', borderColor: '#e5e7eb', borderRadius: '8px', fontSize: '13px', textAlign: 'center' }
+                            })
+                          ) : (
+                            <TextInput
+                              style={[styles.diaInput, styles.timeInput, { flex: 1 }]}
+                              placeholder="08:00"
+                              placeholderTextColor="#9ca3af"
+                              value={horarios[`horaEntrada${dia.key.replace('tarifa', '')}`]}
+                              onChangeText={val => setHorarios(prev => ({ ...prev, [`horaEntrada${dia.key.replace('tarifa', '')}`]: val }))}
+                            />
+                          )}
+                          <RNText style={{ color: '#6b7280', fontSize: 12 }}>a</RNText>
+                          {Platform.OS === 'web' ? (
+                            React.createElement('input', {
+                              type: 'time',
+                              value: horarios[`horaSalida${dia.key.replace('tarifa', '')}`] || '',
+                              onChange: (e: any) => setHorarios(prev => ({ ...prev, [`horaSalida${dia.key.replace('tarifa', '')}`]: e.target.value })),
+                              style: { flex: 1, padding: '8px', backgroundColor: '#f3f4f6', borderWidth: '1px', borderColor: '#e5e7eb', borderRadius: '8px', fontSize: '13px', textAlign: 'center' }
+                            })
+                          ) : (
+                            <TextInput
+                              style={[styles.diaInput, styles.timeInput, { flex: 1 }]}
+                              placeholder="17:00"
+                              placeholderTextColor="#9ca3af"
+                              value={horarios[`horaSalida${dia.key.replace('tarifa', '')}`]}
+                              onChangeText={val => setHorarios(prev => ({ ...prev, [`horaSalida${dia.key.replace('tarifa', '')}`]: val }))}
+                            />
+                          )}
+                        </View>
                       </View>
                     </View>
                   );

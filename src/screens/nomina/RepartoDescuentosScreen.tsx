@@ -377,24 +377,42 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
 
                     <View style={styles.formGroup}>
                       <Text style={styles.label}>Fecha del Descuento</Text>
-                      <TouchableOpacity
-                        style={{ padding: 12, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8 }}
-                        onPress={() => setShowDatePicker(true)}
-                      >
-                        <Text style={{ fontSize: 16, color: '#111827' }}>
-                          {fechaDescuento.toLocaleDateString()}
-                        </Text>
-                      </TouchableOpacity>
-                      {showDatePicker && (
-                        <DateTimePicker
-                          value={fechaDescuento}
-                          mode="date"
-                          display="default"
-                          onChange={(event, selectedDate) => {
-                            setShowDatePicker(false);
-                            if (selectedDate) setFechaDescuento(selectedDate);
-                          }}
-                        />
+                      {Platform.OS === 'web' ? (
+                        React.createElement('input', {
+                          type: 'date',
+                          value: !isNaN(fechaDescuento.getTime()) ? fechaDescuento.toISOString().split('T')[0] : '',
+                          onChange: (e: any) => {
+                            if (e.target.value) {
+                              const [year, month, day] = e.target.value.split('-');
+                              const newDate = new Date(fechaDescuento);
+                              newDate.setFullYear(Number(year), Number(month) - 1, Number(day));
+                              setFechaDescuento(newDate);
+                            }
+                          },
+                          style: { padding: '12px', backgroundColor: '#f9fafb', borderWidth: '1px', borderColor: '#e5e7eb', borderRadius: '8px', fontSize: '16px', width: '100%' }
+                        })
+                      ) : (
+                        <>
+                          <TouchableOpacity
+                            style={{ padding: 12, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8 }}
+                            onPress={() => setShowDatePicker(true)}
+                          >
+                            <Text style={{ fontSize: 16, color: '#111827' }}>
+                              {!isNaN(fechaDescuento.getTime()) ? fechaDescuento.toLocaleDateString() : ''}
+                            </Text>
+                          </TouchableOpacity>
+                          {showDatePicker && (
+                            <DateTimePicker
+                              value={fechaDescuento}
+                              mode="date"
+                              display="default"
+                              onChange={(event, selectedDate) => {
+                                setShowDatePicker(false);
+                                if (selectedDate) setFechaDescuento(selectedDate);
+                              }}
+                            />
+                          )}
+                        </>
                       )}
                     </View>
 
@@ -512,54 +530,87 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
 
               <View style={styles.formGroup}>
                 <Text style={styles.label}>Fecha y Hora</Text>
-                <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <TouchableOpacity
-                    style={{ flex: 1, padding: 12, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8 }}
-                    onPress={() => setShowEditDatePicker(true)}
-                  >
-                    <Text style={{ fontSize: 16, color: '#111827', textAlign: 'center' }}>
-                      {editFecha.toLocaleDateString()}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={{ flex: 1, padding: 12, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8 }}
-                    onPress={() => setShowEditTimePicker(true)}
-                  >
-                    <Text style={{ fontSize: 16, color: '#111827', textAlign: 'center' }}>
-                      {editFecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                {Platform.OS === 'web' ? (
+                  <View style={{ flexDirection: 'row', gap: 12 }}>
+                    {React.createElement('input', {
+                      type: 'date',
+                      value: !isNaN(editFecha.getTime()) ? editFecha.toISOString().split('T')[0] : '',
+                      onChange: (e: any) => {
+                        if (e.target.value) {
+                          const [year, month, day] = e.target.value.split('-');
+                          const newDate = new Date(editFecha);
+                          newDate.setFullYear(Number(year), Number(month) - 1, Number(day));
+                          setEditFecha(newDate);
+                        }
+                      },
+                      style: { flex: 1, padding: '12px', backgroundColor: '#f9fafb', borderWidth: '1px', borderColor: '#e5e7eb', borderRadius: '8px', fontSize: '16px' }
+                    })}
+                    {React.createElement('input', {
+                      type: 'time',
+                      value: !isNaN(editFecha.getTime()) ? editFecha.toTimeString().split(' ')[0].substring(0, 5) : '',
+                      onChange: (e: any) => {
+                        if (e.target.value) {
+                          const [hours, minutes] = e.target.value.split(':');
+                          const newDate = new Date(editFecha);
+                          newDate.setHours(Number(hours), Number(minutes), 0, 0);
+                          setEditFecha(newDate);
+                        }
+                      },
+                      style: { flex: 1, padding: '12px', backgroundColor: '#f9fafb', borderWidth: '1px', borderColor: '#e5e7eb', borderRadius: '8px', fontSize: '16px' }
+                    })}
+                  </View>
+                ) : (
+                  <>
+                    <View style={{ flexDirection: 'row', gap: 12 }}>
+                      <TouchableOpacity
+                        style={{ flex: 1, padding: 12, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8 }}
+                        onPress={() => setShowEditDatePicker(true)}
+                      >
+                        <Text style={{ fontSize: 16, color: '#111827', textAlign: 'center' }}>
+                          {!isNaN(editFecha.getTime()) ? editFecha.toLocaleDateString() : ''}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={{ flex: 1, padding: 12, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8 }}
+                        onPress={() => setShowEditTimePicker(true)}
+                      >
+                        <Text style={{ fontSize: 16, color: '#111827', textAlign: 'center' }}>
+                          {!isNaN(editFecha.getTime()) ? editFecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
 
-                {showEditDatePicker && (
-                  <DateTimePicker
-                    value={editFecha}
-                    mode="date"
-                    display="default"
-                    onChange={(event, selectedDate) => {
-                      setShowEditDatePicker(false);
-                      if (selectedDate) {
-                        const newDate = new Date(editFecha);
-                        newDate.setFullYear(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
-                        setEditFecha(newDate);
-                      }
-                    }}
-                  />
-                )}
-                {showEditTimePicker && (
-                  <DateTimePicker
-                    value={editFecha}
-                    mode="time"
-                    display="default"
-                    onChange={(event, selectedDate) => {
-                      setShowEditTimePicker(false);
-                      if (selectedDate) {
-                        const newDate = new Date(editFecha);
-                        newDate.setHours(selectedDate.getHours(), selectedDate.getMinutes(), 0, 0);
-                        setEditFecha(newDate);
-                      }
-                    }}
-                  />
+                    {showEditDatePicker && (
+                      <DateTimePicker
+                        value={editFecha}
+                        mode="date"
+                        display="default"
+                        onChange={(event, selectedDate) => {
+                          setShowEditDatePicker(false);
+                          if (selectedDate) {
+                            const newDate = new Date(editFecha);
+                            newDate.setFullYear(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                            setEditFecha(newDate);
+                          }
+                        }}
+                      />
+                    )}
+                    {showEditTimePicker && (
+                      <DateTimePicker
+                        value={editFecha}
+                        mode="time"
+                        display="default"
+                        onChange={(event, selectedDate) => {
+                          setShowEditTimePicker(false);
+                          if (selectedDate) {
+                            const newDate = new Date(editFecha);
+                            newDate.setHours(selectedDate.getHours(), selectedDate.getMinutes(), 0, 0);
+                            setEditFecha(newDate);
+                          }
+                        }}
+                      />
+                    )}
+                  </>
                 )}
               </View>
 

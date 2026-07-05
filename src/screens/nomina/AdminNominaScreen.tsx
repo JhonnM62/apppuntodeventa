@@ -567,18 +567,44 @@ export default function AdminNominaScreen({ navigation }: any) {
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Entrada</Text>
-                <TouchableOpacity style={styles.datePickerBtn} onPress={() => openPicker('horaEntrada')}>
-                  <Ionicons name="calendar-outline" size={18} color="#4b5563" style={{ marginRight: 8 }} />
-                  <Text style={styles.datePickerText}>{formatPrettyDate(editForm.horaEntrada)}</Text>
-                </TouchableOpacity>
+                {Platform.OS === 'web' ? (
+                  React.createElement('input', {
+                    type: 'datetime-local',
+                    value: editForm.horaEntrada ? new Date(new Date(editForm.horaEntrada).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '',
+                    onChange: (e: any) => {
+                      if (e.target.value) {
+                        setEditForm({...editForm, horaEntrada: new Date(e.target.value).toISOString()});
+                      }
+                    },
+                    style: { padding: '12px', backgroundColor: '#f9fafb', borderWidth: '1px', borderColor: '#e5e7eb', borderRadius: '8px', fontSize: '16px', width: '100%', fontFamily: 'inherit' }
+                  })
+                ) : (
+                  <TouchableOpacity style={styles.datePickerBtn} onPress={() => openPicker('horaEntrada')}>
+                    <Ionicons name="calendar-outline" size={18} color="#4b5563" style={{ marginRight: 8 }} />
+                    <Text style={styles.datePickerText}>{formatPrettyDate(editForm.horaEntrada)}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>Salida</Text>
-                <TouchableOpacity style={styles.datePickerBtn} onPress={() => openPicker('horaSalida')}>
-                  <Ionicons name="calendar-outline" size={18} color="#4b5563" style={{ marginRight: 8 }} />
-                  <Text style={styles.datePickerText}>{formatPrettyDate(editForm.horaSalida)}</Text>
-                </TouchableOpacity>
+                {Platform.OS === 'web' ? (
+                  React.createElement('input', {
+                    type: 'datetime-local',
+                    value: editForm.horaSalida ? new Date(new Date(editForm.horaSalida).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '',
+                    onChange: (e: any) => {
+                      if (e.target.value) {
+                        setEditForm({...editForm, horaSalida: new Date(e.target.value).toISOString()});
+                      }
+                    },
+                    style: { padding: '12px', backgroundColor: '#f9fafb', borderWidth: '1px', borderColor: '#e5e7eb', borderRadius: '8px', fontSize: '16px', width: '100%', fontFamily: 'inherit' }
+                  })
+                ) : (
+                  <TouchableOpacity style={styles.datePickerBtn} onPress={() => openPicker('horaSalida')}>
+                    <Ionicons name="calendar-outline" size={18} color="#4b5563" style={{ marginRight: 8 }} />
+                    <Text style={styles.datePickerText}>{formatPrettyDate(editForm.horaSalida)}</Text>
+                  </TouchableOpacity>
+                )}
               </View>
 
               <View style={styles.inputGroup}>
