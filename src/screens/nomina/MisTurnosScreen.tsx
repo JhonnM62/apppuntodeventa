@@ -81,7 +81,7 @@ export default function MisTurnosScreen({ navigation }: any) {
 
     const groups: { [key: string]: Turno[] } = {};
     filtered.forEach(turno => {
-      const label = getQuincenaLabel((turno as any).fecha || turno.horaEntrada || new Date().toISOString());
+      const label = getQuincenaLabel(turno.horaEntrada || (turno as any).fecha || new Date().toISOString());
       if (!groups[label]) groups[label] = [];
       groups[label].push(turno);
     });
@@ -156,10 +156,10 @@ export default function MisTurnosScreen({ navigation }: any) {
                       <View style={styles.cardLeft}>
                         <View style={styles.dateBox}>
                           <Text style={styles.dateDay}>
-                            {new Date(turno.fecha || turno.horaEntrada).getDate()}
+                            {new Date(turno.horaEntrada || (turno as any).fecha).getDate()}
                           </Text>
                           <Text style={styles.dateMonth}>
-                            {new Date(turno.fecha || turno.horaEntrada).toLocaleString('es-CO', { weekday: 'short' }).toUpperCase()}
+                            {new Date(turno.horaEntrada || (turno as any).fecha).toLocaleString('es-CO', { weekday: 'short' }).toUpperCase()}
                           </Text>
                         </View>
                       </View>
