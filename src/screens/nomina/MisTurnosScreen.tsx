@@ -189,18 +189,29 @@ export default function MisTurnosScreen({ navigation }: any) {
                           </Text>
                         </View>
                         {turno.estado === 'COMPLETADO' && (() => {
-                          const totalDescuentos = turno.descuentos ? turno.descuentos.reduce((sum: number, d: any) => sum + Number(d.valor), 0) : 0;
-                          const costoCena = turno.ceno ? Number(turno.usuario?.cargo?.descuentoCena || 0) : 0;
-                          const neto = Number(turno.valorTurno || 0) - totalDescuentos - costoCena;
+                          const descuentosCaja = turno.descuentos 
+                            ? turno.descuentos
+                                .filter((d: any) => d.concepto !== 'CENA')
+                                .reduce((sum: number, d: any) => sum + Number(d.valor), 0) 
+                            : 0;
+                          
+                          const descuentosCenaBD = turno.descuentos
+                            ? turno.descuentos
+                                .filter((d: any) => d.concepto === 'CENA')
+                                .reduce((sum: number, d: any) => sum + Number(d.valor), 0)
+                            : 0;
+
+                          const costoCena = descuentosCenaBD > 0 ? descuentosCenaBD : (turno.ceno ? Number(turno.usuario?.cargo?.descuentoCena || 0) : 0);
+                          const neto = Number(turno.valorTurno || 0) - descuentosCaja - costoCena;
                           
                           return (
                             <View>
                               <Text style={styles.moneyText}>
                                 Bruto: ${Number(turno.valorTurno || 0).toLocaleString('es-CO')}
                               </Text>
-                              {totalDescuentos > 0 && (
+                              {descuentosCaja > 0 && (
                                 <Text style={styles.discountText}>
-                                  Dtos: -${totalDescuentos.toLocaleString('es-CO')}
+                                  Dtos: -${descuentosCaja.toLocaleString('es-CO')}
                                 </Text>
                               )}
                               {turno.ceno && costoCena > 0 && (
