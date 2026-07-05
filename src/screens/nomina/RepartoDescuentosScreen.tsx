@@ -71,6 +71,9 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
   const [editingDescuento, setEditingDescuento] = useState<any>(null);
   const [editDescripcion, setEditDescripcion] = useState('');
   const [editValorStr, setEditValorStr] = useState('');
+  const [editFecha, setEditFecha] = useState(new Date());
+  const [showEditDatePicker, setShowEditDatePicker] = useState(false);
+  const [showEditTimePicker, setShowEditTimePicker] = useState(false);
 
   const [concepto, setConcepto] = useState('DESCUADRE_CAJA');
   const [descripcion, setDescripcion] = useState('');
@@ -202,6 +205,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
     setEditingDescuento(item);
     setEditDescripcion(item.descripcion);
     setEditValorStr(String(item.valor));
+    setEditFecha(item.fecha ? new Date(item.fecha) : new Date());
     setEditModalVisible(true);
   };
 
@@ -218,7 +222,8 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
       setSaving(true);
       await updateDescuento(editingDescuento.IDdescuento, {
         descripcion: editDescripcion.trim(),
-        valor
+        valor,
+        fecha: editFecha.toISOString()
       });
       showAlert({ type: 'success', title: 'Éxito', message: 'Descuento actualizado correctamente' });
       setEditModalVisible(false);
@@ -479,6 +484,59 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
                   multiline
                   numberOfLines={2}
                 />
+              </View>
+
+              <View style={styles.formGroup}>
+                <Text style={styles.label}>Fecha y Hora</Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <TouchableOpacity
+                    style={{ flex: 1, padding: 12, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8 }}
+                    onPress={() => setShowEditDatePicker(true)}
+                  >
+                    <Text style={{ fontSize: 16, color: '#111827', textAlign: 'center' }}>
+                      {editFecha.toLocaleDateString()}
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={{ flex: 1, padding: 12, backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8 }}
+                    onPress={() => setShowEditTimePicker(true)}
+                  >
+                    <Text style={{ fontSize: 16, color: '#111827', textAlign: 'center' }}>
+                      {editFecha.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {showEditDatePicker && (
+                  <DateTimePicker
+                    value={editFecha}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setShowEditDatePicker(false);
+                      if (selectedDate) {
+                        const newDate = new Date(editFecha);
+                        newDate.setFullYear(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                        setEditFecha(newDate);
+                      }
+                    }}
+                  />
+                )}
+                {showEditTimePicker && (
+                  <DateTimePicker
+                    value={editFecha}
+                    mode="time"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setShowEditTimePicker(false);
+                      if (selectedDate) {
+                        const newDate = new Date(editFecha);
+                        newDate.setHours(selectedDate.getHours(), selectedDate.getMinutes(), 0, 0);
+                        setEditFecha(newDate);
+                      }
+                    }}
+                  />
+                )}
               </View>
 
               <Button
