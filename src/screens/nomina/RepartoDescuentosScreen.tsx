@@ -286,7 +286,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
 
   const groupedMap = new Map<string, any>();
   filteredDescuentos.forEach(d => {
-    const empleadoId = d.usuario?.IDusuarios || 'unknown';
+    const empleadoId = d.usuarioId || d.usuario?.IDusuarios || 'unknown';
     const empleadoName = d.usuario?.nombre || 'Empleado';
     if (!groupedMap.has(empleadoId)) {
       groupedMap.set(empleadoId, {
