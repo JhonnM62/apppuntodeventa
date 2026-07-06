@@ -125,20 +125,33 @@ export default function ExcepcionHorarioModal({ visible, cargo, onClose }: Props
           <View style={styles.formRow}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <Text style={styles.label}>Fecha</Text>
-              <TouchableOpacity style={styles.dateBtn} onPress={() => setShowDatePicker(true)}>
-                <Ionicons name="calendar-outline" size={18} color="#374151" />
-                <Text style={styles.dateBtnText}>{fecha.toLocaleDateString('es-ES')}</Text>
-              </TouchableOpacity>
-              {showDatePicker && (
-                <DateTimePicker
-                  value={fecha}
-                  mode="date"
-                  display="default"
-                  onChange={(e, d) => {
-                    setShowDatePicker(false);
-                    if (d) setFecha(d);
+              {Platform.OS === 'web' ? (
+                <TextInput
+                  style={[styles.input, { paddingVertical: 8 }]}
+                  value={fecha.toISOString().split('T')[0]}
+                  onChangeText={(text) => {
+                    if (text) setFecha(new Date(text + 'T12:00:00Z'));
                   }}
+                  {...({ type: 'date' } as any)}
                 />
+              ) : (
+                <>
+                  <TouchableOpacity style={styles.dateBtn} onPress={() => setShowDatePicker(true)}>
+                    <Ionicons name="calendar-outline" size={18} color="#374151" />
+                    <Text style={styles.dateBtnText}>{fecha.toLocaleDateString('es-ES')}</Text>
+                  </TouchableOpacity>
+                  {showDatePicker && (
+                    <DateTimePicker
+                      value={fecha}
+                      mode="date"
+                      display="default"
+                      onChange={(e, d) => {
+                        setShowDatePicker(false);
+                        if (d) setFecha(d);
+                      }}
+                    />
+                  )}
+                </>
               )}
             </View>
             <View style={{ flex: 1 }}>
@@ -155,42 +168,78 @@ export default function ExcepcionHorarioModal({ visible, cargo, onClose }: Props
           <View style={styles.formRow}>
             <View style={{ flex: 1, marginRight: 8 }}>
               <Text style={styles.label}>Entrada</Text>
-              <TouchableOpacity style={styles.dateBtn} onPress={() => setShowTimeEntrada(true)}>
-                <Ionicons name="time-outline" size={18} color="#374151" />
-                <Text style={styles.dateBtnText}>
-                  {horaEntrada.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                </Text>
-              </TouchableOpacity>
-              {showTimeEntrada && (
-                <DateTimePicker
-                  value={horaEntrada}
-                  mode="time"
-                  display="default"
-                  onChange={(e, d) => {
-                    setShowTimeEntrada(false);
-                    if (d) setHoraEntrada(d);
+              {Platform.OS === 'web' ? (
+                <TextInput
+                  style={[styles.input, { paddingVertical: 8 }]}
+                  value={horaEntrada.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                  onChangeText={(text) => {
+                    if (text) {
+                      const [h, m] = text.split(':');
+                      const d = new Date(horaEntrada);
+                      d.setHours(Number(h), Number(m));
+                      setHoraEntrada(d);
+                    }
                   }}
+                  {...({ type: 'time' } as any)}
                 />
+              ) : (
+                <>
+                  <TouchableOpacity style={styles.dateBtn} onPress={() => setShowTimeEntrada(true)}>
+                    <Ionicons name="time-outline" size={18} color="#374151" />
+                    <Text style={styles.dateBtnText}>
+                      {horaEntrada.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                    </Text>
+                  </TouchableOpacity>
+                  {showTimeEntrada && (
+                    <DateTimePicker
+                      value={horaEntrada}
+                      mode="time"
+                      display="default"
+                      onChange={(e, d) => {
+                        setShowTimeEntrada(false);
+                        if (d) setHoraEntrada(d);
+                      }}
+                    />
+                  )}
+                </>
               )}
             </View>
             <View style={{ flex: 1, marginRight: 8 }}>
               <Text style={styles.label}>Salida</Text>
-              <TouchableOpacity style={styles.dateBtn} onPress={() => setShowTimeSalida(true)}>
-                <Ionicons name="time-outline" size={18} color="#374151" />
-                <Text style={styles.dateBtnText}>
-                  {horaSalida.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                </Text>
-              </TouchableOpacity>
-              {showTimeSalida && (
-                <DateTimePicker
-                  value={horaSalida}
-                  mode="time"
-                  display="default"
-                  onChange={(e, d) => {
-                    setShowTimeSalida(false);
-                    if (d) setHoraSalida(d);
+              {Platform.OS === 'web' ? (
+                <TextInput
+                  style={[styles.input, { paddingVertical: 8 }]}
+                  value={horaSalida.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                  onChangeText={(text) => {
+                    if (text) {
+                      const [h, m] = text.split(':');
+                      const d = new Date(horaSalida);
+                      d.setHours(Number(h), Number(m));
+                      setHoraSalida(d);
+                    }
                   }}
+                  {...({ type: 'time' } as any)}
                 />
+              ) : (
+                <>
+                  <TouchableOpacity style={styles.dateBtn} onPress={() => setShowTimeSalida(true)}>
+                    <Ionicons name="time-outline" size={18} color="#374151" />
+                    <Text style={styles.dateBtnText}>
+                      {horaSalida.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                    </Text>
+                  </TouchableOpacity>
+                  {showTimeSalida && (
+                    <DateTimePicker
+                      value={horaSalida}
+                      mode="time"
+                      display="default"
+                      onChange={(e, d) => {
+                        setShowTimeSalida(false);
+                        if (d) setHoraSalida(d);
+                      }}
+                    />
+                  )}
+                </>
               )}
             </View>
             <View style={{ flex: 1 }}>
