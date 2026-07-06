@@ -76,6 +76,12 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
   const [showEditDatePicker, setShowEditDatePicker] = useState(false);
   const [showEditTimePicker, setShowEditTimePicker] = useState(false);
 
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+
+  const toggleSection = (sectionId: string) => {
+    setCollapsedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
+  };
+
   const [concepto, setConcepto] = useState('DESCUADRE_CAJA');
   const [descripcion, setDescripcion] = useState('');
   const [montoTotalStr, setMontoTotalStr] = useState('');
@@ -301,18 +307,31 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
     group.data.push(d);
   });
 
-  const sectionData = Array.from(groupedMap.values()).sort((a, b) => a.title.localeCompare(b.title));
+  const sectionData = Array.from(groupedMap.values())
+    .sort((a, b) => a.title.localeCompare(b.title))
+    .map(section => ({
+      ...section,
+      data: collapsedSections[section.id] ? [] : section.data,
+      isCollapsed: !!collapsedSections[section.id]
+    }));
 
   const renderSectionHeader = ({ section }: { section: any }) => (
-    <View style={styles.sectionHeader}>
+    <TouchableOpacity 
+      style={[styles.sectionHeader, section.isCollapsed && styles.sectionHeaderCollapsed]} 
+      onPress={() => toggleSection(section.id)}
+      activeOpacity={0.7}
+    >
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <View style={styles.sectionAvatar}>
           <Text style={styles.sectionAvatarText}>{section.title.charAt(0).toUpperCase()}</Text>
         </View>
         <Text style={styles.sectionTitle}>{section.title}</Text>
       </View>
-      <Text style={styles.sectionTotal}>-${section.total.toLocaleString('es-CO')}</Text>
-    </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Text style={styles.sectionTotal}>-${section.total.toLocaleString('es-CO')}</Text>
+        <Ionicons name={section.isCollapsed ? "chevron-down" : "chevron-up"} size={20} color="#be185d" />
+      </View>
+    </TouchableOpacity>
   );
 
   const renderDescuento = ({ item, index, section }: { item: any, index: number, section: any }) => {
@@ -752,6 +771,7 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, marginLeft: 8, fontSize: 14, color: '#111827', height: '100%', outlineStyle: 'none' as any },
 
   sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fdf2f8', padding: 12, borderTopLeftRadius: 12, borderTopRightRadius: 12, marginTop: 16, borderWidth: 1, borderColor: '#fbcfe8', borderBottomWidth: 0 },
+  sectionHeaderCollapsed: { borderBottomLeftRadius: 12, borderBottomRightRadius: 12, borderBottomWidth: 1, marginBottom: 8 },
   sectionAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#ec4899', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
   sectionAvatarText: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
   sectionTitle: { fontSize: 15, fontWeight: '700', color: '#831843' },
