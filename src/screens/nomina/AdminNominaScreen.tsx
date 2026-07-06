@@ -39,6 +39,12 @@ export default function AdminNominaScreen({ navigation }: any) {
   // Date Picker State
   const [pickerConfig, setPickerConfig] = useState<{show: boolean, mode: 'date'|'time', field: 'horaEntrada'|'horaSalida'}>({show: false, mode: 'date', field: 'horaEntrada'});
 
+  // Llegadas Tarde State
+  const [showLlegadasModal, setShowLlegadasModal] = useState(false);
+  const [selectedLlegadas, setSelectedLlegadas] = useState<string[]>([]);
+  const [aplicandoLlegadas, setAplicandoLlegadas] = useState(false);
+
+
   useEffect(() => {
     loadData();
   }, []);
@@ -182,6 +188,32 @@ export default function AdminNominaScreen({ navigation }: any) {
       showAlert({ type: 'error', title: 'Error', message: Array.isArray(msg) ? msg[0] : msg });
     } finally {
       setSavingTurno(false);
+    }
+  };
+
+  
+  const handleOpenLlegadas = () => {
+    const pendientes = (resumen?.descuentos || []).filter((d: any) => d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE');
+    setSelectedLlegadas(pendientes.map((d: any) => d.IDdescuento));
+    setShowLlegadasModal(true);
+  };
+
+  const handleAplicarLlegadas = async () => {
+    if (selectedLlegadas.length === 0) {
+      return showAlert({ type: 'error', title: 'Aviso', message: 'Selecciona al menos una llegada tarde para aplicar' });
+    }
+    try {
+      setAplicandoLlegadas(true);
+      await api.post('/nomina/llegadas-tarde/aplicar', { descuentoIds: selectedLlegadas });
+      showAlert({ type: 'success', title: 'Éxito', message: 'Descuentos aplicados correctamente' });
+      setShowLlegadasModal(false);
+      if (selectedEmpleado) openResumen(selectedEmpleado);
+      loadData();
+    } catch (error) {
+      console.error(error);
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudieron aplicar los descuentos' });
+    } finally {
+      setAplicandoLlegadas(false);
     }
   };
 
@@ -393,9 +425,18 @@ export default function AdminNominaScreen({ navigation }: any) {
             {loadingResumen ? (
               <ActivityIndicator size="large" color="#4CAF50" style={{ margin: 40 }} />
             ) : (
-              resumen && (
-                <>
-                  <Text style={styles.modalTitle}>Resumen de Pagos</Text>
+              resumen && (() => {
+                const descuentosAgrupados = resumen?.descuentos?.reduce((acc: any, d: any) => {
+                  const concepto = d.concepto || 'OTRO';
+                  if (!acc[concepto]) acc[concepto] = { count: 0, total: 0 };
+                  acc[concepto].count += 1;
+                  acc[concepto].total += Number(d.valor);
+                  return acc;
+                }, {});
+
+                return (
+                  <>
+                    <Text style={styles.modalTitle}>Resumen de Pagos</Text>
                   <Text style={styles.modalSubtitle}>{selectedEmpleado?.nombre}</Text>
                   
                   <ScrollView style={{ maxHeight: 400, marginVertical: 16 }}>
@@ -404,7 +445,24 @@ export default function AdminNominaScreen({ navigation }: any) {
                         <Text style={styles.summaryLabel}>Total Turnos (Bruto):</Text>
                         <Text style={styles.summaryValue}>${Number(resumen.totalBruto).toLocaleString('es-CO')}</Text>
                       </View>
-                      <View style={styles.summaryRow}>
+                      
+                      {Object.keys(descuentosAgrupados || {}).length > 0 && (
+                        <View style={{ marginTop: 8, marginBottom: 4, paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: '#fca5a5' }}>
+                          {Object.entries(descuentosAgrupados).map(([concepto, data]: any) => {
+                            const label = concepto === 'CENA' 
+                              ? `${data.count} ${data.count === 1 ? 'CENA' : 'CENAS'}`
+                              : `${data.count} ${data.count === 1 ? 'vez' : 'veces'} - ${concepto.replace(/_/g, ' ')}`;
+                            return (
+                              <View key={concepto} style={[styles.summaryRow, { marginBottom: 4 }]}>
+                                <Text style={{ fontSize: 13, color: '#6b7280' }}>↳ {label}</Text>
+                                <Text style={{ fontSize: 13, color: '#ef4444' }}>-${data.total.toLocaleString('es-CO')}</Text>
+                              </View>
+                            );
+                          })}
+                        </View>
+                      )}
+
+                      <View style={[styles.summaryRow, { marginTop: 8 }]}>
                         <Text style={styles.summaryLabel}>Total Descuentos:</Text>
                         <Text style={[styles.summaryValue, { color: '#ef4444' }]}>-${Number(resumen.totalDescuentos).toLocaleString('es-CO')}</Text>
                       </View>
@@ -447,6 +505,12 @@ export default function AdminNominaScreen({ navigation }: any) {
                     ))}
                   </ScrollView>
 
+                  
+                    { (resumen.descuentos || []).some((d: any) => d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE') && (
+                      <Button style={{ marginBottom: 12, backgroundColor: '#f97316' }} onPress={handleOpenLlegadas}>
+                        <Text style={{ color: '#fff', fontSize: 14 }}>Evaluar Llegadas Tarde Pendientes</Text>
+                      </Button>
+                    )}
                   <View style={styles.modalActions}>
                     <Button style={{ flex: 1, marginRight: 8, backgroundColor: '#f3f4f6' }} onPress={() => setSelectedEmpleado(null)} disabled={liquidando || recalculando}>
                       <Text style={{ color: '#111827' }}>Cerrar</Text>
@@ -459,8 +523,58 @@ export default function AdminNominaScreen({ navigation }: any) {
                     </Button>
                   </View>
                 </>
-              )
-            )}
+              );
+            })()
+          )}
+          </View>
+        </View>
+      </Modal>
+
+      
+      {/* Modal Llegadas Tarde */}
+      <Modal visible={showLlegadasModal} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Llegadas Tarde Pendientes</Text>
+            <Text style={styles.modalSubtitle}>Selecciona cuáles deseas cobrar en esta liquidación</Text>
+            
+            <ScrollView style={{ maxHeight: 300, marginBottom: 16 }}>
+              {(resumen?.descuentos || []).filter((d: any) => d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE').map((d: any) => (
+                <TouchableOpacity 
+                  key={d.IDdescuento} 
+                  style={[styles.itemRow, { alignItems: 'center', backgroundColor: selectedLlegadas.includes(d.IDdescuento) ? '#f3f4f6' : '#fff', paddingHorizontal: 8, borderRadius: 8 }]}
+                  onPress={() => {
+                    if (selectedLlegadas.includes(d.IDdescuento)) {
+                      setSelectedLlegadas(selectedLlegadas.filter(id => id !== d.IDdescuento));
+                    } else {
+                      setSelectedLlegadas([...selectedLlegadas, d.IDdescuento]);
+                    }
+                  }}
+                >
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 13, fontWeight: '500' }}>{new Date(d.fecha).toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short' })}</Text>
+                    <Text style={{ fontSize: 11, color: '#6b7280' }}>{d.descripcion}</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={{ fontSize: 13, color: '#ef4444', fontWeight: '600', marginRight: 12 }}>
+                      -${Number(d.valor).toLocaleString('es-CO')}
+                    </Text>
+                    <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: selectedLlegadas.includes(d.IDdescuento) ? '#10b981' : '#d1d5db', alignItems: 'center', justifyContent: 'center', backgroundColor: selectedLlegadas.includes(d.IDdescuento) ? '#10b981' : 'transparent' }}>
+                      {selectedLlegadas.includes(d.IDdescuento) && <Ionicons name="checkmark" size={16} color="#fff" />}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <View style={styles.modalActions}>
+              <Button style={{ flex: 1, marginRight: 8, backgroundColor: '#f3f4f6' }} onPress={() => setShowLlegadasModal(false)} disabled={aplicandoLlegadas}>
+                <Text style={{ color: '#111827' }}>Cancelar</Text>
+              </Button>
+              <Button style={{ flex: 1, backgroundColor: '#10b981' }} onPress={handleAplicarLlegadas} loading={aplicandoLlegadas}>
+                <Text style={{ color: '#fff', fontSize: 13 }}>Aplicar ({selectedLlegadas.length})</Text>
+              </Button>
+            </View>
           </View>
         </View>
       </Modal>
