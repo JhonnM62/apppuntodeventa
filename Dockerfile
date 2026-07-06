@@ -11,7 +11,7 @@ RUN npm install --legacy-peer-deps
 COPY . .
 
 # Construir la aplicación para web
-RUN npx expo export -p web
+RUN NODE_OPTIONS=--max-old-space-size=4096 npx expo export -p web
 
 # Etapa 2: Servidor Web (Nginx)
 FROM nginx:alpine
