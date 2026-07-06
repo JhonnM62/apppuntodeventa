@@ -36,6 +36,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const [latitudNegocio, setLatitudNegocio] = useState('');
   const [longitudNegocio, setLongitudNegocio] = useState('');
   const [radioGeocercaM, setRadioGeocercaM] = useState('100');
+  const [minutosGraciaLlegadaTarde, setMinutosGraciaLlegadaTarde] = useState('5');
   
   // Estados para IA
   const [iaConfig, setIaConfig] = useState({
@@ -104,6 +105,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         if (dataNegocio.latitudNegocio !== null && dataNegocio.latitudNegocio !== undefined) setLatitudNegocio(String(dataNegocio.latitudNegocio));
         if (dataNegocio.longitudNegocio !== null && dataNegocio.longitudNegocio !== undefined) setLongitudNegocio(String(dataNegocio.longitudNegocio));
         if (dataNegocio.radioGeocercaM !== null && dataNegocio.radioGeocercaM !== undefined) setRadioGeocercaM(String(dataNegocio.radioGeocercaM));
+        if (dataNegocio.minutosGraciaLlegadaTarde !== null && dataNegocio.minutosGraciaLlegadaTarde !== undefined) setMinutosGraciaLlegadaTarde(String(dataNegocio.minutosGraciaLlegadaTarde));
       }
 
       const dataIA = resIA.data ? resIA.data : resIA;
@@ -145,7 +147,8 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           horaCorteDia, modoOperacion, nombreComercial, nit, direccion, telefono,
           latitudNegocio: latitudNegocio ? parseFloat(latitudNegocio) : undefined,
           longitudNegocio: longitudNegocio ? parseFloat(longitudNegocio) : undefined,
-          radioGeocercaM: radioGeocercaM ? parseInt(radioGeocercaM, 10) : 100
+          radioGeocercaM: radioGeocercaM ? parseInt(radioGeocercaM, 10) : 100,
+          minutosGraciaLlegadaTarde: minutosGraciaLlegadaTarde ? parseInt(minutosGraciaLlegadaTarde, 10) : 5
         } as any),
         updateConfiguracionIA({
           apiKey: iaConfig.apiKey,
@@ -374,6 +377,32 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             placeholder="Ej. 100"
             keyboardType="numeric"
           />
+
+          <Text style={[styles.label, { marginTop: 12 }]}>Minutos de gracia para llegadas tarde</Text>
+          <Text style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>
+            Tiempo límite (en minutos) después de la hora de entrada antes de generar descuento.
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity 
+              style={[styles.timeBtn, { marginRight: 8 }]}
+              onPress={() => setMinutosGraciaLlegadaTarde(String(Math.max(0, parseInt(minutosGraciaLlegadaTarde || '0', 10) - 1)))}
+            >
+              <Ionicons name="remove" size={20} color="#374151" />
+            </TouchableOpacity>
+            <TextInput
+              style={[styles.input, { flex: 1, textAlign: 'center', marginBottom: 0 }]}
+              value={minutosGraciaLlegadaTarde}
+              onChangeText={(text) => setMinutosGraciaLlegadaTarde(text.replace(/[^0-9]/g, ''))}
+              placeholder="Ej. 5"
+              keyboardType="numeric"
+            />
+            <TouchableOpacity 
+              style={[styles.timeBtn, { marginLeft: 8 }]}
+              onPress={() => setMinutosGraciaLlegadaTarde(String(parseInt(minutosGraciaLlegadaTarde || '0', 10) + 1))}
+            >
+              <Ionicons name="add" size={20} color="#374151" />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* INTELIGENCIA ARTIFICIAL */}
@@ -619,15 +648,9 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   label: { fontSize: 14, fontWeight: '600', color: '#374151', marginBottom: 8, marginTop: 8 },
-  input: {
-    backgroundColor: '#f9fafb',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 15,
-    color: '#111827',
-  },
+  input: { backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, color: '#111827', marginBottom: 12 },
+  timeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#e5e7eb' },
+  modelButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
   timePickerButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -639,7 +662,6 @@ const styles = StyleSheet.create({
     borderColor: '#c7d2fe'
   },
   timePickerText: { fontSize: 24, fontWeight: 'bold', color: '#4f46e5' },
-  modelButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   modelBtn: {
     paddingVertical: 8,
     paddingHorizontal: 12,

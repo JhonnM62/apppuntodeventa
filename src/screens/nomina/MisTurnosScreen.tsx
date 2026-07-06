@@ -191,7 +191,7 @@ export default function MisTurnosScreen({ navigation }: any) {
                         {turno.estado === 'COMPLETADO' && (() => {
                           const descuentosCaja = turno.descuentos 
                             ? turno.descuentos
-                                .filter((d: any) => d.concepto !== 'CENA')
+                                .filter((d: any) => d.concepto !== 'CENA' && d.concepto !== 'LLEGADA_TARDE')
                                 .reduce((sum: number, d: any) => sum + Number(d.valor), 0) 
                             : 0;
                           
@@ -201,8 +201,20 @@ export default function MisTurnosScreen({ navigation }: any) {
                                 .reduce((sum: number, d: any) => sum + Number(d.valor), 0)
                             : 0;
 
+                          const descuentosLlegadaTarde = turno.descuentos
+                            ? turno.descuentos
+                                .filter((d: any) => d.concepto === 'LLEGADA_TARDE' && d.estado === 'APROBADO')
+                                .reduce((sum: number, d: any) => sum + Number(d.valor), 0)
+                            : 0;
+                          
+                          const descuentosLlegadaTardePendiente = turno.descuentos
+                            ? turno.descuentos
+                                .filter((d: any) => d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')
+                                .reduce((sum: number, d: any) => sum + Number(d.valor), 0)
+                            : 0;
+
                           const costoCena = descuentosCenaBD > 0 ? descuentosCenaBD : (turno.ceno ? Number(turno.usuario?.cargo?.descuentoCena || 0) : 0);
-                          const neto = Number(turno.valorTurno || 0) - descuentosCaja - costoCena;
+                          const neto = Number(turno.valorTurno || 0) - descuentosCaja - costoCena - descuentosLlegadaTarde;
                           
                           return (
                             <View>
@@ -217,6 +229,16 @@ export default function MisTurnosScreen({ navigation }: any) {
                               {turno.ceno && costoCena > 0 && (
                                 <Text style={styles.discountText}>
                                   Cena: -${costoCena.toLocaleString('es-CO')}
+                                </Text>
+                              )}
+                              {descuentosLlegadaTarde > 0 && (
+                                <Text style={styles.discountText}>
+                                  Llegada Tarde: -${descuentosLlegadaTarde.toLocaleString('es-CO')}
+                                </Text>
+                              )}
+                              {descuentosLlegadaTardePendiente > 0 && (
+                                <Text style={[styles.discountText, { color: '#f59e0b' }]}>
+                                  Retraso (Pendiente): -${descuentosLlegadaTardePendiente.toLocaleString('es-CO')}
                                 </Text>
                               )}
                               <Text style={styles.netMoneyText}>
