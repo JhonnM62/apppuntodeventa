@@ -23,6 +23,8 @@ export interface NotificationSettings {
   notifyDineroRetirado: boolean;
   notifyGastoCreated: boolean;
   notifyGastoDeleted: boolean;
+  notifyTurnoOpened: boolean;
+  notifyTurnoClosed: boolean;
 }
 
 export interface NotificationHistoryItem {

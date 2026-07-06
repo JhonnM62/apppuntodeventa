@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Modal, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Keyboard } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList as OriginalFlashList } from '@shopify/flash-list';
@@ -21,6 +21,19 @@ const MesasScreen = ({ navigation }: any) => {
 
   // State for Detail
   const [selectedMesa, setSelectedMesa] = useState<Mesa | null>(null);
+
+  // Keyboard height for Android modal fix
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => setKeyboardHeight(e.endCoordinates.height));
+    const hideSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide', () => setKeyboardHeight(0));
+    
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   useEffect(() => {
     loadMesas();
@@ -166,7 +179,7 @@ const MesasScreen = ({ navigation }: any) => {
             activeOpacity={1} 
             onPress={() => setFormModalVisible(false)} 
           />
-          <View style={[styles.modalContent, { width: '100%', maxHeight: '80%' }]}>
+          <View style={[styles.modalContent, { width: '100%', maxHeight: '80%', marginBottom: Platform.OS === 'android' ? keyboardHeight : 0 }]}>
             <ScrollView 
               contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
               keyboardShouldPersistTaps="handled"

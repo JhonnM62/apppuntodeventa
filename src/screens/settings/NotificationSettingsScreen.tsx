@@ -128,6 +128,16 @@ export default function NotificationSettingsScreen() {
           {renderSwitch('Producto Eliminado', 'notifyProductoDeleted')}
         </View>
 
+        {/* Sección Nómina */}
+        <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-100">
+          <View className="flex-row items-center mb-2">
+            <MaterialCommunityIcons name="account-clock" size={22} color="#16a34a" />
+            <Text className="text-lg font-bold text-gray-800 ml-2">Nómina y Turnos</Text>
+          </View>
+          {renderSwitch('Apertura de Turno (Check-in)', 'notifyTurnoOpened', true)}
+          {renderSwitch('Cierre de Turno (Check-out)', 'notifyTurnoClosed', true)}
+        </View>
+
         {/* Sección Dinero Guardado */}
         <View className="bg-white rounded-2xl p-4 mb-8 shadow-sm border border-gray-100">
           <View className="flex-row items-center mb-2">

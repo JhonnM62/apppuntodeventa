@@ -732,14 +732,22 @@ export default function AdminNominaScreen({ navigation }: any) {
                 />
               </View>
 
-              <View style={[styles.inputGroup, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+              <View style={styles.inputGroup}>
                 <Text style={styles.label}>¿Cenó?</Text>
-                <Switch
-                  value={editForm.ceno}
-                  onValueChange={(val) => setEditForm({...editForm, ceno: val})}
-                  trackColor={{ false: '#d1d5db', true: '#a7f3d0' }}
-                  thumbColor={editForm.ceno ? '#10b981' : '#f4f3f4'}
-                />
+                <View style={{ flexDirection: 'row', marginTop: 4 }}>
+                  <TouchableOpacity 
+                    style={[styles.cenoBtn, editForm.ceno === true && styles.cenoBtnActive]}
+                    onPress={() => setEditForm({...editForm, ceno: true})}
+                  >
+                    <Text style={[styles.cenoBtnText, editForm.ceno === true && styles.cenoBtnTextActive]}>Sí</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.cenoBtn, editForm.ceno === false && styles.cenoBtnActiveError]}
+                    onPress={() => setEditForm({...editForm, ceno: false})}
+                  >
+                    <Text style={[styles.cenoBtnText, editForm.ceno === false && styles.cenoBtnTextActiveError]}>No</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </ScrollView>
 
@@ -828,7 +836,14 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 10, fontSize: 14, color: '#111827' },
   
   datePickerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 12 },
-  datePickerText: { fontSize: 14, color: '#111827' },
+  datePickerText: { fontSize: 16, color: '#111827' },
+  
+  cenoBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: '#f3f4f6', borderRadius: 8, marginHorizontal: 4, borderWidth: 1, borderColor: '#e5e7eb' },
+  cenoBtnActive: { backgroundColor: '#ecfdf5', borderColor: '#10b981' },
+  cenoBtnActiveError: { backgroundColor: '#fef2f2', borderColor: '#ef4444' },
+  cenoBtnText: { fontSize: 16, fontWeight: '600', color: '#6b7280' },
+  cenoBtnTextActive: { color: '#047857' },
+  cenoBtnTextActiveError: { color: '#b91c1c' },
   
   statusChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#f3f4f6', marginRight: 8, marginBottom: 8, borderWidth: 1, borderColor: '#e5e7eb' },
   statusChipActive: { backgroundColor: '#111827', borderColor: '#111827' },
