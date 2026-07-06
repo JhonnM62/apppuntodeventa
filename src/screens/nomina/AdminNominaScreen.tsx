@@ -66,10 +66,10 @@ export default function AdminNominaScreen({ navigation }: any) {
       const m = colombiaTime.getUTCMonth();
       const d = colombiaTime.getUTCDate();
 
-      // Convertir de vuelta a UTC para la query sumando las 5 horas
+      // Convertir de vuelta a UTC para la query
       const offsetMs = 5 * 60 * 60 * 1000;
-      const hoyUTC = new Date(Date.UTC(y, m, d, 0, 0, 0, 0) + offsetMs);
-      const finHoyUTC = new Date(Date.UTC(y, m, d, 23, 59, 59, 999) + offsetMs);
+      const hoyUTC = new Date(Date.UTC(y, m, d, 0, 0, 0, 0));
+      const finHoyUTC = new Date(Date.UTC(y, m, d, 23, 59, 59, 999));
 
       const resTurnos = await getTurnos({ 
         fechaDesde: hoyUTC.toISOString(), 

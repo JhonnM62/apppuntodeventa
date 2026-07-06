@@ -105,8 +105,8 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
       const [yH, mH, dH] = selectedQuincena.fechaHasta.split('-').map(Number);
 
       const offsetMs = 5 * 60 * 60 * 1000; // Colombia es UTC-5
-      const inicioUTC = new Date(Date.UTC(yD, mD - 1, dD, 0, 0, 0, 0) + offsetMs);
-      const finUTC = new Date(Date.UTC(yH, mH - 1, dH, 23, 59, 59, 999) + offsetMs);
+      const inicioUTC = new Date(Date.UTC(yD, mD - 1, dD, 0, 0, 0, 0));
+      const finUTC = new Date(Date.UTC(yH, mH - 1, dH, 23, 59, 59, 999));
 
       const res = await getDescuentos({
         fechaDesde: inicioUTC.toISOString(),
