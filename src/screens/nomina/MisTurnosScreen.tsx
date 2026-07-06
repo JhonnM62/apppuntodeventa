@@ -188,76 +188,77 @@ export default function MisTurnosScreen({ navigation }: any) {
                             {turno.estado}
                           </Text>
                         </View>
-                        {turno.estado === 'COMPLETADO' && (() => {
-                          const descuentosCaja = turno.descuentos 
-                            ? turno.descuentos
-                                .filter((d: any) => d.concepto !== 'CENA' && d.concepto !== 'LLEGADA_TARDE')
-                                .reduce((sum: number, d: any) => sum + Number(d.valor), 0) 
-                            : 0;
-                          
-                          const descuentosCenaBD = turno.descuentos
-                            ? turno.descuentos
-                                .filter((d: any) => d.concepto === 'CENA')
-                                .reduce((sum: number, d: any) => sum + Number(d.valor), 0)
-                            : 0;
-
-                          const descuentosLlegadaTarde = turno.descuentos
-                            ? turno.descuentos
-                                .filter((d: any) => d.concepto === 'LLEGADA_TARDE' && d.estado === 'APROBADO')
-                                .reduce((sum: number, d: any) => sum + Number(d.valor), 0)
-                            : 0;
-                          
-                          const descuentosLlegadaTardePendiente = turno.descuentos
-                            ? turno.descuentos
-                                .filter((d: any) => d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')
-                                .reduce((sum: number, d: any) => sum + Number(d.valor), 0)
-                            : 0;
-
-                          const costoCena = descuentosCenaBD > 0 ? descuentosCenaBD : (turno.ceno ? Number(turno.usuario?.cargo?.descuentoCena || 0) : 0);
-                          const neto = Number(turno.valorTurno || 0) - descuentosCaja - costoCena - descuentosLlegadaTarde;
-                          
-                          return (
-                            <View style={styles.financialContainer}>
-                              <View style={styles.financialRow}>
-                                <Text style={styles.moneyLabel}>Bruto:</Text>
-                                <Text style={styles.moneyValue}>${Number(turno.valorTurno || 0).toLocaleString('es-CO')}</Text>
-                              </View>
-                              {descuentosCaja > 0 && (
-                                <View style={styles.financialRow}>
-                                  <Text style={styles.discountLabel}>Dtos:</Text>
-                                  <Text style={styles.discountValue}>-${descuentosCaja.toLocaleString('es-CO')}</Text>
-                                </View>
-                              )}
-                              {turno.ceno && costoCena > 0 && (
-                                <View style={styles.financialRow}>
-                                  <Text style={styles.discountLabel}>Cena:</Text>
-                                  <Text style={styles.discountValue}>-${costoCena.toLocaleString('es-CO')}</Text>
-                                </View>
-                              )}
-                              {descuentosLlegadaTarde > 0 && (
-                                <View style={styles.financialRow}>
-                                  <Text style={styles.discountLabel}>Llegada Tarde:</Text>
-                                  <Text style={styles.discountValue}>-${descuentosLlegadaTarde.toLocaleString('es-CO')}</Text>
-                                </View>
-                              )}
-                              {descuentosLlegadaTardePendiente > 0 && (
-                                <View style={styles.financialRow}>
-                                  <Text style={[styles.discountLabel, { color: '#f59e0b' }]}>Retraso (P):</Text>
-                                  <Text style={[styles.discountValue, { color: '#f59e0b' }]}>-${descuentosLlegadaTardePendiente.toLocaleString('es-CO')}</Text>
-                                </View>
-                              )}
-                              <View style={[styles.financialRow, { borderTopWidth: 1, borderTopColor: '#f3f4f6', paddingTop: 6, marginTop: 4 }]}>
-                                <Text style={styles.netMoneyLabel}>Neto:</Text>
-                                <Text style={styles.netMoneyValue}>${neto.toLocaleString('es-CO')}</Text>
-                              </View>
-                            </View>
-                          );
-                        })()}
                         {turno.estado === 'COMPLETADO' && (
                           <Text style={styles.cenoText}>Cenó: {turno.ceno ? 'SÍ' : 'NO'}</Text>
                         )}
                       </View>
                     </View>
+                    
+                    {turno.estado === 'COMPLETADO' && (() => {
+                      const descuentosCaja = turno.descuentos 
+                        ? turno.descuentos
+                            .filter((d: any) => d.concepto !== 'CENA' && d.concepto !== 'LLEGADA_TARDE')
+                            .reduce((sum: number, d: any) => sum + Number(d.valor), 0) 
+                        : 0;
+                      
+                      const descuentosCenaBD = turno.descuentos
+                        ? turno.descuentos
+                            .filter((d: any) => d.concepto === 'CENA')
+                            .reduce((sum: number, d: any) => sum + Number(d.valor), 0)
+                        : 0;
+
+                      const descuentosLlegadaTarde = turno.descuentos
+                        ? turno.descuentos
+                            .filter((d: any) => d.concepto === 'LLEGADA_TARDE' && d.estado === 'APROBADO')
+                            .reduce((sum: number, d: any) => sum + Number(d.valor), 0)
+                        : 0;
+                      
+                      const descuentosLlegadaTardePendiente = turno.descuentos
+                        ? turno.descuentos
+                            .filter((d: any) => d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')
+                            .reduce((sum: number, d: any) => sum + Number(d.valor), 0)
+                        : 0;
+
+                      const costoCena = descuentosCenaBD > 0 ? descuentosCenaBD : (turno.ceno ? Number(turno.usuario?.cargo?.descuentoCena || 0) : 0);
+                      const neto = Number(turno.valorTurno || 0) - descuentosCaja - costoCena - descuentosLlegadaTarde;
+                      
+                      return (
+                        <View style={styles.financialContainer}>
+                          <View style={styles.financialRow}>
+                            <Text style={styles.moneyLabel}>Bruto:</Text>
+                            <Text style={styles.moneyValue}>${Number(turno.valorTurno || 0).toLocaleString('es-CO')}</Text>
+                          </View>
+                          {descuentosCaja > 0 && (
+                            <View style={styles.financialRow}>
+                              <Text style={styles.discountLabel}>Dtos:</Text>
+                              <Text style={styles.discountValue}>-${descuentosCaja.toLocaleString('es-CO')}</Text>
+                            </View>
+                          )}
+                          {turno.ceno && costoCena > 0 && (
+                            <View style={styles.financialRow}>
+                              <Text style={styles.discountLabel}>Cena:</Text>
+                              <Text style={styles.discountValue}>-${costoCena.toLocaleString('es-CO')}</Text>
+                            </View>
+                          )}
+                          {descuentosLlegadaTarde > 0 && (
+                            <View style={styles.financialRow}>
+                              <Text style={styles.discountLabel}>Llegada Tarde:</Text>
+                              <Text style={styles.discountValue}>-${descuentosLlegadaTarde.toLocaleString('es-CO')}</Text>
+                            </View>
+                          )}
+                          {descuentosLlegadaTardePendiente > 0 && (
+                            <View style={styles.financialRow}>
+                              <Text style={[styles.discountLabel, { color: '#f59e0b' }]}>Retraso (P):</Text>
+                              <Text style={[styles.discountValue, { color: '#f59e0b' }]}>-${descuentosLlegadaTardePendiente.toLocaleString('es-CO')}</Text>
+                            </View>
+                          )}
+                          <View style={[styles.financialRow, { borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 8, marginTop: 4 }]}>
+                            <Text style={styles.netMoneyLabel}>Neto:</Text>
+                            <Text style={styles.netMoneyValue}>${neto.toLocaleString('es-CO')}</Text>
+                          </View>
+                        </View>
+                      );
+                    })()}
                   </Card>
                 ))}
               </View>

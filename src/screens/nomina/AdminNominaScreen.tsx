@@ -476,7 +476,7 @@ export default function AdminNominaScreen({ navigation }: any) {
                     {resumen.turnos?.map((t: any) => (
                       <View key={t.IDturno} style={styles.itemRow}>
                         <Text style={{ flex: 1, fontSize: 13 }}>
-                          {new Date(t.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', day: '2-digit', month: 'short' })}
+                          {new Date(t.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })}
                         </Text>
                         <Text style={{ flex: 1, fontSize: 13, textAlign: 'center' }}>
                           {t.horaEntrada ? new Date(t.horaEntrada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
