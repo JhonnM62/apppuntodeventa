@@ -476,7 +476,7 @@ export default function AdminNominaScreen({ navigation }: any) {
                     {resumen.turnos?.map((t: any) => (
                       <View key={t.IDturno} style={styles.itemRow}>
                         <Text style={{ flex: 1, fontSize: 13 }}>
-                          {new Date(t.fecha).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}
+                          {new Date(t.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', day: '2-digit', month: 'short' })}
                         </Text>
                         <Text style={{ flex: 1, fontSize: 13, textAlign: 'center' }}>
                           {t.horaEntrada ? new Date(t.horaEntrada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
@@ -494,7 +494,7 @@ export default function AdminNominaScreen({ navigation }: any) {
                           <Text style={{ fontSize: 13 }}>{d.concepto}</Text>
                           {d.fecha && (
                             <Text style={{ fontSize: 11, color: '#6b7280', textTransform: 'capitalize' }}>
-                              {new Date(d.fecha).toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short' })}
+                              {new Date(d.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })}
                             </Text>
                           )}
                         </View>
@@ -552,7 +552,7 @@ export default function AdminNominaScreen({ navigation }: any) {
                   }}
                 >
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 13, fontWeight: '500' }}>{new Date(d.fecha).toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short' })}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '500' }}>{new Date(d.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })}</Text>
                     <Text style={{ fontSize: 11, color: '#6b7280' }}>{d.descripcion}</Text>
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>

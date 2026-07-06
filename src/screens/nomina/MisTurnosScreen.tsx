@@ -217,33 +217,39 @@ export default function MisTurnosScreen({ navigation }: any) {
                           const neto = Number(turno.valorTurno || 0) - descuentosCaja - costoCena - descuentosLlegadaTarde;
                           
                           return (
-                            <View>
-                              <Text style={styles.moneyText}>
-                                Bruto: ${Number(turno.valorTurno || 0).toLocaleString('es-CO')}
-                              </Text>
+                            <View style={styles.financialContainer}>
+                              <View style={styles.financialRow}>
+                                <Text style={styles.moneyLabel}>Bruto:</Text>
+                                <Text style={styles.moneyValue}>${Number(turno.valorTurno || 0).toLocaleString('es-CO')}</Text>
+                              </View>
                               {descuentosCaja > 0 && (
-                                <Text style={styles.discountText}>
-                                  Dtos: -${descuentosCaja.toLocaleString('es-CO')}
-                                </Text>
+                                <View style={styles.financialRow}>
+                                  <Text style={styles.discountLabel}>Dtos:</Text>
+                                  <Text style={styles.discountValue}>-${descuentosCaja.toLocaleString('es-CO')}</Text>
+                                </View>
                               )}
                               {turno.ceno && costoCena > 0 && (
-                                <Text style={styles.discountText}>
-                                  Cena: -${costoCena.toLocaleString('es-CO')}
-                                </Text>
+                                <View style={styles.financialRow}>
+                                  <Text style={styles.discountLabel}>Cena:</Text>
+                                  <Text style={styles.discountValue}>-${costoCena.toLocaleString('es-CO')}</Text>
+                                </View>
                               )}
                               {descuentosLlegadaTarde > 0 && (
-                                <Text style={styles.discountText}>
-                                  Llegada Tarde: -${descuentosLlegadaTarde.toLocaleString('es-CO')}
-                                </Text>
+                                <View style={styles.financialRow}>
+                                  <Text style={styles.discountLabel}>Llegada Tarde:</Text>
+                                  <Text style={styles.discountValue}>-${descuentosLlegadaTarde.toLocaleString('es-CO')}</Text>
+                                </View>
                               )}
                               {descuentosLlegadaTardePendiente > 0 && (
-                                <Text style={[styles.discountText, { color: '#f59e0b' }]}>
-                                  Retraso (Pendiente): -${descuentosLlegadaTardePendiente.toLocaleString('es-CO')}
-                                </Text>
+                                <View style={styles.financialRow}>
+                                  <Text style={[styles.discountLabel, { color: '#f59e0b' }]}>Retraso (P):</Text>
+                                  <Text style={[styles.discountValue, { color: '#f59e0b' }]}>-${descuentosLlegadaTardePendiente.toLocaleString('es-CO')}</Text>
+                                </View>
                               )}
-                              <Text style={styles.netMoneyText}>
-                                Neto: ${neto.toLocaleString('es-CO')}
-                              </Text>
+                              <View style={[styles.financialRow, { borderTopWidth: 1, borderTopColor: '#f3f4f6', paddingTop: 6, marginTop: 4 }]}>
+                                <Text style={styles.netMoneyLabel}>Neto:</Text>
+                                <Text style={styles.netMoneyValue}>${neto.toLocaleString('es-CO')}</Text>
+                              </View>
                             </View>
                           );
                         })()}
@@ -304,11 +310,16 @@ const styles = StyleSheet.create({
   timeText: { fontSize: 13, fontWeight: '500', color: '#4b5563', marginLeft: 4 },
   obsText: { fontSize: 12, color: '#9ca3af', marginTop: 4, fontStyle: 'italic' },
   
-  cardRight: { alignItems: 'flex-end', justifyContent: 'center' },
+  cardRight: { alignItems: 'flex-end', justifyContent: 'flex-start' },
   statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, marginBottom: 6 },
   statusText: { fontSize: 10, fontWeight: '800' },
-  moneyText: { fontSize: 12, fontWeight: '600', color: '#6b7280' },
-  discountText: { fontSize: 12, fontWeight: '600', color: '#ef4444' },
-  netMoneyText: { fontSize: 14, fontWeight: '800', color: '#10b981', marginTop: 2 },
-  cenoText: { fontSize: 11, color: '#6b7280', marginTop: 2 }
+  financialContainer: { marginTop: 12, padding: 12, backgroundColor: '#f9fafb', borderRadius: 8, borderWidth: 1, borderColor: '#e5e7eb' },
+  financialRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+  moneyLabel: { fontSize: 13, color: '#4b5563' },
+  moneyValue: { fontSize: 13, fontWeight: '600', color: '#111827' },
+  discountLabel: { fontSize: 13, color: '#ef4444' },
+  discountValue: { fontSize: 13, fontWeight: '600', color: '#ef4444' },
+  netMoneyLabel: { fontSize: 14, fontWeight: '700', color: '#111827' },
+  netMoneyValue: { fontSize: 15, fontWeight: '800', color: '#10b981' },
+  cenoText: { fontSize: 11, color: '#6b7280', marginTop: 8, textAlign: 'right' }
 });
