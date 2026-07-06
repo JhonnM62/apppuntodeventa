@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, FlatList, Modal, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, FlatList, Modal, KeyboardAvoidingView, Platform, Keyboard, SectionList, TextInput } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text } from '../../components/ui/text';
 import { Input } from '../../components/ui/input';
@@ -59,6 +59,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
   const [descuentos, setDescuentos] = useState<any[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [selectedQuincena, setSelectedQuincena] = useState(QUINCENAS[0]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Modal form states
   const [modalVisible, setModalVisible] = useState(false);
@@ -274,29 +275,64 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
     );
   };
 
-  const renderDescuento = ({ item }: { item: any }) => {
+  // Lógica de filtrado y agrupación
+  const filteredDescuentos = descuentos.filter(d => {
+    const q = searchQuery.toLowerCase();
+    const nombre = (d.usuario?.nombre || '').toLowerCase();
+    const desc = (d.descripcion || '').toLowerCase();
+    const conc = (d.concepto || '').toLowerCase();
+    return nombre.includes(q) || desc.includes(q) || conc.includes(q);
+  });
+
+  const groupedMap = new Map<string, any>();
+  filteredDescuentos.forEach(d => {
+    const empleadoId = d.usuario?.IDusuarios || 'unknown';
+    const empleadoName = d.usuario?.nombre || 'Empleado';
+    if (!groupedMap.has(empleadoId)) {
+      groupedMap.set(empleadoId, {
+        id: empleadoId,
+        title: empleadoName,
+        total: 0,
+        data: []
+      });
+    }
+    const group = groupedMap.get(empleadoId);
+    group.total += Number(d.valor);
+    group.data.push(d);
+  });
+
+  const sectionData = Array.from(groupedMap.values()).sort((a, b) => a.title.localeCompare(b.title));
+
+  const renderSectionHeader = ({ section }: { section: any }) => (
+    <View style={styles.sectionHeader}>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={styles.sectionAvatar}>
+          <Text style={styles.sectionAvatarText}>{section.title.charAt(0).toUpperCase()}</Text>
+        </View>
+        <Text style={styles.sectionTitle}>{section.title}</Text>
+      </View>
+      <Text style={styles.sectionTotal}>-${section.total.toLocaleString('es-CO')}</Text>
+    </View>
+  );
+
+  const renderDescuento = ({ item, index, section }: { item: any, index: number, section: any }) => {
+    const isLast = index === section.data.length - 1;
     return (
-      <TouchableOpacity style={styles.card} onPress={() => openEditForm(item)}>
-        <View style={styles.cardHeader}>
-          <View style={styles.cardIconBg}>
-            <MaterialCommunityIcons name="percent-circle-outline" size={20} color="#ec4899" />
+      <TouchableOpacity style={[styles.cardItem, isLast && styles.cardItemLast]} onPress={() => openEditForm(item)}>
+        <View style={styles.cardHeaderSmall}>
+          <View style={styles.badgeConceptoSmall}>
+            <Text style={styles.badgeTextSmall}>{item.concepto.replace('_', ' ')}</Text>
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.cardTitle}>{item.usuario?.nombre || 'Empleado'}</Text>
-            <Text style={styles.cardSubtitle}>{new Date(item.fecha).toLocaleDateString()}</Text>
-          </View>
-          <View style={{ alignItems: 'flex-end' }}>
-            <Text style={styles.cardValor}>-${Number(item.valor).toLocaleString('es-CO')}</Text>
-            <TouchableOpacity onPress={() => handleDeleteDescuento(item)} style={{ marginTop: 8 }}>
-              <Ionicons name="trash" size={18} color="#ef4444" />
+          <Text style={styles.cardSubtitleSmall}>{new Date(item.fecha).toLocaleDateString()}</Text>
+        </View>
+        <View style={styles.cardBodySmall}>
+          <Text style={styles.cardDescSmall}>{item.descripcion}</Text>
+          <View style={{ alignItems: 'flex-end', justifyContent: 'flex-end' }}>
+            <Text style={styles.cardValorSmall}>-${Number(item.valor).toLocaleString('es-CO')}</Text>
+            <TouchableOpacity onPress={(e) => { e.stopPropagation(); handleDeleteDescuento(item); }} style={{ padding: 4, marginTop: 4 }}>
+              <Ionicons name="trash" size={16} color="#ef4444" />
             </TouchableOpacity>
           </View>
-        </View>
-        <View style={styles.cardBody}>
-          <View style={styles.badgeConcepto}>
-            <Text style={styles.badgeText}>{item.concepto}</Text>
-          </View>
-          <Text style={styles.cardDesc}>{item.descripcion}</Text>
         </View>
       </TouchableOpacity>
     );
@@ -325,21 +361,38 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
           renderItem={renderQuincenaItem}
           contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 12, gap: 8 }}
         />
+        <View style={styles.searchContainer}>
+          <Ionicons name="search" size={20} color="#9ca3af" />
+          <TextInput
+            style={styles.searchInput as any}
+            placeholder="Buscar por empleado, concepto..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor="#9ca3af"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <Ionicons name="close-circle" size={20} color="#9ca3af" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {loadingList ? (
         <ActivityIndicator size="large" color="#ec4899" style={{ marginTop: 40 }} />
       ) : (
-        <FlatList
-          data={descuentos}
+        <SectionList
+          sections={sectionData}
           keyExtractor={item => item.IDdescuento}
           renderItem={renderDescuento}
+          renderSectionHeader={renderSectionHeader}
           contentContainerStyle={{ padding: 16, paddingBottom: 120 }}
+          stickySectionHeadersEnabled={false}
           ListEmptyComponent={
             <View style={styles.emptyState}>
               <MaterialCommunityIcons name="cash-remove" size={48} color="#d1d5db" />
               <Text style={styles.emptyText}>No hay descuentos</Text>
-              <Text style={styles.emptySubtext}>No se encontraron registros en esta quincena.</Text>
+              <Text style={styles.emptySubtext}>No se encontraron registros para esta búsqueda.</Text>
             </View>
           }
         />
@@ -695,16 +748,24 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 18, fontWeight: '700', color: '#374151', marginTop: 16 },
   emptySubtext: { fontSize: 14, color: '#6b7280', marginTop: 6 },
 
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  cardIconBg: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#fdf2f8', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#111827' },
-  cardSubtitle: { fontSize: 12, color: '#6b7280', marginTop: 2 },
-  cardValor: { fontSize: 16, fontWeight: '800', color: '#be185d' },
-  cardBody: { backgroundColor: '#f9fafb', borderRadius: 8, padding: 12 },
-  badgeConcepto: { alignSelf: 'flex-start', backgroundColor: '#f3f4f6', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginBottom: 8 },
-  badgeText: { fontSize: 11, fontWeight: '700', color: '#4b5563' },
-  cardDesc: { fontSize: 13, color: '#374151' },
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', marginHorizontal: 16, marginBottom: 12, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb', height: 40 },
+  searchInput: { flex: 1, marginLeft: 8, fontSize: 14, color: '#111827', height: '100%', outlineStyle: 'none' as any },
+
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fdf2f8', padding: 12, borderTopLeftRadius: 12, borderTopRightRadius: 12, marginTop: 16, borderWidth: 1, borderColor: '#fbcfe8', borderBottomWidth: 0 },
+  sectionAvatar: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#ec4899', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
+  sectionAvatarText: { color: '#fff', fontSize: 14, fontWeight: 'bold' },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#831843' },
+  sectionTotal: { fontSize: 16, fontWeight: '800', color: '#be185d' },
+
+  cardItem: { backgroundColor: '#fff', padding: 12, borderWidth: 1, borderColor: '#e5e7eb', borderTopWidth: 0 },
+  cardItemLast: { borderBottomLeftRadius: 12, borderBottomRightRadius: 12, borderBottomWidth: 1, marginBottom: 8 },
+  cardHeaderSmall: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  badgeConceptoSmall: { backgroundColor: '#f3f4f6', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
+  badgeTextSmall: { fontSize: 10, fontWeight: '700', color: '#4b5563' },
+  cardSubtitleSmall: { fontSize: 11, color: '#6b7280' },
+  cardBodySmall: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  cardDescSmall: { flex: 1, fontSize: 13, color: '#374151', paddingRight: 8 },
+  cardValorSmall: { fontSize: 14, fontWeight: '700', color: '#be185d' },
 
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
