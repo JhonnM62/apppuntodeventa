@@ -67,3 +67,38 @@ export const deleteCargo = async (id: string) => {
   const { data } = await api.delete(`/cargos/${id}`);
   return data;
 };
+
+export interface ExcepcionHorarioCargo {
+  id: string;
+  cargoId: string;
+  fecha: string;
+  nombre: string;
+  tarifa: string | number;
+  horaEntrada: string;
+  horaSalida: string;
+  createdAt: string;
+}
+
+export interface CreateExcepcionHorarioDto {
+  cargoId: string;
+  fecha: string;
+  nombre: string;
+  tarifa: number;
+  horaEntrada: string;
+  horaSalida: string;
+}
+
+export const getExcepcionesPorCargo = async (cargoId: string) => {
+  const { data } = await api.get(`/cargos/excepcion-horario/${cargoId}`);
+  return data;
+};
+
+export const createExcepcionHorario = async (dto: CreateExcepcionHorarioDto) => {
+  const { data } = await api.post('/cargos/excepcion-horario', dto);
+  return data;
+};
+
+export const deleteExcepcionHorario = async (id: string) => {
+  const { data } = await api.delete(`/cargos/excepcion-horario/${id}`);
+  return data;
+};

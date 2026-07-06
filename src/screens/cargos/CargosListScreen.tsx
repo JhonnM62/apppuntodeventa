@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getCargos, createCargo, updateCargo, deleteCargo, Cargo, DIAS_SEMANA } from '../../services/cargos.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import ExcepcionHorarioModal from './ExcepcionHorarioModal';
 
 const ROLES_DISPONIBLES = [
   { key: 'Admin app',    label: 'Admin App',     description: 'Administrador de la aplicación' },
@@ -107,6 +108,9 @@ export default function CargosListScreen({ navigation }: any) {
   const [editingCargo, setEditingCargo] = useState<Cargo | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  const [excModalVisible, setExcModalVisible] = useState(false);
+  const [excCargo, setExcCargo] = useState<Cargo | null>(null);
 
   // Escuchar teclado para Android
   useEffect(() => {
@@ -324,6 +328,9 @@ export default function CargosListScreen({ navigation }: any) {
                       )}
                     </View>
                     <View style={styles.cardActions}>
+                      <TouchableOpacity onPress={() => { setExcCargo(cargo); setExcModalVisible(true); }} style={styles.actionBtnEvent}>
+                        <Ionicons name="calendar-outline" size={14} color="#f59e0b" />
+                      </TouchableOpacity>
                       <TouchableOpacity onPress={() => openForm(cargo)} style={styles.actionBtnEdit}>
                         <Ionicons name="pencil" size={14} color="#3b82f6" />
                       </TouchableOpacity>
@@ -560,6 +567,15 @@ export default function CargosListScreen({ navigation }: any) {
         </KeyboardAvoidingView>
       </Modal>
 
+      <ExcepcionHorarioModal 
+        visible={excModalVisible} 
+        cargo={excCargo} 
+        onClose={() => {
+          setExcModalVisible(false);
+          setExcCargo(null);
+        }} 
+      />
+
       {timePickerConfig.show && Platform.OS !== 'web' && (
         <DateTimePicker
           value={timePickerConfig.currentValue}
@@ -574,28 +590,28 @@ export default function CargosListScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container:       { flex: 1, backgroundColor: '#f3f4f6' },
-  header:          { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-  backBtn:         { padding: 8 },
-  title:           { fontSize: 20, fontWeight: '700', color: '#111827' },
-  addBtn:          { width: 40, height: 40, borderRadius: 20, backgroundColor: '#4CAF50', justifyContent: 'center', alignItems: 'center' },
-  content:         { padding: 16 },
-  emptyState:      { alignItems: 'center', paddingTop: 60 },
-  emptyText:       { fontSize: 18, fontWeight: '700', color: '#374151', marginTop: 16 },
-  emptySubtext:    { fontSize: 14, color: '#6b7280', marginTop: 6 },
+  container:       { flex: 1, backgroundColor: '#f9fafb' },
+  header: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#4CAF50', paddingHorizontal: 20, paddingVertical: 16, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 },
+  backBtn: { padding: 8, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 12, marginRight: 12 },
+  title: { flex: 1, fontSize: 22, fontWeight: 'bold', color: '#FFF' },
+  addBtn: { padding: 8, backgroundColor: 'rgba(255,255,255,0.2)', borderRadius: 12 },
+  content: { flex: 1, padding: 16 },
 
-  card:            { backgroundColor: '#fff', borderRadius: 16, marginBottom: 14, padding: 16, elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 },
-  cardHeader:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  cardTitleRow:    { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  cardIconBg:      { width: 32, height: 32, borderRadius: 10, backgroundColor: '#f0fdf4', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
-  cardTitle:       { fontSize: 16, fontWeight: '800', color: '#111827' },
-  cardActions:     { flexDirection: 'row', gap: 10 },
-  actionBtnEdit:   { width: 34, height: 34, borderRadius: 8, backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center' },
-  actionBtnDelete: { width: 34, height: 34, borderRadius: 8, backgroundColor: '#fef2f2', justifyContent: 'center', alignItems: 'center' },
-  avgText:         { fontSize: 11, color: '#6b7280', marginTop: 1 },
-  avgValue:        { fontWeight: '700', color: '#16a34a' },
+  emptyState: { alignItems: 'center', justifyContent: 'center', marginTop: 100 },
+  emptyText: { fontSize: 18, fontWeight: '600', color: '#6b7280', marginTop: 16 },
+  emptySubtext: { fontSize: 14, color: '#9ca3af', marginTop: 8 },
 
-  // Grilla compacta de días (7 celdas en wrap)
+  card: { backgroundColor: '#fff', borderRadius: 16, padding: 16, marginBottom: 16, elevation: 2, shadowColor: '#000', shadowOffset: { width:0, height:2 }, shadowOpacity: 0.05, shadowRadius: 4 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  cardIconBg: { backgroundColor: '#dcfce7', width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+  cardTitle: { fontSize: 18, fontWeight: 'bold', color: '#111827' },
+  avgText: { fontSize: 13, color: '#6b7280', marginTop: 2 },
+  avgValue: { fontWeight: '700', color: '#16a34a' },
+  cardActions: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  actionBtnEdit: { backgroundColor: '#eff6ff', padding: 8, borderRadius: 10 },
+  actionBtnDelete: { backgroundColor: '#fef2f2', padding: 8, borderRadius: 10 },
+  actionBtnEvent: { backgroundColor: '#fef3c7', padding: 8, borderRadius: 10 },
+
   daysGrid:           { flexDirection: 'row', flexWrap: 'wrap', marginTop: 8, marginBottom: 6, gap: 6 },
   dayCell:            { width: '23%', minWidth: 60, alignItems: 'center', backgroundColor: '#f9fafb', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 2, borderWidth: 1, borderColor: '#e5e7eb' },
   dayCellWeekend:     { backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' },
@@ -608,7 +624,6 @@ const styles = StyleSheet.create({
   cenaText:        { fontSize: 11, color: '#92400e' },
   cenaVal:         { fontWeight: '700', color: '#d97706' },
 
-  // Modal
   modalOverlay:    { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent:    { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, maxHeight: '90%' },
   modalHeader:     { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
@@ -618,7 +633,6 @@ const styles = StyleSheet.create({
   sublabel:        { fontSize: 12, color: '#6b7280', marginBottom: 12, lineHeight: 18 },
   modalActions:    { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 16, borderTopWidth: 1, borderTopColor: '#e5e7eb' },
 
-  // Dropdown
   dropdownButton:       { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3f4f6', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 14 },
   dropdownButtonText:   { flex: 1, fontSize: 15, color: '#111827' },
   dropdownMenu:         { backgroundColor: '#fff', borderRadius: 12, marginTop: 8, elevation: 4, borderWidth: 1, borderColor: '#e5e7eb' },
