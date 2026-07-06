@@ -126,14 +126,18 @@ export default function ExcepcionHorarioModal({ visible, cargo, onClose }: Props
             <View style={{ flex: 1, marginRight: 8 }}>
               <Text style={styles.label}>Fecha</Text>
               {Platform.OS === 'web' ? (
-                <TextInput
-                  style={[styles.input, { paddingVertical: 8 }]}
-                  value={fecha.toISOString().split('T')[0]}
-                  onChangeText={(text) => {
-                    if (text) setFecha(new Date(text + 'T12:00:00Z'));
-                  }}
-                  {...({ type: 'date' } as any)}
-                />
+                React.createElement('input', {
+                  type: 'date',
+                  value: fecha.toISOString().split('T')[0],
+                  onChange: (e: any) => {
+                    if (e.target.value) setFecha(new Date(e.target.value + 'T12:00:00Z'));
+                  },
+                  style: {
+                    backgroundColor: '#f9fafb', borderWidth: '1px', borderColor: '#e5e7eb',
+                    borderRadius: '8px', padding: '10px 12px', fontSize: '14px',
+                    color: '#111827', width: '100%', outline: 'none'
+                  }
+                })
               ) : (
                 <>
                   <TouchableOpacity style={styles.dateBtn} onPress={() => setShowDatePicker(true)}>
@@ -169,19 +173,23 @@ export default function ExcepcionHorarioModal({ visible, cargo, onClose }: Props
             <View style={{ flex: 1, marginRight: 8 }}>
               <Text style={styles.label}>Entrada</Text>
               {Platform.OS === 'web' ? (
-                <TextInput
-                  style={[styles.input, { paddingVertical: 8 }]}
-                  value={horaEntrada.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                  onChangeText={(text) => {
-                    if (text) {
-                      const [h, m] = text.split(':');
+                React.createElement('input', {
+                  type: 'time',
+                  value: horaEntrada.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+                  onChange: (e: any) => {
+                    if (e.target.value) {
+                      const [h, m] = e.target.value.split(':');
                       const d = new Date(horaEntrada);
                       d.setHours(Number(h), Number(m));
                       setHoraEntrada(d);
                     }
-                  }}
-                  {...({ type: 'time' } as any)}
-                />
+                  },
+                  style: {
+                    backgroundColor: '#f9fafb', borderWidth: '1px', borderColor: '#e5e7eb',
+                    borderRadius: '8px', padding: '10px 12px', fontSize: '14px',
+                    color: '#111827', width: '100%', outline: 'none'
+                  }
+                })
               ) : (
                 <>
                   <TouchableOpacity style={styles.dateBtn} onPress={() => setShowTimeEntrada(true)}>
@@ -207,19 +215,23 @@ export default function ExcepcionHorarioModal({ visible, cargo, onClose }: Props
             <View style={{ flex: 1, marginRight: 8 }}>
               <Text style={styles.label}>Salida</Text>
               {Platform.OS === 'web' ? (
-                <TextInput
-                  style={[styles.input, { paddingVertical: 8 }]}
-                  value={horaSalida.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
-                  onChangeText={(text) => {
-                    if (text) {
-                      const [h, m] = text.split(':');
+                React.createElement('input', {
+                  type: 'time',
+                  value: horaSalida.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+                  onChange: (e: any) => {
+                    if (e.target.value) {
+                      const [h, m] = e.target.value.split(':');
                       const d = new Date(horaSalida);
                       d.setHours(Number(h), Number(m));
                       setHoraSalida(d);
                     }
-                  }}
-                  {...({ type: 'time' } as any)}
-                />
+                  },
+                  style: {
+                    backgroundColor: '#f9fafb', borderWidth: '1px', borderColor: '#e5e7eb',
+                    borderRadius: '8px', padding: '10px 12px', fontSize: '14px',
+                    color: '#111827', width: '100%', outline: 'none'
+                  }
+                })
               ) : (
                 <>
                   <TouchableOpacity style={styles.dateBtn} onPress={() => setShowTimeSalida(true)}>
