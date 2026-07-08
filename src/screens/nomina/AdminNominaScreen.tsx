@@ -612,14 +612,19 @@ export default function AdminNominaScreen({ navigation }: any) {
 
                 return (
                   <>
-                    <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-                      <View>
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16}}>
+                      <View style={{ flex: 1 }}>
                         <Text style={styles.modalTitle}>Resumen de Pagos</Text>
                         <Text style={styles.modalSubtitle}>{selectedEmpleado?.nombre}</Text>
                       </View>
-                      <TouchableOpacity onPress={previewPdf} style={{backgroundColor: '#e0e7ff', padding: 8, borderRadius: 8}}>
-                        <Ionicons name="document-text" size={24} color="#4338ca" />
-                      </TouchableOpacity>
+                      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <TouchableOpacity onPress={previewPdf} style={{backgroundColor: '#e0e7ff', padding: 8, borderRadius: 8, marginRight: 12}}>
+                          <Ionicons name="document-text" size={24} color="#4338ca" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => setSelectedEmpleado(null)} style={{ padding: 4 }} disabled={liquidando || recalculando}>
+                          <Ionicons name="close" size={26} color="#6b7280" />
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   
                   <ScrollView style={{ maxHeight: 400, marginVertical: 16 }}>
@@ -732,8 +737,15 @@ export default function AdminNominaScreen({ navigation }: any) {
       <Modal visible={showTurnosAnteriores} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Turnos Anteriores Pendientes</Text>
-            <Text style={styles.modalSubtitle}>Selecciona los turnos de meses pasados a incluir en este pago</Text>
+            <View style={{ marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.modalTitle}>Turnos Anteriores Pendientes</Text>
+                <Text style={styles.modalSubtitle}>Selecciona los turnos de meses pasados a incluir en este pago</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowTurnosAnteriores(false)} style={{ padding: 4, marginLeft: 8 }}>
+                <Ionicons name="close" size={26} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
             
             <ScrollView style={{ maxHeight: 300, marginBottom: 16 }}>
               {resumen?.turnosAnteriores?.map((t: any) => {
