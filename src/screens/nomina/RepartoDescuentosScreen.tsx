@@ -947,11 +947,17 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
                   {(['resumen', 'editar'] as const).map(tab => (
                     <TouchableOpacity
                       key={tab}
-                      style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: gestionTab === tab ? '#fff' : 'transparent' }}
+                      style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: gestionTab === tab ? '#fff' : 'transparent', flexDirection: 'row', justifyContent: 'center' }}
                       onPress={() => setGestionTab(tab)}
                     >
+                      <Ionicons 
+                        name={tab === 'resumen' ? 'people' : 'pencil'} 
+                        size={16} 
+                        color={gestionTab === tab ? '#be185d' : '#6b7280'} 
+                        style={{ marginRight: 6 }} 
+                      />
                       <Text style={{ fontWeight: '700', fontSize: 14, color: gestionTab === tab ? '#be185d' : '#6b7280' }}>
-                        {tab === 'resumen' ? '👥 Resumen' : '✏️ Editar'}
+                        {tab === 'resumen' ? 'Resumen' : 'Editar'}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -995,7 +1001,10 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
                         style={{ backgroundColor: '#fef2f2', marginTop: 20 }}
                         onPress={handleDeleteLoteCompleto}
                       >
-                        <Text style={{ color: '#ef4444', fontWeight: '700', fontSize: 15 }}>🗑️ Eliminar grupo completo</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                          <Ionicons name="trash-outline" size={18} color="#ef4444" style={{ marginRight: 8 }} />
+                          <Text style={{ color: '#ef4444', fontWeight: '700', fontSize: 15 }}>Eliminar grupo completo</Text>
+                        </View>
                       </Button>
                     </>
                   ) : (
