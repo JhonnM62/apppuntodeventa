@@ -9,6 +9,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
+import TurnoManualModal from './TurnoManualModal';
+import SignatureModal from '../../components/ui/SignatureModal';
+let Print: any = null;
+try {
+  Print = require('expo-print');
+} catch (e) {
+  console.warn('expo-print no está disponible');
+}
+import { generarLiquidacionHTML } from '../../utils/nominaPdf';
 
 export default function AdminNominaScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -25,6 +34,8 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [loadingResumen, setLoadingResumen] = useState(false);
   const [liquidando, setLiquidando] = useState(false);
   const [recalculando, setRecalculando] = useState(false);
+  const [minDateLiquidacion, setMinDateLiquidacion] = useState('');
+  const [maxDateLiquidacion, setMaxDateLiquidacion] = useState('');
 
   // Modal states for Historial de Turnos
   const [historyEmpleado, setHistoryEmpleado] = useState<any>(null);
@@ -44,6 +55,13 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [selectedLlegadas, setSelectedLlegadas] = useState<string[]>([]);
   const [aplicandoLlegadas, setAplicandoLlegadas] = useState(false);
 
+  // Turnos Manuales
+  const [showTurnoManualModal, setShowTurnoManualModal] = useState(false);
+  const [empleadoTurnoManual, setEmpleadoTurnoManual] = useState<any>(null);
+
+  // Firma Admin
+  const [showSignatureAdmin, setShowSignatureAdmin] = useState(false);
+  const [firmaAdmin, setFirmaAdmin] = useState<string>('');
 
   useEffect(() => {
     loadData();
@@ -217,6 +235,47 @@ export default function AdminNominaScreen({ navigation }: any) {
     }
   };
 
+  const getLiquidacionDates = () => {
+    let minDate, maxDate;
+    const hasTurnos = resumen?.turnos && resumen.turnos.length > 0;
+    const hasDescuentos = resumen?.descuentos && resumen.descuentos.length > 0;
+    
+    if (hasTurnos) {
+      const fechas = resumen.turnos.map((t: any) => new Date(t.fecha).getTime());
+      minDate = new Date(Math.min(...fechas)).toISOString();
+      maxDate = new Date(Math.max(...fechas)).toISOString();
+    } else if (hasDescuentos) {
+      const fechas = resumen.descuentos.map((d: any) => new Date(d.fecha).getTime());
+      minDate = new Date(Math.min(...fechas)).toISOString();
+      maxDate = new Date(Math.max(...fechas)).toISOString();
+    }
+    return { minDate, maxDate };
+  };
+
+  const previewPdf = async () => {
+    if (!selectedEmpleado || !resumen) return;
+    const { minDate, maxDate } = getLiquidacionDates();
+    if (!minDate || !maxDate) return;
+
+    const html = generarLiquidacionHTML({
+      empleadoNombre: selectedEmpleado.nombre,
+      empleadoCargo: selectedEmpleado.cargo?.nombre || 'Empleado',
+      fechaInicio: minDate,
+      fechaFin: maxDate,
+      turnos: resumen.turnos || [],
+      descuentos: resumen.descuentos || [],
+      totalBruto: resumen.totalBruto,
+      totalDescuentos: resumen.totalDescuentos,
+      totalNeto: resumen.totalNeto,
+      firmaAdmin: firmaAdmin,
+    });
+    
+    if (!Print) {
+      return showAlert({ type: 'error', title: 'Módulo no disponible', message: 'El módulo de impresión PDF no está compilado en esta versión.' });
+    }
+    await Print.printAsync({ html });
+  };
+
   const handleLiquidar = () => {
     const hasTurnos = resumen?.turnos && resumen.turnos.length > 0;
     const hasDescuentos = resumen?.descuentos && resumen.descuentos.length > 0;
@@ -225,42 +284,44 @@ export default function AdminNominaScreen({ navigation }: any) {
       return showAlert({ type: 'error', title: 'Aviso', message: 'No hay turnos ni descuentos pendientes por liquidar' });
     }
 
+    const { minDate, maxDate } = getLiquidacionDates();
+    setMinDateLiquidacion(minDate as string);
+    setMaxDateLiquidacion(maxDate as string);
+
     showAlert({
       type: 'confirm',
       title: 'Liquidar Empleado',
-      message: `¿Estás seguro de liquidar a ${selectedEmpleado.nombre} por un total de $${Number(resumen.totalNeto).toLocaleString('es-CO')}?`,
+      message: `¿Estás seguro de liquidar a ${selectedEmpleado.nombre} por un total de $${Number(resumen.totalNeto).toLocaleString('es-CO')}?\n\nPresiona "Liquidar" para continuar y firmar el documento.`,
       confirmText: 'Liquidar',
-      onConfirm: async () => {
-        try {
-          setLiquidando(true);
-          let minDate, maxDate;
-          
-          if (hasTurnos) {
-            const fechas = resumen.turnos.map((t: any) => new Date(t.fecha).getTime());
-            minDate = new Date(Math.min(...fechas)).toISOString();
-            maxDate = new Date(Math.max(...fechas)).toISOString();
-          } else {
-            const fechas = resumen.descuentos.map((d: any) => new Date(d.fecha).getTime());
-            minDate = new Date(Math.min(...fechas)).toISOString();
-            maxDate = new Date(Math.max(...fechas)).toISOString();
-          }
-
-          await liquidarEmpleado({
-            usuarioId: selectedEmpleado.IDusuarios,
-            fechaDesde: minDate,
-            fechaHasta: maxDate
-          });
-          
-          showAlert({ type: 'success', title: 'Éxito', message: 'Liquidación generada correctamente' });
-          setSelectedEmpleado(null);
-        } catch (error) {
-          console.error(error);
-          showAlert({ type: 'error', title: 'Error', message: 'No se pudo generar la liquidación' });
-        } finally {
-          setLiquidando(false);
-        }
+      onConfirm: () => {
+        setShowSignatureAdmin(true);
       }
     });
+  };
+
+  const handleSaveSignature = async (firma: string) => {
+    setFirmaAdmin(firma);
+    setShowSignatureAdmin(false);
+    
+    try {
+      setLiquidando(true);
+      await liquidarEmpleado({
+        usuarioId: selectedEmpleado.IDusuarios,
+        fechaDesde: minDateLiquidacion,
+        fechaHasta: maxDateLiquidacion,
+        firmaAdmin: firma
+      });
+      
+      showAlert({ type: 'success', title: 'Éxito', message: 'Liquidación generada correctamente' });
+      setSelectedEmpleado(null);
+      setFirmaAdmin('');
+      loadData();
+    } catch (error) {
+      console.error(error);
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo generar la liquidación' });
+    } finally {
+      setLiquidando(false);
+    }
   };
 
   const handleRecalcular = async () => {
@@ -406,10 +467,19 @@ export default function AdminNominaScreen({ navigation }: any) {
                     </View>
                   </TouchableOpacity>
                   
-                  <TouchableOpacity style={styles.actionBtn} onPress={() => openResumen(empleado)}>
-                    <Text style={styles.actionBtnText}>Ver Resumen</Text>
-                    <Ionicons name="chevron-forward" size={16} color="#3b82f6" />
-                  </TouchableOpacity>
+                  <View style={{flexDirection: 'row', borderTopWidth: 1, borderColor: '#f3f4f6'}}>
+                    <TouchableOpacity style={[styles.actionBtn, {flex: 1, borderRightWidth: 1, borderColor: '#f3f4f6'}]} onPress={() => {
+                      setEmpleadoTurnoManual(empleado);
+                      setShowTurnoManualModal(true);
+                    }}>
+                      <Ionicons name="add-circle-outline" size={16} color="#3b82f6" />
+                      <Text style={[styles.actionBtnText, {marginLeft: 4}]}>Turno Manual</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.actionBtn, {flex: 1}]} onPress={() => openResumen(empleado)}>
+                      <Text style={styles.actionBtnText}>Ver Resumen</Text>
+                      <Ionicons name="chevron-forward" size={16} color="#3b82f6" />
+                    </TouchableOpacity>
+                  </View>
                 </Card>
               );
             })
@@ -436,8 +506,15 @@ export default function AdminNominaScreen({ navigation }: any) {
 
                 return (
                   <>
-                    <Text style={styles.modalTitle}>Resumen de Pagos</Text>
-                  <Text style={styles.modalSubtitle}>{selectedEmpleado?.nombre}</Text>
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+                      <View>
+                        <Text style={styles.modalTitle}>Resumen de Pagos</Text>
+                        <Text style={styles.modalSubtitle}>{selectedEmpleado?.nombre}</Text>
+                      </View>
+                      <TouchableOpacity onPress={previewPdf} style={{backgroundColor: '#e0e7ff', padding: 8, borderRadius: 8}}>
+                        <Ionicons name="document-text" size={24} color="#4338ca" />
+                      </TouchableOpacity>
+                    </View>
                   
                   <ScrollView style={{ maxHeight: 400, marginVertical: 16 }}>
                     <View style={styles.summaryBox}>
@@ -770,6 +847,28 @@ export default function AdminNominaScreen({ navigation }: any) {
           is24Hour={false}
           display="default"
           onChange={handleDateChange}
+        />
+      )}
+
+      {showTurnoManualModal && (
+        <TurnoManualModal
+          visible={showTurnoManualModal}
+          empleado={empleadoTurnoManual}
+          onClose={() => {
+            setShowTurnoManualModal(false);
+            setEmpleadoTurnoManual(null);
+          }}
+          onSuccess={() => {
+            loadData();
+          }}
+        />
+      )}
+
+      {showSignatureAdmin && (
+        <SignatureModal
+          visible={showSignatureAdmin}
+          onClose={() => setShowSignatureAdmin(false)}
+          onSave={handleSaveSignature}
         />
       )}
 

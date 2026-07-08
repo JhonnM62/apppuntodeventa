@@ -6,9 +6,20 @@ import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getTurnoActivo, registrarEntrada, registrarSalida, Turno } from '../../services/nomina.service';
+import { getTurnoActivo, registrarEntrada, registrarSalida, Turno, firmarLiquidacion, getLiquidacionById } from '../../services/nomina.service';
 import { getConfiguracion } from '../../services/configuracion';
 import { useCustomAlert } from '../../context/CustomAlertContext';
+import { useSocket } from '../../hooks/useSocket';
+import useSocketEvent from '../../hooks/useSocketEvent';
+import useAuthStore from '../../store/useAuthStore';
+import SignatureModal from '../../components/ui/SignatureModal';
+let Print: any = null;
+try {
+  Print = require('expo-print');
+} catch (e) {
+  console.warn('expo-print no está disponible');
+}
+import { generarLiquidacionHTML } from '../../utils/nominaPdf';
 let ImagePicker: any;
 try {
   ImagePicker = require('expo-image-picker');
@@ -35,8 +46,15 @@ function calcularDistancia(lat1: number, lon1: number, lat2: number, lon2: numbe
 export default function CheckInScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { showAlert } = useCustomAlert();
+  const { user } = useAuthStore();
+  const { joinRoom, isConnected } = useSocket();
   const [loading, setLoading] = useState(true);
   const [turnoActivo, setTurnoActivo] = useState<Turno | null>(null);
+  
+  // Liquidación del empleado
+  const [pendingLiquidacion, setPendingLiquidacion] = useState<any>(null);
+  const [showSignatureEmpleado, setShowSignatureEmpleado] = useState(false);
+  const [liquidando, setLiquidando] = useState(false);
   
   const [fotoUri, setFotoUri] = useState<string | null>(null);
   const [location, setLocation] = useState<{ latitud: number, longitud: number } | null>(null);
@@ -64,6 +82,68 @@ export default function CheckInScreen({ navigation }: any) {
       loadData();
     }, [])
   );
+
+  useEffect(() => {
+    if (isConnected && user?.IDusuarios) {
+      joinRoom(`user_${user.IDusuarios}`);
+    }
+  }, [isConnected, user, joinRoom]);
+
+  useSocketEvent('nueva_liquidacion', async (data: any) => {
+    try {
+      const liquidacion = await getLiquidacionById(data.liquidacionId);
+      setPendingLiquidacion(liquidacion);
+      showAlert({
+        type: 'confirm',
+        title: '¡Tienes una nueva liquidación!',
+        message: 'Por favor revisa el comprobante y firma para aceptar la liquidación.',
+        confirmText: 'Revisar y Firmar',
+        onConfirm: () => handleReviewLiquidacion(liquidacion)
+      });
+    } catch (e) {
+      console.error('Error al obtener la liquidación pendiente:', e);
+    }
+  });
+
+  const handleReviewLiquidacion = async (liquidacion: any) => {
+    try {
+      const html = generarLiquidacionHTML({
+        empleadoNombre: user?.nombre || '',
+        empleadoCargo: user?.cargo?.nombre || 'Empleado',
+        fechaInicio: liquidacion.fechaInicio,
+        fechaFin: liquidacion.fechaFin,
+        turnos: liquidacion.turnosDetalle || [],
+        descuentos: liquidacion.descuentosDetalle || [],
+        totalBruto: liquidacion.totalBruto,
+        totalDescuentos: liquidacion.totalDescuentos,
+        totalNeto: liquidacion.totalNeto,
+        firmaAdmin: liquidacion.firmaAdmin
+      });
+      if (!Print) {
+        return showAlert({ type: 'error', title: 'Módulo no disponible', message: 'El módulo de impresión PDF no está compilado en esta versión.' });
+      }
+      await Print.printAsync({ html });
+      setShowSignatureEmpleado(true);
+    } catch (e) {
+      console.error(e);
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo abrir el PDF' });
+    }
+  };
+
+  const handleSaveSignature = async (firma: string) => {
+    if (!pendingLiquidacion) return;
+    try {
+      setLiquidando(true);
+      await firmarLiquidacion(pendingLiquidacion.IDliquidacion, { firmaEmpleado: firma });
+      showAlert({ type: 'success', title: 'Éxito', message: 'Liquidación firmada correctamente' });
+      setShowSignatureEmpleado(false);
+      setPendingLiquidacion(null);
+    } catch (e) {
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo guardar la firma' });
+    } finally {
+      setLiquidando(false);
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -381,6 +461,16 @@ export default function CheckInScreen({ navigation }: any) {
           </View>
         </ScrollView>
       )}
+
+      {showSignatureEmpleado && (
+        <SignatureModal
+          visible={showSignatureEmpleado}
+          title="Firma del Empleado"
+          onClose={() => setShowSignatureEmpleado(false)}
+          onSave={handleSaveSignature}
+        />
+      )}
+
     </View>
   );
 }

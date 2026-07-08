@@ -230,17 +230,33 @@ export const repartirDescuento = async (reparto: {
   return data;
 };
 
-export const liquidarEmpleado = async (params: {
-  usuarioId: string;
-  fechaDesde: string;
-  fechaHasta: string;
-}) => {
-  const { data } = await api.post('/nomina/liquidar', {
-    usuarioId: params.usuarioId,
-    fechaInicio: params.fechaDesde,
-    fechaFin: params.fechaHasta
+export const liquidarEmpleado = async (data: { usuarioId: string, fechaDesde: string, fechaHasta: string, firmaAdmin?: string }) => {
+  const response = await api.post('/nomina/liquidar', {
+    usuarioId: data.usuarioId,
+    fechaInicio: data.fechaDesde,
+    fechaFin: data.fechaHasta,
+    firmaAdmin: data.firmaAdmin
   });
-  return data;
+  return response.data;
+};
+
+// --- FIRMA DEL EMPLEADO ---
+
+export const firmarLiquidacion = async (liquidacionId: string, data: { firmaEmpleado: string }) => {
+  const response = await api.post(`/nomina/liquidar/${liquidacionId}/firmar`, data);
+  return response.data;
+};
+
+export const getLiquidacionById = async (liquidacionId: string) => {
+  const response = await api.get(`/nomina/liquidaciones/${liquidacionId}`);
+  return response.data;
+};
+
+// --- TURNOS MANUALES ---
+
+export const createTurnoManual = async (data: { usuarioId: string, fechas: string[], horaEntrada: string, horaSalida?: string }) => {
+  const response = await api.post('/nomina/turno/manual', data);
+  return response.data;
 };
 
 export const getTurnos = async (params?: { usuarioId?: string; fechaDesde?: string; fechaHasta?: string; estado?: string; limit?: number; page?: number }) => {
