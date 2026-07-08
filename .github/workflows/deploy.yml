@@ -31,6 +31,10 @@ jobs:
           script: |
             set -e
             
+            # 0. Limpiar espacio en disco de Docker
+            echo "Limpiando espacio en disco..."
+            docker system prune -af --volumes || true
+            
             # 1. Crear directorio del proyecto si no existe
             mkdir -p /root/frontend-qhubomor
             cd /root/frontend-qhubomor

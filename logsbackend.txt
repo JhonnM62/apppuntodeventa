@@ -1,100 +1,285 @@
-[Nest] 19  - 07/01/2026, 9:11:20 PM     LOG [AppGateway] Client Ub8poTnUWq29wm__AAAD mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 07/01/2026, 9:11:20 PM     LOG [AppGateway] Client Ub8poTnUWq29wm__AAAD joined room: kitchen
-[Nest] 19  - 07/01/2026, 9:11:20 PM     LOG [AppGateway] Client Ub8poTnUWq29wm__AAAD joined room: kitchen
-[Nest] 19  - 07/01/2026, 9:13:04 PM     LOG [AppGateway] Client disconnected: Ub8poTnUWq29wm__AAAD (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 07/01/2026, 9:13:09 PM     LOG [AppGateway] Client ueat1mJBgB18gDLgAAAF mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 07/01/2026, 9:13:10 PM     LOG [AppGateway] Client ueat1mJBgB18gDLgAAAF joined room: kitchen
-[Nest] 19  - 07/01/2026, 9:13:10 PM     LOG [AppGateway] Client ueat1mJBgB18gDLgAAAF joined room: kitchen
-[Nest] 19  - 07/01/2026, 9:13:16 PM     LOG [AppGateway] Client disconnected: ueat1mJBgB18gDLgAAAF (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 07/01/2026, 9:24:32 PM     LOG [AppGateway] Client fdQLqNQi4c9qQMADAAAH mapped to user cmq5v6m4y002011bzw7fd0znr and joined user_cmq5v6m4y002011bzw7fd0znr
-[Nest] 19  - 07/01/2026, 9:24:33 PM     LOG [AppGateway] Client fdQLqNQi4c9qQMADAAAH joined room: kitchen
-[Nest] 19  - 07/01/2026, 9:24:33 PM     LOG [AppGateway] Client fdQLqNQi4c9qQMADAAAH joined room: kitchen
-[Nest] 19  - 07/01/2026, 9:24:39 PM     LOG [AppGateway] Client fdQLqNQi4c9qQMADAAAH joined room: caja
-[Nest] 19  - 07/01/2026, 9:24:40 PM     LOG [AppGateway] Client fdQLqNQi4c9qQMADAAAH joined room: caja
-[Nest] 19  - 07/01/2026, 9:25:03 PM     LOG [AppGateway] Client disconnected: jqSq9QTMRYe03ec4AAAB (was in rooms: user_cmp5oiyx8002o3sjumc803yml, kitchen, caja)
-[Nest] 19  - 07/01/2026, 9:25:53 PM     LOG [AppGateway] Client disconnected: fdQLqNQi4c9qQMADAAAH (was in rooms: user_cmq5v6m4y002011bzw7fd0znr, kitchen, caja)
-[Nest] 19  - 07/01/2026, 9:30:28 PM     LOG [AppGateway] Client KlEgPwqDhQaByhClAAAJ mapped to user cmp5oiyx8002o3sjumc803yml and joined user_cmp5oiyx8002o3sjumc803yml
-[Nest] 19  - 07/01/2026, 9:30:28 PM     LOG [AppGateway] Client KlEgPwqDhQaByhClAAAJ joined room: kitchen
-[Nest] 19  - 07/01/2026, 9:30:28 PM     LOG [AppGateway] Client KlEgPwqDhQaByhClAAAJ joined room: kitchen
-[Nest] 19  - 07/01/2026, 9:30:41 PM     LOG [AppGateway] Client KlEgPwqDhQaByhClAAAJ joined room: caja
-[Nest] 19  - 07/01/2026, 9:30:53 PM     LOG [AppGateway] Nueva orden received: cmr2lb2270006hmis6to0hue6
-[Nest] 19  - 07/01/2026, 9:42:11 PM     LOG [AppGateway] Nueva orden received: cmr2lple6000chmisoyszdkvk
-[Nest] 19  - 07/01/2026, 9:43:15 PM     LOG [AppGateway] Nueva orden received: cmr2lqyhi000lhmisv4sxy2t3
-[Nest] 19  - 07/01/2026, 9:46:37 PM     LOG [AppGateway] Nueva orden received: cmr2lva0r000rhmisgsoxritx
-[Nest] 19  - 07/01/2026, 9:49:16 PM     LOG [AppGateway] Nueva orden received: cmr2lyoxw000xhmislh8r35st
-[Nest] 19  - 07/01/2026, 9:52:11 PM     LOG [AppGateway] Nueva orden received: cmr2m2g570013hmisg8t7i9ok
-[Nest] 19  - 07/01/2026, 9:53:14 PM     LOG [AppGateway] Client tRx9WUwtr1i8xyWMAAAL mapped to user cmq5v6m4y002011bzw7fd0znr and joined user_cmq5v6m4y002011bzw7fd0znr
-[Nest] 19  - 07/01/2026, 9:53:14 PM     LOG [AppGateway] Client tRx9WUwtr1i8xyWMAAAL joined room: kitchen
-[Nest] 19  - 07/01/2026, 9:53:15 PM     LOG [AppGateway] Client tRx9WUwtr1i8xyWMAAAL joined room: kitchen
-[Nest] 19  - 07/01/2026, 9:53:26 PM     LOG [AppGateway] Client disconnected: tRx9WUwtr1i8xyWMAAAL (was in rooms: user_cmq5v6m4y002011bzw7fd0znr, kitchen)
-[Nest] 19  - 07/01/2026, 9:54:07 PM     LOG [AppGateway] Nueva orden received: cmr2m4x8r0019hmishtue2b6b
-[Nest] 19  - 07/01/2026, 9:58:07 PM     LOG [AppGateway] Nueva orden received: cmr2ma2dw001fhmis3xk7nyj9
-[Nest] 19  - 07/01/2026, 10:05:55 PM     LOG [AppGateway] Nueva orden received: cmr2mk3in001lhmisplcyr83v
-[Nest] 19  - 07/01/2026, 10:07:16 PM     LOG [AppGateway] Client KlEgPwqDhQaByhClAAAJ joined room: caja
-[Nest] 19  - 07/01/2026, 10:07:17 PM     LOG [AppGateway] Orden actualizada received: cmr2mk3in001lhmisplcyr83v
-[Nest] 19  - 07/01/2026, 10:09:05 PM     LOG [AppGateway] Orden actualizada received: cmr2mk3in001lhmisplcyr83v
-[Nest] 19  - 07/01/2026, 10:10:59 PM     LOG [AppGateway] Client KlEgPwqDhQaByhClAAAJ joined room: caja
-[Nest] 19  - 07/01/2026, 10:13:11 PM     LOG [AppGateway] Nueva orden received: cmr2mtfzk001vhmisw1ni53bz
-[Nest] 19  - 07/01/2026, 10:18:25 PM     LOG [AppGateway] Nueva orden received: cmr2n061y0021hmis89goatzu
-[Nest] 19  - 07/01/2026, 10:24:17 PM     LOG [AppGateway] Nueva orden received: cmr2n7qhu0027hmisqwxrerfx
-[Nest] 19  - 07/01/2026, 10:32:51 PM     LOG [AppGateway] Client KlEgPwqDhQaByhClAAAJ joined room: caja
-[Nest] 19  - 07/01/2026, 10:32:56 PM     LOG [AppGateway] Nueva orden received: cmr2nitwd002dhmisfujz3a77
-[Nest] 19  - 07/01/2026, 10:33:13 PM     LOG [AppGateway] Client KlEgPwqDhQaByhClAAAJ joined room: caja
-[Nest] 19  - 07/01/2026, 10:34:17 PM     LOG [AppGateway] Nueva orden received: cmr2nkkh0002jhmisipejqbci
-[Nest] 19  - 07/01/2026, 10:36:02 PM     LOG [AppGateway] Nueva orden received: cmr2nmtf9002phmisota331p8
-[Nest] 19  - 07/01/2026, 10:45:03 PM     LOG [AppGateway] Client D9UVUnjOdpmrzePFAAAN mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 07/01/2026, 10:45:03 PM     LOG [AppGateway] Client D9UVUnjOdpmrzePFAAAN joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:45:03 PM     LOG [AppGateway] Client D9UVUnjOdpmrzePFAAAN joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:45:58 PM     LOG [AppGateway] Client disconnected: D9UVUnjOdpmrzePFAAAN (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 07/01/2026, 10:47:40 PM     LOG [AuthController] Request to login user: dh4766450@gmail.com
-[Nest] 19  - 07/01/2026, 10:47:40 PM     LOG [AuthService] Attempting to login user: dh4766450@gmail.com
-[Nest] 19  - 07/01/2026, 10:47:41 PM     LOG [AuthService] User logged in successfully: dh4766450@gmail.com
-[Nest] 19  - 07/01/2026, 10:47:42 PM     LOG [AppGateway] Client oaRYQCZVsLvfbeCqAAAP mapped to user cmr2nzf2c002yhmis6qxo2o9d and joined user_cmr2nzf2c002yhmis6qxo2o9d
-[Nest] 19  - 07/01/2026, 10:47:42 PM     LOG [AppGateway] Client oaRYQCZVsLvfbeCqAAAP joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:47:42 PM     LOG [AppGateway] Client oaRYQCZVsLvfbeCqAAAP joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:47:48 PM     LOG [AppGateway] Client dhBKmsoRI9e8zWaIAAAR mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 07/01/2026, 10:47:48 PM     LOG [AppGateway] Client dhBKmsoRI9e8zWaIAAAR joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:47:49 PM     LOG [AppGateway] Client dhBKmsoRI9e8zWaIAAAR joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:49:34 PM     LOG [AppGateway] Client disconnected: oaRYQCZVsLvfbeCqAAAP (was in rooms: user_cmr2nzf2c002yhmis6qxo2o9d, kitchen)
-[Nest] 19  - 07/01/2026, 10:49:42 PM     LOG [AppGateway] Client OwZb_I9-aV_KfUtZAAAT mapped to user cmq5v6m4y002011bzw7fd0znr and joined user_cmq5v6m4y002011bzw7fd0znr
-[Nest] 19  - 07/01/2026, 10:49:42 PM     LOG [AppGateway] Client OwZb_I9-aV_KfUtZAAAT joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:49:42 PM     LOG [AppGateway] Client OwZb_I9-aV_KfUtZAAAT joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:49:48 PM     LOG [AppGateway] Nueva orden received: cmr2o4j7t0034hmisisohflzv
-[Nest] 19  - 07/01/2026, 10:50:02 PM     LOG [AppGateway] Client juoJoOjibFdIbI8EAAAV mapped to user cmr2nzf2c002yhmis6qxo2o9d and joined user_cmr2nzf2c002yhmis6qxo2o9d
-[Nest] 19  - 07/01/2026, 10:50:03 PM     LOG [AppGateway] Client juoJoOjibFdIbI8EAAAV joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:50:03 PM     LOG [AppGateway] Client juoJoOjibFdIbI8EAAAV joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:50:15 PM     LOG [AppGateway] Client disconnected: OwZb_I9-aV_KfUtZAAAT (was in rooms: user_cmq5v6m4y002011bzw7fd0znr, kitchen)
-[Nest] 19  - 07/01/2026, 10:50:20 PM     LOG [AppGateway] Client ytjw_ualZ7uHPUHaAAAX mapped to user cmq5v6m4y002011bzw7fd0znr and joined user_cmq5v6m4y002011bzw7fd0znr
-[Nest] 19  - 07/01/2026, 10:50:20 PM     LOG [AppGateway] Client disconnected: dhBKmsoRI9e8zWaIAAAR (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 07/01/2026, 10:50:20 PM     LOG [AppGateway] Client ytjw_ualZ7uHPUHaAAAX joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:50:20 PM     LOG [AppGateway] Client ytjw_ualZ7uHPUHaAAAX joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:50:28 PM     LOG [AppGateway] Nueva orden received: cmr2o5dd7003ahmisea1scnhq
-[Nest] 19  - 07/01/2026, 10:50:41 PM     LOG [AppGateway] Client ZR6_GK1EVaf2tPULAAAZ mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 07/01/2026, 10:50:41 PM     LOG [AppGateway] Client ZR6_GK1EVaf2tPULAAAZ joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:50:41 PM     LOG [AppGateway] Client ZR6_GK1EVaf2tPULAAAZ joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:50:49 PM     LOG [AppGateway] Client disconnected: juoJoOjibFdIbI8EAAAV (was in rooms: user_cmr2nzf2c002yhmis6qxo2o9d, kitchen)
-[Nest] 19  - 07/01/2026, 10:50:51 PM     LOG [AppGateway] Client YnWZJr3I9MTcW_wOAAAb mapped to user cmr2nzf2c002yhmis6qxo2o9d and joined user_cmr2nzf2c002yhmis6qxo2o9d
-[Nest] 19  - 07/01/2026, 10:50:52 PM     LOG [AppGateway] Client YnWZJr3I9MTcW_wOAAAb joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:50:52 PM     LOG [AppGateway] Client YnWZJr3I9MTcW_wOAAAb joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:51:34 PM     LOG [AppGateway] Client disconnected: YnWZJr3I9MTcW_wOAAAb (was in rooms: user_cmr2nzf2c002yhmis6qxo2o9d, kitchen)
-[Nest] 19  - 07/01/2026, 10:51:36 PM     LOG [AppGateway] Client v8agZeqvxcmZv478AAAd mapped to user cmr2nzf2c002yhmis6qxo2o9d and joined user_cmr2nzf2c002yhmis6qxo2o9d
-[Nest] 19  - 07/01/2026, 10:51:36 PM     LOG [AppGateway] Client v8agZeqvxcmZv478AAAd joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:51:36 PM     LOG [AppGateway] Client v8agZeqvxcmZv478AAAd joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:52:06 PM     LOG [AppGateway] Client disconnected: ytjw_ualZ7uHPUHaAAAX (was in rooms: user_cmq5v6m4y002011bzw7fd0znr, kitchen)
-[Nest] 19  - 07/01/2026, 10:52:11 PM     LOG [AppGateway] Client disconnected: ZR6_GK1EVaf2tPULAAAZ (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 07/01/2026, 10:52:16 PM     LOG [AppGateway] Client y402yO8SFn6vRbBpAAAf mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 07/01/2026, 10:52:17 PM     LOG [AppGateway] Client y402yO8SFn6vRbBpAAAf joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:52:17 PM     LOG [AppGateway] Client y402yO8SFn6vRbBpAAAf joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:52:20 PM     LOG [AppGateway] Client disconnected: v8agZeqvxcmZv478AAAd (was in rooms: user_cmr2nzf2c002yhmis6qxo2o9d, kitchen)
-[Nest] 19  - 07/01/2026, 10:52:24 PM     LOG [AppGateway] Client disconnected: y402yO8SFn6vRbBpAAAf (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 07/01/2026, 10:52:36 PM     LOG [AppGateway] Client 3l_h0HFv4buopWJfAAAh mapped to user cmr2nzf2c002yhmis6qxo2o9d and joined user_cmr2nzf2c002yhmis6qxo2o9d
-[Nest] 19  - 07/01/2026, 10:52:37 PM     LOG [AppGateway] Client 3l_h0HFv4buopWJfAAAh joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:52:37 PM     LOG [AppGateway] Client 3l_h0HFv4buopWJfAAAh joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:53:11 PM     LOG [AppGateway] Client disconnected: 3l_h0HFv4buopWJfAAAh (was in rooms: user_cmr2nzf2c002yhmis6qxo2o9d, kitchen)
-[Nest] 19  - 07/01/2026, 10:53:26 PM     LOG [AppGateway] Client S1lxeJ_sSa3-22mWAAAj mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 07/01/2026, 10:53:26 PM     LOG [AppGateway] Client S1lxeJ_sSa3-22mWAAAj joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:53:26 PM     LOG [AppGateway] Client S1lxeJ_sSa3-22mWAAAj joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:53:54 PM     LOG [AppGateway] Client m0UJJMqixhRL_BvJAAAl mapped to user cmq5v6m4y002011bzw7fd0znr and joined user_cmq5v6m4y002011bzw7fd0znr
-[Nest] 19  - 07/01/2026, 10:53:54 PM     LOG [AppGateway] Client m0UJJMqixhRL_BvJAAAl joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:53:54 PM     LOG [AppGateway] Client m0UJJMqixhRL_BvJAAAl joined room: kitchen
-[Nest] 19  - 07/01/2026, 10:54:00 PM     LOG [AppGateway] Client disconnected: m0UJJMqixhRL_BvJAAAl (was in rooms: user_cmq5v6m4y002011bzw7fd0znr, kitchen)
+2026-07-08T14:32:32.3402681Z Current runner version: '2.335.1'
+2026-07-08T14:32:32.3429382Z ##[group]Runner Image Provisioner
+2026-07-08T14:32:32.3430635Z Hosted Compute Agent
+2026-07-08T14:32:32.3431517Z Version: 20260624.560
+2026-07-08T14:32:32.3432417Z Commit: 925d229a51159bc391ae97e54a2dd1fe20af789d
+2026-07-08T14:32:32.3433424Z Build Date: 2026-06-24T18:26:47Z
+2026-07-08T14:32:32.3434364Z Worker ID: {c9d9bd46-b985-4291-9b74-a2b33aed426d}
+2026-07-08T14:32:32.3435539Z Azure Region: westus2
+2026-07-08T14:32:32.3436406Z ##[endgroup]
+2026-07-08T14:32:32.3438168Z ##[group]Operating System
+2026-07-08T14:32:32.3439012Z Ubuntu
+2026-07-08T14:32:32.3439714Z 24.04.4
+2026-07-08T14:32:32.3440402Z LTS
+2026-07-08T14:32:32.3441127Z ##[endgroup]
+2026-07-08T14:32:32.3441891Z ##[group]Runner Image
+2026-07-08T14:32:32.3442684Z Image: ubuntu-24.04
+2026-07-08T14:32:32.3443466Z Version: 20260705.232.1
+2026-07-08T14:32:32.3445260Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260705.232/images/ubuntu/Ubuntu2404-Readme.md
+2026-07-08T14:32:32.3446951Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260705.232
+2026-07-08T14:32:32.3448112Z ##[endgroup]
+2026-07-08T14:32:32.3449596Z ##[group]GITHUB_TOKEN Permissions
+2026-07-08T14:32:32.3452148Z Contents: read
+2026-07-08T14:32:32.3452955Z Metadata: read
+2026-07-08T14:32:32.3453710Z Packages: read
+2026-07-08T14:32:32.3454405Z ##[endgroup]
+2026-07-08T14:32:32.3456981Z Secret source: Actions
+2026-07-08T14:32:32.3458003Z Prepare workflow directory
+2026-07-08T14:32:32.3815790Z Prepare all required actions
+2026-07-08T14:32:32.3874633Z Getting action download info
+2026-07-08T14:32:32.8119223Z Download action repository 'appleboy/ssh-action@v1.0.3' (SHA:029f5b4aeeeb58fdfe1410a5d17f967dacf36262)
+2026-07-08T14:32:33.1239268Z Complete job name: deploy
+2026-07-08T14:32:33.1700847Z ##[group]Build container for action use: '/home/runner/work/_actions/appleboy/ssh-action/v1.0.3/Dockerfile'.
+2026-07-08T14:32:33.1909506Z ##[command]/usr/bin/docker build -t acddf9:742fac8aa6dc4f318507a806c5005f79 -f "/home/runner/work/_actions/appleboy/ssh-action/v1.0.3/Dockerfile" "/home/runner/work/_actions/appleboy/ssh-action/v1.0.3"
+2026-07-08T14:32:36.1090488Z #0 building with "default" instance using docker driver
+2026-07-08T14:32:36.1092262Z 
+2026-07-08T14:32:36.1093256Z #1 [internal] load build definition from Dockerfile
+2026-07-08T14:32:36.1095700Z #1 transferring dockerfile: 149B 0.0s done
+2026-07-08T14:32:36.1097674Z #1 DONE 0.0s
+2026-07-08T14:32:36.1098512Z 
+2026-07-08T14:32:36.1099617Z #2 [internal] load metadata for ghcr.io/appleboy/drone-ssh:1.7.3
+2026-07-08T14:32:36.7836526Z #2 DONE 0.8s
+2026-07-08T14:32:36.9166905Z 
+2026-07-08T14:32:36.9167928Z #3 [internal] load .dockerignore
+2026-07-08T14:32:36.9169107Z #3 transferring context: 2B done
+2026-07-08T14:32:36.9170185Z #3 DONE 0.0s
+2026-07-08T14:32:36.9170508Z 
+2026-07-08T14:32:36.9170879Z #4 [internal] load build context
+2026-07-08T14:32:36.9171656Z #4 transferring context: 108B done
+2026-07-08T14:32:36.9172280Z #4 DONE 0.0s
+2026-07-08T14:32:36.9172566Z 
+2026-07-08T14:32:36.9173170Z #5 [1/2] FROM ghcr.io/appleboy/drone-ssh:1.7.3@sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158
+2026-07-08T14:32:36.9174362Z #5 resolve ghcr.io/appleboy/drone-ssh:1.7.3@sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158 done
+2026-07-08T14:32:36.9175728Z #5 sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6 0B / 284.83kB 0.1s
+2026-07-08T14:32:36.9176754Z #5 sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c 0B / 1.20kB 0.1s
+2026-07-08T14:32:36.9177739Z #5 sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158 2.38kB / 2.38kB done
+2026-07-08T14:32:36.9178706Z #5 sha256:1a52f94820e830bc9734623deb03bbafa6a248fba19cdc2e5605c70d90d91441 1.24kB / 1.24kB done
+2026-07-08T14:32:36.9179635Z #5 sha256:c4781b8d012b16b6c7468dc9104fad0a63f2a8815b2af8b7176bb544253ea8c7 3.86kB / 3.86kB done
+2026-07-08T14:32:36.9180597Z #5 sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca 0B / 3.38MB 0.1s
+2026-07-08T14:32:37.0177977Z #5 sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6 284.83kB / 284.83kB 0.2s done
+2026-07-08T14:32:37.0179488Z #5 sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c 1.20kB / 1.20kB 0.2s done
+2026-07-08T14:32:37.0181370Z #5 sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca 3.38MB / 3.38MB 0.1s done
+2026-07-08T14:32:37.0182683Z #5 extracting sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca 0.1s done
+2026-07-08T14:32:37.0184103Z #5 sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 0B / 125B 0.2s
+2026-07-08T14:32:37.0185725Z #5 sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 0B / 2.44MB 0.2s
+2026-07-08T14:32:37.2166612Z #5 sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 1.05MB / 2.44MB 0.3s
+2026-07-08T14:32:37.2167906Z #5 extracting sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6 0.0s done
+2026-07-08T14:32:37.3174133Z #5 sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 2.44MB / 2.44MB 0.3s done
+2026-07-08T14:32:37.5136081Z #5 sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 125B / 125B 0.6s
+2026-07-08T14:32:37.5138800Z #5 extracting sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c
+2026-07-08T14:32:37.7578148Z #5 sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 125B / 125B 0.7s done
+2026-07-08T14:32:37.7580129Z #5 extracting sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c done
+2026-07-08T14:32:37.7581851Z #5 extracting sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 done
+2026-07-08T14:32:37.7584408Z #5 extracting sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 0.0s done
+2026-07-08T14:32:37.7586317Z #5 DONE 0.8s
+2026-07-08T14:32:37.7586830Z 
+2026-07-08T14:32:37.7587455Z #6 [2/2] COPY entrypoint.sh /bin/entrypoint.sh
+2026-07-08T14:32:37.7588648Z #6 DONE 0.0s
+2026-07-08T14:32:37.7589238Z 
+2026-07-08T14:32:37.7589744Z #7 exporting to image
+2026-07-08T14:32:37.7590819Z #7 exporting layers
+2026-07-08T14:32:38.0048898Z #7 exporting layers 0.4s done
+2026-07-08T14:32:38.0248460Z #7 writing image sha256:8f280125df8a40a508bb9e718107e9650aaa13cdcd31db43e3b35658b0d623e3 done
+2026-07-08T14:32:38.0249625Z #7 naming to docker.io/library/acddf9:742fac8aa6dc4f318507a806c5005f79 done
+2026-07-08T14:32:38.0250350Z #7 DONE 0.4s
+2026-07-08T14:32:38.0352184Z ##[endgroup]
+2026-07-08T14:32:38.0706856Z ##[group]Run if [[ "$AUTH_SERVER" == *"@"* ]]; then
+2026-07-08T14:32:38.0707430Z [36;1mif [[ "$AUTH_SERVER" == *"@"* ]]; then[0m
+2026-07-08T14:32:38.0707949Z [36;1m  echo "username=$(echo $AUTH_SERVER | cut -d'@' -f1)" >> $GITHUB_OUTPUT[0m
+2026-07-08T14:32:38.0708509Z [36;1m  echo "host=$(echo $AUTH_SERVER | cut -d'@' -f2)" >> $GITHUB_OUTPUT[0m
+2026-07-08T14:32:38.0708938Z [36;1melse[0m
+2026-07-08T14:32:38.0709259Z [36;1m  echo "username=root" >> $GITHUB_OUTPUT[0m
+2026-07-08T14:32:38.0709695Z [36;1m  echo "host=$AUTH_SERVER" >> $GITHUB_OUTPUT[0m
+2026-07-08T14:32:38.0710062Z [36;1mfi[0m
+2026-07-08T14:32:38.0734309Z shell: /usr/bin/bash -e {0}
+2026-07-08T14:32:38.0734911Z env:
+2026-07-08T14:32:38.0735666Z   AUTH_SERVER: ***
+2026-07-08T14:32:38.0735975Z ##[endgroup]
+2026-07-08T14:32:38.1054425Z ##[group]Run appleboy/ssh-action@v1.0.3
+2026-07-08T14:32:38.1054887Z with:
+2026-07-08T14:32:38.1055453Z   host: 100.42.185.2
+2026-07-08T14:32:38.1055795Z   username: root
+2026-07-08T14:32:38.1056295Z   password: ***
+2026-07-08T14:32:38.1056624Z   command_timeout: 30m
+2026-07-08T14:32:38.1064875Z   script: set -e
+
+# 1. Crear directorio del proyecto si no existe
+mkdir -p /root/backend-qhubomor
+cd /root/backend-qhubomor
+
+# 2. Clonar el repositorio o actualizarlo si ya existe
+if [ ! -d ".git" ]; then
+  echo "Clonando repositorio por primera vez..."
+  git clone https://***@github.com/JhonnM62/backend-nest-js-qhubomor.git .
+else
+  echo "Actualizando repositorio existente..."
+  git remote set-url origin https://***@github.com/JhonnM62/backend-nest-js-qhubomor.git
+  git fetch --all
+  git reset --hard origin/main
+  git clean -fd
+fi
+
+# 3. Inyectar las variables de entorno desde los secretos de GitHub
+cat << 'EOF' > .env
+***
+
+EOF
+
+# 4. Construir la nueva imagen de Docker localmente en Contabo (sin cache para asegurar construccion limpia)
+echo "Construyendo imagen Docker..."
+docker build -t qhubomor-backend .
+
+# 5. Detener y eliminar el contenedor anterior si existe
+echo "Deteniendo contenedor anterior..."
+docker stop qhubomor-backend-app || true
+docker rm qhubomor-backend-app || true
+
+# 5.1 Crear directorios de subidas en el host para persistencia
+mkdir -p /root/backend-qhubomor/public/uploads/insumos
+mkdir -p /root/backend-qhubomor/public/uploads/gastos
+mkdir -p /root/backend-qhubomor/public/uploads/asistencia
+
+# 5.5 Aplicar migraciones/push de Prisma a la base de datos remotamente (sin borrar data)
+echo "Sincronizando esquema de base de datos..."
+docker run --rm --env-file .env qhubomor-backend npx prisma db push --accept-data-loss
+
+# 6. Levantar el nuevo contenedor mapeando el puerto y el volumen de persistencia
+echo "Levantando nuevo contenedor..."
+docker run -d \
+  --name qhubomor-backend-app \
+  -p 8061:3000 \
+  -v /root/backend-qhubomor/public/uploads:/app/public/uploads \
+  --restart unless-stopped \
+  --env-file .env \
+  qhubomor-backend
+
+echo "¡Despliegue completado exitosamente!"
+
+2026-07-08T14:32:38.1071365Z   port: 22
+2026-07-08T14:32:38.1071665Z   timeout: 30s
+2026-07-08T14:32:38.1071955Z   proxy_port: 22
+2026-07-08T14:32:38.1072253Z   proxy_timeout: 30s
+2026-07-08T14:32:38.1072606Z ##[endgroup]
+2026-07-08T14:32:38.1189542Z ##[command]/usr/bin/docker run --name acddf9742fac8aa6dc4f318507a806c5005f79_2d9da7 --label acddf9 --workdir /github/workspace --rm -e "INPUT_HOST" -e "INPUT_USERNAME" -e "INPUT_PASSWORD" -e "INPUT_COMMAND_TIMEOUT" -e "INPUT_SCRIPT" -e "INPUT_PORT" -e "INPUT_PASSPHRASE" -e "INPUT_SYNC" -e "INPUT_USE_INSECURE_CIPHER" -e "INPUT_CIPHER" -e "INPUT_TIMEOUT" -e "INPUT_KEY" -e "INPUT_KEY_PATH" -e "INPUT_FINGERPRINT" -e "INPUT_PROXY_HOST" -e "INPUT_PROXY_PORT" -e "INPUT_PROXY_USERNAME" -e "INPUT_PROXY_PASSWORD" -e "INPUT_PROXY_PASSPHRASE" -e "INPUT_PROXY_TIMEOUT" -e "INPUT_PROXY_KEY" -e "INPUT_PROXY_KEY_PATH" -e "INPUT_PROXY_FINGERPRINT" -e "INPUT_PROXY_CIPHER" -e "INPUT_PROXY_USE_INSECURE_CIPHER" -e "INPUT_SCRIPT_STOP" -e "INPUT_ENVS" -e "INPUT_ENVS_FORMAT" -e "INPUT_DEBUG" -e "INPUT_ALLENVS" -e "INPUT_REQUEST_PTY" -e "HOME" -e "GITHUB_JOB" -e "GITHUB_REF" -e "GITHUB_SHA" -e "GITHUB_REPOSITORY" -e "GITHUB_REPOSITORY_OWNER" -e "GITHUB_REPOSITORY_OWNER_ID" -e "GITHUB_RUN_ID" -e "GITHUB_RUN_NUMBER" -e "GITHUB_RETENTION_DAYS" -e "GITHUB_RUN_ATTEMPT" -e "GITHUB_ACTOR_ID" -e "GITHUB_ACTOR" -e "GITHUB_WORKFLOW" -e "GITHUB_HEAD_REF" -e "GITHUB_BASE_REF" -e "GITHUB_EVENT_NAME" -e "GITHUB_SERVER_URL" -e "GITHUB_API_URL" -e "GITHUB_GRAPHQL_URL" -e "GITHUB_REF_NAME" -e "GITHUB_REF_PROTECTED" -e "GITHUB_REF_TYPE" -e "GITHUB_WORKFLOW_REF" -e "GITHUB_WORKFLOW_SHA" -e "GITHUB_REPOSITORY_ID" -e "GITHUB_TRIGGERING_ACTOR" -e "GITHUB_WORKSPACE" -e "GITHUB_ACTION" -e "GITHUB_EVENT_PATH" -e "GITHUB_ACTION_REPOSITORY" -e "GITHUB_ACTION_REF" -e "GITHUB_PATH" -e "GITHUB_ENV" -e "GITHUB_STEP_SUMMARY" -e "GITHUB_STATE" -e "GITHUB_OUTPUT" -e "RUNNER_OS" -e "RUNNER_ARCH" -e "RUNNER_NAME" -e "RUNNER_ENVIRONMENT" -e "RUNNER_TOOL_CACHE" -e "RUNNER_TEMP" -e "RUNNER_WORKSPACE" -e "ACTIONS_RUNTIME_URL" -e "ACTIONS_RUNTIME_TOKEN" -e "ACTIONS_CACHE_URL" -e "ACTIONS_RESULTS_URL" -e "ACTIONS_ORCHESTRATION_ID" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work/_temp":"/github/runner_temp" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" -v "/home/runner/work/_temp/_runner_file_commands":"/github/file_commands" -v "/home/runner/work/backend-nest-js-qhubomor/backend-nest-js-qhubomor":"/github/workspace" acddf9:742fac8aa6dc4f318507a806c5005f79
+2026-07-08T14:32:38.2968155Z ======CMD======
+2026-07-08T14:32:38.2968576Z set -e
+2026-07-08T14:32:38.2968752Z 
+2026-07-08T14:32:38.2968944Z # 1. Crear directorio del proyecto si no existe
+2026-07-08T14:32:38.2969398Z mkdir -p /root/backend-qhubomor
+2026-07-08T14:32:38.2969749Z cd /root/backend-qhubomor
+2026-07-08T14:32:38.2969940Z 
+2026-07-08T14:32:38.2970180Z # 2. Clonar el repositorio o actualizarlo si ya existe
+2026-07-08T14:32:38.2970582Z if [ ! -d ".git" ]; then
+2026-07-08T14:32:38.2970948Z   echo "Clonando repositorio por primera vez..."
+2026-07-08T14:32:38.2972004Z   git clone https://***@github.com/JhonnM62/backend-nest-js-qhubomor.git .
+2026-07-08T14:32:38.2972451Z else
+2026-07-08T14:32:38.2972783Z   echo "Actualizando repositorio existente..."
+2026-07-08T14:32:38.2973504Z   git remote set-url origin https://***@github.com/JhonnM62/backend-nest-js-qhubomor.git
+2026-07-08T14:32:38.2974006Z   git fetch --all
+2026-07-08T14:32:38.2974325Z   git reset --hard origin/main
+2026-07-08T14:32:38.2974653Z   git clean -fd
+2026-07-08T14:32:38.2974940Z fi
+2026-07-08T14:32:38.2975336Z 
+2026-07-08T14:32:38.2975589Z # 3. Inyectar las variables de entorno desde los secretos de GitHub
+2026-07-08T14:32:38.2976027Z cat << 'EOF' > .env
+2026-07-08T14:32:38.2976360Z ***
+2026-07-08T14:32:38.2976995Z ***
+2026-07-08T14:32:38.2977295Z ***
+2026-07-08T14:32:38.2977591Z ***
+2026-07-08T14:32:38.2977925Z ***
+2026-07-08T14:32:38.2978220Z ***
+2026-07-08T14:32:38.2978507Z ***
+2026-07-08T14:32:38.2978646Z 
+2026-07-08T14:32:38.2978780Z ***
+2026-07-08T14:32:38.2979055Z ***
+2026-07-08T14:32:38.2979327Z ***
+2026-07-08T14:32:38.2979469Z 
+2026-07-08T14:32:38.2979597Z ***
+2026-07-08T14:32:38.2979935Z ***
+2026-07-08T14:32:38.2980206Z ***
+2026-07-08T14:32:38.2980351Z 
+2026-07-08T14:32:38.2980470Z ***
+2026-07-08T14:32:38.2980733Z ***
+2026-07-08T14:32:38.2981036Z ***
+2026-07-08T14:32:38.2981251Z 
+2026-07-08T14:32:38.2981380Z ***
+2026-07-08T14:32:38.2981668Z ***
+2026-07-08T14:32:38.2981958Z ***
+2026-07-08T14:32:38.2982111Z 
+2026-07-08T14:32:38.2982226Z EOF
+2026-07-08T14:32:38.2982392Z 
+2026-07-08T14:32:38.2982731Z # 4. Construir la nueva imagen de Docker localmente en Contabo (sin cache para asegurar construccion limpia)
+2026-07-08T14:32:38.2983307Z echo "Construyendo imagen Docker..."
+2026-07-08T14:32:38.2983679Z docker build -t qhubomor-backend .
+2026-07-08T14:32:38.2983899Z 
+2026-07-08T14:32:38.2984116Z # 5. Detener y eliminar el contenedor anterior si existe
+2026-07-08T14:32:38.2984533Z echo "Deteniendo contenedor anterior..."
+2026-07-08T14:32:38.2984909Z docker stop qhubomor-backend-app || true
+2026-07-08T14:32:38.2985622Z docker rm qhubomor-backend-app || true
+2026-07-08T14:32:38.2985865Z 
+2026-07-08T14:32:38.2986082Z # 5.1 Crear directorios de subidas en el host para persistencia
+2026-07-08T14:32:38.2986585Z mkdir -p /root/backend-qhubomor/public/uploads/insumos
+2026-07-08T14:32:38.2987037Z mkdir -p /root/backend-qhubomor/public/uploads/gastos
+2026-07-08T14:32:38.2987498Z mkdir -p /root/backend-qhubomor/public/uploads/asistencia
+2026-07-08T14:32:38.2987767Z 
+2026-07-08T14:32:38.2988058Z # 5.5 Aplicar migraciones/push de Prisma a la base de datos remotamente (sin borrar data)
+2026-07-08T14:32:38.2988590Z echo "Sincronizando esquema de base de datos..."
+2026-07-08T14:32:38.2989115Z docker run --rm --env-file .env qhubomor-backend npx prisma db push --accept-data-loss
+2026-07-08T14:32:38.2989476Z 
+2026-07-08T14:32:38.2990010Z # 6. Levantar el nuevo contenedor mapeando el puerto y el volumen de persistencia
+2026-07-08T14:32:38.2990529Z echo "Levantando nuevo contenedor..."
+2026-07-08T14:32:38.2990883Z docker run -d \
+2026-07-08T14:32:38.2991215Z   --name qhubomor-backend-app \
+2026-07-08T14:32:38.2991591Z   -p 8061:3000 \
+2026-07-08T14:32:38.2991964Z   -v /root/backend-qhubomor/public/uploads:/app/public/uploads \
+2026-07-08T14:32:38.2992414Z   --restart unless-stopped \
+2026-07-08T14:32:38.2992744Z   --env-file .env \
+2026-07-08T14:32:38.2993057Z   qhubomor-backend
+2026-07-08T14:32:38.2993229Z 
+2026-07-08T14:32:38.2993768Z echo "¡Despliegue completado exitosamente!"
+2026-07-08T14:32:38.2994157Z 
+2026-07-08T14:32:38.2994285Z ======END======
+2026-07-08T14:32:39.8925440Z out: Actualizando repositorio existente...
+2026-07-08T14:32:39.9049595Z out: Fetching origin
+2026-07-08T14:32:40.2126314Z out: HEAD is now at f37a0a9 feat: implement employee shift management system including clock-in with geofencing, automatic late arrival penalties, and related database schema updates.
+2026-07-08T14:32:40.2276622Z out: Construyendo imagen Docker...
+2026-07-08T14:32:40.5309267Z err: #0 building with "default" instance using docker driver
+2026-07-08T14:32:40.5310358Z err: #1 [internal] load build definition from Dockerfile
+2026-07-08T14:32:40.5311232Z err: #1 transferring dockerfile: 1.15kB done
+2026-07-08T14:32:40.5311665Z err: #1 DONE 0.0s
+2026-07-08T14:32:40.5312138Z err: #2 [internal] load metadata for docker.io/library/node:20-slim
+2026-07-08T14:32:40.7571746Z err: #2 DONE 0.4s
+2026-07-08T14:32:40.9726070Z err: #3 [internal] load .dockerignore
+2026-07-08T14:32:40.9726640Z err: #3 transferring context: 105B done
+2026-07-08T14:32:40.9727158Z err: #3 DONE 0.0s
+2026-07-08T14:32:40.9727919Z err: #4 [deps 1/6] FROM docker.io/library/node:20-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0
+2026-07-08T14:32:40.9728676Z err: #4 DONE 0.0s
+2026-07-08T14:32:40.9729058Z err: #5 [internal] load build context
+2026-07-08T14:32:40.9729539Z err: #5 transferring context: 16.90kB 0.0s done
+2026-07-08T14:32:40.9729973Z err: #5 DONE 0.0s
+2026-07-08T14:32:40.9730363Z err: #6 [deps 4/6] COPY package*.json ./
+2026-07-08T14:32:40.9730763Z err: #6 CACHED
+2026-07-08T14:32:40.9731332Z err: #7 [deps 2/6] RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+2026-07-08T14:32:40.9731929Z err: #7 CACHED
+2026-07-08T14:32:40.9732301Z err: #8 [deps 5/6] COPY prisma ./prisma/
+2026-07-08T14:32:40.9732706Z err: #8 CACHED
+2026-07-08T14:32:40.9733327Z err: #9 [deps 6/6] RUN npm ci
+2026-07-08T14:32:40.9734024Z err: #9 CACHED
+2026-07-08T14:32:40.9734396Z err: #10 [deps 3/6] WORKDIR /app
+2026-07-08T14:32:40.9734821Z err: #10 CACHED
+2026-07-08T14:32:40.9735532Z err: #11 [builder 4/7] COPY --from=deps /app/node_modules ./node_modules
+2026-07-08T14:32:40.9737347Z err: #11 ERROR: failed to copy files: failed to open target /var/lib/docker/overlay2/o4jfyz0pk5nkxh8ytejk9hzsm/merged/app/node_modules/@angular-devkit/core/node_modules/ajv/dist/compile/validate/boolSchema.d.ts: open /app/node_modules/@angular-devkit/core/node_modules/ajv/dist/compile/validate/boolSchema.d.ts: no space left on device
+2026-07-08T14:32:40.9817354Z err: ------
+2026-07-08T14:32:40.9818008Z err:  > [builder 4/7] COPY --from=deps /app/node_modules ./node_modules:
+2026-07-08T14:32:40.9818515Z err: ------
+2026-07-08T14:32:40.9835890Z err: Dockerfile:13
+2026-07-08T14:32:40.9836328Z err: --------------------
+2026-07-08T14:32:40.9836889Z err:   11 |     RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+2026-07-08T14:32:40.9837475Z err:   12 |     WORKDIR /app
+2026-07-08T14:32:40.9837925Z err:   13 | >>> COPY --from=deps /app/node_modules ./node_modules
+2026-07-08T14:32:40.9838425Z err:   14 |     COPY . .
+2026-07-08T14:32:40.9838864Z err:   15 |     # Generamos el cliente de Prisma antes de compilar
+2026-07-08T14:32:40.9839351Z err: --------------------
+2026-07-08T14:32:40.9841236Z err: ERROR: failed to solve: ResourceExhausted: failed to copy files: failed to open target /var/lib/docker/overlay2/o4jfyz0pk5nkxh8ytejk9hzsm/merged/app/node_modules/@angular-devkit/core/node_modules/ajv/dist/compile/validate/boolSchema.d.ts: open /app/node_modules/@angular-devkit/core/node_modules/ajv/dist/compile/validate/boolSchema.d.ts: no space left on device
+2026-07-08T14:32:40.9883876Z 2026/07/08 14:32:40 Process exited with status 1
+2026-07-08T14:32:41.0612696Z Cleaning up orphan processes
