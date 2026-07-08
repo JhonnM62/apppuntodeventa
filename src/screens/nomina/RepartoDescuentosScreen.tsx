@@ -193,11 +193,12 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
       onConfirm: async () => {
         try {
           setSaving(true);
+          const nombresSeleccionados = empleados.filter(e => selectedIds.has(e.IDusuarios)).map(e => e.nombre).join(', ');
           await repartirDescuento({
             usuarioIds: Array.from(selectedIds),
             montoTotal: montoEfectivo,
             concepto,
-            descripcion: `${descripcion.trim()} (Faltante original: $${montoTotal} / Cobro: ${porcentaje}%)`,
+            descripcion: `${descripcion.trim()} (Faltante original: $${montoTotal.toLocaleString('es-CO')} / Cobro: ${porcentaje}% repartido entre: ${nombresSeleccionados})`,
             fecha: fechaDescuento.toISOString()
           });
           showAlert({ type: 'success', title: 'Éxito', message: 'Descuento repartido correctamente' });

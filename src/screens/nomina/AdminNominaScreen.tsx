@@ -294,7 +294,7 @@ export default function AdminNominaScreen({ navigation }: any) {
       fechaInicio: minDate,
       fechaFin: maxDate,
       turnos: resumen.turnos || [],
-      descuentos: resumen.descuentos || [],
+      descuentos: (resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')),
       totalBruto: resumen.totalBruto,
       totalDescuentos: resumen.totalDescuentos,
       totalNeto: resumen.totalNeto,
@@ -621,12 +621,14 @@ export default function AdminNominaScreen({ navigation }: any) {
                       </View>
                     ))}
 
-                    <Text style={{ fontWeight: '700', marginTop: 16, marginBottom: 8 }}>Descuentos ({resumen.descuentos?.length || 0})</Text>
-                    {resumen.descuentos?.map((d: any) => (
+                    <Text style={{ fontWeight: '700', marginTop: 16, marginBottom: 8 }}>Descuentos ({(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).length})</Text>
+                    {(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).map((d: any) => (
                       <View key={d.IDdescuento} style={styles.itemRow}>
                         <View style={{ flex: 1 }}>
                           <Text style={{ fontSize: 13 }}>{d.concepto}</Text>
-                          {d.fecha && (
+                          {d.descripcion ? (
+                            <Text style={{ fontSize: 11, color: '#6b7280' }}>{d.descripcion}</Text>
+                          ) : d.fecha && (
                             <Text style={{ fontSize: 11, color: '#6b7280', textTransform: 'capitalize' }}>
                               {new Date(d.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })}
                             </Text>
