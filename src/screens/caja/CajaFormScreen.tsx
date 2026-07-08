@@ -88,7 +88,8 @@ const CurrencyInputWrapper = ({ value, onChange, onFocus, editable, className, p
 
   useEffect(() => {
     const newNumeric = value !== undefined && value !== '' && value !== null ? String(Number(value)) : '';
-    if (newNumeric !== lastSentNumeric.current) {
+    // Prevent formatting empty input back to "$ 0" if schema transformed it to 0
+    if (newNumeric !== lastSentNumeric.current && !(lastSentNumeric.current === '' && newNumeric === '0')) {
       setLocalValue(value !== undefined && value !== '' && value !== null && Number(value) !== 0 ? formatCurrency(Number(value)) : '');
       lastSentNumeric.current = newNumeric;
     }
@@ -219,6 +220,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   };
   const [isEditingObservaciones, setIsEditingObservaciones] = useState(false);
   const [transferenciasContadas, setTransferenciasContadas] = useState<string>('');
+  const [isTransferenciasDirty, setIsTransferenciasDirty] = useState(false);
   const [verifyModalVisible, setVerifyModalVisible] = useState(false);
   const [guardarModalVisible, setGuardarModalVisible] = useState(false);
   const [verificacionCompletada, setVerificacionCompletada] = useState(false);
@@ -514,10 +516,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
           valorExcedente: caja.valorExcedente != null ? String(caja.valorExcedente) : ('' as any),
           observaciones: caja.observaciones || '',
           insumos: mappedInsumos
-        });
+        }, { keepDirtyValues: true });
         
-        // Recuperar el valor guardado de transferencias contadas si existe
-        if (caja.transferenciasContadas != null) {
+        // Recuperar el valor guardado de transferencias contadas si existe y no ha sido editado
+        if (caja.transferenciasContadas != null && !isTransferenciasDirty) {
           setTransferenciasContadas(String(caja.transferenciasContadas));
         }
       }
@@ -716,6 +718,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
         
         await fetchInitialData();
         setModifiedInsumoIndexes(new Set());
+        setIsTransferenciasDirty(false);
       }
     } catch (error: any) {
       console.error(error);
@@ -1752,7 +1755,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 <CurrencyInputWrapper 
                   editable={!isReadOnly}
                   value={transferenciasContadas} 
-                  onChange={setTransferenciasContadas} 
+                  onChange={(val: any) => {
+                    setTransferenciasContadas(val);
+                    setIsTransferenciasDirty(true);
+                  }} 
                   className="font-black text-lg bg-white border-blue-300 text-blue-700 text-center" 
                   placeholder="$ 0"
                 />
