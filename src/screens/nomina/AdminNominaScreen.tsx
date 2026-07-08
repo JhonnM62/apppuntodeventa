@@ -118,12 +118,38 @@ export default function AdminNominaScreen({ navigation }: any) {
     }
   };
 
+  
+  const getCurrentQuincena = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const date = now.getDate();
+    
+    let fechaDesde = new Date(year, month, 1);
+    let fechaHasta = new Date(year, month, 15);
+    
+    if (date > 15) {
+      fechaDesde = new Date(year, month, 16);
+      fechaHasta = new Date(year, month + 1, 0);
+    }
+    
+    fechaDesde.setHours(0, 0, 0, 0);
+    fechaHasta.setHours(23, 59, 59, 999);
+    
+    return { 
+      fechaDesde: fechaDesde.toISOString(), 
+      fechaHasta: fechaHasta.toISOString() 
+    };
+  };
+
   const openResumen = async (empleado: any) => {
     setSelectedEmpleado(empleado);
     setSelectedExtraTurnos([]);
     try {
       setLoadingResumen(true);
-      const res = await getResumenEmpleadoAdmin(empleado.IDusuarios);
+      const { fechaDesde, fechaHasta } = getCurrentQuincena();
+      const res = await getResumenEmpleadoAdmin(empleado.IDusuarios, { fechaDesde, fechaHasta });
+
       setResumen(res.data);
     } catch (error) {
       console.error(error);
@@ -275,6 +301,21 @@ export default function AdminNominaScreen({ navigation }: any) {
       firmaAdmin: firmaAdmin,
     });
     
+    if (Platform.OS === 'web') {
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+          printWindow.print();
+        }, 500);
+      } else {
+        showAlert({ type: 'error', title: 'Error', message: 'No se pudo abrir la ventana de impresión. Verifique si tiene un bloqueador de ventanas emergentes (Pop-ups).' });
+      }
+      return;
+    }
+
     if (!Print) {
       return showAlert({ type: 'error', title: 'Módulo no disponible', message: 'El módulo de impresión PDF no está compilado en esta versión.' });
     }
@@ -336,7 +377,8 @@ export default function AdminNominaScreen({ navigation }: any) {
       const res = await api.post(`/nomina/recalcular/${selectedEmpleado.IDusuarios}`);
       showAlert({ type: 'success', title: 'Éxito', message: res.data?.mensaje || 'Turnos recalculados' });
       // Reload resumen automatically
-      const resUpdated = await getResumenEmpleadoAdmin(selectedEmpleado.IDusuarios);
+      const { fechaDesde, fechaHasta } = getCurrentQuincena();
+      const resUpdated = await getResumenEmpleadoAdmin(selectedEmpleado.IDusuarios, { fechaDesde, fechaHasta });
       setResumen(resUpdated.data);
     } catch (error: any) {
       console.error(error);
@@ -462,31 +504,34 @@ export default function AdminNominaScreen({ navigation }: any) {
             empleadosFiltrados.map((empleado) => {
               const status = getStatusTurnoHoy(empleado.IDusuarios);
               return (
-                <Card key={empleado.IDusuarios} style={styles.card}>
-                  <TouchableOpacity style={styles.cardInfo} onPress={() => openHistory(empleado)} activeOpacity={0.7}>
-                    <Text style={styles.cardTitle}>{empleado.nombre}</Text>
-                    <Text style={styles.cardSubtitle}>{empleado.rol} • {empleado.cargo?.nombre || 'Sin cargo asignado'}</Text>
-                    
-                    <View style={styles.statusBadge}>
-                      <Ionicons name={status.icon as any} size={14} color={status.color} />
-                      <Text style={[styles.statusText, { color: status.color }]}>{status.text}</Text>
+                <View key={empleado.IDusuarios} style={styles.employeeListItem}>
+                  <TouchableOpacity style={styles.employeeInfoContainer} onPress={() => openHistory(empleado)} activeOpacity={0.7}>
+                    <View style={styles.employeeAvatar}>
+                      <Text style={styles.employeeAvatarText}>{empleado.nombre.charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <View style={styles.employeeDetails}>
+                      <Text style={styles.employeeName}>{empleado.nombre}</Text>
+                      <Text style={styles.employeeRole}>{empleado.cargo?.nombre || 'Sin cargo'} • {empleado.rol}</Text>
+                      <View style={[styles.statusBadge, { marginTop: 4 }]}>
+                        <Ionicons name={status.icon as any} size={12} color={status.color} />
+                        <Text style={[styles.statusText, { color: status.color, fontSize: 11, marginLeft: 4 }]}>{status.text}</Text>
+                      </View>
                     </View>
                   </TouchableOpacity>
                   
-                  <View style={{flexDirection: 'row', borderTopWidth: 1, borderColor: '#f3f4f6', marginTop: 12, paddingTop: 12}}>
-                    <TouchableOpacity style={[styles.actionBtn, {flex: 1, marginLeft: 0, marginRight: 4}]} onPress={() => {
+                  <View style={styles.employeeActionsRow}>
+                    <TouchableOpacity style={styles.iconBtnAction} onPress={() => {
                       setEmpleadoTurnoManual(empleado);
                       setShowTurnoManualModal(true);
                     }}>
-                      <Ionicons name="add-circle-outline" size={16} color="#3b82f6" />
-                      <Text style={[styles.actionBtnText, {marginLeft: 4}]}>Turno Manual</Text>
+                      <Ionicons name="add-circle" size={24} color="#3b82f6" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.actionBtn, {flex: 1, marginLeft: 4}]} onPress={() => openResumen(empleado)}>
-                      <Text style={styles.actionBtnText}>Ver Resumen</Text>
-                      <Ionicons name="chevron-forward" size={16} color="#3b82f6" />
+                    <TouchableOpacity style={styles.primaryActionBtn} onPress={() => openResumen(empleado)}>
+                      <Text style={styles.primaryActionBtnText}>Resumen</Text>
+                      <Ionicons name="chevron-forward" size={16} color="#fff" />
                     </TouchableOpacity>
                   </View>
-                </Card>
+                </View>
               );
             })
           )}
@@ -983,6 +1028,18 @@ const styles = StyleSheet.create({
 
   historyCard: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 12, padding: 12, marginBottom: 12 },
   historyHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+
+  employeeListItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 12, borderRadius: 12, marginBottom: 8, borderWidth: 1, borderColor: '#f3f4f6', elevation: 0 },
+  employeeInfoContainer: { flex: 1, flexDirection: 'row', alignItems: 'center' },
+  employeeAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#eff6ff', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  employeeAvatarText: { color: '#3b82f6', fontSize: 18, fontWeight: 'bold' },
+  employeeDetails: { flex: 1, justifyContent: 'center' },
+  employeeName: { fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 2 },
+  employeeRole: { fontSize: 12, color: '#6b7280' },
+  employeeActionsRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  iconBtnAction: { padding: 8, backgroundColor: '#eff6ff', borderRadius: 8 },
+  primaryActionBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#10b981', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  primaryActionBtnText: { color: '#fff', fontSize: 13, fontWeight: '600', marginRight: 4 },
   historyDate: { fontSize: 14, fontWeight: '700', color: '#374151', textTransform: 'capitalize' },
   statusTag: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
   statusTagText: { fontSize: 11, fontWeight: '700' },
