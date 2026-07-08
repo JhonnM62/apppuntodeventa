@@ -286,6 +286,9 @@ export default function AdminNominaScreen({ navigation }: any) {
     const { minDate, maxDate } = getLiquidacionDates();
     if (!minDate || !maxDate) return;
 
+    const extraTurnosToPDF = (resumen.turnosAnteriores || []).filter((t: any) => selectedExtraTurnos.includes(t.IDturno));
+    const extraBrutoToPDF = extraTurnosToPDF.reduce((sum: number, t: any) => sum + Number(t.valorTurno), 0);
+
     const html = generarLiquidacionHTML({
       empleadoNombre: selectedEmpleado.nombre,
       empleadoCargo: selectedEmpleado.cargo?.nombre || 'Empleado',
@@ -293,11 +296,11 @@ export default function AdminNominaScreen({ navigation }: any) {
       minutosGracia: resumen.minutosGracia ?? 5,
       fechaInicio: minDate,
       fechaFin: maxDate,
-      turnos: resumen.turnos || [],
+      turnos: [...(resumen.turnos || []), ...extraTurnosToPDF],
       descuentos: (resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')),
-      totalBruto: resumen.totalBruto,
+      totalBruto: (resumen.totalBruto || 0) + extraBrutoToPDF,
       totalDescuentos: resumen.totalDescuentos,
-      totalNeto: resumen.totalNeto,
+      totalNeto: (resumen.totalNeto || 0) + extraBrutoToPDF,
       firmaAdmin: firmaAdmin,
     });
     
@@ -606,14 +609,14 @@ export default function AdminNominaScreen({ navigation }: any) {
                       </View>
                     </View>
 
-                    <Text style={{ fontWeight: '700', marginVertical: 8 }}>Desglose de Turnos ({resumen.turnos?.length || 0})</Text>
-                    {resumen.turnos?.map((t: any) => (
+                    <Text style={{ fontWeight: '700', marginVertical: 8 }}>Desglose de Turnos ({(resumen.turnos?.length || 0) + selectedExtraTurnos.length})</Text>
+                    {[...(resumen.turnos || []), ...(resumen.turnosAnteriores || []).filter((t: any) => selectedExtraTurnos.includes(t.IDturno))].map((t: any) => (
                       <View key={t.IDturno} style={styles.itemRow}>
                         <Text style={{ flex: 1, fontSize: 13 }}>
                           {new Date(t.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })}
                         </Text>
                         <Text style={{ flex: 1, fontSize: 13, textAlign: 'center' }}>
-                          {t.horaEntrada ? new Date(t.horaEntrada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                          {t.horaEntrada ? new Date(t.horaEntrada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true }) : '--:--'}
                         </Text>
                         <Text style={{ flex: 1, fontSize: 13, textAlign: 'right', color: '#10b981', fontWeight: '600' }}>
                           ${Number(t.valorTurno).toLocaleString('es-CO')}
@@ -700,7 +703,7 @@ export default function AdminNominaScreen({ navigation }: any) {
                         {new Date(t.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })}
                       </Text>
                       <Text style={{ fontSize: 11, color: '#6b7280' }}>
-                        {t.horaEntrada ? new Date(t.horaEntrada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                        {t.horaEntrada ? new Date(t.horaEntrada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true }) : '--:--'}
                       </Text>
                     </View>
                     <View style={{ alignItems: 'flex-end' }}>
