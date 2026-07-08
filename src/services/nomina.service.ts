@@ -230,11 +230,12 @@ export const repartirDescuento = async (reparto: {
   return data;
 };
 
-export const liquidarEmpleado = async (data: { usuarioId: string, fechaDesde: string, fechaHasta: string, firmaAdmin?: string }) => {
+export const liquidarEmpleado = async (data: { usuarioId: string, fechaDesde: string, fechaHasta: string, firmaAdmin?: string, extraTurnosIds?: string[] }) => {
   const response = await api.post('/nomina/liquidar', {
     usuarioId: data.usuarioId,
     fechaInicio: data.fechaDesde,
     fechaFin: data.fechaHasta,
+    extraTurnosIds: data.extraTurnosIds,
     firmaAdmin: data.firmaAdmin
   });
   return response.data;

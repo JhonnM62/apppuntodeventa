@@ -52,6 +52,8 @@ export default function AdminNominaScreen({ navigation }: any) {
 
   // Llegadas Tarde State
   const [showLlegadasModal, setShowLlegadasModal] = useState(false);
+  const [showTurnosAnteriores, setShowTurnosAnteriores] = useState(false);
+  const [selectedExtraTurnos, setSelectedExtraTurnos] = useState<string[]>([]);
   const [selectedLlegadas, setSelectedLlegadas] = useState<string[]>([]);
   const [aplicandoLlegadas, setAplicandoLlegadas] = useState(false);
 
@@ -118,6 +120,7 @@ export default function AdminNominaScreen({ navigation }: any) {
 
   const openResumen = async (empleado: any) => {
     setSelectedEmpleado(empleado);
+    setSelectedExtraTurnos([]);
     try {
       setLoadingResumen(true);
       const res = await getResumenEmpleadoAdmin(empleado.IDusuarios);
@@ -311,7 +314,8 @@ export default function AdminNominaScreen({ navigation }: any) {
         usuarioId: selectedEmpleado.IDusuarios,
         fechaDesde: minDateLiquidacion,
         fechaHasta: maxDateLiquidacion,
-        firmaAdmin: firma
+        firmaAdmin: firma,
+        extraTurnosIds: selectedExtraTurnos
       });
       
       showAlert({ type: 'success', title: 'Éxito', message: 'Liquidación generada correctamente' });
@@ -522,7 +526,10 @@ export default function AdminNominaScreen({ navigation }: any) {
                     <View style={styles.summaryBox}>
                       <View style={styles.summaryRow}>
                         <Text style={styles.summaryLabel}>Total Turnos (Bruto):</Text>
-                        <Text style={styles.summaryValue}>${Number(resumen.totalBruto).toLocaleString('es-CO')}</Text>
+                        <Text style={styles.summaryValue}>${Number(resumen.totalBruto + selectedExtraTurnos.reduce((sum: number, id: string) => {
+                          const t = resumen.turnosAnteriores?.find((x: any) => x.IDturno === id);
+                          return sum + (t ? Number(t.valorTurno) : 0);
+                        }, 0)).toLocaleString('es-CO')}</Text>
                       </View>
                       
                       {Object.keys(descuentosAgrupados || {}).length > 0 && (
@@ -547,7 +554,10 @@ export default function AdminNominaScreen({ navigation }: any) {
                       </View>
                       <View style={[styles.summaryRow, { borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 8, marginTop: 8 }]}>
                         <Text style={[styles.summaryLabel, { fontWeight: '700' }]}>Total Neto a Pagar:</Text>
-                        <Text style={[styles.summaryValue, { color: '#10b981', fontSize: 18 }]}>${Number(resumen.totalNeto).toLocaleString('es-CO')}</Text>
+                        <Text style={[styles.summaryValue, { color: '#10b981', fontSize: 18 }]}>${Number(resumen.totalNeto + selectedExtraTurnos.reduce((sum: number, id: string) => {
+                          const t = resumen.turnosAnteriores?.find((x: any) => x.IDturno === id);
+                          return sum + (t ? Number(t.valorTurno) : 0);
+                        }, 0)).toLocaleString('es-CO')}</Text>
                       </View>
                     </View>
 
@@ -590,6 +600,11 @@ export default function AdminNominaScreen({ navigation }: any) {
                         <Text style={{ color: '#fff', fontSize: 14 }}>Evaluar Llegadas Tarde Pendientes</Text>
                       </Button>
                     )}
+                    { (resumen.turnosAnteriores && resumen.turnosAnteriores.length > 0) && (
+                      <Button style={{ marginBottom: 12, backgroundColor: '#3b82f6' }} onPress={() => setShowTurnosAnteriores(true)}>
+                        <Text style={{ color: '#fff', fontSize: 14 }}>Evaluar Turnos Anteriores Pendientes ({resumen.turnosAnteriores.length})</Text>
+                      </Button>
+                    )}
                   <View style={styles.modalActions}>
                     <Button style={{ flex: 1, marginRight: 8, backgroundColor: '#f3f4f6' }} onPress={() => setSelectedEmpleado(null)} disabled={liquidando || recalculando}>
                       <Text style={{ color: '#111827' }}>Cerrar</Text>
@@ -610,6 +625,55 @@ export default function AdminNominaScreen({ navigation }: any) {
       </Modal>
 
       
+      
+      {/* Modal Turnos Anteriores */}
+      <Modal visible={showTurnosAnteriores} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Turnos Anteriores Pendientes</Text>
+            <Text style={styles.modalSubtitle}>Selecciona los turnos de meses pasados a incluir en este pago</Text>
+            
+            <ScrollView style={{ maxHeight: 300, marginBottom: 16 }}>
+              {resumen?.turnosAnteriores?.map((t: any) => {
+                const isSelected = selectedExtraTurnos.includes(t.IDturno);
+                return (
+                  <TouchableOpacity 
+                    key={t.IDturno} 
+                    style={[styles.itemRow, { backgroundColor: isSelected ? '#eff6ff' : '#fff', borderColor: isSelected ? '#3b82f6' : '#e5e7eb', borderWidth: 1 }]}
+                    onPress={() => {
+                      if (isSelected) {
+                        setSelectedExtraTurnos(prev => prev.filter(id => id !== t.IDturno));
+                      } else {
+                        setSelectedExtraTurnos(prev => [...prev, t.IDturno]);
+                      }
+                    }}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: isSelected ? '700' : '400' }}>
+                        {new Date(t.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: '#6b7280' }}>
+                        {t.horaEntrada ? new Date(t.horaEntrada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                      </Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{ fontSize: 13, color: '#10b981', fontWeight: '600' }}>
+                        +${Number(t.valorTurno).toLocaleString('es-CO')}
+                      </Text>
+                      {isSelected && <Ionicons name="checkmark-circle" size={16} color="#3b82f6" />}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            
+            <Button style={{ backgroundColor: '#3b82f6' }} onPress={() => setShowTurnosAnteriores(false)}>
+              <Text style={{ color: '#fff' }}>Aceptar Selección</Text>
+            </Button>
+          </View>
+        </View>
+      </Modal>
+
       {/* Modal Llegadas Tarde */}
       <Modal visible={showLlegadasModal} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
