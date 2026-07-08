@@ -54,41 +54,69 @@ export const generarLiquidacionHTML = (data: {
     return `${hour12.toString().padStart(2, '0')}:${m} ${suffix}`;
   };
 
+  const calculateDuration = (entrada?: string, salida?: string) => {
+    if (!entrada || !salida) return '---';
+    const [hEntrada, mEntrada] = entrada.split(':').map(Number);
+    const [hSalida, mSalida] = salida.split(':').map(Number);
+    if (isNaN(hEntrada) || isNaN(mEntrada) || isNaN(hSalida) || isNaN(mSalida)) return '---';
+    
+    let totalMinutosEntrada = hEntrada * 60 + mEntrada;
+    let totalMinutosSalida = hSalida * 60 + mSalida;
+    
+    if (totalMinutosSalida < totalMinutosEntrada) {
+      totalMinutosSalida += 24 * 60;
+    }
+    
+    const diff = totalMinutosSalida - totalMinutosEntrada;
+    const hours = Math.floor(diff / 60);
+    const minutes = diff % 60;
+    
+    if (minutes === 0) return `${hours} horas`;
+    return `${hours} h ${minutes} m`;
+  };
+
   const scheduleRows = `
     <tr>
       <td>Lunes</td>
       <td>${formatHourString(cargo?.horaEntradaLunes)}</td>
       <td>${formatHourString(cargo?.horaSalidaLunes)}</td>
+      <td>${calculateDuration(cargo?.horaEntradaLunes, cargo?.horaSalidaLunes)}</td>
     </tr>
     <tr>
       <td>Martes</td>
       <td>${formatHourString(cargo?.horaEntradaMartes)}</td>
       <td>${formatHourString(cargo?.horaSalidaMartes)}</td>
+      <td>${calculateDuration(cargo?.horaEntradaMartes, cargo?.horaSalidaMartes)}</td>
     </tr>
     <tr>
       <td>Miércoles</td>
       <td>${formatHourString(cargo?.horaEntradaMiercoles)}</td>
       <td>${formatHourString(cargo?.horaSalidaMiercoles)}</td>
+      <td>${calculateDuration(cargo?.horaEntradaMiercoles, cargo?.horaSalidaMiercoles)}</td>
     </tr>
     <tr>
       <td>Jueves</td>
       <td>${formatHourString(cargo?.horaEntradaJueves)}</td>
       <td>${formatHourString(cargo?.horaSalidaJueves)}</td>
+      <td>${calculateDuration(cargo?.horaEntradaJueves, cargo?.horaSalidaJueves)}</td>
     </tr>
     <tr>
       <td>Viernes</td>
       <td>${formatHourString(cargo?.horaEntradaViernes)}</td>
       <td>${formatHourString(cargo?.horaSalidaViernes)}</td>
+      <td>${calculateDuration(cargo?.horaEntradaViernes, cargo?.horaSalidaViernes)}</td>
     </tr>
     <tr>
       <td>Sábado</td>
       <td>${formatHourString(cargo?.horaEntradaSabado)}</td>
       <td>${formatHourString(cargo?.horaSalidaSabado)}</td>
+      <td>${calculateDuration(cargo?.horaEntradaSabado, cargo?.horaSalidaSabado)}</td>
     </tr>
     <tr>
       <td>Domingo</td>
       <td>${formatHourString(cargo?.horaEntradaDomingo)}</td>
       <td>${formatHourString(cargo?.horaSalidaDomingo)}</td>
+      <td>${calculateDuration(cargo?.horaEntradaDomingo, cargo?.horaSalidaDomingo)}</td>
     </tr>
   `;
 
@@ -192,6 +220,7 @@ export const generarLiquidacionHTML = (data: {
               <th style="background-color: #f3f4f6; color: #374151;">Día</th>
               <th style="background-color: #f3f4f6; color: #374151;">Hora de Entrada</th>
               <th style="background-color: #f3f4f6; color: #374151;">Hora de Salida</th>
+              <th style="background-color: #f3f4f6; color: #374151;">Duración</th>
             </tr>
           </thead>
           <tbody>
