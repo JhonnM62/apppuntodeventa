@@ -260,6 +260,8 @@ export default function AdminNominaScreen({ navigation }: any) {
     const html = generarLiquidacionHTML({
       empleadoNombre: selectedEmpleado.nombre,
       empleadoCargo: selectedEmpleado.cargo?.nombre || 'Empleado',
+      cargo: selectedEmpleado.cargo,
+      minutosGracia: resumen.minutosGracia ?? 5,
       fechaInicio: minDate,
       fechaFin: maxDate,
       turnos: resumen.turnos || [],
@@ -467,15 +469,15 @@ export default function AdminNominaScreen({ navigation }: any) {
                     </View>
                   </TouchableOpacity>
                   
-                  <View style={{flexDirection: 'row', borderTopWidth: 1, borderColor: '#f3f4f6'}}>
-                    <TouchableOpacity style={[styles.actionBtn, {flex: 1, borderRightWidth: 1, borderColor: '#f3f4f6'}]} onPress={() => {
+                  <View style={{flexDirection: 'row', borderTopWidth: 1, borderColor: '#f3f4f6', marginTop: 12, paddingTop: 12}}>
+                    <TouchableOpacity style={[styles.actionBtn, {flex: 1, marginLeft: 0, marginRight: 4}]} onPress={() => {
                       setEmpleadoTurnoManual(empleado);
                       setShowTurnoManualModal(true);
                     }}>
                       <Ionicons name="add-circle-outline" size={16} color="#3b82f6" />
                       <Text style={[styles.actionBtnText, {marginLeft: 4}]}>Turno Manual</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.actionBtn, {flex: 1}]} onPress={() => openResumen(empleado)}>
+                    <TouchableOpacity style={[styles.actionBtn, {flex: 1, marginLeft: 4}]} onPress={() => openResumen(empleado)}>
                       <Text style={styles.actionBtnText}>Ver Resumen</Text>
                       <Ionicons name="chevron-forward" size={16} color="#3b82f6" />
                     </TouchableOpacity>
@@ -891,7 +893,7 @@ const styles = StyleSheet.create({
 
   content: { padding: 16 },
   
-  card: { flexDirection: 'row', alignItems: 'center', padding: 16, marginBottom: 12, backgroundColor: '#fff', borderRadius: 12, elevation: 1 },
+  card: { padding: 16, marginBottom: 12, backgroundColor: '#fff', borderRadius: 12, elevation: 1 },
   cardInfo: { flex: 1 },
   cardTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 2 },
   cardSubtitle: { fontSize: 13, color: '#6b7280', marginBottom: 8 },

@@ -1,6 +1,8 @@
 export const generarLiquidacionHTML = (data: {
   empleadoNombre: string;
   empleadoCargo: string;
+  cargo?: any;
+  minutosGracia?: number;
   fechaInicio: string;
   fechaFin: string;
   turnos: any[];
@@ -11,7 +13,7 @@ export const generarLiquidacionHTML = (data: {
   firmaAdmin?: string;
   firmaEmpleado?: string;
 }) => {
-  const { empleadoNombre, empleadoCargo, fechaInicio, fechaFin, turnos, descuentos, totalBruto, totalDescuentos, totalNeto, firmaAdmin, firmaEmpleado } = data;
+  const { empleadoNombre, empleadoCargo, cargo, minutosGracia = 5, fechaInicio, fechaFin, turnos, descuentos, totalBruto, totalDescuentos, totalNeto, firmaAdmin, firmaEmpleado } = data;
 
   const formatDate = (d: string | Date) => new Date(d).toLocaleDateString('es-CO');
   const formatMoney = (n: number) => `$${Number(n).toLocaleString('es-CO')}`;
@@ -39,6 +41,49 @@ export const generarLiquidacionHTML = (data: {
       <td style="text-align: right">${formatMoney(d.valor)}</td>
     </tr>
   `).join('');
+
+  const formatHourString = (str?: string) => {
+    if (!str) return 'Descanso';
+    return str;
+  };
+
+  const scheduleRows = `
+    <tr>
+      <td>Lunes</td>
+      <td>${formatHourString(cargo?.horaEntradaLunes)}</td>
+      <td>${formatHourString(cargo?.horaSalidaLunes)}</td>
+    </tr>
+    <tr>
+      <td>Martes</td>
+      <td>${formatHourString(cargo?.horaEntradaMartes)}</td>
+      <td>${formatHourString(cargo?.horaSalidaMartes)}</td>
+    </tr>
+    <tr>
+      <td>Miércoles</td>
+      <td>${formatHourString(cargo?.horaEntradaMiercoles)}</td>
+      <td>${formatHourString(cargo?.horaSalidaMiercoles)}</td>
+    </tr>
+    <tr>
+      <td>Jueves</td>
+      <td>${formatHourString(cargo?.horaEntradaJueves)}</td>
+      <td>${formatHourString(cargo?.horaSalidaJueves)}</td>
+    </tr>
+    <tr>
+      <td>Viernes</td>
+      <td>${formatHourString(cargo?.horaEntradaViernes)}</td>
+      <td>${formatHourString(cargo?.horaSalidaViernes)}</td>
+    </tr>
+    <tr>
+      <td>Sábado</td>
+      <td>${formatHourString(cargo?.horaEntradaSabado)}</td>
+      <td>${formatHourString(cargo?.horaSalidaSabado)}</td>
+    </tr>
+    <tr>
+      <td>Domingo</td>
+      <td>${formatHourString(cargo?.horaEntradaDomingo)}</td>
+      <td>${formatHourString(cargo?.horaSalidaDomingo)}</td>
+    </tr>
+  `;
 
   return `
     <!DOCTYPE html>
@@ -129,6 +174,30 @@ export const generarLiquidacionHTML = (data: {
         <div class="total-row neto">
           <span>Total Neto a Pagar:</span>
           <span>${formatMoney(totalNeto)}</span>
+        </div>
+      </div>
+
+      <div style="clear: both; padding-top: 20px;">
+        <h3 style="color: #374151; margin-bottom: 10px;">Horario Establecido</h3>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 13px;">
+          <thead>
+            <tr>
+              <th style="background-color: #f3f4f6; color: #374151;">Día</th>
+              <th style="background-color: #f3f4f6; color: #374151;">Hora de Entrada</th>
+              <th style="background-color: #f3f4f6; color: #374151;">Hora de Salida</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${scheduleRows}
+          </tbody>
+        </table>
+
+        <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; margin-bottom: 30px; border-radius: 4px;">
+          <h4 style="margin: 0 0 8px 0; color: #92400e;">Política de Asistencia y Descuentos</h4>
+          <p style="margin: 0; font-size: 13px; color: #92400e; line-height: 1.5;">
+            El tiempo de gracia permitido para el inicio de turno es de <strong>${minutosGracia} minutos</strong>. 
+            Las llegadas posteriores al tiempo de gracia son penalizadas. La penalidad se calcula dividiendo el valor total del turno entre las horas esperadas, obteniendo el valor por minuto. Ese valor se multiplica por la cantidad de minutos de retraso que excedan el tiempo de gracia.
+          </p>
         </div>
       </div>
 
