@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, TextInput, Switch, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text } from '../../components/ui/text';
@@ -120,37 +121,87 @@ export default function AdminNominaScreen({ navigation }: any) {
 
   
   const getCurrentQuincena = () => {
+    // Usamos lógica UTC-5 (Colombia) para conocer qué día/mes es hoy
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
-    const date = now.getDate();
-    
-    let fechaDesde = new Date(year, month, 1);
-    let fechaHasta = new Date(year, month, 15);
-    
+    const offsetMs = 5 * 60 * 60 * 1000;
+    const colombiaTime = new Date(now.getTime() - offsetMs);
+
+    const year = colombiaTime.getUTCFullYear();
+    const month = colombiaTime.getUTCMonth();
+    const date = colombiaTime.getUTCDate();
+
+    // Construir las fechas de la quincena en UTC puro (medianoche UTC)
+    // para que coincidan con cómo el backend guarda los turnos (fecha en UTC medianoche).
+    let startDay = 1;
+    let endDay = 15;
+
     if (date > 15) {
-      fechaDesde = new Date(year, month, 16);
-      fechaHasta = new Date(year, month + 1, 0);
+      startDay = 16;
+      // Último día del mes
+      endDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
     }
-    
-    fechaDesde.setHours(0, 0, 0, 0);
-    fechaHasta.setHours(23, 59, 59, 999);
-    
-    return { 
-      fechaDesde: fechaDesde.toISOString(), 
-      fechaHasta: fechaHasta.toISOString() 
+
+    const fechaDesde = new Date(Date.UTC(year, month, startDay, 0, 0, 0, 0));
+    const fechaHasta = new Date(Date.UTC(year, month, endDay, 23, 59, 59, 999));
+
+    return {
+      fechaDesde: fechaDesde.toISOString(),
+      fechaHasta: fechaHasta.toISOString()
     };
+  };
+
+  const STORAGE_KEY = (id: string) => `extraTurnos_${id}`;
+
+  const saveExtraTurnos = async (empleadoId: string, ids: string[]) => {
+    try {
+      const value = JSON.stringify(ids);
+      if (Platform.OS === 'web') {
+        localStorage.setItem(STORAGE_KEY(empleadoId), value);
+      } else {
+        await AsyncStorage.setItem(STORAGE_KEY(empleadoId), value);
+      }
+    } catch (e) {
+      console.warn('No se pudo guardar la selección de turnos', e);
+    }
+  };
+
+  const loadExtraTurnos = async (empleadoId: string): Promise<string[]> => {
+    try {
+      let value: string | null = null;
+      if (Platform.OS === 'web') {
+        value = localStorage.getItem(STORAGE_KEY(empleadoId));
+      } else {
+        value = await AsyncStorage.getItem(STORAGE_KEY(empleadoId));
+      }
+      return value ? JSON.parse(value) : [];
+    } catch (e) {
+      return [];
+    }
+  };
+
+  const clearExtraTurnos = async (empleadoId: string) => {
+    try {
+      if (Platform.OS === 'web') {
+        localStorage.removeItem(STORAGE_KEY(empleadoId));
+      } else {
+        await AsyncStorage.removeItem(STORAGE_KEY(empleadoId));
+      }
+    } catch (e) {}
   };
 
   const openResumen = async (empleado: any) => {
     setSelectedEmpleado(empleado);
-    setSelectedExtraTurnos([]);
     try {
       setLoadingResumen(true);
       const { fechaDesde, fechaHasta } = getCurrentQuincena();
-      const res = await getResumenEmpleadoAdmin(empleado.IDusuarios, { fechaDesde, fechaHasta });
-
+      const [res, savedIds] = await Promise.all([
+        getResumenEmpleadoAdmin(empleado.IDusuarios, { fechaDesde, fechaHasta }),
+        loadExtraTurnos(empleado.IDusuarios),
+      ]);
       setResumen(res.data);
+      // Restore only IDs that still exist in turnosAnteriores
+      const validIds = (res.data?.turnosAnteriores || []).map((t: any) => t.IDturno);
+      setSelectedExtraTurnos(savedIds.filter((id: string) => validIds.includes(id)));
     } catch (error) {
       console.error(error);
       showAlert({ type: 'error', title: 'Error', message: 'No se pudo cargar el resumen del empleado' });
@@ -363,6 +414,7 @@ export default function AdminNominaScreen({ navigation }: any) {
       });
       
       showAlert({ type: 'success', title: 'Éxito', message: 'Liquidación generada correctamente' });
+      await clearExtraTurnos(selectedEmpleado.IDusuarios);
       setSelectedEmpleado(null);
       setFirmaAdmin('');
       loadData();
@@ -717,7 +769,10 @@ export default function AdminNominaScreen({ navigation }: any) {
               })}
             </ScrollView>
             
-            <Button style={{ backgroundColor: '#3b82f6' }} onPress={() => setShowTurnosAnteriores(false)}>
+            <Button style={{ backgroundColor: '#3b82f6' }} onPress={async () => {
+              if (selectedEmpleado) await saveExtraTurnos(selectedEmpleado.IDusuarios, selectedExtraTurnos);
+              setShowTurnosAnteriores(false);
+            }}>
               <Text style={{ color: '#fff' }}>Aceptar Selección</Text>
             </Button>
           </View>
