@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/button';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
-import { repartirDescuento, getDescuentos, updateDescuento, deleteDescuento } from '../../services/nomina.service';
+import { repartirDescuento, getDescuentos, updateDescuento, deleteDescuento, getLote, updateLote, deleteLote } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 
 const CONCEPTOS_VALIDOS = ['DESCUADRE_CAJA', 'CENA', 'PERDIDA', 'ROBO', 'ADELANTO', 'LLEGADA_TARDIA', 'OTRO'];
@@ -77,6 +77,22 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
   const [showEditTimePicker, setShowEditTimePicker] = useState(false);
 
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
+
+  // Gestionar Reparto Modal state
+  const [gestionModalVisible, setGestionModalVisible] = useState(false);
+  const [gestionLote, setGestionLote] = useState<any[]>([]);
+  const [gestionLoteId, setGestionLoteId] = useState<string>('');
+  const [gestionTab, setGestionTab] = useState<'resumen' | 'editar'>('resumen');
+  const [gestionLoadingLote, setGestionLoadingLote] = useState(false);
+  const [gestionSaving, setGestionSaving] = useState(false);
+  // Edit fields for Gestionar
+  const [gConcepto, setGConcepto] = useState('DESCUADRE_CAJA');
+  const [gDescripcion, setGDescripcion] = useState('');
+  const [gMontoTotal, setGMontoTotal] = useState('');
+  const [gPorcentaje, setGPorcentaje] = useState('100');
+  const [gFecha, setGFecha] = useState(new Date());
+  const [gShowDatePicker, setGShowDatePicker] = useState(false);
+  const [gSelectedIds, setGSelectedIds] = useState<Set<string>>(new Set());
 
   const toggleSection = (sectionId: string) => {
     setCollapsedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
@@ -270,6 +286,155 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
     });
   };
 
+  // ── Gestionar Reparto handlers ──────────────────────────────────────────────
+
+  const parseMontoFromDesc = (desc: string): number => {
+    // Extract "Faltante original: $22000" or similar
+    const m = desc?.match(/Faltante original:\s*\$([\d.]+)/);
+    if (m) return parseInt(m[1].replace(/\./g, ''), 10);
+    return 0;
+  };
+
+  const parsePorcentajeFromDesc = (desc: string): string => {
+    const m = desc?.match(/Cobro:\s*(\d+)%/);
+    return m ? m[1] : '100';
+  };
+
+  const parseBaseDesc = (desc: string): string => {
+    // Remove everything from " (Faltante original" to end
+    return desc?.replace(/\s*\(Faltante original:.*$/, '').trim() ?? desc;
+  };
+
+  const openGestionar = async (item: any) => {
+    const loteId = item.loteId;
+    if (!loteId) {
+      // Single discount without lote — fall through to old edit form
+      openEditForm(item);
+      return;
+    }
+    setGestionLoteId(loteId);
+    setGestionTab('resumen');
+    setGestionModalVisible(true);
+    try {
+      setGestionLoadingLote(true);
+      const res = await getLote(loteId);
+      const loteData: any[] = res.data || [];
+      setGestionLote(loteData);
+      // Pre-fill edit fields
+      const first = loteData[0];
+      setGConcepto(first?.concepto || 'DESCUADRE_CAJA');
+      const baseDesc = parseBaseDesc(first?.descripcion || '');
+      setGDescripcion(baseDesc);
+      setGMontoTotal(String(parseMontoFromDesc(first?.descripcion || '')));
+      setGPorcentaje(parsePorcentajeFromDesc(first?.descripcion || ''));
+      setGFecha(first?.fecha ? new Date(first.fecha) : new Date());
+      setGSelectedIds(new Set(loteData.map((d: any) => d.usuarioId)));
+      // Load empleados if needed
+      if (empleados.length === 0) {
+        const empRes = await api.get('/usuarios');
+        setEmpleados((empRes.data?.data || []).filter((u: any) => u.isActive));
+      }
+    } catch (error) {
+      console.error(error);
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo cargar el grupo de descuento' });
+      setGestionModalVisible(false);
+    } finally {
+      setGestionLoadingLote(false);
+    }
+  };
+
+  const handleDeleteLoteCompleto = () => {
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar Grupo Completo',
+      message: `¿Eliminar el descuento de TODOS los ${gestionLote.length} empleado(s) del grupo? Esta acción no se puede deshacer.`,
+      confirmText: 'Eliminar todo',
+      onConfirm: async () => {
+        try {
+          await deleteLote(gestionLoteId);
+          showAlert({ type: 'success', title: 'Éxito', message: 'Grupo eliminado correctamente' });
+          setGestionModalVisible(false);
+          loadDescuentos();
+        } catch (error) {
+          showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar el grupo' });
+        }
+      }
+    });
+  };
+
+  const handleRemoveFromLote = (usuarioId: string, nombre: string) => {
+    if (gestionLote.length <= 1) {
+      return showAlert({ type: 'error', title: 'Aviso', message: 'Si quieres eliminar el único integrante, usa "Eliminar grupo completo"' });
+    }
+    showAlert({
+      type: 'confirm',
+      title: 'Quitar del grupo',
+      message: `¿Quitar a ${nombre} del reparto? El monto se redistribuirá entre los restantes.`,
+      confirmText: 'Quitar',
+      onConfirm: async () => {
+        try {
+          const remaining = gestionLote.filter(d => d.usuarioId !== usuarioId);
+          const montoTotal = parseMontoFromDesc(gestionLote[0]?.descripcion || '0');
+          const porcentaje = Number(parsePorcentajeFromDesc(gestionLote[0]?.descripcion || '100'));
+          const montoEfectivo = montoTotal * (porcentaje / 100);
+          await updateLote(gestionLoteId, {
+            usuarioIds: remaining.map((d: any) => d.usuarioId),
+            montoTotal: montoEfectivo,
+            concepto: gestionLote[0]?.concepto || 'DESCUADRE_CAJA',
+            descripcion: gestionLote[0]?.descripcion || '',
+            fecha: gestionLote[0]?.fecha,
+          });
+          showAlert({ type: 'success', title: 'Éxito', message: `${nombre} quitado del grupo` });
+          // Refresh lote
+          const res = await getLote(gestionLoteId);
+          setGestionLote(res.data || []);
+          setGSelectedIds(new Set((res.data || []).map((d: any) => d.usuarioId)));
+          loadDescuentos();
+        } catch (error) {
+          showAlert({ type: 'error', title: 'Error', message: 'No se pudo actualizar el grupo' });
+        }
+      }
+    });
+  };
+
+  const handleUpdateLote = async () => {
+    const montoTotal = Number(gMontoTotal);
+    const porcentaje = Number(gPorcentaje);
+    if (gSelectedIds.size < 1) return showAlert({ type: 'error', title: 'Error', message: 'Selecciona al menos un empleado' });
+    if (!gDescripcion.trim()) return showAlert({ type: 'error', title: 'Error', message: 'La descripción es obligatoria' });
+    if (isNaN(montoTotal) || montoTotal <= 0) return showAlert({ type: 'error', title: 'Error', message: 'El monto debe ser mayor a cero' });
+    if (isNaN(porcentaje) || porcentaje <= 0 || porcentaje > 100) return showAlert({ type: 'error', title: 'Error', message: 'El porcentaje debe ser entre 1 y 100' });
+
+    const montoEfectivo = montoTotal * (porcentaje / 100);
+    const newDescBase = `${gDescripcion.trim()} (Faltante original: $${montoTotal.toLocaleString('es-CO')} / Cobro: ${porcentaje}%`;
+
+    try {
+      setGestionSaving(true);
+      await updateLote(gestionLoteId, {
+        usuarioIds: Array.from(gSelectedIds),
+        montoTotal: montoEfectivo,
+        concepto: gConcepto,
+        descripcion: newDescBase,
+        fecha: gFecha.toISOString(),
+      });
+      showAlert({ type: 'success', title: 'Éxito', message: 'Reparto actualizado correctamente' });
+      setGestionModalVisible(false);
+      loadDescuentos();
+    } catch (error) {
+      console.error(error);
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo guardar el cambio' });
+    } finally {
+      setGestionSaving(false);
+    }
+  };
+
+  const toggleGSelectedId = (id: string) => {
+    const s = new Set(gSelectedIds);
+    if (s.has(id)) s.delete(id); else s.add(id);
+    setGSelectedIds(s);
+  };
+
+
   const renderQuincenaItem = ({ item }: { item: any }) => {
     const isSelected = item.id === selectedQuincena.id;
     return (
@@ -337,8 +502,9 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
 
   const renderDescuento = ({ item, index, section }: { item: any, index: number, section: any }) => {
     const isLast = index === section.data.length - 1;
+    const hasLote = !!item.loteId;
     return (
-      <TouchableOpacity style={[styles.cardItem, isLast && styles.cardItemLast]} onPress={() => openEditForm(item)}>
+      <TouchableOpacity style={[styles.cardItem, isLast && styles.cardItemLast]} onPress={() => openGestionar(item)}>
         <View style={styles.cardHeaderSmall}>
           <View style={styles.badgeConceptoSmall}>
             <Text style={styles.badgeTextSmall}>{item.concepto.replace('_', ' ')}</Text>
@@ -349,9 +515,16 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
           <Text style={styles.cardDescSmall}>{item.descripcion}</Text>
           <View style={{ alignItems: 'flex-end', justifyContent: 'flex-end' }}>
             <Text style={styles.cardValorSmall}>-${Number(item.valor).toLocaleString('es-CO')}</Text>
-            <TouchableOpacity onPress={(e) => { e.stopPropagation(); handleDeleteDescuento(item); }} style={{ padding: 4, marginTop: 4 }}>
-              <Ionicons name="trash" size={16} color="#ef4444" />
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+              <TouchableOpacity onPress={(e) => { e.stopPropagation(); openGestionar(item); }} style={{ padding: 4 }}>
+                <Ionicons name="create-outline" size={16} color="#3b82f6" />
+              </TouchableOpacity>
+              {!hasLote && (
+                <TouchableOpacity onPress={(e) => { e.stopPropagation(); handleDeleteDescuento(item); }} style={{ padding: 4 }}>
+                  <Ionicons name="trash" size={16} color="#ef4444" />
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
       </TouchableOpacity>
@@ -745,6 +918,174 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
               </View>
             </View>
           </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* MODAL GESTIONAR REPARTO */}
+      <Modal visible={gestionModalVisible} animationType="slide" transparent statusBarTranslucent>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <SafeAreaView style={{ flex: 1 }}>
+            <View style={[styles.modalOverlay, { justifyContent: 'flex-end' }]}>
+              <View style={[styles.modalContent, { maxHeight: '92%' }]}>
+                {/* Header */}
+                <View style={styles.modalHeader}>
+                  <View>
+                    <Text style={styles.modalTitle}>Gestionar Reparto</Text>
+                    {gestionLote.length > 0 && (
+                      <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+                        {gestionLote.length} empleado(s) · ${(gestionLote.reduce((s: number, d: any) => s + Number(d.valor), 0)).toLocaleString('es-CO')} total
+                      </Text>
+                    )}
+                  </View>
+                  <TouchableOpacity onPress={() => setGestionModalVisible(false)}>
+                    <Ionicons name="close" size={24} color="#374151" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Tabs */}
+                <View style={{ flexDirection: 'row', backgroundColor: '#f3f4f6', borderRadius: 10, padding: 4, marginBottom: 16 }}>
+                  {(['resumen', 'editar'] as const).map(tab => (
+                    <TouchableOpacity
+                      key={tab}
+                      style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: gestionTab === tab ? '#fff' : 'transparent' }}
+                      onPress={() => setGestionTab(tab)}
+                    >
+                      <Text style={{ fontWeight: '700', fontSize: 14, color: gestionTab === tab ? '#be185d' : '#6b7280' }}>
+                        {tab === 'resumen' ? '👥 Resumen' : '✏️ Editar'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  {gestionLoadingLote ? (
+                    <ActivityIndicator size="large" color="#ec4899" style={{ marginTop: 40 }} />
+                  ) : gestionTab === 'resumen' ? (
+                    <>
+                      {/* Member list */}
+                      <Text style={{ fontWeight: '700', fontSize: 14, color: '#374151', marginBottom: 10 }}>Participantes del reparto</Text>
+                      {gestionLote.map((d: any) => (
+                        <View key={d.IDdescuento} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', borderRadius: 10, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#e5e7eb' }}>
+                          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#ec4899', justifyContent: 'center', alignItems: 'center', marginRight: 12 }}>
+                            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>{d.usuario?.nombre?.charAt(0)?.toUpperCase()}</Text>
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontWeight: '700', color: '#111827', fontSize: 14 }}>{d.usuario?.nombre}</Text>
+                            <Text style={{ fontSize: 12, color: '#6b7280' }}>Descuento: ${Number(d.valor).toLocaleString('es-CO')}</Text>
+                          </View>
+                          <TouchableOpacity
+                            onPress={() => handleRemoveFromLote(d.usuarioId, d.usuario?.nombre)}
+                            style={{ padding: 8, backgroundColor: '#fef2f2', borderRadius: 8 }}
+                          >
+                            <Ionicons name="person-remove-outline" size={18} color="#ef4444" />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+
+                      {/* Description */}
+                      {gestionLote[0]?.descripcion && (
+                        <View style={{ backgroundColor: '#f0f9ff', borderRadius: 10, padding: 12, marginTop: 8, borderWidth: 1, borderColor: '#bae6fd' }}>
+                          <Text style={{ fontSize: 12, color: '#0369a1', fontWeight: '700', marginBottom: 4 }}>Descripción</Text>
+                          <Text style={{ fontSize: 13, color: '#0c4a6e' }}>{gestionLote[0].descripcion}</Text>
+                        </View>
+                      )}
+
+                      {/* Delete group */}
+                      <Button
+                        style={{ backgroundColor: '#fef2f2', marginTop: 20 }}
+                        onPress={handleDeleteLoteCompleto}
+                      >
+                        <Text style={{ color: '#ef4444', fontWeight: '700', fontSize: 15 }}>🗑️ Eliminar grupo completo</Text>
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      {/* Concepto */}
+                      <View style={styles.formGroup}>
+                        <Text style={styles.label}>Concepto</Text>
+                        <View style={styles.conceptosGrid}>
+                          {CONCEPTOS_VALIDOS.map(c => (
+                            <TouchableOpacity key={c} style={[styles.conceptoChip, gConcepto === c && styles.conceptoChipActive]} onPress={() => setGConcepto(c)}>
+                              <Text style={[styles.conceptoText, gConcepto === c && styles.conceptoTextActive]}>{c.replace('_', ' ')}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+
+                      {/* Descripción */}
+                      <View style={styles.formGroup}>
+                        <Text style={styles.label}>Descripción del faltante</Text>
+                        <Input value={gDescripcion} onChangeText={setGDescripcion} placeholder="Ej: Faltante de caja..." multiline numberOfLines={2} />
+                      </View>
+
+                      {/* Monto */}
+                      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.label}>Monto original ($)</Text>
+                          <Input keyboardType="numeric" value={gMontoTotal} onChangeText={setGMontoTotal} placeholder="Ej: 22000" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.label}>% a cobrar</Text>
+                          <Input keyboardType="numeric" value={gPorcentaje} onChangeText={setGPorcentaje} placeholder="100" />
+                        </View>
+                      </View>
+
+                      {/* Preview monto */}
+                      {!!gMontoTotal && !!gPorcentaje && gSelectedIds.size > 0 && (
+                        <View style={[styles.summaryBox, { marginBottom: 16 }]}>
+                          <Ionicons name="calculator-outline" size={24} color="#ec4899" style={{ marginRight: 12 }} />
+                          <View>
+                            <Text style={{ fontSize: 13, color: '#6b7280' }}>Monto efectivo a cobrar</Text>
+                            <Text style={{ fontSize: 20, fontWeight: '800', color: '#be185d' }}>
+                              ${(Number(gMontoTotal) * (Number(gPorcentaje) / 100)).toLocaleString('es-CO')}
+                            </Text>
+                            <Text style={{ fontSize: 13, color: '#6b7280' }}>
+                              ÷ {gSelectedIds.size} = ${Math.round(Number(gMontoTotal) * (Number(gPorcentaje) / 100) / gSelectedIds.size).toLocaleString('es-CO')} c/u
+                            </Text>
+                          </View>
+                        </View>
+                      )}
+
+                      {/* Empleados */}
+                      <View style={styles.formGroup}>
+                        <View style={styles.listHeader}>
+                          <Text style={styles.label}>Asignar a empleados</Text>
+                          <TouchableOpacity onPress={() => {
+                            if (gSelectedIds.size === empleados.length) setGSelectedIds(new Set());
+                            else setGSelectedIds(new Set(empleados.map((e: any) => e.IDusuarios)));
+                          }}>
+                            <Text style={styles.selectAllText}>{gSelectedIds.size === empleados.length ? 'Deseleccionar todos' : 'Seleccionar todos'}</Text>
+                          </TouchableOpacity>
+                        </View>
+                        <View style={styles.employeeList}>
+                          {empleados.map((emp: any, idx: number) => {
+                            const sel = gSelectedIds.has(emp.IDusuarios);
+                            const isLastEmp = idx === empleados.length - 1;
+                            return (
+                              <TouchableOpacity key={emp.IDusuarios} style={[styles.employeeItem, sel && styles.employeeItemSelected, isLastEmp && { borderBottomWidth: 0 }]} onPress={() => toggleGSelectedId(emp.IDusuarios)}>
+                                <View style={[styles.checkbox, sel && styles.checkboxSelected]}>
+                                  {sel && <Ionicons name="checkmark" size={14} color="#fff" />}
+                                </View>
+                                <View style={{ marginLeft: 12 }}>
+                                  <Text style={styles.empName}>{emp.nombre}</Text>
+                                  <Text style={styles.empRole}>{emp.cargo?.nombre || 'Empleado'}</Text>
+                                </View>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      </View>
+
+                      {/* Actions */}
+                      <Button style={styles.mainBtn} onPress={handleUpdateLote} loading={gestionSaving}>
+                        <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>Guardar cambios</Text>
+                      </Button>
+                    </>
+                  )}
+                </ScrollView>
+              </View>
+            </View>
+          </SafeAreaView>
         </KeyboardAvoidingView>
       </Modal>
     </View>

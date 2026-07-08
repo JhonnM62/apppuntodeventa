@@ -299,3 +299,25 @@ export const deleteDescuento = async (descuentoId: string) => {
   const { data } = await api.delete(`/nomina/descuento/${descuentoId}`);
   return data;
 };
+
+export const getLote = async (loteId: string) => {
+  const { data } = await api.get(`/nomina/descuentos/lote/${loteId}`);
+  return data;
+};
+
+export const updateLote = async (loteId: string, dto: {
+  usuarioIds: string[];
+  montoTotal: number;
+  concepto: string;
+  descripcion: string;
+  fecha?: string;
+}) => {
+  const { data } = await api.patch(`/nomina/descuentos/lote/${loteId}`, dto);
+  return data;
+};
+
+export const deleteLote = async (loteId: string) => {
+  const { data } = await api.delete(`/nomina/descuentos/lote/${loteId}`);
+  return data;
+};
+
