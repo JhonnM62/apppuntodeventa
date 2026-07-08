@@ -28,12 +28,14 @@ jobs:
           host: ${{ steps.parse.outputs.host }}
           username: ${{ steps.parse.outputs.username }}
           password: ${{ secrets.AUTH_PASS }}
+          command_timeout: 30m
           script: |
             set -e
             
-            # 0. Limpiar espacio en disco de Docker
-            echo "Limpiando espacio en disco..."
-            docker system prune -af --volumes || true
+            # 0. Limpiar imagenes viejas del proyecto y caché de construcción
+            echo "Limpiando espacio en disco de imagenes viejas..."
+            docker image prune -f || true
+            docker builder prune -f || true
             
             # 1. Crear directorio del proyecto si no existe
             mkdir -p /root/frontend-qhubomor
