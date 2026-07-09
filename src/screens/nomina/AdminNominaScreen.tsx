@@ -376,6 +376,8 @@ export default function AdminNominaScreen({ navigation }: any) {
     await Print.printAsync({ html });
   };
 
+  const empleadoALiquidar = useRef<any>(null);
+
   const handleLiquidar = () => {
     const hasTurnos = resumen?.turnos && resumen.turnos.length > 0;
     const hasDescuentos = resumen?.descuentos && resumen.descuentos.length > 0;
@@ -394,19 +396,26 @@ export default function AdminNominaScreen({ navigation }: any) {
       message: `¿Estás seguro de liquidar a ${selectedEmpleado.nombre} por un total de $${Number(resumen.totalNeto).toLocaleString('es-CO')}?\n\nPresiona "Liquidar" para continuar y firmar el documento.`,
       confirmText: 'Liquidar',
       onConfirm: () => {
+        empleadoALiquidar.current = selectedEmpleado;
         setShowSignatureAdmin(true);
       }
     });
   };
 
   const handleSaveSignature = async (firma: string) => {
+    const empleado = empleadoALiquidar.current || selectedEmpleado;
+    if (!empleado) {
+      showAlert({ type: 'error', title: 'Error', message: 'No hay empleado seleccionado.' });
+      return;
+    }
+
     setFirmaAdmin(firma);
     setShowSignatureAdmin(false);
     
     try {
       setLiquidando(true);
       await liquidarEmpleado({
-        usuarioId: selectedEmpleado.IDusuarios,
+        usuarioId: empleado.IDusuarios,
         fechaDesde: minDateLiquidacion,
         fechaHasta: maxDateLiquidacion,
         firmaAdmin: firma,
@@ -414,8 +423,9 @@ export default function AdminNominaScreen({ navigation }: any) {
       });
       
       showAlert({ type: 'success', title: 'Éxito', message: 'Liquidación generada correctamente' });
-      await clearExtraTurnos(selectedEmpleado.IDusuarios);
+      await clearExtraTurnos(empleado.IDusuarios);
       setSelectedEmpleado(null);
+      empleadoALiquidar.current = null;
       setFirmaAdmin('');
       loadData();
     } catch (error: any) {
