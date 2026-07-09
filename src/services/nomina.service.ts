@@ -253,6 +253,11 @@ export const firmarLiquidacionAdmin = async (liquidacionId: string, data: { firm
   return response.data;
 };
 
+export const agregarDescuentoExtraLiquidacion = async (liquidacionId: string, data: { concepto: string, descripcion: string, valor: number }) => {
+  const response = await api.post(`/nomina/liquidar/${liquidacionId}/descuento-extra`, data);
+  return response.data;
+};
+
 export const getLiquidacionById = async (liquidacionId: string) => {
   const response = await api.get(`/nomina/liquidaciones/${liquidacionId}`);
   return response.data;

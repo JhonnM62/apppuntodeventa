@@ -8,7 +8,8 @@ import { Button } from '../../components/ui/button';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../../services/api';
-import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno, getLiquidaciones, reenviarNotificacionFirma, firmarLiquidacionAdmin } from '../../services/nomina.service';
+import { Picker } from '@react-native-picker/picker';
+import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno, getLiquidaciones, reenviarNotificacionFirma, firmarLiquidacionAdmin, agregarDescuentoExtraLiquidacion } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import TurnoManualModal from './TurnoManualModal';
 import SignatureModal from '../../components/ui/SignatureModal';
@@ -69,6 +70,14 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [firmaAdmin, setFirmaAdmin] = useState<string>('');
   const [liquidacionParaFirmaAdmin, setLiquidacionParaFirmaAdmin] = useState<string | null>(null);
 
+  // Extra Discount
+  const [showDescuentoExtraModal, setShowDescuentoExtraModal] = useState(false);
+  const [descuentoExtraLiqId, setDescuentoExtraLiqId] = useState<string | null>(null);
+  const [extraConcepto, setExtraConcepto] = useState('DESCUADRE_CAJA');
+  const [extraDescripcion, setExtraDescripcion] = useState('');
+  const [extraValor, setExtraValor] = useState('');
+  const [guardandoDescuentoExtra, setGuardandoDescuentoExtra] = useState(false);
+
   useEffect(() => {
     loadData();
     loadLiquidaciones();
@@ -92,6 +101,44 @@ export default function AdminNominaScreen({ navigation }: any) {
       showAlert({ type: 'success', title: 'Éxito', message: 'Notificación reenviada al empleado' });
     } catch (e: any) {
       showAlert({ type: 'error', title: 'Error', message: e.response?.data?.message || 'No se pudo reenviar' });
+    }
+  };
+
+  const handleSaveSignature = async (signatureBase64: string) => {
+    if (!liquidacionParaFirmaAdmin) return;
+    try {
+      await firmarLiquidacionAdmin(liquidacionParaFirmaAdmin, { firma: signatureBase64 });
+      showAlert({ type: 'success', title: 'Éxito', message: 'Firma de administrador guardada correctamente' });
+      await loadLiquidaciones();
+    } catch (e: any) {
+      showAlert({ type: 'error', title: 'Error', message: e.response?.data?.message || 'No se pudo guardar la firma' });
+    }
+  };
+
+  const handleSaveDescuentoExtra = async () => {
+    if (!descuentoExtraLiqId) return;
+    if (!extraValor || isNaN(Number(extraValor))) {
+      return showAlert({ type: 'error', title: 'Aviso', message: 'El valor debe ser numérico' });
+    }
+    if (!extraDescripcion.trim()) {
+      return showAlert({ type: 'error', title: 'Aviso', message: 'Debe ingresar una descripción' });
+    }
+    setGuardandoDescuentoExtra(true);
+    try {
+      await agregarDescuentoExtraLiquidacion(descuentoExtraLiqId, {
+        concepto: extraConcepto,
+        descripcion: extraDescripcion,
+        valor: Number(extraValor)
+      });
+      showAlert({ type: 'success', title: 'Éxito', message: 'Descuento extra aplicado' });
+      setShowDescuentoExtraModal(false);
+      setExtraDescripcion('');
+      setExtraValor('');
+      await loadLiquidaciones();
+    } catch (e: any) {
+      showAlert({ type: 'error', title: 'Error', message: e.response?.data?.message || 'No se pudo agregar el descuento' });
+    } finally {
+      setGuardandoDescuentoExtra(false);
     }
   };
 
@@ -140,17 +187,13 @@ export default function AdminNominaScreen({ navigation }: any) {
       const usuariosActivos = (resUsuarios.data?.data || []).filter((u: any) => u.isActive);
       setEmpleados(usuariosActivos);
 
-      // Usar lógica manual de UTC-5 (Colombia) para evitar problemas de Intl en Android/Hermes
       const now = new Date();
-      // Hora actual en Colombia (restando 5 horas al UTC actual)
       const colombiaTime = new Date(now.getTime() - (5 * 60 * 60 * 1000));
       
       const y = colombiaTime.getUTCFullYear();
       const m = colombiaTime.getUTCMonth();
       const d = colombiaTime.getUTCDate();
 
-      // Convertir de vuelta a UTC para la query
-      const offsetMs = 5 * 60 * 60 * 1000;
       const hoyUTC = new Date(Date.UTC(y, m, d, 0, 0, 0, 0));
       const finHoyUTC = new Date(Date.UTC(y, m, d, 23, 59, 59, 999));
 
@@ -160,15 +203,12 @@ export default function AdminNominaScreen({ navigation }: any) {
         limit: 100
       });
       
-      // Obtener también todos los turnos activos sin importar la fecha
-      // (por si un turno inició ayer pero sigue activo cruzando la medianoche)
       const resActivos = await getTurnos({
         estado: 'ACTIVO',
         limit: 100
       });
 
       const combined = [...(resTurnos.data || []), ...(resActivos.data || [])];
-      // Eliminar duplicados por IDturno
       const uniqueTurnos = Array.from(new Map(combined.map(t => [t.IDturno, t])).values());
 
       setTurnosHoy(uniqueTurnos);
@@ -183,7 +223,6 @@ export default function AdminNominaScreen({ navigation }: any) {
 
   
   const getCurrentQuincena = () => {
-    // Usamos lógica UTC-5 (Colombia) para conocer qué día/mes es hoy
     const now = new Date();
     const offsetMs = 5 * 60 * 60 * 1000;
     const colombiaTime = new Date(now.getTime() - offsetMs);
@@ -192,14 +231,11 @@ export default function AdminNominaScreen({ navigation }: any) {
     const month = colombiaTime.getUTCMonth();
     const date = colombiaTime.getUTCDate();
 
-    // Construir las fechas de la quincena en UTC puro (medianoche UTC)
-    // para que coincidan con cómo el backend guarda los turnos (fecha en UTC medianoche).
     let startDay = 1;
     let endDay = 15;
 
     if (date > 15) {
       startDay = 16;
-      // Último día del mes
       endDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
     }
 
@@ -261,7 +297,6 @@ export default function AdminNominaScreen({ navigation }: any) {
         loadExtraTurnos(empleado.IDusuarios),
       ]);
       setResumen(res.data);
-      // Restore only IDs that still exist in turnosAnteriores
       const validIds = (res.data?.turnosAnteriores || []).map((t: any) => t.IDturno);
       setSelectedExtraTurnos(savedIds.filter((id: string) => validIds.includes(id)));
     } catch (error) {
@@ -299,7 +334,7 @@ export default function AdminNominaScreen({ navigation }: any) {
           await deleteTurno(turno.IDturno);
           showAlert({ type: 'success', title: 'Éxito', message: 'Turno eliminado' });
           if (historyEmpleado) openHistory(historyEmpleado);
-          loadData(); // Reload main stats too
+          loadData(); 
         } catch (error) {
           showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar el turno' });
         }
@@ -326,7 +361,6 @@ export default function AdminNominaScreen({ navigation }: any) {
         estado: editForm.estado,
         ceno: editForm.ceno,
         valorTurno: Number(editForm.valorTurno),
-        // El backend espera strings ISO, no objetos Date
         horaEntrada: editForm.horaEntrada
           ? new Date(editForm.horaEntrada).toISOString()
           : undefined,
@@ -334,7 +368,6 @@ export default function AdminNominaScreen({ navigation }: any) {
           ? new Date(editForm.horaSalida).toISOString()
           : undefined,
       };
-      // Eliminar campos undefined para no enviar propiedades vacías
       Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
 
       await updateTurnoAdmin(editingTurno.IDturno, payload);
@@ -452,67 +485,11 @@ export default function AdminNominaScreen({ navigation }: any) {
     });
   };
 
-  const handleSaveSignature = async (firma: string) => {
-    if (liquidacionParaFirmaAdmin) {
-      try {
-        setLiquidando(true);
-        await firmarLiquidacionAdmin(liquidacionParaFirmaAdmin, { firma });
-        showAlert({ type: 'success', title: 'Éxito', message: 'Firma guardada correctamente' });
-        setShowSignatureAdmin(false);
-        setLiquidacionParaFirmaAdmin(null);
-        setFirmaAdmin('');
-        loadLiquidaciones();
-      } catch (error: any) {
-        console.error('Error al guardar firma admin:', error);
-        showAlert({ type: 'error', title: 'Error', message: error?.response?.data?.message || 'No se pudo guardar la firma' });
-      } finally {
-        setLiquidando(false);
-      }
-      return;
-    }
-
-    const empleado = empleadoALiquidar.current || selectedEmpleado;
-    if (!empleado) {
-      showAlert({ type: 'error', title: 'Error', message: 'No hay empleado seleccionado.' });
-      return;
-    }
-
-    setFirmaAdmin(firma);
-    setShowSignatureAdmin(false);
-    
-    try {
-      setLiquidando(true);
-      await liquidarEmpleado({
-        usuarioId: empleado.IDusuarios,
-        fechaDesde: minDateLiquidacion,
-        fechaHasta: maxDateLiquidacion,
-        firmaAdmin: firma,
-        extraTurnosIds: selectedExtraTurnos
-      });
-      
-      showAlert({ type: 'success', title: 'Éxito', message: 'Liquidación generada correctamente' });
-      await clearExtraTurnos(empleado.IDusuarios);
-      setSelectedEmpleado(null);
-      empleadoALiquidar.current = null;
-      setFirmaAdmin('');
-      loadData();
-      loadLiquidaciones();
-      setFilterTab('Liquidados');
-    } catch (error: any) {
-      console.error('Error al liquidar:', error);
-      const msg = error?.response?.data?.message || error?.message || JSON.stringify(error) || 'Error desconocido';
-      showAlert({ type: 'error', title: 'Error', message: `No se pudo generar la liquidación. Detalles: ${Array.isArray(msg) ? msg[0] : msg}` });
-    } finally {
-      setLiquidando(false);
-    }
-  };
-
   const handleRecalcular = async () => {
     try {
       setRecalculando(true);
       const res = await api.post(`/nomina/recalcular/${selectedEmpleado.IDusuarios}`);
       showAlert({ type: 'success', title: 'Éxito', message: res.data?.mensaje || 'Turnos recalculados' });
-      // Reload resumen automatically
       const { fechaDesde, fechaHasta } = getCurrentQuincena();
       const resUpdated = await getResumenEmpleadoAdmin(selectedEmpleado.IDusuarios, { fechaDesde, fechaHasta });
       setResumen(resUpdated.data);
@@ -526,7 +503,6 @@ export default function AdminNominaScreen({ navigation }: any) {
   };
 
   const getStatusTurnoHoy = (usuarioId: string) => {
-    // Primero, si hay un turno activo, ese es el estado actual
     const turnoActivo = turnosHoy.find(t => t.usuarioId === usuarioId && t.estado === 'ACTIVO');
     if (turnoActivo) {
       return { 
@@ -536,11 +512,9 @@ export default function AdminNominaScreen({ navigation }: any) {
       };
     }
 
-    // Si no hay activo, buscamos un turno cerrado que realmente haya iniciado HOY (hora Colombia)
     const turnoCerradoHoy = turnosHoy.find(t => {
       if (t.usuarioId !== usuarioId || t.estado === 'ACTIVO') return false;
       const entrada = new Date(t.horaEntrada);
-      // Hora de entrada en Colombia
       const colombiaTime = new Date(entrada.getTime() - (5 * 60 * 60 * 1000));
       const today = new Date();
       const todayColombia = new Date(today.getTime() - (5 * 60 * 60 * 1000));
@@ -578,7 +552,6 @@ export default function AdminNominaScreen({ navigation }: any) {
       if (pickerConfig.mode === 'date') {
         currentVal.setFullYear(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
         setEditForm({ ...editForm, [field]: currentVal.toISOString() });
-        // Automatically open time picker for Android
         if (Platform.OS === 'android') {
           setPickerConfig({ show: true, mode: 'time', field });
         } else {
@@ -607,7 +580,7 @@ export default function AdminNominaScreen({ navigation }: any) {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color="#111827" />
@@ -679,6 +652,14 @@ export default function AdminNominaScreen({ navigation }: any) {
                     <Text style={{ color: '#fff', fontSize: 13 }}>{liq.firmaAdmin ? 'Cambiar Firma' : 'Firmar'}</Text>
                   </Button>
                 </View>
+                {liq.estado === 'ESPERANDO_FIRMA' && (
+                  <View style={{ marginTop: 8 }}>
+                    <Button variant="outline" style={{ height: 36, borderColor: '#ef4444' }} onPress={() => { setDescuentoExtraLiqId(liq.IDliquidacion); setShowDescuentoExtraModal(true); }}>
+                      <Ionicons name="remove-circle-outline" size={16} color="#ef4444" style={{ marginRight: 4 }} />
+                      <Text style={{ color: '#ef4444', fontSize: 13 }}>Agregar Descuento Extra</Text>
+                    </Button>
+                  </View>
+                )}
               </Card>
             ))
           )}
@@ -1183,12 +1164,71 @@ export default function AdminNominaScreen({ navigation }: any) {
       {showSignatureAdmin && (
         <SignatureModal
           visible={showSignatureAdmin}
+          title="Firma del Administrador"
           onClose={() => setShowSignatureAdmin(false)}
           onSave={handleSaveSignature}
         />
       )}
 
-    </View>
+      {/* Modal Descuento Extra */}
+      <Modal visible={showDescuentoExtraModal} transparent animationType="fade">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 20 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Agregar Descuento Extra</Text>
+              <TouchableOpacity onPress={() => setShowDescuentoExtraModal(false)}>
+                <Ionicons name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            <View style={{ marginBottom: 16 }}>
+              <Text style={{ fontSize: 14, color: '#374151', marginBottom: 4, fontWeight: 'bold' }}>Concepto</Text>
+              <View style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, backgroundColor: '#f9fafb', height: 48, justifyContent: 'center' }}>
+                <Picker selectedValue={extraConcepto} onValueChange={(v) => setExtraConcepto(v)} style={{ height: 48, backgroundColor: 'transparent' }}>
+                  <Picker.Item label="Descuadre de Caja" value="DESCUADRE_CAJA" />
+                  <Picker.Item label="Pérdida" value="PERDIDA" />
+                  <Picker.Item label="Robo" value="ROBO" />
+                  <Picker.Item label="Adelanto" value="ADELANTO" />
+                  <Picker.Item label="Otro" value="OTRO" />
+                </Picker>
+              </View>
+            </View>
+            <View style={{ marginBottom: 16 }}>
+              <Text style={{ fontSize: 14, color: '#374151', marginBottom: 4, fontWeight: 'bold' }}>Descripción</Text>
+              <TextInput
+                style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, padding: 12, backgroundColor: '#f9fafb', color: '#111827' }}
+                placeholder="Motivo del descuento"
+                value={extraDescripcion}
+                onChangeText={setExtraDescripcion}
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+            <View style={{ marginBottom: 20 }}>
+              <Text style={{ fontSize: 14, color: '#374151', marginBottom: 4, fontWeight: 'bold' }}>Valor ($)</Text>
+              <TextInput
+                style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, padding: 12, backgroundColor: '#f9fafb', color: '#111827' }}
+                placeholder="Ej. 15000"
+                keyboardType="numeric"
+                value={extraValor}
+                onChangeText={setExtraValor}
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+            <Button
+              onPress={handleSaveDescuentoExtra}
+              disabled={guardandoDescuentoExtra}
+              style={{ height: 48 }}
+            >
+              {guardandoDescuentoExtra ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Guardar Descuento</Text>
+              )}
+            </Button>
+          </View>
+        </View>
+      </Modal>
+
+    </SafeAreaView>
   );
 }
 
