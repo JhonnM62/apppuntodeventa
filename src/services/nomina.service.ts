@@ -253,6 +253,16 @@ export const getLiquidacionById = async (liquidacionId: string) => {
   return response.data;
 };
 
+export const getLiquidaciones = async (params?: { usuarioId?: string; page?: number; limit?: number }) => {
+  const response = await api.get('/nomina/liquidaciones', { params });
+  return response.data;
+};
+
+export const reenviarNotificacionFirma = async (liquidacionId: string) => {
+  const response = await api.post(`/nomina/liquidaciones/${liquidacionId}/reenviar-notificacion`);
+  return response.data;
+};
+
 // --- TURNOS MANUALES ---
 
 export const createTurnoManual = async (data: { usuarioId: string, fechas: string[], horaEntrada: string, horaSalida?: string }) => {

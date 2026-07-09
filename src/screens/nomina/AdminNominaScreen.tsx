@@ -8,7 +8,7 @@ import { Button } from '../../components/ui/button';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../../services/api';
-import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno } from '../../services/nomina.service';
+import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno, getLiquidaciones, reenviarNotificacionFirma } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import TurnoManualModal from './TurnoManualModal';
 import SignatureModal from '../../components/ui/SignatureModal';
@@ -27,7 +27,9 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [empleados, setEmpleados] = useState<any[]>([]);
   const [turnosHoy, setTurnosHoy] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterTab, setFilterTab] = useState<'Todos' | 'Activos'>('Todos');
+  const [filterTab, setFilterTab] = useState<'Todos' | 'Activos' | 'Liquidados'>('Todos');
+  const [liquidaciones, setLiquidaciones] = useState<any[]>([]);
+  const [loadingLiquidaciones, setLoadingLiquidaciones] = useState(false);
   
   // Modal states for Liquidación / Resumen
   const [selectedEmpleado, setSelectedEmpleado] = useState<any>(null);
@@ -68,7 +70,51 @@ export default function AdminNominaScreen({ navigation }: any) {
 
   useEffect(() => {
     loadData();
+    loadLiquidaciones();
   }, []);
+
+  const loadLiquidaciones = async () => {
+    try {
+      setLoadingLiquidaciones(true);
+      const res = await getLiquidaciones({ limit: 50 });
+      setLiquidaciones(res.data || []);
+    } catch (error) {
+      console.error('Error cargando liquidaciones:', error);
+    } finally {
+      setLoadingLiquidaciones(false);
+    }
+  };
+
+  const handleReenviarNotificacion = async (id: string) => {
+    try {
+      await reenviarNotificacionFirma(id);
+      showAlert({ type: 'success', title: 'Éxito', message: 'Notificación reenviada al empleado' });
+    } catch (e: any) {
+      showAlert({ type: 'error', title: 'Error', message: e.response?.data?.message || 'No se pudo reenviar' });
+    }
+  };
+
+  const handleVerPDF = async (liquidacion: any) => {
+    try {
+      const html = generarLiquidacionHTML({
+        empleadoNombre: liquidacion.usuario?.nombre || 'Empleado',
+        empleadoCargo: liquidacion.usuario?.cargo?.nombre || 'Sin Cargo',
+        fechaInicio: liquidacion.fechaInicio,
+        fechaFin: liquidacion.fechaFin,
+        turnos: liquidacion.turnosDetalle || [],
+        descuentos: liquidacion.descuentosDetalle || [],
+        totalBruto: liquidacion.totalBruto,
+        totalDescuentos: liquidacion.totalDescuentos,
+        totalNeto: liquidacion.totalNeto,
+        firmaAdmin: liquidacion.firmaAdmin,
+        firmaEmpleado: liquidacion.firmaEmpleado
+      });
+      if (!Print) return showAlert({ type: 'error', title: 'Error', message: 'Módulo PDF no disponible' });
+      await Print.printAsync({ html });
+    } catch (e) {
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo generar el PDF' });
+    }
+  };
 
   const loadData = async () => {
     try {
@@ -428,6 +474,8 @@ export default function AdminNominaScreen({ navigation }: any) {
       empleadoALiquidar.current = null;
       setFirmaAdmin('');
       loadData();
+      loadLiquidaciones();
+      setFilterTab('Liquidados');
     } catch (error: any) {
       console.error('Error al liquidar:', error);
       const msg = error?.response?.data?.message || error?.message || JSON.stringify(error) || 'Error desconocido';
@@ -558,10 +606,58 @@ export default function AdminNominaScreen({ navigation }: any) {
         <TouchableOpacity style={[styles.tabBtn, filterTab === 'Activos' && styles.tabBtnActive]} onPress={() => setFilterTab('Activos')}>
           <Text style={[styles.tabBtnText, filterTab === 'Activos' && styles.tabBtnTextActive]}>Turnos Activos</Text>
         </TouchableOpacity>
+        <TouchableOpacity style={[styles.tabBtn, filterTab === 'Liquidados' && styles.tabBtnActive]} onPress={() => { setFilterTab('Liquidados'); loadLiquidaciones(); }}>
+          <Text style={[styles.tabBtnText, filterTab === 'Liquidados' && styles.tabBtnTextActive]}>Liquidados</Text>
+        </TouchableOpacity>
       </View>
 
-      {loading ? (
+      {loading && filterTab !== 'Liquidados' ? (
         <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 40 }} />
+      ) : filterTab === 'Liquidados' ? (
+        <ScrollView style={styles.content}>
+          {loadingLiquidaciones ? (
+             <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 40 }} />
+          ) : liquidaciones.length === 0 ? (
+            <Text style={{ textAlign: 'center', marginTop: 40, color: '#6b7280' }}>No hay liquidaciones recientes.</Text>
+          ) : (
+            liquidaciones.map((liq) => (
+              <Card key={liq.IDliquidacion} style={{ marginBottom: 12, padding: 16 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontSize: 16, fontWeight: '700' }}>{liq.usuario?.nombre}</Text>
+                    <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
+                      {new Date(liq.fechaInicio).toLocaleDateString('es-CO')} - {new Date(liq.fechaFin).toLocaleDateString('es-CO')}
+                    </Text>
+                    <View style={[styles.statusBadge, { marginTop: 6, alignSelf: 'flex-start', backgroundColor: liq.estado === 'FIRMADO' ? '#d1fae5' : '#fef3c7' }]}>
+                      <Ionicons name={liq.estado === 'FIRMADO' ? 'checkmark-circle' : 'time-outline'} size={12} color={liq.estado === 'FIRMADO' ? '#059669' : '#d97706'} />
+                      <Text style={[styles.statusText, { color: liq.estado === 'FIRMADO' ? '#059669' : '#d97706', fontSize: 11, marginLeft: 4 }]}>
+                        {liq.estado.replace('_', ' ')}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={{ alignItems: 'flex-end' }}>
+                    <Text style={{ fontSize: 18, fontWeight: '800', color: '#10b981' }}>
+                      ${Number(liq.totalNeto).toLocaleString('es-CO')}
+                    </Text>
+                  </View>
+                </View>
+                <View style={{ flexDirection: 'row', marginTop: 16, gap: 8 }}>
+                  <Button variant="outline" style={{ flex: 1, height: 36, borderColor: '#3b82f6' }} onPress={() => handleVerPDF(liq)}>
+                    <Ionicons name="document-text-outline" size={16} color="#3b82f6" style={{ marginRight: 4 }} />
+                    <Text style={{ color: '#3b82f6', fontSize: 13 }}>Ver PDF</Text>
+                  </Button>
+                  {liq.estado === 'ESPERANDO_FIRMA' && (
+                    <Button variant="default" style={{ flex: 1, height: 36, backgroundColor: '#f59e0b' }} onPress={() => handleReenviarNotificacion(liq.IDliquidacion)}>
+                      <Ionicons name="paper-plane-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+                      <Text style={{ color: '#fff', fontSize: 13 }}>Reenviar</Text>
+                    </Button>
+                  )}
+                </View>
+              </Card>
+            ))
+          )}
+          <View style={{ height: 120 }} />
+        </ScrollView>
       ) : (
         <ScrollView style={styles.content}>
           {empleadosFiltrados.length === 0 ? (
