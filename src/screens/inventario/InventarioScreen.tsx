@@ -72,7 +72,17 @@ const InventarioScreen = ({ navigation }: any) => {
   const { canRead: canReadRegistros } = usePermissions('registros_inventario');
   const { canRead: canReadSalidas, canCreate: canCreateSalidas, canEdit: canEditSalidas, canDelete: canDeleteSalidas } = usePermissions('salidas_inventario');
 
-  const [activeTab, setActiveTab] = useState<TabType>('entrada');
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    // Will be adjusted by effect once permissions load
+    return 'entrada';
+  });
+
+  // Auto-redirect to 'salida' tab if user cannot see entradas
+  useEffect(() => {
+    if (!canReadEntradas && canReadSalidas) {
+      setActiveTab('salida');
+    }
+  }, [canReadEntradas, canReadSalidas]);
 
   // Fallback consolidado para compatibilidad visual con botones generales de creación
   const canCreate = (activeTab === 'entrada' && canCreateEntradas) || (activeTab === 'salida' && canCreateSalidas) || (activeTab === 'registros' && canCreateEntradas);
@@ -766,9 +776,34 @@ const InventarioScreen = ({ navigation }: any) => {
       return;
     }
 
+    // ── Stock validation for salidas ──────────────────────────────────────
+    const isEntrada = newInventario.tipo === 'entrada';
+    if (!isEntrada && addItemsList.length > 0) {
+      const itemsConStockInsuficiente = addItemsList.filter(item => {
+        const stockActual = Number(getInsumoStock(item.insumoId)) || 0;
+        return Number(item.cantidad) > stockActual;
+      });
+
+      if (itemsConStockInsuficiente.length > 0) {
+        const nombres = itemsConStockInsuficiente
+          .map(item => {
+            const stockActual = Number(getInsumoStock(item.insumoId)) || 0;
+            return `• ${item.nombre}: pides ${item.cantidad}, disponible ${stockActual}`;
+          })
+          .join('\n');
+        Toast.show({
+          type: 'error',
+          text1: 'Stock insuficiente',
+          text2: `Los siguientes insumos no tienen suficiente stock:\n${nombres}`,
+          visibilityTime: 5000,
+        });
+        return;
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
     setSaving(true);
     try {
-      const isEntrada = newInventario.tipo === 'entrada';
       let totalCalculado = 0;
 
       if (addItemsList.length > 0 && isEntrada) {
@@ -852,10 +887,35 @@ const InventarioScreen = ({ navigation }: any) => {
       return;
     }
 
+    const isEntrada = selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada';
+
+    // ── Stock validation for salidas ─────────────────────────────────────
+    if (!isEntrada) {
+      const itemsConStockInsuficiente = addItemsList.filter(item => {
+        const stockActual = Number(getInsumoStock(item.insumoId)) || 0;
+        return Number(item.cantidad) > stockActual;
+      });
+
+      if (itemsConStockInsuficiente.length > 0) {
+        const nombres = itemsConStockInsuficiente
+          .map(item => {
+            const stockActual = Number(getInsumoStock(item.insumoId)) || 0;
+            return `• ${item.nombre}: pides ${item.cantidad}, disponible ${stockActual}`;
+          })
+          .join('\n');
+        Toast.show({
+          type: 'error',
+          text1: 'Stock insuficiente',
+          text2: `Los siguientes insumos no tienen suficiente stock:\n${nombres}`,
+          visibilityTime: 5000,
+        });
+        return;
+      }
+    }
+    // ────────────────────────────────────────────────────────────────────
+
     setSaving(true);
     try {
-      const isEntrada = selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada';
-      
       let nuevosItemsSubtotal = 0;
 
       for (const item of addItemsList) {
@@ -1879,20 +1939,24 @@ const InventarioScreen = ({ navigation }: any) => {
             <View style={{ marginTop: 16 }}>
               <RNText style={{ fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 }}>Tipo</RNText>
               <View style={{ flexDirection: 'row' }}>
-                <TouchableOpacity
-                  style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, marginRight: 8, alignItems: 'center', backgroundColor: newInventario.tipo === 'entrada' ? '#22c55e' : '#f3f4f6' }}
-                  onPress={() => setNewInventario(p => ({ ...p, tipo: 'entrada' }))}
-                >
-                  <MaterialCommunityIcons name="arrow-down-bold" size={20} color={newInventario.tipo === 'entrada' ? '#fff' : '#6b7280'} />
-                  <RNText style={{ marginTop: 4, fontWeight: '600', fontSize: 13, color: newInventario.tipo === 'entrada' ? '#fff' : '#6b7280' }}>Entrada</RNText>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, alignItems: 'center', backgroundColor: newInventario.tipo === 'salida' ? '#ef4444' : '#f3f4f6' }}
-                  onPress={() => setNewInventario(p => ({ ...p, tipo: 'salida' }))}
-                >
-                  <MaterialCommunityIcons name="arrow-up-bold" size={20} color={newInventario.tipo === 'salida' ? '#fff' : '#6b7280'} />
-                  <RNText style={{ marginTop: 4, fontWeight: '600', fontSize: 13, color: newInventario.tipo === 'salida' ? '#fff' : '#6b7280' }}>Salida</RNText>
-                </TouchableOpacity>
+                {canCreateEntradas && (
+                  <TouchableOpacity
+                    style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, marginRight: canCreateSalidas ? 8 : 0, alignItems: 'center', backgroundColor: newInventario.tipo === 'entrada' ? '#22c55e' : '#f3f4f6' }}
+                    onPress={() => setNewInventario(p => ({ ...p, tipo: 'entrada' }))}
+                  >
+                    <MaterialCommunityIcons name="arrow-down-bold" size={20} color={newInventario.tipo === 'entrada' ? '#fff' : '#6b7280'} />
+                    <RNText style={{ marginTop: 4, fontWeight: '600', fontSize: 13, color: newInventario.tipo === 'entrada' ? '#fff' : '#6b7280' }}>Entrada</RNText>
+                  </TouchableOpacity>
+                )}
+                {canCreateSalidas && (
+                  <TouchableOpacity
+                    style={{ flex: 1, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, alignItems: 'center', backgroundColor: newInventario.tipo === 'salida' ? '#ef4444' : '#f3f4f6' }}
+                    onPress={() => setNewInventario(p => ({ ...p, tipo: 'salida' }))}
+                  >
+                    <MaterialCommunityIcons name="arrow-up-bold" size={20} color={newInventario.tipo === 'salida' ? '#fff' : '#6b7280'} />
+                    <RNText style={{ marginTop: 4, fontWeight: '600', fontSize: 13, color: newInventario.tipo === 'salida' ? '#fff' : '#6b7280' }}>Salida</RNText>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
 
@@ -2052,7 +2116,12 @@ const InventarioScreen = ({ navigation }: any) => {
                       <View style={{ flex: 1, marginRight: newInventario.tipo === 'entrada' ? 8 : 0 }}>
                         <RNText style={{ fontSize: 12, fontWeight: '600', color: '#374151', marginBottom: 4 }}>Cantidad</RNText>
                         <TextInput
-                          style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: '#111827' }}
+                          style={{
+                            borderWidth: 1,
+                            borderColor: (newInventario.tipo !== 'entrada' && item.cantidad > 0 && item.cantidad > (Number(getInsumoStock(item.insumoId)) || 0))
+                              ? '#ef4444' : '#d1d5db',
+                            borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: '#111827'
+                          }}
                           keyboardType="numeric"
                           value={item.cantidad > 0 ? String(item.cantidad) : ''}
                           placeholder="0" placeholderTextColor="#9ca3af"
@@ -2062,6 +2131,11 @@ const InventarioScreen = ({ navigation }: any) => {
                             setAddItemsList(newItems);
                           }}
                         />
+                        {newInventario.tipo !== 'entrada' && item.cantidad > 0 && item.cantidad > (Number(getInsumoStock(item.insumoId)) || 0) && (
+                          <RNText style={{ fontSize: 11, color: '#ef4444', marginTop: 3, fontWeight: '600' }}>
+                            ⚠ Stock disponible: {getInsumoStock(item.insumoId)}
+                          </RNText>
+                        )}
                       </View>
                       
                       {newInventario.tipo === 'entrada' && (
@@ -2651,7 +2725,12 @@ const InventarioScreen = ({ navigation }: any) => {
                     <View style={{ flex: 1, marginRight: (selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') ? 8 : 0 }}>
                       <RNText style={{ fontSize: 12, fontWeight: '600', color: '#374151', marginBottom: 4 }}>Cantidad</RNText>
                       <TextInput
-                        style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: '#111827' }}
+                        style={{
+                          borderWidth: 1,
+                          borderColor: (!(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && item.cantidad > 0 && item.cantidad > (Number(getInsumoStock(item.insumoId)) || 0))
+                            ? '#ef4444' : '#d1d5db',
+                          borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 14, color: '#111827'
+                        }}
                         keyboardType="numeric"
                         value={item.cantidad ? String(item.cantidad) : ''}
                         onFocus={() => setActiveInputIndex(index)}
@@ -2661,6 +2740,11 @@ const InventarioScreen = ({ navigation }: any) => {
                           setAddItemsList(newItems);
                         }}
                       />
+                      {!(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && item.cantidad > 0 && item.cantidad > (Number(getInsumoStock(item.insumoId)) || 0) && (
+                        <RNText style={{ fontSize: 11, color: '#ef4444', marginTop: 3, fontWeight: '600' }}>
+                          ⚠ Stock disponible: {getInsumoStock(item.insumoId)}
+                        </RNText>
+                      )}
                     </View>
                     
                     {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && (
