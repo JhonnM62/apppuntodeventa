@@ -100,6 +100,7 @@ export default function AdminNominaScreen({ navigation }: any) {
       const html = generarLiquidacionHTML({
         empleadoNombre: liquidacion.usuario?.nombre || 'Empleado',
         empleadoCargo: liquidacion.usuario?.cargo?.nombre || 'Sin Cargo',
+        cargo: liquidacion.usuario?.cargo,
         fechaInicio: liquidacion.fechaInicio,
         fechaFin: liquidacion.fechaFin,
         turnos: liquidacion.turnosDetalle || [],
@@ -673,12 +674,10 @@ export default function AdminNominaScreen({ navigation }: any) {
                       <Text style={{ color: '#fff', fontSize: 13 }}>Reenviar</Text>
                     </Button>
                   )}
-                  {!liq.firmaAdmin && (
-                    <Button variant="default" style={{ flex: 1, height: 36, backgroundColor: '#10b981' }} onPress={() => { setLiquidacionParaFirmaAdmin(liq.IDliquidacion); setShowSignatureAdmin(true); }}>
-                      <Ionicons name="create-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
-                      <Text style={{ color: '#fff', fontSize: 13 }}>Firmar</Text>
-                    </Button>
-                  )}
+                  <Button variant="default" style={{ flex: 1, height: 36, backgroundColor: liq.firmaAdmin ? '#3b82f6' : '#10b981' }} onPress={() => { setLiquidacionParaFirmaAdmin(liq.IDliquidacion); setShowSignatureAdmin(true); }}>
+                    <Ionicons name="create-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+                    <Text style={{ color: '#fff', fontSize: 13 }}>{liq.firmaAdmin ? 'Cambiar Firma' : 'Firmar'}</Text>
+                  </Button>
                 </View>
               </Card>
             ))
