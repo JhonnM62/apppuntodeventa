@@ -255,6 +255,37 @@ export const generarLiquidacionHTML = (data: {
         </div>
       </div>
 
+      <script>
+        document.addEventListener("DOMContentLoaded", function() {
+          const images = document.querySelectorAll('.signature-img');
+          images.forEach(function(img) {
+            if (img.complete) {
+              fixSignature(img);
+            } else {
+              img.addEventListener('load', function() {
+                fixSignature(this);
+              });
+            }
+          });
+
+          function fixSignature(img) {
+            // Si la firma es más alta que ancha, significa que se firmó en vertical
+            if (img.naturalHeight > img.naturalWidth) {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.naturalHeight;
+              canvas.height = img.naturalWidth;
+              const ctx = canvas.getContext('2d');
+              
+              // Rotar 90 grados para que quede horizontal (ajustando la orientación común)
+              ctx.translate(canvas.width / 2, canvas.height / 2);
+              ctx.rotate(90 * Math.PI / 180);
+              ctx.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+              
+              img.src = canvas.toDataURL();
+            }
+          }
+        });
+      </script>
     </body>
     </html>
   `;
