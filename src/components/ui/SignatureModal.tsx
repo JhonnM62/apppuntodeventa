@@ -6,18 +6,10 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Text,
-  Platform,
   StatusBar,
-  Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-let SignatureScreen: any = null;
-try {
-  SignatureScreen = require('react-native-signature-canvas').default;
-} catch (e) {
-  console.warn('react-native-signature-canvas no está disponible o requiere recompilación');
-}
+import SignatureCanvas from './SignatureCanvas';
 
 interface Props {
   visible: boolean;
@@ -25,8 +17,6 @@ interface Props {
   onClose: () => void;
   onSave: (signature: string) => void;
 }
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function SignatureModal({ visible, title = 'Firmar Documento', onClose, onSave }: Props) {
   const ref = useRef<any>(null);
@@ -50,29 +40,6 @@ export default function SignatureModal({ visible, title = 'Firmar Documento', on
     ref.current?.readSignature();
   };
 
-  // Minimal webview style — hide built-in footer, maximize canvas
-  const webStyle = `
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #ffffff; }
-    .m-signature-pad {
-      box-shadow: none;
-      border: none;
-      width: 100%;
-      height: 100%;
-      min-height: 100vh;
-    }
-    .m-signature-pad--body {
-      border: none;
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-    }
-    .m-signature-pad--footer { display: none !important; }
-    canvas {
-      width: 100% !important;
-      height: 100% !important;
-    }
-  `;
-
   return (
     <Modal
       visible={visible}
@@ -86,7 +53,11 @@ export default function SignatureModal({ visible, title = 'Firmar Documento', on
 
         {/* ── Header ── */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
+          <TouchableOpacity
+            onPress={onClose}
+            style={styles.closeBtn}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
             <Ionicons name="arrow-back" size={24} color="#374151" />
           </TouchableOpacity>
 
@@ -95,7 +66,7 @@ export default function SignatureModal({ visible, title = 'Firmar Documento', on
             <Text style={styles.subtitle}>Dibuja tu firma en el área de abajo</Text>
           </View>
 
-          {/* Status dot */}
+          {/* Live status dot */}
           <View style={[styles.statusDot, { backgroundColor: signed ? '#22c55e' : '#d1d5db' }]} />
         </View>
 
@@ -110,30 +81,20 @@ export default function SignatureModal({ visible, title = 'Firmar Documento', on
           )}
         </View>
 
-        {/* ── Canvas ── */}
+        {/* ── Signature Canvas ──
+            On web  → SignatureCanvas.web.tsx  (HTML5 <canvas> + Pointer Events)
+            On native → SignatureCanvas.tsx     (react-native-signature-canvas)
+        */}
         <View style={styles.canvasWrapper}>
-          {SignatureScreen ? (
-            <SignatureScreen
-              ref={ref}
-              onOK={handleOK}
-              onBegin={handleBegin}
-              webStyle={webStyle}
-              backgroundColor="#ffffff"
-              penColor="#1e293b"
-              minWidth={2}
-              maxWidth={4}
-              style={{ flex: 1 }}
-            />
-          ) : (
-            <View style={styles.unavailableContainer}>
-              <Ionicons name="warning-outline" size={56} color="#f59e0b" style={{ marginBottom: 16 }} />
-              <Text style={styles.unavailableTitle}>Módulo de firma no disponible</Text>
-              <Text style={styles.unavailableSubtitle}>
-                Esta función requiere recompilación de la app nativa.{'\n'}
-                Usa <Text style={{ fontWeight: '700' }}>npx expo run:android</Text> para habilitarla.
-              </Text>
-            </View>
-          )}
+          <SignatureCanvas
+            ref={ref}
+            onOK={handleOK}
+            onBegin={handleBegin}
+            backgroundColor="#ffffff"
+            penColor="#1e293b"
+            minWidth={1.5}
+            maxWidth={3.5}
+          />
         </View>
 
         {/* ── Divider ── */}
@@ -226,25 +187,6 @@ const styles = StyleSheet.create({
   canvasWrapper: {
     flex: 1,
     backgroundColor: '#ffffff',
-  },
-  unavailableContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  unavailableTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#374151',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  unavailableSubtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-    textAlign: 'center',
-    lineHeight: 22,
   },
 
   /* Divider */
