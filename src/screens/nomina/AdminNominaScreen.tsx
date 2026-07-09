@@ -6,7 +6,7 @@ import { Text } from '../../components/ui/text';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { Picker } from '@react-native-picker/picker';
 import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno, getLiquidaciones, reenviarNotificacionFirma, firmarLiquidacionAdmin, agregarDescuentoExtraLiquidacion } from '../../services/nomina.service';
