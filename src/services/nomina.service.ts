@@ -285,10 +285,7 @@ export const deleteTurno = async (id: string) => {
   return data;
 };
 
-export const getLiquidaciones = async (params?: { usuarioId?: string; page?: number; limit?: number }) => {
-  const { data } = await api.get('/nomina/liquidaciones', { params });
-  return data;
-};
+
 
 export const getResumenEmpleado = async (params?: { fechaDesde?: string; fechaHasta?: string }) => {
   const { data } = await api.get('/nomina/resumen/mio', { params });
