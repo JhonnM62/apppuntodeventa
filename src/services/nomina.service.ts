@@ -248,6 +248,11 @@ export const firmarLiquidacion = async (liquidacionId: string, data: { firmaEmpl
   return response.data;
 };
 
+export const firmarLiquidacionAdmin = async (liquidacionId: string, data: { firma: string }) => {
+  const response = await api.post(`/nomina/liquidar/${liquidacionId}/firmar-admin`, data);
+  return response.data;
+};
+
 export const getLiquidacionById = async (liquidacionId: string) => {
   const response = await api.get(`/nomina/liquidaciones/${liquidacionId}`);
   return response.data;

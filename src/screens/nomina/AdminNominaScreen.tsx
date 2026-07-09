@@ -8,7 +8,7 @@ import { Button } from '../../components/ui/button';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../../services/api';
-import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno, getLiquidaciones, reenviarNotificacionFirma } from '../../services/nomina.service';
+import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno, getLiquidaciones, reenviarNotificacionFirma, firmarLiquidacionAdmin } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import TurnoManualModal from './TurnoManualModal';
 import SignatureModal from '../../components/ui/SignatureModal';
@@ -67,6 +67,7 @@ export default function AdminNominaScreen({ navigation }: any) {
   // Firma Admin
   const [showSignatureAdmin, setShowSignatureAdmin] = useState(false);
   const [firmaAdmin, setFirmaAdmin] = useState<string>('');
+  const [liquidacionParaFirmaAdmin, setLiquidacionParaFirmaAdmin] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -109,6 +110,20 @@ export default function AdminNominaScreen({ navigation }: any) {
         firmaAdmin: liquidacion.firmaAdmin,
         firmaEmpleado: liquidacion.firmaEmpleado
       });
+      if (Platform.OS === 'web') {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => {
+            printWindow.print();
+          }, 500);
+        } else {
+          showAlert({ type: 'error', title: 'Error', message: 'No se pudo abrir la ventana de impresión.' });
+        }
+        return;
+      }
       if (!Print) return showAlert({ type: 'error', title: 'Error', message: 'Módulo PDF no disponible' });
       await Print.printAsync({ html });
     } catch (e) {
@@ -362,20 +377,8 @@ export default function AdminNominaScreen({ navigation }: any) {
   };
 
   const getLiquidacionDates = () => {
-    let minDate, maxDate;
-    const hasTurnos = resumen?.turnos && resumen.turnos.length > 0;
-    const hasDescuentos = resumen?.descuentos && resumen.descuentos.length > 0;
-    
-    if (hasTurnos) {
-      const fechas = resumen.turnos.map((t: any) => new Date(t.fecha).getTime());
-      minDate = new Date(Math.min(...fechas)).toISOString();
-      maxDate = new Date(Math.max(...fechas)).toISOString();
-    } else if (hasDescuentos) {
-      const fechas = resumen.descuentos.map((d: any) => new Date(d.fecha).getTime());
-      minDate = new Date(Math.min(...fechas)).toISOString();
-      maxDate = new Date(Math.max(...fechas)).toISOString();
-    }
-    return { minDate, maxDate };
+    const { fechaDesde, fechaHasta } = getCurrentQuincena();
+    return { minDate: fechaDesde, maxDate: fechaHasta };
   };
 
   const previewPdf = async () => {
@@ -449,6 +452,24 @@ export default function AdminNominaScreen({ navigation }: any) {
   };
 
   const handleSaveSignature = async (firma: string) => {
+    if (liquidacionParaFirmaAdmin) {
+      try {
+        setLiquidando(true);
+        await firmarLiquidacionAdmin(liquidacionParaFirmaAdmin, { firma });
+        showAlert({ type: 'success', title: 'Éxito', message: 'Firma guardada correctamente' });
+        setShowSignatureAdmin(false);
+        setLiquidacionParaFirmaAdmin(null);
+        setFirmaAdmin('');
+        loadLiquidaciones();
+      } catch (error: any) {
+        console.error('Error al guardar firma admin:', error);
+        showAlert({ type: 'error', title: 'Error', message: error?.response?.data?.message || 'No se pudo guardar la firma' });
+      } finally {
+        setLiquidando(false);
+      }
+      return;
+    }
+
     const empleado = empleadoALiquidar.current || selectedEmpleado;
     if (!empleado) {
       showAlert({ type: 'error', title: 'Error', message: 'No hay empleado seleccionado.' });
@@ -650,6 +671,12 @@ export default function AdminNominaScreen({ navigation }: any) {
                     <Button variant="default" style={{ flex: 1, height: 36, backgroundColor: '#f59e0b' }} onPress={() => handleReenviarNotificacion(liq.IDliquidacion)}>
                       <Ionicons name="paper-plane-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
                       <Text style={{ color: '#fff', fontSize: 13 }}>Reenviar</Text>
+                    </Button>
+                  )}
+                  {!liq.firmaAdmin && (
+                    <Button variant="default" style={{ flex: 1, height: 36, backgroundColor: '#10b981' }} onPress={() => { setLiquidacionParaFirmaAdmin(liq.IDliquidacion); setShowSignatureAdmin(true); }}>
+                      <Ionicons name="create-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+                      <Text style={{ color: '#fff', fontSize: 13 }}>Firmar</Text>
                     </Button>
                   )}
                 </View>
