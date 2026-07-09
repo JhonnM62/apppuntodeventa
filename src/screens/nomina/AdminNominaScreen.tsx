@@ -418,9 +418,10 @@ export default function AdminNominaScreen({ navigation }: any) {
       setSelectedEmpleado(null);
       setFirmaAdmin('');
       loadData();
-    } catch (error) {
-      console.error(error);
-      showAlert({ type: 'error', title: 'Error', message: 'No se pudo generar la liquidación' });
+    } catch (error: any) {
+      console.error('Error al liquidar:', error);
+      const msg = error?.response?.data?.message || error?.message || JSON.stringify(error) || 'Error desconocido';
+      showAlert({ type: 'error', title: 'Error', message: `No se pudo generar la liquidación. Detalles: ${Array.isArray(msg) ? msg[0] : msg}` });
     } finally {
       setLiquidando(false);
     }
