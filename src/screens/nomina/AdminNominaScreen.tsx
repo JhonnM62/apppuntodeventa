@@ -128,13 +128,46 @@ export default function AdminNominaScreen({ navigation }: any) {
   };
 
   const handleSaveSignature = async (signatureBase64: string) => {
-    if (!liquidacionParaFirmaAdmin) return;
-    try {
-      await firmarLiquidacionAdmin(liquidacionParaFirmaAdmin, { firma: signatureBase64 });
-      showAlert({ type: 'success', title: 'Éxito', message: 'Firma de administrador guardada correctamente' });
-      await loadLiquidaciones();
-    } catch (e: any) {
-      showAlert({ type: 'error', title: 'Error', message: e.response?.data?.message || 'No se pudo guardar la firma' });
+    // Si estamos firmando una liquidación ya existente:
+    if (liquidacionParaFirmaAdmin) {
+      try {
+        await firmarLiquidacionAdmin(liquidacionParaFirmaAdmin, { firma: signatureBase64 });
+        showAlert({ type: 'success', title: 'Éxito', message: 'Firma de administrador guardada correctamente' });
+        setLiquidacionParaFirmaAdmin(null);
+        setShowSignatureAdmin(false);
+        await loadLiquidaciones();
+      } catch (e: any) {
+        showAlert({ type: 'error', title: 'Error', message: e.response?.data?.message || 'No se pudo guardar la firma' });
+      }
+      return;
+    }
+
+    // Si estamos generando una liquidación nueva:
+    if (empleadoALiquidar.current) {
+      setLiquidando(true);
+      try {
+        const { minDate, maxDate } = getLiquidacionDates();
+        const res = await liquidarEmpleado({
+          usuarioId: empleadoALiquidar.current.IDusuarios,
+          fechaDesde: minDate as string,
+          fechaHasta: maxDate as string,
+          extraTurnosIds: selectedExtraTurnos,
+          firmaAdmin: signatureBase64,
+        });
+
+        showAlert({ type: 'success', title: 'Éxito', message: res?.mensaje || 'Liquidación generada con éxito' });
+        empleadoALiquidar.current = null;
+        setShowSignatureAdmin(false);
+        setSelectedEmpleado(null); // Cierra el modal de resumen
+        await loadLiquidaciones();
+      } catch (error: any) {
+        console.error(error);
+        const msg = error?.response?.data?.message || 'Error al liquidar al empleado';
+        showAlert({ type: 'error', title: 'Error', message: Array.isArray(msg) ? msg[0] : msg });
+      } finally {
+        setLiquidando(false);
+      }
+      return;
     }
   };
 
