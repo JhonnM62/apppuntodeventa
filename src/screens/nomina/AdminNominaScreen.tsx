@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, TextInput, Switch, Platform } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, TextInput, Switch, Platform, Alert } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text } from '../../components/ui/text';
 import { Card } from '../../components/ui/card';
@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { Picker } from '@react-native-picker/picker';
-import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno, getLiquidaciones, reenviarNotificacionFirma, firmarLiquidacionAdmin, agregarDescuentoExtraLiquidacion } from '../../services/nomina.service';
+import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno, getLiquidaciones, reenviarNotificacionFirma, firmarLiquidacionAdmin, agregarDescuentoExtraLiquidacion, deshacerLiquidacion } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import TurnoManualModal from './TurnoManualModal';
 import SignatureModal from '../../components/ui/SignatureModal';
@@ -63,7 +63,7 @@ export default function AdminNominaScreen({ navigation }: any) {
 
   // Turnos Manuales
   const [showTurnoManualModal, setShowTurnoManualModal] = useState(false);
-  const [empleadoTurnoManual, setEmpleadoTurnoManual] = useState<any>(null);
+  const [empleadoTurnoManual, setEmpleadoTurnoManual] = useState(null);
 
   // Firma Admin
   const [showSignatureAdmin, setShowSignatureAdmin] = useState(false);
@@ -95,6 +95,8 @@ export default function AdminNominaScreen({ navigation }: any) {
     }
   };
 
+  const [deshaciendo, setDeshaciendo] = useState(false);
+
   const handleReenviarNotificacion = async (id: string) => {
     try {
       await reenviarNotificacionFirma(id);
@@ -102,6 +104,33 @@ export default function AdminNominaScreen({ navigation }: any) {
     } catch (e: any) {
       showAlert({ type: 'error', title: 'Error', message: e.response?.data?.message || 'No se pudo reenviar' });
     }
+  };
+
+  const handleDeshacerLiquidacion = async (id: string) => {
+    Alert.alert(
+      "Deshacer Liquidación",
+      "¿Estás seguro? Esta acción borrará la liquidación y restaurará los turnos al estado 'por cobrar'.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Sí, Deshacer", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setDeshaciendo(true);
+              const res = await deshacerLiquidacion(id);
+              showAlert({ type: 'success', title: 'Éxito', message: res?.data?.mensaje || 'Liquidación deshecha' });
+              loadLiquidaciones();
+            } catch (error: any) {
+              const msg = error?.response?.data?.message || 'Error al deshacer la liquidación';
+              showAlert({ type: 'error', title: 'Error', message: Array.isArray(msg) ? msg[0] : msg });
+            } finally {
+              setDeshaciendo(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleSaveSignature = async (signatureBase64: string) => {
@@ -636,30 +665,26 @@ export default function AdminNominaScreen({ navigation }: any) {
                     </Text>
                   </View>
                 </View>
-                <View style={{ flexDirection: 'row', marginTop: 16, gap: 8 }}>
-                  <Button variant="outline" style={{ flex: 1, height: 36, borderColor: '#3b82f6' }} onPress={() => handleVerPDF(liq)}>
+                <View style={{ flexDirection: 'row', marginTop: 12, flexWrap: 'wrap', gap: 8 }}>
+                  <Button variant="outline" style={{ flex: 1, height: 36, borderColor: '#3b82f6', minWidth: '45%' }} onPress={() => handleVerPDF(liq)}>
                     <Ionicons name="document-text-outline" size={16} color="#3b82f6" style={{ marginRight: 4 }} />
                     <Text style={{ color: '#3b82f6', fontSize: 13 }}>Ver PDF</Text>
                   </Button>
                   {liq.estado === 'ESPERANDO_FIRMA' && (
-                    <Button variant="default" style={{ flex: 1, height: 36, backgroundColor: '#f59e0b' }} onPress={() => handleReenviarNotificacion(liq.IDliquidacion)}>
+                    <Button variant="default" style={{ flex: 1, height: 36, backgroundColor: '#f59e0b', minWidth: '45%' }} onPress={() => handleReenviarNotificacion(liq.IDliquidacion)}>
                       <Ionicons name="paper-plane-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
                       <Text style={{ color: '#fff', fontSize: 13 }}>Reenviar</Text>
                     </Button>
                   )}
-                  <Button variant="default" style={{ flex: 1, height: 36, backgroundColor: liq.firmaAdmin ? '#3b82f6' : '#10b981' }} onPress={() => { setLiquidacionParaFirmaAdmin(liq.IDliquidacion); setShowSignatureAdmin(true); }}>
+                  <Button variant="default" style={{ flex: 1, height: 36, backgroundColor: liq.firmaAdmin ? '#3b82f6' : '#10b981', minWidth: '45%' }} onPress={() => { setLiquidacionParaFirmaAdmin(liq.IDliquidacion); setShowSignatureAdmin(true); }}>
                     <Ionicons name="create-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
                     <Text style={{ color: '#fff', fontSize: 13 }}>{liq.firmaAdmin ? 'Cambiar Firma' : 'Firmar'}</Text>
                   </Button>
+                  <Button style={{ flex: 1, height: 36, backgroundColor: '#ef4444', minWidth: '100%' }} onPress={() => handleDeshacerLiquidacion(liq.IDliquidacion)} disabled={deshaciendo}>
+                    <Ionicons name="trash-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+                    <Text style={{ color: '#fff', fontSize: 13 }}>Deshacer Liquidación</Text>
+                  </Button>
                 </View>
-                {liq.estado === 'ESPERANDO_FIRMA' && (
-                  <View style={{ marginTop: 8 }}>
-                    <Button variant="outline" style={{ height: 36, borderColor: '#ef4444' }} onPress={() => { setDescuentoExtraLiqId(liq.IDliquidacion); setShowDescuentoExtraModal(true); }}>
-                      <Ionicons name="remove-circle-outline" size={16} color="#ef4444" style={{ marginRight: 4 }} />
-                      <Text style={{ color: '#ef4444', fontSize: 13 }}>Agregar Descuento Extra</Text>
-                    </Button>
-                  </View>
-                )}
               </Card>
             ))
           )}
@@ -718,9 +743,12 @@ export default function AdminNominaScreen({ navigation }: any) {
               resumen && (() => {
                 const descuentosAgrupados = resumen?.descuentos?.reduce((acc: any, d: any) => {
                   const concepto = d.concepto || 'OTRO';
-                  if (!acc[concepto]) acc[concepto] = { count: 0, total: 0 };
+                  if (!acc[concepto]) acc[concepto] = { count: 0, total: 0, allPendientes: true };
                   acc[concepto].count += 1;
                   acc[concepto].total += Number(d.valor);
+                  if (d.estado !== 'PENDIENTE') {
+                    acc[concepto].allPendientes = false;
+                  }
                   return acc;
                 }, {});
 
@@ -757,10 +785,17 @@ export default function AdminNominaScreen({ navigation }: any) {
                             const label = concepto === 'CENA' 
                               ? `${data.count} ${data.count === 1 ? 'CENA' : 'CENAS'}`
                               : `${data.count} ${data.count === 1 ? 'vez' : 'veces'} - ${concepto.replace(/_/g, ' ')}`;
+                            
+                            const isLlegadaTardePendiente = concepto === 'LLEGADA_TARDE' && data.allPendientes;
+                            
                             return (
                               <View key={concepto} style={[styles.summaryRow, { marginBottom: 4 }]}>
-                                <Text style={{ fontSize: 13, color: '#6b7280' }}>↳ {label}</Text>
-                                <Text style={{ fontSize: 13, color: '#ef4444' }}>-${data.total.toLocaleString('es-CO')}</Text>
+                                <Text style={{ fontSize: 13, color: '#6b7280' }}>
+                                  ↳ {label} {isLlegadaTardePendiente ? '(Pendiente de Aprobar)' : ''}
+                                </Text>
+                                <Text style={{ fontSize: 13, color: isLlegadaTardePendiente ? '#9ca3af' : '#ef4444' }}>
+                                  {isLlegadaTardePendiente ? `(-$${data.total.toLocaleString('es-CO')})` : `-$${data.total.toLocaleString('es-CO')}`}
+                                </Text>
                               </View>
                             );
                           })}

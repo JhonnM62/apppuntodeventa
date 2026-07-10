@@ -248,15 +248,10 @@ export const firmarLiquidacion = async (liquidacionId: string, data: { firmaEmpl
   return response.data;
 };
 
-export const firmarLiquidacionAdmin = async (liquidacionId: string, data: { firma: string }) => {
-  const response = await api.post(`/nomina/liquidar/${liquidacionId}/firmar-admin`, data);
-  return response.data;
-};
-
-export const agregarDescuentoExtraLiquidacion = async (liquidacionId: string, data: { concepto: string, descripcion: string, valor: number }) => {
-  const response = await api.post(`/nomina/liquidar/${liquidacionId}/descuento-extra`, data);
-  return response.data;
-};
+export const reenviarNotificacionFirma = (id: string) => api.post(`/nomina/liquidar/${id}/reenviar-notificacion`);
+export const firmarLiquidacionAdmin = (id: string, data: any) => api.post(`/nomina/liquidar/${id}/firmar-admin`, data);
+export const deshacerLiquidacion = (id: string) => api.delete(`/nomina/liquidar/${id}`);
+export const agregarDescuentoExtraLiquidacion = (id: string, data: any) => api.post(`/nomina/liquidar/${id}/descuento-extra`, data);
 
 export const getLiquidacionById = async (liquidacionId: string) => {
   const response = await api.get(`/nomina/liquidaciones/${liquidacionId}`);
@@ -268,10 +263,7 @@ export const getLiquidaciones = async (params?: { usuarioId?: string; page?: num
   return response.data;
 };
 
-export const reenviarNotificacionFirma = async (liquidacionId: string) => {
-  const response = await api.post(`/nomina/liquidaciones/${liquidacionId}/reenviar-notificacion`);
-  return response.data;
-};
+
 
 // --- TURNOS MANUALES ---
 
