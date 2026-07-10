@@ -128,6 +128,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const { canCreate, canEdit, canDelete } = usePermissions('caja');
   const { showAlert } = useCustomAlert();
   const isAdmin = user?.rol === 'Admin app' || user?.rol === 'Admin negocio';
+  const canCloseCaja = isAdmin || user?.rol === 'Jefe';
   
   const isReadOnly = isNew ? !canCreate : !canEdit;
   
@@ -1893,7 +1894,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                     )}
                   </View>
                   
-                  {!isReadOnly && !isNew && !(resumenData?.caja?.cierre?.toLowerCase() === 'cerrada' || resumenData?.caja?.apertura?.toLowerCase() === 'cerrada') && (
+                  {!isReadOnly && !isNew && canCloseCaja && !(resumenData?.caja?.cierre?.toLowerCase() === 'cerrada' || resumenData?.caja?.apertura?.toLowerCase() === 'cerrada') && (
                     <TouchableOpacity 
                       className="bg-red-600 py-4 rounded-xl mt-4 items-center shadow-sm shadow-red-200"
                       onPress={() => {
