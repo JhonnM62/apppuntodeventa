@@ -96,6 +96,7 @@ export default function AdminNominaScreen({ navigation }: any) {
   };
 
   const [deshaciendo, setDeshaciendo] = useState(false);
+  const [confirmDeshacerId, setConfirmDeshacerId] = useState<string | null>(null);
 
   const handleReenviarNotificacion = async (id: string) => {
     try {
@@ -107,34 +108,22 @@ export default function AdminNominaScreen({ navigation }: any) {
   };
 
   const handleDeshacerLiquidacion = async (id: string) => {
-    const ejecutarDeshacer = async () => {
-      try {
-        setDeshaciendo(true);
-        const res = await deshacerLiquidacion(id);
-        showAlert({ type: 'success', title: 'Éxito', message: res?.data?.mensaje || 'Liquidación deshecha' });
-        loadLiquidaciones();
-      } catch (error: any) {
-        const msg = error?.response?.data?.message || 'Error al deshacer la liquidación';
-        showAlert({ type: 'error', title: 'Error', message: Array.isArray(msg) ? msg[0] : msg });
-      } finally {
-        setDeshaciendo(false);
-      }
-    };
+    setConfirmDeshacerId(id);
+  };
 
-    if (Platform.OS === 'web') {
-      const confirm = window.confirm("¿Estás seguro? Esta acción borrará la liquidación y restaurará los turnos al estado 'por cobrar'.");
-      if (confirm) {
-        ejecutarDeshacer();
-      }
-    } else {
-      Alert.alert(
-        "Deshacer Liquidación",
-        "¿Estás seguro? Esta acción borrará la liquidación y restaurará los turnos al estado 'por cobrar'.",
-        [
-          { text: "Cancelar", style: "cancel" },
-          { text: "Sí, Deshacer", style: "destructive", onPress: ejecutarDeshacer }
-        ]
-      );
+  const ejecutarDeshacer = async () => {
+    if (!confirmDeshacerId) return;
+    try {
+      setDeshaciendo(true);
+      const res = await deshacerLiquidacion(confirmDeshacerId);
+      showAlert({ type: 'success', title: 'Éxito', message: res?.data?.mensaje || 'Liquidación deshecha' });
+      setConfirmDeshacerId(null);
+      loadLiquidaciones();
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || 'Error al deshacer la liquidación';
+      showAlert({ type: 'error', title: 'Error', message: Array.isArray(msg) ? msg[0] : msg });
+    } finally {
+      setDeshaciendo(false);
     }
   };
 
@@ -1045,7 +1034,7 @@ export default function AdminNominaScreen({ navigation }: any) {
                             {turno.ceno ? '🍔 Cenó' : '❌ No cenó'}
                           </Text>
                           <Text style={[styles.historyFooterValue, { marginLeft: 12 }]}>
-                            ${Number(turno.valorTurno || 0).toLocaleString('es-CO')}
+                            Turno: ${Number(turno.valorTurno || 0).toLocaleString('es-CO')}
                           </Text>
                         </View>
                         <View style={{ flexDirection: 'row' }}>
@@ -1264,6 +1253,30 @@ export default function AdminNominaScreen({ navigation }: any) {
                 <Text style={{ color: '#fff', fontWeight: 'bold' }}>Guardar Descuento</Text>
               )}
             </Button>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal visible={!!confirmDeshacerId} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              <View style={{ backgroundColor: '#fee2e2', padding: 12, borderRadius: 50, marginBottom: 12 }}>
+                <Ionicons name="warning" size={32} color="#ef4444" />
+              </View>
+              <Text style={[styles.modalTitle, { textAlign: 'center' }]}>Deshacer Liquidación</Text>
+              <Text style={[styles.modalSubtitle, { textAlign: 'center', marginTop: 8 }]}>
+                ¿Estás seguro? Esta acción borrará la liquidación permanentemente y restaurará los turnos al estado 'por cobrar'.
+              </Text>
+            </View>
+            <View style={styles.modalActions}>
+              <Button style={{ flex: 1, marginRight: 8, backgroundColor: '#f3f4f6' }} onPress={() => setConfirmDeshacerId(null)} disabled={deshaciendo}>
+                <Text style={{ color: '#111827', fontWeight: 'bold' }}>Cancelar</Text>
+              </Button>
+              <Button style={{ flex: 1, backgroundColor: '#ef4444' }} onPress={ejecutarDeshacer} loading={deshaciendo}>
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Sí, Deshacer</Text>
+              </Button>
+            </View>
           </View>
         </View>
       </Modal>
