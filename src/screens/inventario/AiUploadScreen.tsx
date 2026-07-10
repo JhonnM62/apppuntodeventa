@@ -5,7 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
-import api from '../../services/api';
+import api, { extractDataWithIA } from '../../services/api';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'AiUpload'>;
@@ -83,17 +83,13 @@ const AiUploadScreen = () => {
       } as any);
       formData.append('context', 'inventario');
 
-      const response = await api.post('/ai/extract-data', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: 60000,
-      });
+      const response = await extractDataWithIA(formData);
 
       navigation.replace('AiReview', { extractedData: response.data, type: 'image', targetInventarioId: route.params?.targetInventarioId });
     } catch (error: any) {
       console.error('Error procesando imagen con IA:', error);
-      Alert.alert('Error IA', error.response?.data?.message || 'No se pudo procesar la imagen.');
+      const errorMsg = typeof error === 'string' ? error : (error.response?.data?.message || 'No se pudo procesar la imagen.');
+      Alert.alert('Error IA', errorMsg);
     } finally {
       setLoading(false);
     }
@@ -115,7 +111,8 @@ const AiUploadScreen = () => {
       navigation.replace('AiReview', { extractedData: response.data, rawSource: textInput, type: 'text', targetInventarioId: route.params?.targetInventarioId });
     } catch (error: any) {
       console.error('Error procesando texto con IA:', error);
-      Alert.alert('Error IA', error.response?.data?.message || 'No se pudo procesar el texto.');
+      const errorMsg = typeof error === 'string' ? error : (error.response?.data?.message || 'No se pudo procesar el texto.');
+      Alert.alert('Error IA', errorMsg);
     } finally {
       setLoading(false);
     }

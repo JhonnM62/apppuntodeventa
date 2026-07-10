@@ -471,10 +471,11 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       }
     } catch (err: any) {
       console.error('Error procesando audio', err);
+      const errorMsg = typeof err === 'string' ? err : (err?.message || 'Hubo un problema al procesar el audio.');
       Toast.show({
         type: 'error',
         text1: 'Error',
-        text2: err?.response?.data?.message || err?.message || 'Hubo un problema al procesar el audio.',
+        text2: errorMsg,
         position: 'top',
       });
     } finally {

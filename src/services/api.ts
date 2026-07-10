@@ -152,13 +152,28 @@ api.interceptors.response.use(
 
 export const getConfiguracionIA = () => api.get('/configuracion/ia');
 export const updateConfiguracionIA = (data: any) => api.put('/configuracion/ia', data);
-export const extractDataWithIA = (formData: FormData) => api.post('/ai/extract-data', formData, {
-  headers: { 'Content-Type': 'multipart/form-data' },
-  timeout: 30000,
-});
-export const processVoiceOrderWithIA = (formData: FormData) => api.post('/ai/voice-order', formData, {
-  headers: { 'Content-Type': 'multipart/form-data' },
-  timeout: 30000,
-});
+export const extractDataWithIA = async (formData: FormData) => {
+  const token = await AsyncStorage.getItem('token');
+  const response = await fetch(`${API_URL}/ai/extract-data`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData,
+  });
+  const data = await response.json();
+  if (!response.ok) throw data.error || data.message || 'Error de red';
+  return data;
+};
+
+export const processVoiceOrderWithIA = async (formData: FormData) => {
+  const token = await AsyncStorage.getItem('token');
+  const response = await fetch(`${API_URL}/ai/voice-order`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${token}` },
+    body: formData,
+  });
+  const data = await response.json();
+  if (!response.ok) throw data.error || data.message || 'Error de red';
+  return data;
+};
 
 export default api;
