@@ -138,6 +138,8 @@ export default function AdminNominaScreen({ navigation }: any) {
         await loadLiquidaciones();
       } catch (e: any) {
         showAlert({ type: 'error', title: 'Error', message: e.response?.data?.message || 'No se pudo guardar la firma' });
+        setShowSignatureAdmin(false);
+        setLiquidacionParaFirmaAdmin(null);
       }
       return;
     }
@@ -164,6 +166,8 @@ export default function AdminNominaScreen({ navigation }: any) {
         console.error(error);
         const msg = error?.response?.data?.message || 'Error al liquidar al empleado';
         showAlert({ type: 'error', title: 'Error', message: Array.isArray(msg) ? msg[0] : msg });
+        setShowSignatureAdmin(false);
+        empleadoALiquidar.current = null;
       } finally {
         setLiquidando(false);
       }
@@ -1226,7 +1230,11 @@ export default function AdminNominaScreen({ navigation }: any) {
         <SignatureModal
           visible={showSignatureAdmin}
           title="Firma del Administrador"
-          onClose={() => setShowSignatureAdmin(false)}
+          onClose={() => {
+            setShowSignatureAdmin(false);
+            setLiquidacionParaFirmaAdmin(null);
+            empleadoALiquidar.current = null;
+          }}
           onSave={handleSaveSignature}
         />
       )}
