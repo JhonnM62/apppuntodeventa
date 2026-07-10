@@ -134,6 +134,7 @@ const UsersScreen = ({ navigation }: any) => {
   const [cargos, setCargos] = useState<Cargo[]>([]);
   const [showCargoDropdown, setShowCargoDropdown] = useState(false);
   const [showEditCargoDropdown, setShowEditCargoDropdown] = useState(false);
+  const [activeTab, setActiveTab] = useState<'activos' | 'inactivos'>('activos');
   const insets = useSafeAreaInsets();
 
   useEffect(() => {
@@ -152,10 +153,11 @@ const UsersScreen = ({ navigation }: any) => {
     }
   };
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (soloInactivos = false) => {
     setLoading(true);
     try {
-      const resp = await api.get('/usuarios?limit=100&page=1');
+      const param = soloInactivos ? '&soloInactivos=true' : '';
+      const resp = await api.get(`/usuarios?limit=100&page=1${param}`);
       let usersData: any[] = [];
 
       if (Array.isArray(resp)) {
@@ -174,6 +176,11 @@ const UsersScreen = ({ navigation }: any) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleTabChange = (tab: 'activos' | 'inactivos') => {
+    setActiveTab(tab);
+    fetchUsers(tab === 'inactivos');
   };
 
   const validateCreateForm = (): boolean => {
@@ -255,7 +262,7 @@ const UsersScreen = ({ navigation }: any) => {
         setShowCreateModal(false);
         setShowCredentialsModal(true);
         resetCreateForm();
-        fetchUsers();
+        fetchUsers(activeTab === 'inactivos');
       }
     } catch (error: any) {
       showAlert({ type: 'error', title: 'Error', message: getErrorMessage(error, 'Error al crear usuario') });
@@ -292,7 +299,7 @@ const UsersScreen = ({ navigation }: any) => {
           setShowEditModal(false);
           setSelectedUser(null);
           resetEditForm();
-          fetchUsers();
+          fetchUsers(activeTab === 'inactivos');
         } catch (error: any) {
           showAlert({ type: 'error', title: 'Error', message: getErrorMessage(error, 'Error al actualizar usuario') });
         } finally {
@@ -322,9 +329,32 @@ const UsersScreen = ({ navigation }: any) => {
           showAlert({ type: 'success', title: 'Éxito', message: 'Usuario eliminado correctamente' });
           setShowEditModal(false);
           setSelectedUser(null);
-          fetchUsers();
+          fetchUsers(activeTab === 'inactivos');
         } catch (error: any) {
           showAlert({ type: 'error', title: 'Error', message: getErrorMessage(error, 'Error al eliminar usuario') });
+        } finally {
+          setLoading(false);
+        }
+      },
+      onCancel: () => {}
+    });
+  };
+
+  const handleReactivarUsuario = async (userItem: UsuarioItem) => {
+    showAlert({
+      type: 'confirm',
+      title: 'Reactivar Usuario',
+      message: `¿Deseas reactivar a "${userItem.nombre}"? Podrá volver a iniciar sesión en el sistema.`,
+      confirmText: 'Reactivar',
+      cancelText: 'Cancelar',
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          await api.patch(`/usuarios/${userItem.IDusuarios}`, { isActive: true });
+          showAlert({ type: 'success', title: 'Éxito', message: `${userItem.nombre} ha sido reactivado correctamente` });
+          fetchUsers(true); // Refrescar lista de inactivos
+        } catch (error: any) {
+          showAlert({ type: 'error', title: 'Error', message: getErrorMessage(error, 'Error al reactivar usuario') });
         } finally {
           setLoading(false);
         }
@@ -522,8 +552,10 @@ const UsersScreen = ({ navigation }: any) => {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {isAdminApp ? (
           <View style={styles.adminSection}>
-            <View style={styles.sectionHeader}>
-              <RNText style={styles.sectionTitle}>GESTIÓN DE USUARIOS</RNText>
+          {/* Pestañas Activos / Inactivos */}
+          <View style={styles.sectionHeader}>
+            <RNText style={styles.sectionTitle}>GESTIÓN DE USUARIOS</RNText>
+            {activeTab === 'activos' && (
               <TouchableOpacity
                 style={styles.addUserBtn}
                 onPress={() => setShowCreateModal(true)}
@@ -531,10 +563,61 @@ const UsersScreen = ({ navigation }: any) => {
                 <Ionicons name="person-add" size={18} color="#fff" />
                 <RNText style={styles.addUserBtnText}>Agregar</RNText>
               </TouchableOpacity>
-            </View>
+            )}
+          </View>
 
-            {loading && users.length === 0 ? (
+          {/* Tab selector */}
+          <View style={{ flexDirection: 'row', marginBottom: 16, backgroundColor: '#f3f4f6', borderRadius: 10, padding: 4 }}>
+            <TouchableOpacity
+              style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: activeTab === 'activos' ? '#fff' : 'transparent' }}
+              onPress={() => handleTabChange('activos')}
+            >
+              <RNText style={{ fontSize: 14, fontWeight: activeTab === 'activos' ? '700' : '400', color: activeTab === 'activos' ? '#111827' : '#6b7280' }}>Activos</RNText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: activeTab === 'inactivos' ? '#fff' : 'transparent' }}
+              onPress={() => handleTabChange('inactivos')}
+            >
+              <RNText style={{ fontSize: 14, fontWeight: activeTab === 'inactivos' ? '700' : '400', color: activeTab === 'inactivos' ? '#ef4444' : '#6b7280' }}>Inactivos</RNText>
+            </TouchableOpacity>
+          </View>
+
+            {loading ? (
               <ActivityIndicator size="large" color="#4CAF50" style={styles.loader} />
+            ) : users.length === 0 ? (
+              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                <Ionicons name={activeTab === 'activos' ? 'people-outline' : 'person-remove-outline'} size={48} color="#d1d5db" />
+                <RNText style={{ color: '#9ca3af', marginTop: 12, fontSize: 15 }}>
+                  {activeTab === 'activos' ? 'No hay usuarios activos' : 'No hay usuarios inactivos'}
+                </RNText>
+              </View>
+            ) : activeTab === 'inactivos' ? (
+              <View style={styles.usersList}>
+                {users.map(userItem => (
+                  <View key={userItem.IDusuarios} style={[styles.userItemWrapper, { borderLeftWidth: 3, borderLeftColor: '#fca5a5' }]}>
+                    <TouchableOpacity style={[styles.userItem, { opacity: 0.75 }]} onPress={() => openEditModal(userItem)} activeOpacity={0.7}>
+                      <View style={[styles.userAvatar, { backgroundColor: '#fee2e2' }]}>
+                        <RNText style={[styles.userAvatarText, { color: '#ef4444' }]}>
+                          {userItem.nombre.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                        </RNText>
+                      </View>
+                      <View style={styles.userInfo}>
+                        <RNText style={styles.userName}>{userItem.nombre}</RNText>
+                        <RNText style={styles.userEmail}>{userItem.email}</RNText>
+                        <View style={[styles.statusBadge, styles.statusBadgeInactive, { alignSelf: 'flex-start', marginTop: 4 }]}>
+                          <RNText style={[styles.statusBadgeText, { color: '#ef4444' }]}>Inactivo</RNText>
+                        </View>
+                      </View>
+                      <TouchableOpacity
+                        style={{ backgroundColor: '#dcfce7', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#22c55e' }}
+                        onPress={() => handleReactivarUsuario(userItem)}
+                      >
+                        <RNText style={{ color: '#16a34a', fontSize: 12, fontWeight: '700' }}>Reactivar</RNText>
+                      </TouchableOpacity>
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
             ) : (
               <View style={styles.usersList}>
                 {users.map(userItem => (
