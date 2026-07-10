@@ -266,7 +266,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const filteredProducts = useMemo(() => {
     let filtered = cachedProductos;
 
-    if (activeCategory !== 'LO MAS VENDIDO') {
+    if (activeCategory) {
       filtered = filtered.filter(p =>
         (p.categoriaNombre || p.categoria) === activeCategory
       );
