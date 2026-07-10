@@ -107,30 +107,35 @@ export default function AdminNominaScreen({ navigation }: any) {
   };
 
   const handleDeshacerLiquidacion = async (id: string) => {
-    Alert.alert(
-      "Deshacer Liquidación",
-      "¿Estás seguro? Esta acción borrará la liquidación y restaurará los turnos al estado 'por cobrar'.",
-      [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Sí, Deshacer", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setDeshaciendo(true);
-              const res = await deshacerLiquidacion(id);
-              showAlert({ type: 'success', title: 'Éxito', message: res?.data?.mensaje || 'Liquidación deshecha' });
-              loadLiquidaciones();
-            } catch (error: any) {
-              const msg = error?.response?.data?.message || 'Error al deshacer la liquidación';
-              showAlert({ type: 'error', title: 'Error', message: Array.isArray(msg) ? msg[0] : msg });
-            } finally {
-              setDeshaciendo(false);
-            }
-          }
-        }
-      ]
-    );
+    const ejecutarDeshacer = async () => {
+      try {
+        setDeshaciendo(true);
+        const res = await deshacerLiquidacion(id);
+        showAlert({ type: 'success', title: 'Éxito', message: res?.data?.mensaje || 'Liquidación deshecha' });
+        loadLiquidaciones();
+      } catch (error: any) {
+        const msg = error?.response?.data?.message || 'Error al deshacer la liquidación';
+        showAlert({ type: 'error', title: 'Error', message: Array.isArray(msg) ? msg[0] : msg });
+      } finally {
+        setDeshaciendo(false);
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      const confirm = window.confirm("¿Estás seguro? Esta acción borrará la liquidación y restaurará los turnos al estado 'por cobrar'.");
+      if (confirm) {
+        ejecutarDeshacer();
+      }
+    } else {
+      Alert.alert(
+        "Deshacer Liquidación",
+        "¿Estás seguro? Esta acción borrará la liquidación y restaurará los turnos al estado 'por cobrar'.",
+        [
+          { text: "Cancelar", style: "cancel" },
+          { text: "Sí, Deshacer", style: "destructive", onPress: ejecutarDeshacer }
+        ]
+      );
+    }
   };
 
   const handleSaveSignature = async (signatureBase64: string) => {
