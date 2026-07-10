@@ -736,13 +736,11 @@ export default function AdminNominaScreen({ navigation }: any) {
             ) : (
               resumen && (() => {
                 const descuentosAgrupados = resumen?.descuentos?.reduce((acc: any, d: any) => {
+                  if (d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE') return acc;
                   const concepto = d.concepto || 'OTRO';
-                  if (!acc[concepto]) acc[concepto] = { count: 0, total: 0, allPendientes: true };
+                  if (!acc[concepto]) acc[concepto] = { count: 0, total: 0 };
                   acc[concepto].count += 1;
                   acc[concepto].total += Number(d.valor);
-                  if (d.estado !== 'PENDIENTE') {
-                    acc[concepto].allPendientes = false;
-                  }
                   return acc;
                 }, {});
 
@@ -780,15 +778,13 @@ export default function AdminNominaScreen({ navigation }: any) {
                               ? `${data.count} ${data.count === 1 ? 'CENA' : 'CENAS'}`
                               : `${data.count} ${data.count === 1 ? 'vez' : 'veces'} - ${concepto.replace(/_/g, ' ')}`;
                             
-                            const isLlegadaTardePendiente = concepto === 'LLEGADA_TARDE' && data.allPendientes;
-                            
                             return (
                               <View key={concepto} style={[styles.summaryRow, { marginBottom: 4 }]}>
                                 <Text style={{ fontSize: 13, color: '#6b7280' }}>
-                                  ↳ {label} {isLlegadaTardePendiente ? '(Pendiente de Aprobar)' : ''}
+                                  ↳ {label}
                                 </Text>
-                                <Text style={{ fontSize: 13, color: isLlegadaTardePendiente ? '#9ca3af' : '#ef4444' }}>
-                                  {isLlegadaTardePendiente ? `(-$${data.total.toLocaleString('es-CO')})` : `-$${data.total.toLocaleString('es-CO')}`}
+                                <Text style={{ fontSize: 13, color: '#ef4444' }}>
+                                  -${Number(data.total).toLocaleString('es-CO')}
                                 </Text>
                               </View>
                             );
@@ -827,14 +823,17 @@ export default function AdminNominaScreen({ navigation }: any) {
                     <Text style={{ fontWeight: '700', marginTop: 16, marginBottom: 8 }}>Descuentos ({(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).length})</Text>
                     {(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).map((d: any) => (
                       <View key={d.IDdescuento} style={styles.itemRow}>
-                        <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 13 }}>{d.concepto}</Text>
-                          {d.descripcion ? (
-                            <Text style={{ fontSize: 11, color: '#6b7280' }}>{d.descripcion}</Text>
-                          ) : d.fecha && (
-                            <Text style={{ fontSize: 11, color: '#6b7280', textTransform: 'capitalize' }}>
-                              {new Date(d.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })}
-                            </Text>
+                        <View style={{ flex: 1, paddingRight: 8 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Text style={{ fontSize: 13, fontWeight: '500' }}>{d.concepto}</Text>
+                            {d.fecha && (
+                              <Text style={{ fontSize: 12, color: '#4b5563', marginLeft: 6, textTransform: 'capitalize' }}>
+                                ({new Date(d.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })})
+                              </Text>
+                            )}
+                          </View>
+                          {d.descripcion && (
+                            <Text style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{d.descripcion}</Text>
                           )}
                         </View>
                         <Text style={{ fontSize: 13, color: '#ef4444', fontWeight: '600' }}>
