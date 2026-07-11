@@ -319,7 +319,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
         });
       }
       fetchResumenSilenciosamente();
-      fetchInitialData(false);
+      fetchInitialData(false, true);
     } else if (data && data.action === 'delete' && data.cajaId === cajaId) {
       Toast.show({ type: 'error', text1: 'Caja Eliminada', text2: 'Esta caja ha sido eliminada por otro usuario' });
       navigation.goBack();
@@ -408,7 +408,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
     }
   };
 
-  const fetchInitialData = useCallback(async (showLoader = true) => {
+  const fetchInitialData = useCallback(async (showLoader = true, isSocketRefresh = false) => {
     if (showLoader) setLoading(true);
     try {
       const [insumosRes, prodRes, configRes] = await Promise.all([
@@ -517,7 +517,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           valorExcedente: caja.valorExcedente != null ? String(caja.valorExcedente) : ('' as any),
           observaciones: caja.observaciones || '',
           insumos: mappedInsumos
-        }, { keepDirtyValues: true });
+        }, { keepDirtyValues: isSocketRefresh });
         
         // Recuperar el valor guardado de transferencias contadas si existe y no ha sido editado
         if (caja.transferenciasContadas != null && !isTransferenciasDirty) {
