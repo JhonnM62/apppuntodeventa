@@ -116,11 +116,14 @@ export default function AgentChatModal() {
 
         response = await api.post(`/agent/chat`, formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
+          timeout: 60000
         });
       } else {
         response = await api.post(`/agent/chat`, {
           threadId,
           message: userMsg
+        }, {
+          timeout: 60000
         });
       }
       
@@ -143,7 +146,23 @@ export default function AgentChatModal() {
       }
     } catch (error: any) {
       console.error(error);
-      const errorMsg = error?.response?.data?.details || error?.response?.data?.message || error?.message || 'Error desconocido';
+      let errorMsg = 'Error desconocido';
+      if (typeof error === 'string') {
+        errorMsg = error;
+      } else if (error?.response?.data?.details) {
+        errorMsg = error.response.data.details;
+      } else if (error?.response?.data?.message) {
+        const msg = error.response.data.message;
+        errorMsg = Array.isArray(msg) ? msg.join(', ') : msg;
+      } else if (error?.message) {
+        errorMsg = error.message;
+      }
+      
+      // Si el error es por timeout, dar un mensaje más amigable
+      if (errorMsg.includes('timeout')) {
+        errorMsg = 'El agente tardó demasiado en responder. Si tienes el "Modelo de Razonamiento" activo, es normal que tome más tiempo. Por favor, intenta de nuevo.';
+      }
+
       addMessage({ id: Date.now().toString(), text: `⚠️ Hubo un error al ejecutar la tarea:\n\n${errorMsg}`, sender: 'agent' });
     } finally {
       setProcessing(false);

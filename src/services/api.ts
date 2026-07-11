@@ -142,11 +142,8 @@ api.interceptors.response.use(
       }
     }
 
-    // For all other errors, pass through the structured error if available
-    if (error.response?.data?.error) {
-      return Promise.reject(error.response.data.error);
-    }
-    return Promise.reject(error.message ?? error);
+    // For all other errors, pass through the original error so components can read response.data.message
+    return Promise.reject(error);
   }
 );
 
