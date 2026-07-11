@@ -266,16 +266,14 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const filteredProducts = useMemo(() => {
     let filtered = cachedProductos;
 
-    if (activeCategory) {
-      filtered = filtered.filter(p =>
-        (p.categoriaNombre || p.categoria) === activeCategory
-      );
-    }
-
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(p =>
         p.nombre?.toLowerCase().includes(query)
+      );
+    } else if (activeCategory) {
+      filtered = filtered.filter(p =>
+        (p.categoriaNombre || p.categoria) === activeCategory
       );
     }
 
