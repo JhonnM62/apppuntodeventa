@@ -80,7 +80,7 @@ export default function CajaListScreen({ navigation }: any) {
     let filtered = cajas;
     
     if (activeTab === 'activos') {
-      filtered = filtered.filter(c => c.cierre === 'abierta' || !c.cierre);
+      filtered = filtered.filter(c => c.cierre === 'abierta' || (!c.cierre && !c.fechaDeCierre && !c.horaDeCierre));
     } else {
       filtered = filtered.filter(c => c.cierre && c.cierre !== 'abierta');
     }
@@ -285,11 +285,11 @@ export default function CajaListScreen({ navigation }: any) {
         </View>
       </SafeAreaView>
 
-      <View className="bg-white px-4 py-3 border-b border-gray-100 z-10 shadow-sm">
-        <View className="flex-row items-center bg-gray-100 rounded-xl px-3 py-2 border border-gray-200 mb-3">
-          <Ionicons name="search" size={20} color="#9ca3af" />
+      <View className="bg-white px-4 py-2 border-b border-gray-100 z-10 shadow-sm">
+        <View className="flex-row items-center bg-gray-100 rounded-lg px-3 py-1.5 border border-gray-200 mb-2">
+          <Ionicons name="search" size={18} color="#9ca3af" />
           <TextInput
-            className="flex-1 ml-2 text-gray-800"
+            className="flex-1 ml-2 text-gray-800 text-sm"
             placeholder="Buscar por responsable o estado..."
             placeholderTextColor="#9ca3af"
             value={searchQuery}
@@ -297,23 +297,23 @@ export default function CajaListScreen({ navigation }: any) {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery('')} className="p-1">
-              <Ionicons name="close-circle" size={18} color="#9ca3af" />
+              <Ionicons name="close-circle" size={16} color="#9ca3af" />
             </TouchableOpacity>
           )}
         </View>
 
-        <View className="flex-row items-center bg-gray-100 rounded-lg p-1">
+        <View className="flex-row items-center bg-gray-100 rounded-md p-1">
           <TouchableOpacity
             onPress={() => setActiveTab('activos')}
-            className={`flex-1 py-2 items-center rounded-md ${activeTab === 'activos' ? 'bg-white shadow-sm' : ''}`}
+            className={`flex-1 py-1.5 items-center rounded-md ${activeTab === 'activos' ? 'bg-white shadow-sm' : ''}`}
           >
-            <Text className={`font-bold ${activeTab === 'activos' ? 'text-green-700' : 'text-gray-500'}`}>Activos</Text>
+            <Text className={`font-bold text-xs ${activeTab === 'activos' ? 'text-green-700' : 'text-gray-500'}`}>Activos</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setActiveTab('cerrados')}
-            className={`flex-1 py-2 items-center rounded-md ${activeTab === 'cerrados' ? 'bg-white shadow-sm' : ''}`}
+            className={`flex-1 py-1.5 items-center rounded-md ${activeTab === 'cerrados' ? 'bg-white shadow-sm' : ''}`}
           >
-            <Text className={`font-bold ${activeTab === 'cerrados' ? 'text-gray-800' : 'text-gray-500'}`}>Cerrados</Text>
+            <Text className={`font-bold text-xs ${activeTab === 'cerrados' ? 'text-gray-800' : 'text-gray-500'}`}>Cerrados</Text>
           </TouchableOpacity>
         </View>
       </View>

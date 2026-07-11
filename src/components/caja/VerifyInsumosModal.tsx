@@ -40,7 +40,7 @@ interface InsumoState {
   diferencia: number;
 }
 
-type ModalState = 'CHECKING' | 'PENDING_VERIFICATION' | 'LOADING' | 'ERROR' | 'ALREADY_VERIFIED';
+type ModalState = 'CHECKING' | 'PENDING_VERIFICATION' | 'LOADING' | 'ERROR' | 'ALREADY_VERIFIED' | 'RESULTS_SUMMARY';
 
 const estadoLabels: Record<ModalState, { titulo: string; icono: string; color: string }> = {
   CHECKING: { titulo: 'Verificando insumos...', icono: 'hourglass-outline', color: COLORS.info },
@@ -48,6 +48,7 @@ const estadoLabels: Record<ModalState, { titulo: string; icono: string; color: s
   LOADING: { titulo: 'Guardando conteo...', icono: 'hourglass-outline', color: COLORS.info },
   ERROR: { titulo: 'Error', icono: 'close-circle', color: COLORS.error },
   ALREADY_VERIFIED: { titulo: 'Insumos Verificados', icono: 'checkmark-circle', color: COLORS.success },
+  RESULTS_SUMMARY: { titulo: 'Resultados del Conteo', icono: 'list', color: COLORS.primary },
 };
 
 export default function VerifyInsumosModal({
@@ -169,7 +170,13 @@ export default function VerifyInsumosModal({
       }));
 
       await registrarConteo(cajaId, payload);
-      onVerified();
+      
+      const hasDifferences = insumos.some(i => i.diferencia !== 0);
+      if (hasDifferences) {
+        setModalState('RESULTS_SUMMARY');
+      } else {
+        onVerified();
+      }
     } catch (error: any) {
       console.error('Error registrando conteo:', error);
       setErrorMessage(error?.response?.data?.message || 'Error al guardar el conteo');
@@ -273,7 +280,9 @@ export default function VerifyInsumosModal({
               >
                 <View className="px-5 py-4">
                   <Text className="text-sm font-medium text-gray-700 mb-3">
-                    Insumos que requieren verificación:
+                    {modalState === 'RESULTS_SUMMARY' 
+                      ? 'Resultados de la verificación:' 
+                      : 'Insumos que requieren verificación:'}
                   </Text>
 
                   {insumos.map(insumo => (
@@ -281,7 +290,7 @@ export default function VerifyInsumosModal({
                       key={insumo.id}
                       className={cn(
                         'mb-3 p-4 rounded-xl border',
-                        insumo.diferencia !== 0
+                        modalState === 'RESULTS_SUMMARY' && insumo.diferencia !== 0
                           ? 'border-red-200 bg-red-50'
                           : 'border-gray-200 bg-gray-50'
                       )}
@@ -290,25 +299,34 @@ export default function VerifyInsumosModal({
                         <Text className="text-base font-semibold text-gray-900 flex-1">
                           {insumo.nombre}
                         </Text>
-                        {insumo.diferencia !== 0 ? (
-                          <View className="flex-row items-center">
-                            <Ionicons name="warning" size={16} color={COLORS.error} />
-                            <Text className="text-xs font-medium text-red-500 ml-1">
-                              {insumo.diferencia > 0 ? '+' : ''}{insumo.diferencia}
-                            </Text>
-                          </View>
-                        ) : (
-                          <View className="flex-row items-center">
-                            <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
-                            <Text className="text-xs font-medium text-green-500 ml-1">Cuadrado</Text>
-                          </View>
+                        
+                        {modalState === 'RESULTS_SUMMARY' && (
+                          insumo.diferencia !== 0 ? (
+                            <View className="flex-row items-center">
+                              <Ionicons name="warning" size={16} color={COLORS.error} />
+                              <Text className="text-xs font-medium text-red-500 ml-1">
+                                {insumo.diferencia > 0 ? '+' : ''}{insumo.diferencia}
+                              </Text>
+                            </View>
+                          ) : (
+                            <View className="flex-row items-center">
+                              <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
+                              <Text className="text-xs font-medium text-green-500 ml-1">Cuadrado</Text>
+                            </View>
+                          )
                         )}
                       </View>
 
                       <View className="flex-row items-center justify-between mb-3">
-                        <Text className="text-sm text-gray-500">
-                          Sistema: <Text className="font-semibold">{insumo.disponibleEnSistema}</Text>
-                        </Text>
+                        {modalState === 'RESULTS_SUMMARY' ? (
+                          <Text className="text-sm text-gray-500">
+                            Sistema: <Text className="font-semibold">{insumo.disponibleEnSistema}</Text>
+                          </Text>
+                        ) : (
+                          <Text className="text-sm text-gray-500 italic">
+                            Conteo físico
+                          </Text>
+                        )}
                         <Text className="text-sm text-gray-400">
                           {insumo.unidadDeMedida}
                         </Text>
@@ -318,7 +336,8 @@ export default function VerifyInsumosModal({
                         <Pressable
                           onPress={() => handleCantidadChange(insumo.id, -1)}
                           className="w-12 h-12 rounded-xl items-center justify-center"
-                          style={{ backgroundColor: `${COLORS.primary}15` }}
+                          style={{ backgroundColor: `${COLORS.primary}15`, opacity: modalState === 'RESULTS_SUMMARY' ? 0.5 : 1 }}
+                          disabled={modalState === 'RESULTS_SUMMARY'}
                         >
                           <Ionicons name="remove" size={22} color={COLORS.primary} />
                         </Pressable>
@@ -327,18 +346,21 @@ export default function VerifyInsumosModal({
                           value={String(insumo.cantContada)}
                           onChangeText={(v) => handleInputChange(insumo.id, v)}
                           keyboardType="number-pad"
+                          editable={modalState !== 'RESULTS_SUMMARY'}
                           className="mx-3 w-20 h-12 text-center text-lg font-bold"
                           style={{
-                            backgroundColor: COLORS.surface,
-                            borderColor: insumo.diferencia !== 0 ? COLORS.error : COLORS.primary,
+                            backgroundColor: modalState === 'RESULTS_SUMMARY' ? 'transparent' : COLORS.surface,
+                            borderColor: modalState === 'RESULTS_SUMMARY' && insumo.diferencia !== 0 ? COLORS.error : COLORS.primary,
                             borderWidth: 2,
+                            opacity: modalState === 'RESULTS_SUMMARY' ? 0.8 : 1
                           }}
                         />
 
                         <Pressable
                           onPress={() => handleCantidadChange(insumo.id, 1)}
                           className="w-12 h-12 rounded-xl items-center justify-center"
-                          style={{ backgroundColor: `${COLORS.primary}15` }}
+                          style={{ backgroundColor: `${COLORS.primary}15`, opacity: modalState === 'RESULTS_SUMMARY' ? 0.5 : 1 }}
+                          disabled={modalState === 'RESULTS_SUMMARY'}
                         >
                           <Ionicons name="add" size={22} color={COLORS.primary} />
                         </Pressable>
@@ -377,6 +399,14 @@ export default function VerifyInsumosModal({
                     Cancelar y volver
                   </Text>
                 </Pressable>
+              </View>
+            )}
+
+            {modalState === 'RESULTS_SUMMARY' && (
+              <View className="px-5 pb-5 pt-2 border-t border-gray-100">
+                <Button onPress={onVerified} className="w-full">
+                  Entendido
+                </Button>
               </View>
             )}
           </View>
