@@ -450,14 +450,14 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
                 onPress={() => setIaConfig({...iaConfig, modeloDefecto: modelo})}
               >
                 <Text style={[styles.modelBtnText, iaConfig.modeloDefecto === modelo && styles.modelBtnTextActive]}>
-                  {modelo.replace('gemini-', '')}
+                  {modelo}
                 </Text>
               </TouchableOpacity>
             ))}
           </View>
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
-            <View>
+            <View style={{ flex: 1, paddingRight: 16 }}>
               <Text style={styles.label}>Usar Modelo de Razonamiento</Text>
               <Text style={[styles.infoTextIA, { marginTop: 0, fontSize: 12 }]}>Activa el "Thinking Level" para mayor precisión (aumenta el tiempo de espera a 10-30s).</Text>
             </View>
