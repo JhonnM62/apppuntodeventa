@@ -654,7 +654,7 @@ showAlert({
     });
   };
 
-  const renderSectionHeader = (section: { title: string; count: number; date: Date }) => {
+  const renderSectionHeader = (section: { title: string; count: number; date: Date; total?: number }) => {
     // Check if all items in this section are selected
     const itemsInSection = groupedVentas.find(g => g.title === section.title)?.data || [];
     const allSelected = itemsInSection.length > 0 && itemsInSection.every(item => selectedToDelete.includes(item.IDventas));
@@ -697,6 +697,11 @@ showAlert({
         </View>
         <View style={styles.sectionHeaderRight}>
           <RNText style={styles.sectionHeaderCount}>{section.count} pedido{section.count !== 1 ? 's' : ''}</RNText>
+          {section.total !== undefined && (
+            <RNText style={[styles.sectionHeaderCount, { marginLeft: 8, color: '#059669', fontWeight: 'bold' }]}>
+              {formatMoney(section.total)}
+            </RNText>
+          )}
         </View>
       </View>
     );
@@ -829,21 +834,22 @@ showAlert({
 
   const renderListItem = ({ item }: { item: any }) => {
     if (item.isHeader) {
-      return renderSectionHeader({ title: item.title, count: item.count, date: item.date });
+      return renderSectionHeader({ title: item.title, count: item.count, date: item.date, total: item.total });
     }
     return renderVentaItem({ item: item as VentaItem });
   };
 
   const flatListData = useMemo(() => {
-    const result: (VentaItem | { isHeader: boolean; title: string; date: Date; count: number })[] = [];
+    const result: (VentaItem | { isHeader: boolean; title: string; date: Date; count: number; total?: number })[] = [];
     groupedVentas.forEach(section => {
-      result.push({ isHeader: true, title: section.title, date: section.date, count: section.data.length });
+      const totalAmount = section.data.reduce((sum, item) => sum + (Number(item.totalInput) || 0), 0);
+      result.push({ isHeader: true, title: section.title, date: section.date, count: section.data.length, total: totalAmount });
       result.push(...section.data);
     });
     return result;
   }, [groupedVentas]);
 
-  const keyExtractor = (item: VentaItem | { isHeader: boolean; title: string; date: Date; count: number }, index: number) => {
+  const keyExtractor = (item: VentaItem | { isHeader: boolean; title: string; date: Date; count: number; total?: number }, index: number) => {
     if ('isHeader' in item) {
       return `header-${item.title}`;
     }

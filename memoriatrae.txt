@@ -129,3 +129,17 @@ SIEMPRE usar: `npm run typecheck`
 
 
 langchain-rag, langchain-middleware, deep-agents-memory, langgraph-persistence, langgraph-human-in-the-loop, langchain-architecture
+
+Revisa estos dos proyectos (este es el backend C:\APIS_v2.3\puntodeventabackend y este es el front C:\APIS_v2.3\puntodeventafront) junto con sus respectivas rutas.
+
+El proyecto en general es un ERP con un punto de venta. Está construido en el front con React Native y Expo, y en el backend con NestJS, Express y Prisma. La base de datos está en PostgreSQL; todas las consultas que hagas las vas a necesitar hacer a través de Prisma.
+
+Para empezar, revisa los archivos .md tanto en el front como en el backend, donde vas a encontrar toda la documentación.
+
+El backend ya está montado en producción dentro de un VPS en un contenedor de Docker. El flujo de CI/CD ya está configurado, por lo que cada vez que se hace un commit y un push en el backend, se crea la imagen automáticamente con ayuda de Docker y GitHub Actions. De igual forma, la aplicación web de Expo y React Native en el front.De igual forma, revisa los archivos Agents.md en los dos proyectos y recuerda que no se está probando nada en la máquina local. Todo ya está en el FPS (el front).
+
+Para la aplicación móvil hay que compilar, pero los cambios se miran rápido en la aplicación web.
+
+Para el backend, sí hay un endpoint en las variables de entorno al cual se pueden hacer peticiones. Sin embargo, obviamente requiere un token de usuario para estar haciendo pruebas. Creo que lo más fácil es hacer consultas a través de Prisma.
+
+Así que revisa la estructura de estos dos proyectos para empezar a hacer modificaciones. Graba en tu memoria bien esas reglas sobre probar los centros, hacer las consultas y, principalmente para hacer pruebas (testing), usar Prisma
