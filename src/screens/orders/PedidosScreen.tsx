@@ -680,25 +680,21 @@ showAlert({
 
     return (
       <View style={styles.sectionHeader}>
-        <View style={styles.sectionHeaderLeft}>
+        <View style={[styles.sectionHeaderLeft, { flex: 1, marginRight: 10 }]}>
           {isSelectionMode && (
-            <TouchableOpacity 
-              style={{ marginRight: 10 }}
-              onPress={toggleSectionSelection}
-            >
-              <View style={[styles.checkbox, allSelected && styles.checkboxSelected, !allSelected && someSelected && { borderColor: '#4CAF50', backgroundColor: '#e8f5e9' }]}>
-                {allSelected && <Ionicons name="checkmark" size={14} color="#fff" />}
-                {!allSelected && someSelected && <Ionicons name="remove" size={14} color="#4CAF50" />}
+            <TouchableOpacity onPress={toggleSectionSelection} style={{ marginRight: 12 }}>
+              <View style={[styles.checkbox, allSelected && styles.checkboxSelected]}>
+                {someSelected && <Ionicons name={allSelected ? "checkmark" : "remove"} size={14} color="#fff" />}
               </View>
             </TouchableOpacity>
           )}
           <Ionicons name="calendar-outline" size={16} color="#6366f1" />
-          <RNText style={styles.sectionHeaderText}>{section.title}</RNText>
+          <RNText style={[styles.sectionHeaderText, { flexShrink: 1 }]} numberOfLines={2}>{section.title}</RNText>
         </View>
-        <View style={styles.sectionHeaderRight}>
+        <View style={{ flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
           <RNText style={styles.sectionHeaderCount}>{section.count} pedido{section.count !== 1 ? 's' : ''}</RNText>
           {section.total !== undefined && (
-            <RNText style={[styles.sectionHeaderCount, { marginLeft: 8, color: '#059669', fontWeight: 'bold' }]}>
+            <RNText style={[styles.sectionHeaderCount, { color: '#059669', fontWeight: 'bold', marginTop: 2 }]}>
               {formatMoney(section.total)}
             </RNText>
           )}
@@ -1994,6 +1990,7 @@ showAlert({
       ) : (
         <FlashList
           data={flatListData}
+          extraData={flatListData}
           renderItem={renderListItem}
           keyExtractor={keyExtractor}
           getItemType={(item) => 'isHeader' in item ? 'header' : 'item'}
