@@ -10,7 +10,8 @@ import api from '../../services/api';
 import { repartirDescuento, getDescuentos, updateDescuento, deleteDescuento, getLote, updateLote, deleteLote } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 
-const CONCEPTOS_VALIDOS = ['DESCUADRE_CAJA', 'CENA', 'PERDIDA', 'ROBO', 'ADELANTO', 'LLEGADA_TARDIA', 'OTRO'];
+const CONCEPTOS_DESCUENTO = ['DESCUADRE_CAJA', 'CENA', 'PERDIDA', 'ROBO', 'ADELANTO', 'LLEGADA_TARDIA', 'OTRO'];
+const CONCEPTOS_BONO = ['BONO', 'PREMIO', 'HORAS_EXTRAS'];
 
 const getMonthName = (monthIndex: number) => {
   const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -98,6 +99,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
     setCollapsedSections(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
   };
 
+  const [tipoRegistro, setTipoRegistro] = useState<'DESCUENTO' | 'BONO'>('DESCUENTO');
   const [concepto, setConcepto] = useState('DESCUADRE_CAJA');
   const [descripcion, setDescripcion] = useState('');
   const [montoTotalStr, setMontoTotalStr] = useState('');
@@ -146,6 +148,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
 
   const openForm = async () => {
     setModalVisible(true);
+    setTipoRegistro('DESCUENTO');
     setConcepto('DESCUADRE_CAJA');
     setDescripcion('');
     setMontoTotalStr('');
@@ -197,9 +200,17 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
 
     const montoEfectivo = montoTotal * (porcentaje / 100);
     const valorPorPersona = montoEfectivo / selectedIds.size;
-    const msg = selectedIds.size === 1
-      ? `Faltante de $${montoTotal.toLocaleString('es-CO')}. Se cobrará el ${porcentaje}%. \n\nSe descontará $${valorPorPersona.toLocaleString('es-CO')} al empleado seleccionado.\n\n¿Estás seguro?`
-      : `Faltante de $${montoTotal.toLocaleString('es-CO')}. Se cobrará el ${porcentaje}%. \n\nSe descontarán $${valorPorPersona.toLocaleString('es-CO')} a cada uno de los ${selectedIds.size} empleados seleccionados.\n\n¿Estás seguro?`;
+    
+    let msg = '';
+    if (tipoRegistro === 'BONO') {
+      msg = selectedIds.size === 1
+        ? `Monto del bono: $${montoTotal.toLocaleString('es-CO')}. Se repartirá el ${porcentaje}%. \n\nSe sumarán $${valorPorPersona.toLocaleString('es-CO')} al empleado seleccionado.\n\n¿Estás seguro?`
+        : `Monto del bono: $${montoTotal.toLocaleString('es-CO')}. Se repartirá el ${porcentaje}%. \n\nSe sumarán $${valorPorPersona.toLocaleString('es-CO')} a cada uno de los ${selectedIds.size} empleados seleccionados.\n\n¿Estás seguro?`;
+    } else {
+      msg = selectedIds.size === 1
+        ? `Faltante de $${montoTotal.toLocaleString('es-CO')}. Se cobrará el ${porcentaje}%. \n\nSe descontará $${valorPorPersona.toLocaleString('es-CO')} al empleado seleccionado.\n\n¿Estás seguro?`
+        : `Faltante de $${montoTotal.toLocaleString('es-CO')}. Se cobrará el ${porcentaje}%. \n\nSe descontarán $${valorPorPersona.toLocaleString('es-CO')} a cada uno de los ${selectedIds.size} empleados seleccionados.\n\n¿Estás seguro?`;
+    }
 
     showAlert({
       type: 'confirm',
@@ -210,14 +221,18 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
         try {
           setSaving(true);
           const nombresSeleccionados = empleados.filter(e => selectedIds.has(e.IDusuarios)).map(e => e.nombre).join(', ');
+          const descripcionFmt = tipoRegistro === 'BONO'
+            ? `${descripcion.trim()} (Bono original: $${montoTotal.toLocaleString('es-CO')} / Reparto: ${porcentaje}% repartido entre: ${nombresSeleccionados})`
+            : `${descripcion.trim()} (Faltante original: $${montoTotal.toLocaleString('es-CO')} / Cobro: ${porcentaje}% repartido entre: ${nombresSeleccionados})`;
+
           await repartirDescuento({
             usuarioIds: Array.from(selectedIds),
             montoTotal: montoEfectivo,
             concepto,
-            descripcion: `${descripcion.trim()} (Faltante original: $${montoTotal.toLocaleString('es-CO')} / Cobro: ${porcentaje}% repartido entre: ${nombresSeleccionados})`,
+            descripcion: descripcionFmt,
             fecha: fechaDescuento.toISOString()
           });
-          showAlert({ type: 'success', title: 'Éxito', message: 'Descuento repartido correctamente' });
+          showAlert({ type: 'success', title: 'Éxito', message: tipoRegistro === 'BONO' ? 'Bono repartido correctamente' : 'Descuento repartido correctamente' });
           setModalVisible(false);
           loadDescuentos();
         } catch (error) {
@@ -469,7 +484,12 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
       });
     }
     const group = groupedMap.get(empleadoId);
-    group.total += Number(d.valor);
+    const isBono = CONCEPTOS_BONO.includes(d.concepto);
+    if (isBono) {
+      group.total += Number(d.valor);
+    } else {
+      group.total -= Number(d.valor);
+    }
     group.data.push(d);
   });
 
@@ -494,8 +514,10 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
         <Text style={styles.sectionTitle}>{section.title}</Text>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text style={styles.sectionTotal}>-${section.total.toLocaleString('es-CO')}</Text>
-        <Ionicons name={section.isCollapsed ? "chevron-down" : "chevron-up"} size={20} color="#be185d" />
+        <Text style={[styles.sectionTotal, { color: section.total >= 0 ? '#059669' : '#be185d' }]}>
+          {section.total >= 0 ? '+' : '-'}${Math.abs(section.total).toLocaleString('es-CO')}
+        </Text>
+        <Ionicons name={section.isCollapsed ? "chevron-down" : "chevron-up"} size={20} color={section.total >= 0 ? "#059669" : "#be185d"} />
       </View>
     </TouchableOpacity>
   );
@@ -503,18 +525,21 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
   const renderDescuento = ({ item, index, section }: { item: any, index: number, section: any }) => {
     const isLast = index === section.data.length - 1;
     const hasLote = !!item.loteId;
+    const isBono = CONCEPTOS_BONO.includes(item.concepto);
     return (
       <TouchableOpacity style={[styles.cardItem, isLast && styles.cardItemLast]} onPress={() => openGestionar(item)}>
         <View style={styles.cardHeaderSmall}>
-          <View style={styles.badgeConceptoSmall}>
-            <Text style={styles.badgeTextSmall}>{item.concepto.replace('_', ' ')}</Text>
+          <View style={[styles.badgeConceptoSmall, isBono && { backgroundColor: '#d1fae5' }]}>
+            <Text style={[styles.badgeTextSmall, isBono && { color: '#059669' }]}>{item.concepto.replace(/_/g, ' ')}</Text>
           </View>
           <Text style={styles.cardSubtitleSmall}>{new Date(item.fecha).toLocaleDateString()}</Text>
         </View>
         <View style={styles.cardBodySmall}>
           <Text style={styles.cardDescSmall}>{item.descripcion}</Text>
           <View style={{ alignItems: 'flex-end', justifyContent: 'flex-end' }}>
-            <Text style={styles.cardValorSmall}>-${Number(item.valor).toLocaleString('es-CO')}</Text>
+            <Text style={[styles.cardValorSmall, isBono && { color: '#047857' }]}>
+              {isBono ? '+' : '-'}${Number(item.valor).toLocaleString('es-CO')}
+            </Text>
             <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
               <TouchableOpacity onPress={(e) => { e.stopPropagation(); openGestionar(item); }} style={{ padding: 4 }}>
                 <Ionicons name="create-outline" size={16} color="#3b82f6" />
@@ -612,16 +637,37 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
                     contentContainerStyle={{ flexGrow: 1, paddingBottom: 32 }}
                   >
                     <View style={styles.formGroup}>
-                      <Text style={styles.label}>Concepto General</Text>
+                      <View style={{ flexDirection: 'row', gap: 10, marginBottom: 15 }}>
+                        <TouchableOpacity
+                          style={[styles.conceptoChip, tipoRegistro === 'DESCUENTO' && styles.conceptoChipActive, { flex: 1, paddingVertical: 12 }]}
+                          onPress={() => { setTipoRegistro('DESCUENTO'); setConcepto('DESCUADRE_CAJA'); }}
+                        >
+                          <Text style={[styles.conceptoText, tipoRegistro === 'DESCUENTO' && styles.conceptoTextActive, { textAlign: 'center', fontWeight: 'bold' }]}>Descuento</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.conceptoChip, tipoRegistro === 'BONO' && { backgroundColor: '#10b981', borderColor: '#10b981' }, { flex: 1, paddingVertical: 12 }]}
+                          onPress={() => { setTipoRegistro('BONO'); setConcepto('BONO'); }}
+                        >
+                          <Text style={[styles.conceptoText, tipoRegistro === 'BONO' && { color: '#fff' }, { textAlign: 'center', fontWeight: 'bold' }]}>Bono / Suma</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      <Text style={styles.label}>Concepto {tipoRegistro === 'BONO' ? 'del Bono' : 'del Descuento'}</Text>
                       <View style={styles.conceptosGrid}>
-                        {CONCEPTOS_VALIDOS.map(c => (
+                        {(tipoRegistro === 'BONO' ? CONCEPTOS_BONO : CONCEPTOS_DESCUENTO).map(c => (
                           <TouchableOpacity
                             key={c}
-                            style={[styles.conceptoChip, concepto === c && styles.conceptoChipActive]}
+                            style={[
+                              styles.conceptoChip, 
+                              concepto === c && (tipoRegistro === 'BONO' ? { backgroundColor: '#10b981', borderColor: '#10b981' } : styles.conceptoChipActive)
+                            ]}
                             onPress={() => setConcepto(c)}
                           >
-                            <Text style={[styles.conceptoText, concepto === c && styles.conceptoTextActive]}>
-                              {c.replace('_', ' ')}
+                            <Text style={[
+                              styles.conceptoText, 
+                              concepto === c && (tipoRegistro === 'BONO' ? { color: '#fff' } : styles.conceptoTextActive)
+                            ]}>
+                              {c.replace(/_/g, ' ')}
                             </Text>
                           </TouchableOpacity>
                         ))}
@@ -689,7 +735,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
                     </View>
 
                     <View style={styles.formGroup}>
-                      <Text style={styles.label}>Porcentaje a cobrar al equipo (%)</Text>
+                      <Text style={styles.label}>{tipoRegistro === 'BONO' ? 'Porcentaje a repartir al equipo (%)' : 'Porcentaje a cobrar al equipo (%)'}</Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                         <TouchableOpacity
                           style={[styles.conceptoChip, porcentajeCobro === '50' && styles.conceptoChipActive, { paddingVertical: 12, paddingHorizontal: 20 }]}
@@ -715,18 +761,20 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
                     </View>
 
                     {selectedIds.size > 0 && !isNaN(Number(montoTotalStr)) && Number(montoTotalStr) > 0 && !isNaN(Number(porcentajeCobro)) && Number(porcentajeCobro) > 0 && (
-                      <View style={styles.summaryBox}>
-                        <Ionicons name="calculator-outline" size={24} color="#ec4899" />
+                      <View style={[styles.summaryBox, tipoRegistro === 'BONO' && { backgroundColor: '#d1fae5', borderColor: '#a7f3d0' }]}>
+                        <Ionicons name="calculator-outline" size={24} color={tipoRegistro === 'BONO' ? "#059669" : "#ec4899"} />
                         <View style={{ marginLeft: 12, flex: 1 }}>
-                          <Text style={{ fontSize: 13, color: '#ec4899' }}>
-                            Faltante: ${Number(montoTotalStr).toLocaleString('es-CO')}
+                          <Text style={{ fontSize: 13, color: tipoRegistro === 'BONO' ? "#059669" : '#ec4899' }}>
+                            {tipoRegistro === 'BONO' ? 'Monto original:' : 'Faltante:'} ${Number(montoTotalStr).toLocaleString('es-CO')}
                           </Text>
-                          <Text style={{ fontSize: 14, color: '#be185d', fontWeight: 'bold' }}>
-                            A cobrar ({porcentajeCobro}%): ${(Number(montoTotalStr) * (Number(porcentajeCobro) / 100)).toLocaleString('es-CO')}
+                          <Text style={{ fontSize: 14, color: tipoRegistro === 'BONO' ? "#047857" : '#be185d', fontWeight: 'bold' }}>
+                            {tipoRegistro === 'BONO' ? 'A repartir' : 'A cobrar'} ({porcentajeCobro}%): ${(Number(montoTotalStr) * (Number(porcentajeCobro) / 100)).toLocaleString('es-CO')}
                           </Text>
-                          <View style={{ height: 1, backgroundColor: '#fbcfe8', marginVertical: 6 }} />
-                          <Text style={{ fontSize: 12, color: '#ec4899' }}>A descontar por persona:</Text>
-                          <Text style={{ fontSize: 20, fontWeight: '800', color: '#be185d' }}>
+                          <View style={{ height: 1, backgroundColor: tipoRegistro === 'BONO' ? "#a7f3d0" : '#fbcfe8', marginVertical: 6 }} />
+                          <Text style={{ fontSize: 12, color: tipoRegistro === 'BONO' ? "#059669" : '#ec4899' }}>
+                            {tipoRegistro === 'BONO' ? 'A sumar por persona:' : 'A descontar por persona:'}
+                          </Text>
+                          <Text style={{ fontSize: 20, fontWeight: '800', color: tipoRegistro === 'BONO' ? "#047857" : '#be185d' }}>
                             ${((Number(montoTotalStr) * (Number(porcentajeCobro) / 100)) / selectedIds.size).toLocaleString('es-CO')}
                           </Text>
                         </View>
@@ -770,7 +818,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
                       loading={saving}
                     >
                       <Text style={{ color: '#fff', fontSize: 16, fontWeight: 'bold' }}>
-                        Aplicar Descuento
+                        {tipoRegistro === 'BONO' ? 'Aplicar Bono' : 'Aplicar Descuento'}
                       </Text>
                     </Button>
                     <View style={{ height: 20 }} />
@@ -1013,9 +1061,9 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
                       <View style={styles.formGroup}>
                         <Text style={styles.label}>Concepto</Text>
                         <View style={styles.conceptosGrid}>
-                          {CONCEPTOS_VALIDOS.map(c => (
+                          {(CONCEPTOS_BONO.includes(gConcepto) ? CONCEPTOS_BONO : CONCEPTOS_DESCUENTO).map(c => (
                             <TouchableOpacity key={c} style={[styles.conceptoChip, gConcepto === c && styles.conceptoChipActive]} onPress={() => setGConcepto(c)}>
-                              <Text style={[styles.conceptoText, gConcepto === c && styles.conceptoTextActive]}>{c.replace('_', ' ')}</Text>
+                              <Text style={[styles.conceptoText, gConcepto === c && styles.conceptoTextActive]}>{c.replace(/_/g, ' ')}</Text>
                             </TouchableOpacity>
                           ))}
                         </View>
