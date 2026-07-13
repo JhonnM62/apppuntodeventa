@@ -36,6 +36,7 @@ function AppInitializer({ children }: { children: React.ReactNode }) {
   const { currentPrinter, isConnected, setConnected } = usePrinterStore();
 
   useEffect(() => {
+    usePrinterStore.getState().fetchConfigs();
     const autoConnectPrinter = async () => {
       // Si hay una impresora guardada, el módulo existe, y no está conectada
       if (currentPrinter && BLEPrinter && !isConnected) {
