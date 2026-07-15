@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -8,9 +8,11 @@ import {
   Text,
   StatusBar,
   ActivityIndicator,
+  useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SignatureCanvas from './SignatureCanvas';
+import * as ScreenOrientation from 'expo-screen-orientation';
 
 interface Props {
   visible: boolean;
@@ -23,6 +25,19 @@ interface Props {
 export default function SignatureModal({ visible, title = 'Firmar Documento', loading = false, onClose, onSave }: Props) {
   const ref = useRef<any>(null);
   const [signed, setSigned] = useState(false);
+  const { width, height } = useWindowDimensions();
+  const isPortrait = height > width;
+
+  useEffect(() => {
+    if (visible) {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
+    } else {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    }
+    return () => {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    };
+  }, [visible]);
 
   const handleOK = (signature: string) => {
     onSave(signature);
@@ -82,6 +97,16 @@ export default function SignatureModal({ visible, title = 'Firmar Documento', lo
           )}
         </View>
 
+        {/* ── Portrait Warning ── */}
+        {isPortrait && (
+          <View style={{ backgroundColor: '#fffbeb', padding: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderBottomWidth: 1, borderColor: '#fef3c7' }}>
+            <Ionicons name="phone-landscape-outline" size={18} color="#d97706" style={{ marginRight: 8 }} />
+            <Text style={{ color: '#d97706', fontSize: 13, fontWeight: '600', textAlign: 'center' }}>
+              Gire el dispositivo y firme de manera horizontal
+            </Text>
+          </View>
+        )}
+
         {/* ── Signature Canvas ──
             On web  → SignatureCanvas.web.tsx  (HTML5 <canvas> + Pointer Events)
             On native → SignatureCanvas.tsx     (react-native-signature-canvas)
@@ -122,6 +147,8 @@ export default function SignatureModal({ visible, title = 'Firmar Documento', lo
             <Text style={styles.btnSaveText}>{loading ? 'Guardando...' : 'Guardar Firma'}</Text>
           </TouchableOpacity>
         </View>
+
+
 
       </SafeAreaView>
     </Modal>

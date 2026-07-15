@@ -92,7 +92,7 @@ export default function AdminNominaScreen({ navigation }: any) {
   const loadLiquidaciones = async () => {
     try {
       setLoadingLiquidaciones(true);
-      const res = await getLiquidaciones({ limit: 50 });
+      const res = await getLiquidaciones({ limit: 50, _t: Date.now() });
       setLiquidaciones(res.data || []);
     } catch (error) {
       console.error('Error cargando liquidaciones:', error);
@@ -137,6 +137,7 @@ export default function AdminNominaScreen({ navigation }: any) {
     // Si estamos firmando una liquidación ya existente:
     if (liquidacionParaFirmaAdmin) {
       try {
+        setLiquidando(true);
         await firmarLiquidacionAdmin(liquidacionParaFirmaAdmin, { firma: signatureBase64 });
         showAlert({ type: 'success', title: 'Éxito', message: 'Firma de administrador guardada correctamente' });
         setLiquidacionParaFirmaAdmin(null);
@@ -146,6 +147,8 @@ export default function AdminNominaScreen({ navigation }: any) {
         showAlert({ type: 'error', title: 'Error', message: e.response?.data?.message || 'No se pudo guardar la firma' });
         setShowSignatureAdmin(false);
         setLiquidacionParaFirmaAdmin(null);
+      } finally {
+        setLiquidando(false);
       }
       return;
     }
@@ -702,7 +705,7 @@ export default function AdminNominaScreen({ navigation }: any) {
                       <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>Reenviar</Text>
                     </Button>
                   )}
-                  <Button variant="default" style={{ width: '48%', height: 36, backgroundColor: liq.firmaAdmin ? '#3b82f6' : '#10b981', marginBottom: 8 }} onPress={() => { setLiquidacionParaFirmaAdmin(liq.IDliquidacion); setShowSignatureAdmin(true); }}>
+                  <Button variant="default" style={{ width: '100%', height: 36, backgroundColor: liq.firmaAdmin ? '#3b82f6' : '#10b981', marginBottom: 8 }} onPress={() => { setLiquidacionParaFirmaAdmin(liq.IDliquidacion); setShowSignatureAdmin(true); }}>
                     <Ionicons name="create-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
                     <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>{liq.firmaAdmin ? 'Cambiar Firma' : 'Firmar'}</Text>
                   </Button>
@@ -1225,6 +1228,7 @@ export default function AdminNominaScreen({ navigation }: any) {
         <SignatureModal
           visible={showSignatureAdmin}
           title="Firma del Administrador"
+          loading={liquidando}
           onClose={() => {
             setShowSignatureAdmin(false);
             setLiquidacionParaFirmaAdmin(null);
