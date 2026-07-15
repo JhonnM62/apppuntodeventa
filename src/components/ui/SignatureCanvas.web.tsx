@@ -169,6 +169,21 @@ const SignatureCanvas = forwardRef<SignatureCanvasRef, Props>(
       readSignature: () => {
         const canvas = canvasRef.current;
         if (canvas) {
+          if (canvas.height > canvas.width) {
+            // The canvas is in portrait mode, but the user signed it holding the device horizontally.
+            // We rotate the image -90 degrees so the signature is saved horizontally.
+            const tmpCanvas = document.createElement('canvas');
+            tmpCanvas.width = canvas.height;
+            tmpCanvas.height = canvas.width;
+            const ctx = tmpCanvas.getContext('2d');
+            if (ctx) {
+              ctx.translate(tmpCanvas.width / 2, tmpCanvas.height / 2);
+              ctx.rotate((-90 * Math.PI) / 180);
+              ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+              onOK(tmpCanvas.toDataURL('image/png'));
+              return;
+            }
+          }
           onOK(canvas.toDataURL('image/png'));
         }
       },
