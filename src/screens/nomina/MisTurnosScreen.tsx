@@ -4,16 +4,95 @@ import { Text } from '../../components/ui/text';
 import { Card } from '../../components/ui/card';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getMisTurnos, Turno } from '../../services/nomina.service';
+import { getMisTurnos, Turno, firmarLiquidacion, getLiquidacionById } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
+import { useSocket } from '../../hooks/useSocket';
+import useSocketEvent from '../../hooks/useSocketEvent';
+import useAuthStore from '../../store/useAuthStore';
+import SignatureModal from '../../components/ui/SignatureModal';
+import { generarLiquidacionHTML } from '../../utils/nominaPdf';
+let Print: any = null;
+try {
+  Print = require('expo-print');
+} catch (e) {
+  console.warn('expo-print no está disponible');
+}
 
 export default function MisTurnosScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { showAlert } = useCustomAlert();
+  const { user } = useAuthStore();
+  const { joinRoom, isConnected } = useSocket();
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('Todos');
+
+  const [pendingLiquidacion, setPendingLiquidacion] = useState<any>(null);
+  const [showSignatureEmpleado, setShowSignatureEmpleado] = useState(false);
+  const [liquidando, setLiquidando] = useState(false);
+
+  useEffect(() => {
+    if (isConnected && user?.IDusuarios) {
+      joinRoom(`user_${user.IDusuarios}`);
+    }
+  }, [isConnected, user, joinRoom]);
+
+  useSocketEvent('nueva_liquidacion', async (data: any) => {
+    try {
+      const liquidacion = await getLiquidacionById(data.liquidacionId);
+      setPendingLiquidacion(liquidacion);
+      showAlert({
+        type: 'confirm',
+        title: '¡Tienes una nueva liquidación!',
+        message: 'Por favor revisa el comprobante y firma para aceptar la liquidación.',
+        confirmText: 'Revisar y Firmar',
+        onConfirm: () => handleReviewLiquidacion(liquidacion)
+      });
+    } catch (e) {
+      console.error('Error al obtener la liquidación pendiente:', e);
+    }
+  });
+
+  const handleReviewLiquidacion = async (liquidacion: any) => {
+    try {
+      const html = generarLiquidacionHTML({
+        empleadoNombre: user?.nombre || '',
+        empleadoCargo: user?.cargo?.nombre || 'Empleado',
+        fechaInicio: liquidacion.fechaInicio,
+        fechaFin: liquidacion.fechaFin,
+        turnos: liquidacion.turnosDetalle || [],
+        descuentos: liquidacion.descuentosDetalle || [],
+        totalBruto: liquidacion.totalBruto,
+        totalDescuentos: liquidacion.totalDescuentos,
+        totalNeto: liquidacion.totalNeto,
+        firmaAdmin: liquidacion.firmaAdmin
+      });
+      if (!Print) {
+        return showAlert({ type: 'error', title: 'Módulo no disponible', message: 'El módulo de impresión PDF no está compilado en esta versión.' });
+      }
+      await Print.printAsync({ html });
+      setShowSignatureEmpleado(true);
+    } catch (e) {
+      console.error(e);
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo abrir el PDF' });
+    }
+  };
+
+  const handleSaveSignature = async (firma: string) => {
+    if (!pendingLiquidacion) return;
+    try {
+      setLiquidando(true);
+      await firmarLiquidacion(pendingLiquidacion.IDliquidacion, { firmaEmpleado: firma });
+      showAlert({ type: 'success', title: 'Éxito', message: 'Liquidación firmada correctamente' });
+      setShowSignatureEmpleado(false);
+      setPendingLiquidacion(null);
+    } catch (e) {
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo guardar la firma' });
+    } finally {
+      setLiquidando(false);
+    }
+  };
 
   useEffect(() => {
     loadTurnos();
@@ -267,6 +346,14 @@ export default function MisTurnosScreen({ navigation }: any) {
           <View style={{ height: 120 }} />
         </ScrollView>
       )}
+
+      <SignatureModal
+        visible={showSignatureEmpleado}
+        onClose={() => setShowSignatureEmpleado(false)}
+        onSave={handleSaveSignature}
+        title="Firma del Empleado"
+        loading={liquidando}
+      />
     </View>
   );
 }

@@ -248,7 +248,7 @@ export const firmarLiquidacion = async (liquidacionId: string, data: { firmaEmpl
   return response.data;
 };
 
-export const reenviarNotificacionFirma = (id: string) => api.post(`/nomina/liquidar/${id}/reenviar-notificacion`);
+export const reenviarNotificacionFirma = (id: string) => api.post(`/nomina/liquidaciones/${id}/reenviar-notificacion`);
 export const firmarLiquidacionAdmin = (id: string, data: any) => api.post(`/nomina/liquidar/${id}/firmar-admin`, data);
 export const deshacerLiquidacion = (id: string) => api.delete(`/nomina/liquidar/${id}`);
 export const agregarDescuentoExtraLiquidacion = (id: string, data: any) => api.post(`/nomina/liquidar/${id}/descuento-extra`, data);

@@ -640,7 +640,7 @@ export default function AdminNominaScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color="#111827" />
@@ -696,24 +696,24 @@ export default function AdminNominaScreen({ navigation }: any) {
                     </Text>
                   </View>
                 </View>
-                <View style={{ flexDirection: 'row', marginTop: 12, flexWrap: 'wrap', gap: 8 }}>
-                  <Button variant="outline" style={{ flex: 1, height: 36, borderColor: '#3b82f6', minWidth: '45%' }} onPress={() => handleVerPDF(liq)}>
+                <View style={{ flexDirection: 'row', marginTop: 12, flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                  <Button variant="outline" style={{ width: '48%', height: 36, borderColor: '#3b82f6', marginBottom: 8 }} onPress={() => handleVerPDF(liq)}>
                     <Ionicons name="document-text-outline" size={16} color="#3b82f6" style={{ marginRight: 4 }} />
-                    <Text style={{ color: '#3b82f6', fontSize: 13 }}>Ver PDF</Text>
+                    <Text style={{ color: '#3b82f6', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>Ver PDF</Text>
                   </Button>
                   {liq.estado === 'ESPERANDO_FIRMA' && (
-                    <Button variant="default" style={{ flex: 1, height: 36, backgroundColor: '#f59e0b', minWidth: '45%' }} onPress={() => handleReenviarNotificacion(liq.IDliquidacion)}>
+                    <Button variant="default" style={{ width: '48%', height: 36, backgroundColor: '#f59e0b', marginBottom: 8 }} onPress={() => handleReenviarNotificacion(liq.IDliquidacion)}>
                       <Ionicons name="paper-plane-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
-                      <Text style={{ color: '#fff', fontSize: 13 }}>Reenviar</Text>
+                      <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>Reenviar</Text>
                     </Button>
                   )}
-                  <Button variant="default" style={{ flex: 1, height: 36, backgroundColor: liq.firmaAdmin ? '#3b82f6' : '#10b981', minWidth: '45%' }} onPress={() => { setLiquidacionParaFirmaAdmin(liq.IDliquidacion); setShowSignatureAdmin(true); }}>
+                  <Button variant="default" style={{ width: '48%', height: 36, backgroundColor: liq.firmaAdmin ? '#3b82f6' : '#10b981', marginBottom: 8 }} onPress={() => { setLiquidacionParaFirmaAdmin(liq.IDliquidacion); setShowSignatureAdmin(true); }}>
                     <Ionicons name="create-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
-                    <Text style={{ color: '#fff', fontSize: 13 }}>{liq.firmaAdmin ? 'Cambiar Firma' : 'Firmar'}</Text>
+                    <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>{liq.firmaAdmin ? 'Cambiar Firma' : 'Firmar'}</Text>
                   </Button>
-                  <Button style={{ flex: 1, height: 36, backgroundColor: '#ef4444', minWidth: '100%' }} onPress={() => handleDeshacerLiquidacion(liq.IDliquidacion)} disabled={deshaciendo}>
+                  <Button style={{ width: '100%', height: 36, backgroundColor: '#ef4444', marginBottom: 8 }} onPress={() => handleDeshacerLiquidacion(liq.IDliquidacion)} disabled={deshaciendo}>
                     <Ionicons name="trash-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
-                    <Text style={{ color: '#fff', fontSize: 13 }}>Deshacer Liquidación</Text>
+                    <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>Deshacer Liquidación</Text>
                   </Button>
                 </View>
               </Card>
@@ -1321,7 +1321,7 @@ export default function AdminNominaScreen({ navigation }: any) {
         </View>
       </Modal>
 
-    </SafeAreaView>
+    </View>
   );
 }
 
