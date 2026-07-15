@@ -19,6 +19,12 @@ try {
 } catch (e) {
   console.warn('expo-print no está disponible');
 }
+let Sharing: any = null;
+try {
+  Sharing = require('expo-sharing');
+} catch (e) {
+  console.warn('expo-sharing no está disponible');
+}
 import { generarLiquidacionHTML } from '../../utils/nominaPdf';
 
 export default function AdminNominaScreen({ navigation }: any) {
@@ -202,6 +208,28 @@ export default function AdminNominaScreen({ navigation }: any) {
     }
   };
 
+  const abrirPdfDesdeHTML = async (html: string) => {
+    if (Platform.OS === 'web') {
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => { printWindow.print(); }, 500);
+      } else {
+        showAlert({ type: 'error', title: 'Error', message: 'No se pudo abrir la ventana de impresión.' });
+      }
+      return;
+    }
+    if (!Print) return showAlert({ type: 'error', title: 'Error', message: 'Módulo PDF no disponible' });
+    const { uri } = await Print.printToFileAsync({ html });
+    if (Sharing && await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(uri, { UTI: 'com.adobe.pdf', mimeType: 'application/pdf', dialogTitle: 'Comprobante de Liquidación' });
+    } else {
+      showAlert({ type: 'info', title: 'PDF Generado', message: `Archivo guardado en: ${uri}` });
+    }
+  };
+
   const handleVerPDF = async (liquidacion: any) => {
     try {
       const html = generarLiquidacionHTML({
@@ -218,22 +246,7 @@ export default function AdminNominaScreen({ navigation }: any) {
         firmaAdmin: liquidacion.firmaAdmin,
         firmaEmpleado: liquidacion.firmaEmpleado
       });
-      if (Platform.OS === 'web') {
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-          printWindow.document.write(html);
-          printWindow.document.close();
-          printWindow.focus();
-          setTimeout(() => {
-            printWindow.print();
-          }, 500);
-        } else {
-          showAlert({ type: 'error', title: 'Error', message: 'No se pudo abrir la ventana de impresión.' });
-        }
-        return;
-      }
-      if (!Print) return showAlert({ type: 'error', title: 'Error', message: 'Módulo PDF no disponible' });
-      await Print.printAsync({ html });
+      await abrirPdfDesdeHTML(html);
     } catch (e) {
       showAlert({ type: 'error', title: 'Error', message: 'No se pudo generar el PDF' });
     }
@@ -498,25 +511,7 @@ export default function AdminNominaScreen({ navigation }: any) {
       firmaAdmin: firmaAdmin,
     });
     
-    if (Platform.OS === 'web') {
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-          printWindow.print();
-        }, 500);
-      } else {
-        showAlert({ type: 'error', title: 'Error', message: 'No se pudo abrir la ventana de impresión. Verifique si tiene un bloqueador de ventanas emergentes (Pop-ups).' });
-      }
-      return;
-    }
-
-    if (!Print) {
-      return showAlert({ type: 'error', title: 'Módulo no disponible', message: 'El módulo de impresión PDF no está compilado en esta versión.' });
-    }
-    await Print.printAsync({ html });
+    await abrirPdfDesdeHTML(html);
   };
 
   const empleadoALiquidar = useRef<any>(null);

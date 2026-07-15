@@ -13,12 +13,7 @@ import { useSocket } from '../../hooks/useSocket';
 import useSocketEvent from '../../hooks/useSocketEvent';
 import useAuthStore from '../../store/useAuthStore';
 import SignatureModal from '../../components/ui/SignatureModal';
-let Print: any = null;
-try {
-  Print = require('expo-print');
-} catch (e) {
-  console.warn('expo-print no está disponible');
-}
+import LiquidacionViewerModal from '../../components/ui/LiquidacionViewerModal';
 import { generarLiquidacionHTML } from '../../utils/nominaPdf';
 let ImagePicker: any;
 try {
@@ -53,6 +48,10 @@ export default function CheckInScreen({ navigation }: any) {
   
   // Liquidación del empleado
   const [pendingLiquidacion, setPendingLiquidacion] = useState<any>(null);
+  // visorHtml: HTML actual que se muestra en el visor (null = cerrado)
+  const [visorHtml, setVisorHtml] = useState<string | null>(null);
+  // visorModoFirma: true cuando el PDF previo a firmar está abierto (muestra botón Firmar)
+  const [visorModoFirma, setVisorModoFirma] = useState(false);
   const [showSignatureEmpleado, setShowSignatureEmpleado] = useState(false);
   const [liquidando, setLiquidando] = useState(false);
   
@@ -105,39 +104,56 @@ export default function CheckInScreen({ navigation }: any) {
     }
   });
 
-  const handleReviewLiquidacion = async (liquidacion: any) => {
-    try {
-      const html = generarLiquidacionHTML({
-        empleadoNombre: user?.nombre || '',
-        empleadoCargo: user?.cargo?.nombre || 'Empleado',
-        fechaInicio: liquidacion.fechaInicio,
-        fechaFin: liquidacion.fechaFin,
-        turnos: liquidacion.turnosDetalle || [],
-        descuentos: liquidacion.descuentosDetalle || [],
-        totalBruto: liquidacion.totalBruto,
-        totalDescuentos: liquidacion.totalDescuentos,
-        totalNeto: liquidacion.totalNeto,
-        firmaAdmin: liquidacion.firmaAdmin
-      });
-      if (!Print) {
-        return showAlert({ type: 'error', title: 'Módulo no disponible', message: 'El módulo de impresión PDF no está compilado en esta versión.' });
-      }
-      await Print.printAsync({ html });
-      setShowSignatureEmpleado(true);
-    } catch (e) {
-      console.error(e);
-      showAlert({ type: 'error', title: 'Error', message: 'No se pudo abrir el PDF' });
-    }
+  // ── Paso 1: abrir el visor con botón Firmar ──
+  const handleReviewLiquidacion = (liquidacion: any) => {
+    const html = generarLiquidacionHTML({
+      empleadoNombre: user?.nombre || '',
+      empleadoCargo: user?.cargo?.nombre || 'Empleado',
+      fechaInicio: liquidacion.fechaInicio,
+      fechaFin: liquidacion.fechaFin,
+      turnos: liquidacion.turnosDetalle || [],
+      descuentos: liquidacion.descuentosDetalle || [],
+      totalBruto: liquidacion.totalBruto,
+      totalDescuentos: liquidacion.totalDescuentos,
+      totalNeto: liquidacion.totalNeto,
+      firmaAdmin: liquidacion.firmaAdmin,
+    });
+    setVisorHtml(html);
+    setVisorModoFirma(true);
   };
 
+  // ── Paso 2: al presionar Firmar dentro del visor ──
+  const handleAbrirFirma = () => {
+    setVisorHtml(null);        // cierra el visor temporalmente
+    setVisorModoFirma(false);
+    setShowSignatureEmpleado(true);
+  };
+
+  // ── Paso 3: guardar firma y mostrar PDF final ──
   const handleSaveSignature = async (firma: string) => {
     if (!pendingLiquidacion) return;
     try {
       setLiquidando(true);
       await firmarLiquidacion(pendingLiquidacion.IDliquidacion, { firmaEmpleado: firma });
-      showAlert({ type: 'success', title: 'Éxito', message: 'Liquidación firmada correctamente' });
       setShowSignatureEmpleado(false);
+      showAlert({ type: 'success', title: 'Éxito', message: 'Liquidación firmada correctamente' });
+      // Mostrar PDF final con ambas firmas
+      const htmlFinal = generarLiquidacionHTML({
+        empleadoNombre: user?.nombre || '',
+        empleadoCargo: user?.cargo?.nombre || 'Empleado',
+        fechaInicio: pendingLiquidacion.fechaInicio,
+        fechaFin: pendingLiquidacion.fechaFin,
+        turnos: pendingLiquidacion.turnosDetalle || [],
+        descuentos: pendingLiquidacion.descuentosDetalle || [],
+        totalBruto: pendingLiquidacion.totalBruto,
+        totalDescuentos: pendingLiquidacion.totalDescuentos,
+        totalNeto: pendingLiquidacion.totalNeto,
+        firmaAdmin: pendingLiquidacion.firmaAdmin,
+        firmaEmpleado: firma,
+      });
       setPendingLiquidacion(null);
+      setVisorModoFirma(false);  // modo final: sin botón Firmar
+      setVisorHtml(htmlFinal);   // abre visor con ambas firmas
     } catch (e) {
       showAlert({ type: 'error', title: 'Error', message: 'No se pudo guardar la firma' });
     } finally {
@@ -462,6 +478,17 @@ export default function CheckInScreen({ navigation }: any) {
         </ScrollView>
       )}
 
+      {/* ── Paso 1 y 3: visor in-app del PDF ── */}
+      <LiquidacionViewerModal
+        visible={!!visorHtml}
+        html={visorHtml || ''}
+        title="Comprobante de Liquidación"
+        showSignButton={visorModoFirma}
+        onSign={handleAbrirFirma}
+        onClose={() => setVisorHtml(null)}
+      />
+
+      {/* ── Paso 2: modal de firma del empleado ── */}
       {showSignatureEmpleado && (
         <SignatureModal
           visible={showSignatureEmpleado}

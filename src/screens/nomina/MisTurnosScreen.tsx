@@ -10,13 +10,8 @@ import { useSocket } from '../../hooks/useSocket';
 import useSocketEvent from '../../hooks/useSocketEvent';
 import useAuthStore from '../../store/useAuthStore';
 import SignatureModal from '../../components/ui/SignatureModal';
+import LiquidacionViewerModal from '../../components/ui/LiquidacionViewerModal';
 import { generarLiquidacionHTML } from '../../utils/nominaPdf';
-let Print: any = null;
-try {
-  Print = require('expo-print');
-} catch (e) {
-  console.warn('expo-print no está disponible');
-}
 
 export default function MisTurnosScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -29,6 +24,8 @@ export default function MisTurnosScreen({ navigation }: any) {
   const [statusFilter, setStatusFilter] = useState('Todos');
 
   const [pendingLiquidacion, setPendingLiquidacion] = useState<any>(null);
+  const [visorHtml, setVisorHtml] = useState<string | null>(null);
+  const [visorModoFirma, setVisorModoFirma] = useState(false);
   const [showSignatureEmpleado, setShowSignatureEmpleado] = useState(false);
   const [liquidando, setLiquidando] = useState(false);
 
@@ -54,39 +51,55 @@ export default function MisTurnosScreen({ navigation }: any) {
     }
   });
 
-  const handleReviewLiquidacion = async (liquidacion: any) => {
-    try {
-      const html = generarLiquidacionHTML({
-        empleadoNombre: user?.nombre || '',
-        empleadoCargo: user?.cargo?.nombre || 'Empleado',
-        fechaInicio: liquidacion.fechaInicio,
-        fechaFin: liquidacion.fechaFin,
-        turnos: liquidacion.turnosDetalle || [],
-        descuentos: liquidacion.descuentosDetalle || [],
-        totalBruto: liquidacion.totalBruto,
-        totalDescuentos: liquidacion.totalDescuentos,
-        totalNeto: liquidacion.totalNeto,
-        firmaAdmin: liquidacion.firmaAdmin
-      });
-      if (!Print) {
-        return showAlert({ type: 'error', title: 'Módulo no disponible', message: 'El módulo de impresión PDF no está compilado en esta versión.' });
-      }
-      await Print.printAsync({ html });
-      setShowSignatureEmpleado(true);
-    } catch (e) {
-      console.error(e);
-      showAlert({ type: 'error', title: 'Error', message: 'No se pudo abrir el PDF' });
-    }
+  // ── Paso 1: abrir el visor con botón Firmar ──
+  const handleReviewLiquidacion = (liquidacion: any) => {
+    const html = generarLiquidacionHTML({
+      empleadoNombre: user?.nombre || '',
+      empleadoCargo: user?.cargo?.nombre || 'Empleado',
+      fechaInicio: liquidacion.fechaInicio,
+      fechaFin: liquidacion.fechaFin,
+      turnos: liquidacion.turnosDetalle || [],
+      descuentos: liquidacion.descuentosDetalle || [],
+      totalBruto: liquidacion.totalBruto,
+      totalDescuentos: liquidacion.totalDescuentos,
+      totalNeto: liquidacion.totalNeto,
+      firmaAdmin: liquidacion.firmaAdmin,
+    });
+    setVisorHtml(html);
+    setVisorModoFirma(true);
   };
 
+  // ── Paso 2: al presionar Firmar dentro del visor ──
+  const handleAbrirFirma = () => {
+    setVisorHtml(null);
+    setVisorModoFirma(false);
+    setShowSignatureEmpleado(true);
+  };
+
+  // ── Paso 3: guardar firma y mostrar PDF final ──
   const handleSaveSignature = async (firma: string) => {
     if (!pendingLiquidacion) return;
     try {
       setLiquidando(true);
       await firmarLiquidacion(pendingLiquidacion.IDliquidacion, { firmaEmpleado: firma });
-      showAlert({ type: 'success', title: 'Éxito', message: 'Liquidación firmada correctamente' });
       setShowSignatureEmpleado(false);
+      showAlert({ type: 'success', title: 'Éxito', message: 'Liquidación firmada correctamente' });
+      const htmlFinal = generarLiquidacionHTML({
+        empleadoNombre: user?.nombre || '',
+        empleadoCargo: user?.cargo?.nombre || 'Empleado',
+        fechaInicio: pendingLiquidacion.fechaInicio,
+        fechaFin: pendingLiquidacion.fechaFin,
+        turnos: pendingLiquidacion.turnosDetalle || [],
+        descuentos: pendingLiquidacion.descuentosDetalle || [],
+        totalBruto: pendingLiquidacion.totalBruto,
+        totalDescuentos: pendingLiquidacion.totalDescuentos,
+        totalNeto: pendingLiquidacion.totalNeto,
+        firmaAdmin: pendingLiquidacion.firmaAdmin,
+        firmaEmpleado: firma,
+      });
       setPendingLiquidacion(null);
+      setVisorModoFirma(false);
+      setVisorHtml(htmlFinal);
     } catch (e) {
       showAlert({ type: 'error', title: 'Error', message: 'No se pudo guardar la firma' });
     } finally {
@@ -347,12 +360,20 @@ export default function MisTurnosScreen({ navigation }: any) {
         </ScrollView>
       )}
 
+      <LiquidacionViewerModal
+        visible={!!visorHtml}
+        html={visorHtml || ''}
+        title="Comprobante de Liquidación"
+        showSignButton={visorModoFirma}
+        onSign={handleAbrirFirma}
+        onClose={() => setVisorHtml(null)}
+      />
+
       <SignatureModal
         visible={showSignatureEmpleado}
         onClose={() => setShowSignatureEmpleado(false)}
         onSave={handleSaveSignature}
         title="Firma del Empleado"
-        loading={liquidando}
       />
     </View>
   );
