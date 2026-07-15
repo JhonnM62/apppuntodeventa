@@ -374,6 +374,7 @@ export default function MisTurnosScreen({ navigation }: any) {
         onClose={() => setShowSignatureEmpleado(false)}
         onSave={handleSaveSignature}
         title="Firma del Empleado"
+        loading={liquidando}
       />
     </View>
   );

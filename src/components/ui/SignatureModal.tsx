@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   Text,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import SignatureCanvas from './SignatureCanvas';
@@ -14,16 +15,16 @@ import SignatureCanvas from './SignatureCanvas';
 interface Props {
   visible: boolean;
   title?: string;
+  loading?: boolean;
   onClose: () => void;
   onSave: (signature: string) => void;
 }
 
-export default function SignatureModal({ visible, title = 'Firmar Documento', onClose, onSave }: Props) {
+export default function SignatureModal({ visible, title = 'Firmar Documento', loading = false, onClose, onSave }: Props) {
   const ref = useRef<any>(null);
   const [signed, setSigned] = useState(false);
 
   const handleOK = (signature: string) => {
-    setSigned(false);
     onSave(signature);
   };
 
@@ -108,12 +109,17 @@ export default function SignatureModal({ visible, title = 'Firmar Documento', on
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.btnSave, !signed && styles.btnSaveDisabled]}
+            style={[styles.btnSave, (!signed || loading) && styles.btnSaveDisabled]}
             onPress={handleConfirm}
             activeOpacity={0.85}
+            disabled={!signed || loading}
           >
-            <Ionicons name="checkmark-circle" size={20} color="#fff" />
-            <Text style={styles.btnSaveText}>Guardar Firma</Text>
+            {loading ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Ionicons name="checkmark-circle" size={20} color="#fff" />
+            )}
+            <Text style={styles.btnSaveText}>{loading ? 'Guardando...' : 'Guardar Firma'}</Text>
           </TouchableOpacity>
         </View>
 

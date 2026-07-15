@@ -493,6 +493,7 @@ export default function CheckInScreen({ navigation }: any) {
         <SignatureModal
           visible={showSignatureEmpleado}
           title="Firma del Empleado"
+          loading={liquidando}
           onClose={() => setShowSignatureEmpleado(false)}
           onSave={handleSaveSignature}
         />

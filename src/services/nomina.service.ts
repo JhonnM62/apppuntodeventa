@@ -244,7 +244,7 @@ export const liquidarEmpleado = async (data: { usuarioId: string, fechaDesde: st
 // --- FIRMA DEL EMPLEADO ---
 
 export const firmarLiquidacion = async (liquidacionId: string, data: { firmaEmpleado: string }) => {
-  const response = await api.post(`/nomina/liquidar/${liquidacionId}/firmar`, data);
+  const response = await api.post(`/nomina/liquidar/${liquidacionId}/firmar`, { firma: data.firmaEmpleado });
   return response.data;
 };
 
