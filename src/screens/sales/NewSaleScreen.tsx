@@ -397,12 +397,23 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         });
 
         const formData = new FormData();
-        const fileExt = uri.split('.').pop() || 'm4a';
-        formData.append('audio', {
-          uri: Platform.OS === 'ios' ? uri.replace('file://', '') : uri,
-          name: `audio.${fileExt}`,
-          type: `audio/${fileExt === 'm4a' ? 'mp4' : 'wav'}`,
-        } as any);
+        if (Platform.OS === 'web') {
+          try {
+            const blobResponse = await fetch(uri);
+            const blob = await blobResponse.blob();
+            formData.append('audio', blob, 'audio.webm');
+          } catch (fetchErr) {
+            console.error('Error fetching blob from uri on web', fetchErr);
+            throw new Error('Error procesando el audio en la web.');
+          }
+        } else {
+          const fileExt = uri.split('.').pop() || 'm4a';
+          formData.append('audio', {
+            uri: Platform.OS === 'ios' ? uri.replace('file://', '') : uri,
+            name: `audio.${fileExt}`,
+            type: `audio/${fileExt === 'm4a' ? 'mp4' : 'wav'}`,
+          } as any);
+        }
 
         const response = await processVoiceOrderWithIA(formData);
         
@@ -1447,40 +1458,41 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           <RNModal visible={mesaModalVisible} transparent animationType="fade" onRequestClose={() => setMesaModalVisible(false)}>
             <TouchableOpacity style={styles.mesaModalOverlay} activeOpacity={1} onPress={() => setMesaModalVisible(false)}>
               <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.mesaModalContent, { maxHeight: '85%' }]}>
-                <View style={styles.mesaModalHeader}>
-                  <Text style={styles.mesaModalTitle}>Seleccionar Mesa</Text>
-                  <TouchableOpacity onPress={() => setMesaModalVisible(false)}>
-                    <Ionicons name="close" size={20} color="#6b7280" />
-                  </TouchableOpacity>
-                </View>
-
-                {/* Buscador de Mesas */}
-                <View style={[styles.searchBox, { marginBottom: 10 }]}>
-                  <Ionicons name="search" size={18} color="#9ca3af" />
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder="Buscar mesa..."
-                    placeholderTextColor="#9ca3af"
-                    value={mesaSearchQuery}
-                    onChangeText={setMesaSearchQuery}
-                  />
-                  {mesaSearchQuery.length > 0 && (
-                    <TouchableOpacity onPress={() => setMesaSearchQuery('')}>
-                      <Ionicons name="close-circle" size={18} color="#9ca3af" />
+                <TouchableOpacity activeOpacity={1} style={{ flex: 1, width: '100%' }}>
+                  <View style={styles.mesaModalHeader}>
+                    <Text style={styles.mesaModalTitle}>Seleccionar Mesa</Text>
+                    <TouchableOpacity onPress={() => setMesaModalVisible(false)}>
+                      <Ionicons name="close" size={20} color="#6b7280" />
                     </TouchableOpacity>
-                  )}
-                </View>
+                  </View>
 
-                {/* Anotación temporal */}
-                <View style={[styles.searchBox, { marginBottom: 10, backgroundColor: '#fdfbc8' }]}>
-                  <Ionicons name="document-text-outline" size={18} color="#ca8a04" />
-                  <TextInput
-                    style={styles.searchInput}
-                    placeholder="Anotación temporal (ej. Juan, carro rojo)"
-                    placeholderTextColor="#ca8a04"
-                    value={mesaNota}
-                    onChangeText={setMesaNota}
-                  />
+                  {/* Buscador de Mesas */}
+                  <View style={[styles.searchBox, { marginBottom: 10 }]}>
+                    <Ionicons name="search" size={18} color="#9ca3af" />
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder="Buscar mesa..."
+                      placeholderTextColor="#9ca3af"
+                      value={mesaSearchQuery}
+                      onChangeText={setMesaSearchQuery}
+                    />
+                    {mesaSearchQuery.length > 0 && (
+                      <TouchableOpacity onPress={() => setMesaSearchQuery('')}>
+                        <Ionicons name="close-circle" size={18} color="#9ca3af" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Anotación temporal */}
+                  <View style={[styles.searchBox, { marginBottom: 10, backgroundColor: '#fdfbc8' }]}>
+                    <Ionicons name="document-text-outline" size={18} color="#ca8a04" />
+                    <TextInput
+                      style={styles.searchInput}
+                      placeholder="Anotación (ej. VIP, rojo)"
+                      placeholderTextColor="#ca8a04"
+                      value={mesaNota}
+                      onChangeText={setMesaNota}
+                    />
                   {mesaNota.length > 0 && (
                     <TouchableOpacity onPress={() => setMesaNota('')}>
                       <Ionicons name="close-circle" size={18} color="#ca8a04" />
@@ -1527,6 +1539,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
+                </TouchableOpacity>
               </KeyboardAvoidingView>
             </TouchableOpacity>
           </RNModal>
