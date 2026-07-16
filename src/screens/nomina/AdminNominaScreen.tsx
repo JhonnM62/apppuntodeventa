@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { Picker } from '@react-native-picker/picker';
-import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno, getLiquidaciones, reenviarNotificacionFirma, firmarLiquidacionAdmin, agregarDescuentoExtraLiquidacion, deshacerLiquidacion } from '../../services/nomina.service';
+import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno, getLiquidaciones, getLiquidacionById, reenviarNotificacionFirma, firmarLiquidacionAdmin, agregarDescuentoExtraLiquidacion, deshacerLiquidacion } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import TurnoManualModal from './TurnoManualModal';
 import SignatureModal from '../../components/ui/SignatureModal';
@@ -211,45 +211,109 @@ export default function AdminNominaScreen({ navigation }: any) {
     }
   };
 
-  const abrirPdfDesdeHTML = async (html: string) => {
+  const abrirPdfDesdeHTML = async (html: string, nombreArchivo = 'Liquidacion_Nomina.pdf') => {
     if (Platform.OS === 'web') {
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => { printWindow.print(); }, 500);
-      } else {
-        showAlert({ type: 'error', title: 'Error', message: 'No se pudo abrir la ventana de impresión.' });
+      // Web: generate base64 PDF and trigger download via anchor element
+      if (!Print) return showAlert({ type: 'error', title: 'Error', message: 'Módulo PDF no disponible' });
+      try {
+        const { uri } = await Print.printToFileAsync({ html, base64: true });
+        const link = document.createElement('a');
+        link.href = uri;
+        link.download = nombreArchivo;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } catch (e) {
+        // Fallback: open in new tab
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => { printWindow.print(); }, 500);
+        } else {
+          showAlert({ type: 'error', title: 'Error', message: 'No se pudo abrir la ventana de impresión.' });
+        }
       }
       return;
     }
+
     if (!Print) return showAlert({ type: 'error', title: 'Error', message: 'Módulo PDF no disponible' });
-    const { uri } = await Print.printToFileAsync({ html });
-    if (Sharing && await Sharing.isAvailableAsync()) {
-      await Sharing.shareAsync(uri, { UTI: 'com.adobe.pdf', mimeType: 'application/pdf', dialogTitle: 'Comprobante de Liquidación' });
+
+    let FileSystem: any = null;
+    try { FileSystem = require('expo-file-system/legacy'); } catch (_) {}
+
+    const { uri } = await Print.printToFileAsync({ html, base64: false });
+
+    if (Platform.OS === 'android' && FileSystem) {
+      const SAF_KEY = '@saf_downloads_directory';
+      let directoryUri = await AsyncStorage.getItem(SAF_KEY);
+      if (!directoryUri) {
+        showAlert({ type: 'info', title: 'Configurar Descargas', message: 'Por favor selecciona tu carpeta "Descargas" o "Downloads" en la siguiente pantalla. Solo tendrás que hacerlo esta vez.' });
+        const permissions = await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+        if (permissions.granted) {
+          directoryUri = permissions.directoryUri;
+          await AsyncStorage.setItem(SAF_KEY, directoryUri);
+        } else {
+          return;
+        }
+      }
+      try {
+        const base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
+        const newUri = await FileSystem.StorageAccessFramework.createFileAsync(directoryUri!, nombreArchivo, 'application/pdf');
+        await FileSystem.writeAsStringAsync(newUri, base64, { encoding: FileSystem.EncodingType.Base64 });
+        showAlert({ type: 'success', title: 'Descarga Exitosa', message: `Guardado en Descargas: ${nombreArchivo}` });
+        try {
+          const contentUri = await FileSystem.getContentUriAsync(uri);
+          const IntentLauncher = require('expo-intent-launcher');
+          await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
+            data: contentUri,
+            flags: 1,
+            type: 'application/pdf',
+          });
+        } catch (openError: any) {
+          if (Sharing && await Sharing.isAvailableAsync()) {
+            await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Abrir PDF' });
+          }
+        }
+      } catch (safError) {
+        await AsyncStorage.removeItem(SAF_KEY);
+        showAlert({ type: 'error', title: 'Error de Carpeta', message: 'El permiso de la carpeta expiró. Intenta de nuevo para reasignarla.' });
+      }
     } else {
-      showAlert({ type: 'info', title: 'PDF Generado', message: `Archivo guardado en: ${uri}` });
+      // iOS / fallback
+      if (Sharing && await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { UTI: 'com.adobe.pdf', mimeType: 'application/pdf', dialogTitle: 'Comprobante de Liquidación' });
+      } else {
+        showAlert({ type: 'info', title: 'PDF Generado', message: `Archivo guardado en: ${uri}` });
+      }
     }
   };
 
   const handleVerPDF = async (liquidacion: any) => {
     try {
+      // Fetch full record to get turnosDetalle and descuentosDetalle which are not included in the list response
+      const full = await getLiquidacionById(liquidacion.IDliquidacion);
+      const liq = full || liquidacion;
+      const now = new Date();
+      const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+      const fileName = `Liquidacion_${(liq.usuario?.nombre || 'Empleado').replace(/\s+/g,'_')}_${now.getDate()}_${meses[now.getMonth()]}_${now.getFullYear()}.pdf`;
       const html = generarLiquidacionHTML({
-        empleadoNombre: liquidacion.usuario?.nombre || 'Empleado',
-        empleadoCargo: liquidacion.usuario?.cargo?.nombre || 'Sin Cargo',
-        cargo: liquidacion.usuario?.cargo,
-        fechaInicio: liquidacion.fechaInicio,
-        fechaFin: liquidacion.fechaFin,
-        turnos: liquidacion.turnosDetalle || [],
-        descuentos: liquidacion.descuentosDetalle || [],
-        totalBruto: liquidacion.totalBruto,
-        totalDescuentos: liquidacion.totalDescuentos,
-        totalNeto: liquidacion.totalNeto,
-        firmaAdmin: liquidacion.firmaAdmin,
-        firmaEmpleado: liquidacion.firmaEmpleado
+        empleadoNombre: liq.usuario?.nombre || 'Empleado',
+        empleadoCargo: liq.usuario?.cargo?.nombre || 'Sin Cargo',
+        cargo: liq.usuario?.cargo,
+        minutosGracia: liq.minutosGracia ?? 5,
+        fechaInicio: liq.fechaInicio,
+        fechaFin: liq.fechaFin,
+        turnos: (liq.turnosDetalle as any[]) || [],
+        descuentos: (liq.descuentosDetalle as any[]) || [],
+        totalBruto: liq.totalBruto,
+        totalDescuentos: liq.totalDescuentos,
+        totalNeto: liq.totalNeto,
+        firmaAdmin: liq.firmaAdmin,
+        firmaEmpleado: liq.firmaEmpleado,
       });
-      await abrirPdfDesdeHTML(html);
+      await abrirPdfDesdeHTML(html, fileName);
     } catch (e) {
       showAlert({ type: 'error', title: 'Error', message: 'No se pudo generar el PDF' });
     }
@@ -499,6 +563,10 @@ export default function AdminNominaScreen({ navigation }: any) {
     const extraTurnosToPDF = (resumen.turnosAnteriores || []).filter((t: any) => selectedExtraTurnos.includes(t.IDturno));
     const extraBrutoToPDF = extraTurnosToPDF.reduce((sum: number, t: any) => sum + Number(t.valorTurno), 0);
 
+    const now = new Date();
+    const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const fileName = `Resumen_${(selectedEmpleado.nombre || 'Empleado').replace(/\s+/g,'_')}_${now.getDate()}_${meses[now.getMonth()]}_${now.getFullYear()}.pdf`;
+
     const html = generarLiquidacionHTML({
       empleadoNombre: selectedEmpleado.nombre,
       empleadoCargo: selectedEmpleado.cargo?.nombre || 'Empleado',
@@ -514,7 +582,7 @@ export default function AdminNominaScreen({ navigation }: any) {
       firmaAdmin: firmaAdmin,
     });
     
-    await abrirPdfDesdeHTML(html);
+    await abrirPdfDesdeHTML(html, fileName);
   };
 
   const empleadoALiquidar = useRef<any>(null);
@@ -1039,11 +1107,11 @@ export default function AdminNominaScreen({ navigation }: any) {
                 {historyTurnos.length === 0 ? (
                   <Text style={{ textAlign: 'center', marginTop: 20, color: '#6b7280' }}>No hay turnos registrados</Text>
                 ) : (
-                  historyTurnos.sort((a, b) => new Date(b.horaEntrada).getTime() - new Date(a.horaEntrada).getTime()).map(turno => (
+                  historyTurnos.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map(turno => (
                     <View key={turno.IDturno} style={styles.historyCard}>
                       <View style={styles.historyHeader}>
                         <Text style={styles.historyDate}>
-                          {new Date(turno.horaEntrada).toLocaleDateString('es-CO', { weekday: 'short', day: '2-digit', month: 'short' })}
+                          {new Date(turno.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })}
                         </Text>
                         <View style={[styles.statusTag, { backgroundColor: turno.estado === 'ACTIVO' ? '#dcfce7' : '#f3f4f6' }]}>
                           <Text style={[styles.statusTagText, { color: turno.estado === 'ACTIVO' ? '#16a34a' : '#6b7280' }]}>
