@@ -92,7 +92,7 @@ export default function AdminNominaScreen({ navigation }: any) {
   const loadLiquidaciones = async () => {
     try {
       setLoadingLiquidaciones(true);
-      const res = await getLiquidaciones({ limit: 50, _t: Date.now() });
+      const res = await getLiquidaciones({ limit: 50, _t: Date.now() } as any);
       setLiquidaciones(res.data || []);
     } catch (error) {
       console.error('Error cargando liquidaciones:', error);
@@ -694,25 +694,27 @@ export default function AdminNominaScreen({ navigation }: any) {
                     </Text>
                   </View>
                 </View>
-                <View style={{ flexDirection: 'row', marginTop: 12, flexWrap: 'wrap', justifyContent: 'space-between' }}>
-                  <Button variant="outline" style={{ width: '48%', height: 36, borderColor: '#3b82f6', marginBottom: 8 }} onPress={() => handleVerPDF(liq)}>
+                <View style={{ flexDirection: 'row', marginTop: 12, flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 }}>
+                  <Button variant="outline" size="sm" style={{ flex: 1, borderColor: '#3b82f6', marginBottom: 4 }} onPress={() => handleVerPDF(liq)}>
                     <Ionicons name="document-text-outline" size={16} color="#3b82f6" style={{ marginRight: 4 }} />
                     <Text style={{ color: '#3b82f6', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>Ver PDF</Text>
                   </Button>
                   {liq.estado === 'ESPERANDO_FIRMA' && (
-                    <Button variant="default" style={{ width: '48%', height: 36, backgroundColor: '#f59e0b', marginBottom: 8 }} onPress={() => handleReenviarNotificacion(liq.IDliquidacion)}>
+                    <Button variant="default" size="sm" style={{ flex: 1, backgroundColor: '#f59e0b', marginBottom: 4 }} onPress={() => handleReenviarNotificacion(liq.IDliquidacion)}>
                       <Ionicons name="paper-plane-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
                       <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>Reenviar</Text>
                     </Button>
                   )}
-                  <Button variant="default" style={{ width: '100%', height: 36, backgroundColor: liq.firmaAdmin ? '#3b82f6' : '#10b981', marginBottom: 8 }} onPress={() => { setLiquidacionParaFirmaAdmin(liq.IDliquidacion); setShowSignatureAdmin(true); }}>
-                    <Ionicons name="create-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
-                    <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>{liq.firmaAdmin ? 'Cambiar Firma' : 'Firmar'}</Text>
-                  </Button>
-                  <Button style={{ width: '100%', height: 36, backgroundColor: '#ef4444', marginBottom: 8 }} onPress={() => handleDeshacerLiquidacion(liq.IDliquidacion)} disabled={deshaciendo}>
-                    <Ionicons name="trash-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
-                    <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>Deshacer Liquidación</Text>
-                  </Button>
+                  <View style={{ width: '100%' }}>
+                    <Button variant="default" size="sm" style={{ width: '100%', backgroundColor: liq.firmaAdmin ? '#3b82f6' : '#10b981', marginBottom: 8 }} onPress={() => { setLiquidacionParaFirmaAdmin(liq.IDliquidacion); setShowSignatureAdmin(true); }}>
+                      <Ionicons name="create-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+                      <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>{liq.firmaAdmin ? 'Cambiar Firma' : 'Firmar'}</Text>
+                    </Button>
+                    <Button size="sm" style={{ width: '100%', backgroundColor: '#ef4444' }} onPress={() => handleDeshacerLiquidacion(liq.IDliquidacion)} disabled={deshaciendo}>
+                      <Ionicons name="trash-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+                      <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>Deshacer Liquidación</Text>
+                    </Button>
+                  </View>
                 </View>
               </Card>
             ))
