@@ -1425,14 +1425,16 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               <Ionicons name="time-outline" size={16} color="#4CAF50" />
               <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <TouchableOpacity style={styles.mesaButton} onPress={() => setMesaModalVisible(true)}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1, paddingLeft: 10 }}>
+              <TouchableOpacity style={[styles.mesaButton, { flexShrink: 1 }]} onPress={() => setMesaModalVisible(true)}>
                 <MaterialCommunityIcons 
                   name={selectedMesa ? "table-furniture" : "flash-outline"}
                   size={18}
                   color="#4CAF50"
                 />
-                <Text style={styles.mesaButtonText}>{selectedMesa?.nombre || 'V.R'}</Text>
+                <Text style={[styles.mesaButtonText, { flexShrink: 1 }]} numberOfLines={1} ellipsizeMode="tail">
+                  {selectedMesa?.nombre || 'V.R'}
+                </Text>
                 <Ionicons name="chevron-down" size={16} color="#4CAF50" />
               </TouchableOpacity>
             </View>
