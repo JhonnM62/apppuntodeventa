@@ -63,6 +63,9 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const [modifiersModalVisible, setModifiersModalVisible] = useState(false);
   const [clienteModalVisible, setClienteModalVisible] = useState(false);
   
+  const [mesaSearchQuery, setMesaSearchQuery] = useState('');
+  const [mesaNota, setMesaNota] = useState('');
+  
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isProcessingVoice, setIsProcessingVoice] = useState(false);
@@ -403,9 +406,23 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
         const response = await processVoiceOrderWithIA(formData);
         
-        if (response && response.data && response.data.items && response.data.items.length > 0) {
-          let countAdded = 0;
-          response.data.items.forEach((item: any) => {
+        if (response && response.data) {
+          if (response.data.mesaId) {
+            const foundMesa = mesas.find(m => m.IdMesas === response.data.mesaId);
+            if (foundMesa) {
+              setSelectedMesa(foundMesa);
+              Toast.show({
+                type: 'info',
+                text1: 'Mesa Seleccionada',
+                text2: `La IA seleccionó: ${foundMesa.nombre}`,
+                position: 'top',
+              });
+            }
+          }
+
+          if (response.data.items && response.data.items.length > 0) {
+            let countAdded = 0;
+            response.data.items.forEach((item: any) => {
             const product = cachedProductos.find(p => p.IDproductos === item.productoId);
             if (product) {
               const orderItem: CartItem = {
@@ -458,11 +475,14 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               position: 'top',
             });
           }
-        } else {
+        }
+        } // Cierra el if (response && response.data)
+        
+        if (!response?.data?.items?.length && !response?.data?.mesaId) {
           Toast.show({
             type: 'error',
             text1: 'Atención',
-            text2: 'No se reconoció ningún pedido válido en el audio.',
+            text2: 'No se reconoció ningún pedido o mesa válida en el audio.',
             position: 'top',
           });
         }
@@ -1426,33 +1446,88 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
           <RNModal visible={mesaModalVisible} transparent animationType="fade" onRequestClose={() => setMesaModalVisible(false)}>
             <TouchableOpacity style={styles.mesaModalOverlay} activeOpacity={1} onPress={() => setMesaModalVisible(false)}>
-              <View style={[styles.mesaModalContent, { maxHeight: '80%' }]}>
+              <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.mesaModalContent, { maxHeight: '85%' }]}>
                 <View style={styles.mesaModalHeader}>
                   <Text style={styles.mesaModalTitle}>Seleccionar Mesa</Text>
                   <TouchableOpacity onPress={() => setMesaModalVisible(false)}>
                     <Ionicons name="close" size={20} color="#6b7280" />
                   </TouchableOpacity>
                 </View>
-                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }}>
-                  <TouchableOpacity
-                    style={[styles.mesaOption, !selectedMesa && styles.mesaOptionActive]}
-                    onPress={() => { setSelectedMesa(null); setMesaModalVisible(false); }}
-                  >
-                    <MaterialCommunityIcons name="flash-outline" size={20} color={!selectedMesa ? '#fff' : '#6b7280'} />
-                    <Text style={[styles.mesaOptionText, !selectedMesa && styles.mesaOptionTextActive]}>Venta Rapida (V.R)</Text>
-                  </TouchableOpacity>
-                  {mesas.map((mesa) => (
+
+                {/* Buscador de Mesas */}
+                <View style={[styles.searchBox, { marginBottom: 10 }]}>
+                  <Ionicons name="search" size={18} color="#9ca3af" />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Buscar mesa..."
+                    placeholderTextColor="#9ca3af"
+                    value={mesaSearchQuery}
+                    onChangeText={setMesaSearchQuery}
+                  />
+                  {mesaSearchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => setMesaSearchQuery('')}>
+                      <Ionicons name="close-circle" size={18} color="#9ca3af" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* Anotación temporal */}
+                <View style={[styles.searchBox, { marginBottom: 10, backgroundColor: '#fdfbc8' }]}>
+                  <Ionicons name="document-text-outline" size={18} color="#ca8a04" />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Anotación temporal (ej. Juan, carro rojo)"
+                    placeholderTextColor="#ca8a04"
+                    value={mesaNota}
+                    onChangeText={setMesaNota}
+                  />
+                  {mesaNota.length > 0 && (
+                    <TouchableOpacity onPress={() => setMesaNota('')}>
+                      <Ionicons name="close-circle" size={18} color="#ca8a04" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }} keyboardShouldPersistTaps="handled">
+                  {(!mesaSearchQuery || 'venta rapida (v.r)'.includes(mesaSearchQuery.toLowerCase())) && (
+                    <TouchableOpacity
+                      style={[styles.mesaOption, !selectedMesa && styles.mesaOptionActive]}
+                      onPress={() => { 
+                        setSelectedMesa(null); 
+                        setMesaModalVisible(false); 
+                      }}
+                    >
+                      <MaterialCommunityIcons name="flash-outline" size={20} color={!selectedMesa ? '#fff' : '#6b7280'} />
+                      <Text style={[styles.mesaOptionText, !selectedMesa && styles.mesaOptionTextActive]}>
+                        Venta Rapida (V.R) {mesaNota ? `- ${mesaNota}` : ''}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {mesas.filter(m => m.nombre.toLowerCase().includes(mesaSearchQuery.toLowerCase())).map((mesa) => (
                     <TouchableOpacity
                       key={mesa.IdMesas}
                       style={[styles.mesaOption, selectedMesa?.IdMesas === mesa.IdMesas && styles.mesaOptionActive]}
-                      onPress={() => { setSelectedMesa(mesa); setMesaModalVisible(false); }}
+                      onPress={() => { 
+                        if (mesaNota) {
+                          setSelectedMesa({
+                            ...mesa,
+                            IdMesas: `${mesa.IdMesas} - ${mesaNota}`,
+                            nombre: `${mesa.nombre} - ${mesaNota}`
+                          });
+                        } else {
+                          setSelectedMesa(mesa);
+                        }
+                        setMesaModalVisible(false); 
+                      }}
                     >
                       <MaterialCommunityIcons name="table-furniture" size={20} color={selectedMesa?.IdMesas === mesa.IdMesas ? '#fff' : '#6b7280'} />
-                      <RNText style={[styles.mesaOptionText, selectedMesa?.IdMesas === mesa.IdMesas && styles.mesaOptionTextActive]}>{mesa.nombre}</RNText>
+                      <RNText style={[styles.mesaOptionText, selectedMesa?.IdMesas === mesa.IdMesas && styles.mesaOptionTextActive]}>
+                        {mesa.nombre} {mesaNota && selectedMesa?.IdMesas !== mesa.IdMesas ? `- ${mesaNota}` : ''}
+                      </RNText>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
-              </View>
+              </KeyboardAvoidingView>
             </TouchableOpacity>
           </RNModal>
 
