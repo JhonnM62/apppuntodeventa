@@ -20,10 +20,14 @@ export const generarLiquidacionHTML = (data: {
 
   const formatTime = (d: string | Date) => {
     if (!d) return '---';
-    return new Date(d).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+    // horaEntrada/horaSalida are stored as UTC wall-clock time on the server
+    return new Date(d).toLocaleTimeString('es-CO', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
   };
 
-  const turnosRows = turnos.map(t => `
+  // Sort turnos: most recent first (descending by fecha)
+  const turnosSorted = [...turnos].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+
+  const turnosRows = turnosSorted.map(t => `
     <tr>
       <td>${formatDate(t.fecha)}</td>
       <td>${formatTime(t.horaEntrada)}</td>
@@ -33,7 +37,10 @@ export const generarLiquidacionHTML = (data: {
     </tr>
   `).join('');
 
-  const descuentosRows = descuentos.map(d => `
+  // Sort descuentos: most recent first (descending by fecha)
+  const descuentosSorted = [...descuentos].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+
+  const descuentosRows = descuentosSorted.map(d => `
     <tr>
       <td>${formatDate(d.fecha)}</td>
       <td>${d.concepto}</td>

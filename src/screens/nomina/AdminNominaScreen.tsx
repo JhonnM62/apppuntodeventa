@@ -213,30 +213,22 @@ export default function AdminNominaScreen({ navigation }: any) {
 
   const abrirPdfDesdeHTML = async (html: string, nombreArchivo = 'Liquidacion_Nomina.pdf') => {
     if (Platform.OS === 'web') {
-      // Web: generate base64 PDF and trigger download via anchor element
-      if (!Print) return showAlert({ type: 'error', title: 'Error', message: 'Módulo PDF no disponible' });
-      try {
-        const { uri } = await Print.printToFileAsync({ html, base64: true });
-        const link = document.createElement('a');
-        link.href = uri;
-        link.download = nombreArchivo;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } catch (e) {
-        // Fallback: open in new tab
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-          printWindow.document.write(html);
-          printWindow.document.close();
-          printWindow.focus();
-          setTimeout(() => { printWindow.print(); }, 500);
-        } else {
-          showAlert({ type: 'error', title: 'Error', message: 'No se pudo abrir la ventana de impresión.' });
-        }
+      // Web: expo-print's printToFileAsync is NOT supported on web.
+      // The reliable approach is to open a new tab, write the HTML, and trigger print().
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+        printWindow.focus();
+        // Give the browser time to render the HTML before triggering the print dialog
+        setTimeout(() => { printWindow.print(); }, 600);
+      } else {
+        showAlert({ type: 'error', title: 'Error', message: 'El navegador bloqueó la ventana emergente. Por favor, permite las ventanas emergentes para este sitio e intenta de nuevo.' });
       }
       return;
     }
+
 
     if (!Print) return showAlert({ type: 'error', title: 'Error', message: 'Módulo PDF no disponible' });
 
@@ -298,6 +290,9 @@ export default function AdminNominaScreen({ navigation }: any) {
       const now = new Date();
       const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
       const fileName = `Liquidacion_${(liq.usuario?.nombre || 'Empleado').replace(/\s+/g,'_')}_${now.getDate()}_${meses[now.getMonth()]}_${now.getFullYear()}.pdf`;
+      const sortByFechaDesc = (arr: any[]) =>
+        [...arr].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+
       const html = generarLiquidacionHTML({
         empleadoNombre: liq.usuario?.nombre || 'Empleado',
         empleadoCargo: liq.usuario?.cargo?.nombre || 'Sin Cargo',
@@ -305,8 +300,8 @@ export default function AdminNominaScreen({ navigation }: any) {
         minutosGracia: liq.minutosGracia ?? 5,
         fechaInicio: liq.fechaInicio,
         fechaFin: liq.fechaFin,
-        turnos: (liq.turnosDetalle as any[]) || [],
-        descuentos: (liq.descuentosDetalle as any[]) || [],
+        turnos: sortByFechaDesc((liq.turnosDetalle as any[]) || []),
+        descuentos: sortByFechaDesc((liq.descuentosDetalle as any[]) || []),
         totalBruto: liq.totalBruto,
         totalDescuentos: liq.totalDescuentos,
         totalNeto: liq.totalNeto,
