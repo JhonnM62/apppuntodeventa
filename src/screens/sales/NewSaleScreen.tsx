@@ -1469,10 +1469,10 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                   </View>
 
                   {/* Buscador de Mesas */}
-                  <View style={[styles.searchBox, { marginBottom: 10, minHeight: 40, height: 'auto' }]}>
+                  <View style={[styles.searchBox, { marginBottom: 10, minHeight: 40 }]}>
                     <Ionicons name="search" size={18} color="#9ca3af" />
                     <TextInput
-                      style={[styles.searchInput, { height: 'auto', minHeight: 36, paddingVertical: 4 }]}
+                      style={[styles.searchInput, { height: undefined, minHeight: 36, paddingVertical: 4 }]}
                       placeholder="Buscar mesa..."
                       placeholderTextColor="#9ca3af"
                       value={mesaSearchQuery}
