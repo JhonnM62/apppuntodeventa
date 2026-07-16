@@ -739,23 +739,23 @@ showAlert({
           activeOpacity={0.7}
         >
           <View style={styles.cardHeader}>
-            <View style={styles.cardTitleRow}>
-              <Ionicons name="receipt-outline" size={18} color="#374151" />
-              <RNText style={styles.cardTitle}>{item.pedido || 'Sin pedido'}</RNText>
+            <View style={[styles.cardTitleRow, { flex: 1, marginRight: 8, alignItems: 'flex-start' }]}>
+              <Ionicons name="receipt-outline" size={18} color="#374151" style={{ marginTop: 2 }} />
+              <RNText style={[styles.cardTitle, { flexShrink: 1 }]}>{item.pedido || 'Sin pedido'}</RNText>
               {hasNotes(item) && (
-                <View style={{ marginLeft: 8, backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ marginLeft: 8, backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
                   <RNText style={{ fontSize: 12 }}>🏷️</RNText>
                   <RNText style={{ fontSize: 10, color: '#d97706', fontWeight: 'bold', marginLeft: 4 }}>NOTAS</RNText>
                 </View>
               )}
               {item.mensaje?.includes('Auto-Cuadre IA') && (
-                <View style={{ marginLeft: 8, backgroundColor: '#ede9fe', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
+                <View style={{ marginLeft: 8, backgroundColor: '#ede9fe', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
                   <RNText style={{ fontSize: 12 }}>🤖</RNText>
                   <RNText style={{ fontSize: 10, color: '#6d28d9', fontWeight: 'bold', marginLeft: 4 }}>IA</RNText>
                 </View>
               )}
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
               <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.estado) + '20' }]}>
                 <RNText style={[styles.statusText, { color: getStatusColor(item.estado) }]}>
                   {item.estado?.replace(/_/g, ' ') || 'SIN ESTADO'}

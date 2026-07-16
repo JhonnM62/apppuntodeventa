@@ -1469,14 +1469,15 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                   </View>
 
                   {/* Buscador de Mesas */}
-                  <View style={[styles.searchBox, { marginBottom: 10 }]}>
+                  <View style={[styles.searchBox, { marginBottom: 10, minHeight: 40, height: 'auto' }]}>
                     <Ionicons name="search" size={18} color="#9ca3af" />
                     <TextInput
-                      style={styles.searchInput}
+                      style={[styles.searchInput, { height: 'auto', minHeight: 36, paddingVertical: 4 }]}
                       placeholder="Buscar mesa..."
                       placeholderTextColor="#9ca3af"
                       value={mesaSearchQuery}
                       onChangeText={setMesaSearchQuery}
+                      multiline={true}
                     />
                     {mesaSearchQuery.length > 0 && (
                       <TouchableOpacity onPress={() => setMesaSearchQuery('')}>
@@ -1512,7 +1513,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                       }}
                     >
                       <Ionicons name="add-circle-outline" size={20} color="#d97706" />
-                      <Text style={[styles.mesaOptionText, { color: '#d97706', marginLeft: 8 }]}>
+                      <Text style={[styles.mesaOptionText, { color: '#d97706', marginLeft: 8, flexShrink: 1 }]}>
                         Anotar como "{mesaSearchQuery}"
                       </Text>
                     </TouchableOpacity>
