@@ -1483,23 +1483,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                     )}
                   </View>
 
-                  {/* Anotación temporal */}
-                  <View style={[styles.searchBox, { marginBottom: 10, backgroundColor: '#fdfbc8' }]}>
-                    <Ionicons name="document-text-outline" size={18} color="#ca8a04" />
-                    <TextInput
-                      style={styles.searchInput}
-                      placeholder="Anotación (ej. VIP, rojo)"
-                      placeholderTextColor="#ca8a04"
-                      value={mesaNota}
-                      onChangeText={setMesaNota}
-                    />
-                  {mesaNota.length > 0 && (
-                    <TouchableOpacity onPress={() => setMesaNota('')}>
-                      <Ionicons name="close-circle" size={18} color="#ca8a04" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 10 }} keyboardShouldPersistTaps="handled">
                   {(!mesaSearchQuery || 'venta rapida (v.r)'.includes(mesaSearchQuery.toLowerCase())) && (
                     <TouchableOpacity
@@ -1511,7 +1494,24 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                     >
                       <MaterialCommunityIcons name="flash-outline" size={20} color={!selectedMesa ? '#fff' : '#6b7280'} />
                       <Text style={[styles.mesaOptionText, !selectedMesa && styles.mesaOptionTextActive]}>
-                        Venta Rapida (V.R) {mesaNota ? `- ${mesaNota}` : ''}
+                        Venta Rapida (V.R)
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                  {mesaSearchQuery.length > 0 && !mesas.some(m => m.nombre.toLowerCase() === mesaSearchQuery.toLowerCase()) && (
+                    <TouchableOpacity
+                      style={[styles.mesaOption, { backgroundColor: '#fef3c7', borderColor: '#fde68a', borderWidth: 1 }]}
+                      onPress={() => { 
+                        setSelectedMesa({
+                          IdMesas: mesaSearchQuery.trim(),
+                          nombre: mesaSearchQuery.trim(),
+                        });
+                        setMesaModalVisible(false); 
+                      }}
+                    >
+                      <Ionicons name="add-circle-outline" size={20} color="#d97706" />
+                      <Text style={[styles.mesaOptionText, { color: '#d97706', marginLeft: 8 }]}>
+                        Anotar como "{mesaSearchQuery}"
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -1520,21 +1520,13 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                       key={mesa.IdMesas}
                       style={[styles.mesaOption, selectedMesa?.IdMesas === mesa.IdMesas && styles.mesaOptionActive]}
                       onPress={() => { 
-                        if (mesaNota) {
-                          setSelectedMesa({
-                            ...mesa,
-                            IdMesas: `${mesa.IdMesas} - ${mesaNota}`,
-                            nombre: `${mesa.nombre} - ${mesaNota}`
-                          });
-                        } else {
-                          setSelectedMesa(mesa);
-                        }
+                        setSelectedMesa(mesa);
                         setMesaModalVisible(false); 
                       }}
                     >
                       <MaterialCommunityIcons name="table-furniture" size={20} color={selectedMesa?.IdMesas === mesa.IdMesas ? '#fff' : '#6b7280'} />
                       <RNText style={[styles.mesaOptionText, selectedMesa?.IdMesas === mesa.IdMesas && styles.mesaOptionTextActive]}>
-                        {mesa.nombre} {mesaNota && selectedMesa?.IdMesas !== mesa.IdMesas ? `- ${mesaNota}` : ''}
+                        {mesa.nombre}
                       </RNText>
                     </TouchableOpacity>
                   ))}
