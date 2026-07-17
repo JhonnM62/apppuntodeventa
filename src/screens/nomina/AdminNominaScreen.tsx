@@ -13,6 +13,8 @@ import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin,
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import TurnoManualModal from './TurnoManualModal';
 import SignatureModal from '../../components/ui/SignatureModal';
+const CONCEPTOS_BONO = ['BONO', 'PREMIO', 'HORAS_EXTRAS'];
+
 let Print: any = null;
 try {
   Print = require('expo-print');
@@ -874,6 +876,7 @@ export default function AdminNominaScreen({ navigation }: any) {
                       {Object.keys(descuentosAgrupados || {}).length > 0 && (
                         <View style={{ marginTop: 8, marginBottom: 4, paddingLeft: 12, borderLeftWidth: 2, borderLeftColor: '#fca5a5' }}>
                           {Object.entries(descuentosAgrupados).map(([concepto, data]: any) => {
+                            const esBono = CONCEPTOS_BONO.includes(concepto);
                             const label = concepto === 'CENA' 
                               ? `${data.count} ${data.count === 1 ? 'CENA' : 'CENAS'}`
                               : `${data.count} ${data.count === 1 ? 'vez' : 'veces'} - ${concepto.replace(/_/g, ' ')}`;
@@ -883,8 +886,8 @@ export default function AdminNominaScreen({ navigation }: any) {
                                 <Text style={{ fontSize: 13, color: '#6b7280' }}>
                                   ↳ {label}
                                 </Text>
-                                <Text style={{ fontSize: 13, color: '#ef4444' }}>
-                                  -${Number(data.total).toLocaleString('es-CO')}
+                                <Text style={{ fontSize: 13, color: esBono ? '#10b981' : '#ef4444' }}>
+                                  {esBono ? '+' : '-'}${Number(data.total).toLocaleString('es-CO')}
                                 </Text>
                               </View>
                             );
@@ -896,6 +899,12 @@ export default function AdminNominaScreen({ navigation }: any) {
                         <Text style={styles.summaryLabel}>Total Descuentos:</Text>
                         <Text style={[styles.summaryValue, { color: '#ef4444' }]}>-${Number(resumen.totalDescuentos).toLocaleString('es-CO')}</Text>
                       </View>
+                      {resumen.totalBonos > 0 && (
+                        <View style={[styles.summaryRow, { marginTop: 4 }]}>
+                          <Text style={styles.summaryLabel}>Total Bonos:</Text>
+                          <Text style={[styles.summaryValue, { color: '#10b981' }]}>+${Number(resumen.totalBonos).toLocaleString('es-CO')}</Text>
+                        </View>
+                      )}
                       <View style={[styles.summaryRow, { borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 8, marginTop: 8 }]}>
                         <Text style={[styles.summaryLabel, { fontWeight: '700' }]}>Total Neto a Pagar:</Text>
                         <Text style={[styles.summaryValue, { color: '#10b981', fontSize: 18 }]}>${Number(resumen.totalNeto + selectedExtraTurnos.reduce((sum: number, id: string) => {
@@ -920,27 +929,30 @@ export default function AdminNominaScreen({ navigation }: any) {
                       </View>
                     ))}
 
-                    <Text style={{ fontWeight: '700', marginTop: 16, marginBottom: 8 }}>Descuentos ({(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).length})</Text>
-                    {(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).map((d: any) => (
-                      <View key={d.IDdescuento} style={styles.itemRow}>
-                        <View style={{ flex: 1, paddingRight: 8 }}>
-                          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Text style={{ fontSize: 13, fontWeight: '500' }}>{d.concepto}</Text>
-                            {d.fecha && (
-                              <Text style={{ fontSize: 12, color: '#4b5563', marginLeft: 6, textTransform: 'capitalize' }}>
-                                ({new Date(d.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })})
-                              </Text>
+                    <Text style={{ fontWeight: '700', marginTop: 16, marginBottom: 8 }}>Descuentos y Bonos ({(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).length})</Text>
+                    {(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).map((d: any) => {
+                      const esBono = CONCEPTOS_BONO.includes(d.concepto);
+                      return (
+                        <View key={d.IDdescuento} style={styles.itemRow}>
+                          <View style={{ flex: 1, paddingRight: 8 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                              <Text style={{ fontSize: 13, fontWeight: '500', color: esBono ? '#059669' : '#374151' }}>{d.concepto}</Text>
+                              {d.fecha && (
+                                <Text style={{ fontSize: 12, color: '#4b5563', marginLeft: 6, textTransform: 'capitalize' }}>
+                                  ({new Date(d.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })})
+                                </Text>
+                              )}
+                            </View>
+                            {d.descripcion && (
+                              <Text style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{d.descripcion}</Text>
                             )}
                           </View>
-                          {d.descripcion && (
-                            <Text style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{d.descripcion}</Text>
-                          )}
+                          <Text style={{ fontSize: 13, color: esBono ? '#10b981' : '#ef4444', fontWeight: '600' }}>
+                            {esBono ? '+' : '-'}${Number(d.valor).toLocaleString('es-CO')}
+                          </Text>
                         </View>
-                        <Text style={{ fontSize: 13, color: '#ef4444', fontWeight: '600' }}>
-                          -${Number(d.valor).toLocaleString('es-CO')}
-                        </Text>
-                      </View>
-                    ))}
+                      );
+                    })}
                   </ScrollView>
 
                   
