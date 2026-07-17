@@ -1459,9 +1459,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
           <RNModal visible={mesaModalVisible} transparent animationType="fade" onRequestClose={() => setMesaModalVisible(false)}>
             <TouchableOpacity style={styles.mesaModalOverlay} activeOpacity={1} onPress={() => setMesaModalVisible(false)}>
-              <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={[styles.mesaModalContent, { maxHeight: '85%' }]}>
-                <TouchableOpacity activeOpacity={1} style={{ flex: 1, width: '100%' }}>
-                  <View style={styles.mesaModalHeader}>
+              <TouchableOpacity activeOpacity={1} style={[styles.mesaModalContent, { width: 300, maxHeight: '85%' }]}>
+                <View style={styles.mesaModalHeader}>
                     <Text style={styles.mesaModalTitle}>Seleccionar Mesa</Text>
                     <TouchableOpacity onPress={() => setMesaModalVisible(false)}>
                       <Ionicons name="close" size={20} color="#6b7280" />
@@ -1534,8 +1533,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                     </TouchableOpacity>
                   ))}
                 </ScrollView>
-                </TouchableOpacity>
-              </KeyboardAvoidingView>
+              </TouchableOpacity>
             </TouchableOpacity>
           </RNModal>
 
