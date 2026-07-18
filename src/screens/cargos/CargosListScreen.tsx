@@ -591,14 +591,27 @@ export default function CargosListScreen({ navigation }: any) {
                 <View style={styles.formGroup}>
                   <RNText style={styles.label}>⏱ Hora sugerida de descanso (Opcional)</RNText>
                   <RNText style={styles.sublabel}>Hora en la que se le sugerirá al empleado iniciar su descanso.</RNText>
-                  <TouchableOpacity
-                    style={[styles.diaInput, styles.timeInput, { marginTop: 8, paddingVertical: 12 }]}
-                    onPress={() => openTimePicker('horaSugeridaDescanso')}
-                  >
-                    <RNText style={{ color: horaSugeridaDescanso ? '#111827' : '#9ca3af', textAlign: 'center', fontSize: 16 }}>
-                      {horaSugeridaDescanso ? format12Hour(horaSugeridaDescanso) : 'Seleccionar hora'}
-                    </RNText>
-                  </TouchableOpacity>
+                  {Platform.OS === 'web' ? (
+                    React.createElement('input', {
+                      type: 'time',
+                      value: horaSugeridaDescanso || '',
+                      onChange: (e: any) => setHoraSugeridaDescanso(e.target.value),
+                      style: {
+                        marginTop: '8px', padding: '12px', backgroundColor: '#f9fafb', borderWidth: '1px',
+                        borderColor: '#e5e7eb', borderRadius: '8px', fontSize: '16px', color: '#111827',
+                        width: '100%', textAlign: 'center', outline: 'none'
+                      }
+                    })
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.diaInput, styles.timeInput, { marginTop: 8, paddingVertical: 12 }]}
+                      onPress={() => openTimePicker('horaSugeridaDescanso')}
+                    >
+                      <RNText style={{ color: horaSugeridaDescanso ? '#111827' : '#9ca3af', textAlign: 'center', fontSize: 16 }}>
+                        {horaSugeridaDescanso ? format12Hour(horaSugeridaDescanso) : 'Seleccionar hora'}
+                      </RNText>
+                    </TouchableOpacity>
+                  )}
                   {horaSugeridaDescanso !== '' && (
                     <TouchableOpacity onPress={() => setHoraSugeridaDescanso('')} style={{ marginTop: 8 }}>
                       <RNText style={{ color: '#ef4444', textAlign: 'center', fontSize: 14 }}>Borrar hora sugerida</RNText>
