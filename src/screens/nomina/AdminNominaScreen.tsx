@@ -29,6 +29,65 @@ try {
 }
 import { generarLiquidacionHTML } from '../../utils/nominaPdf';
 
+const DescansoStatusAdmin = ({ turno }: { turno: any }) => {
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    if (turno?.inicioDescanso && !turno?.finDescanso) {
+      const interval = setInterval(() => setNow(new Date()), 10000); // Efficient: updates every 10s
+      return () => clearInterval(interval);
+    }
+  }, [turno?.inicioDescanso, turno?.finDescanso]);
+
+  if (!turno) return null;
+
+  if (turno.descansoRegistrado && turno.finDescanso) {
+    return (
+      <View style={[styles.statusBadge, { marginTop: 4, backgroundColor: '#f0fdf4' }]}>
+        <Ionicons name="cafe-outline" size={12} color="#15803d" />
+        <Text style={[styles.statusText, { color: '#15803d', fontSize: 11, marginLeft: 4 }]}>
+          Descanso tomado
+        </Text>
+      </View>
+    );
+  }
+
+  if (turno.inicioDescanso && !turno.finDescanso) {
+    const inicio = new Date(turno.inicioDescanso);
+    const duration = turno.duracionDescanso || 0;
+    const elapsedMinutes = Math.floor((now.getTime() - inicio.getTime()) / 60000);
+    const remaining = duration - elapsedMinutes;
+    
+    let text = `En descanso (faltan ${remaining} min)`;
+    let bgColor = '#fef3c7';
+    let textColor = '#b45309';
+    
+    if (remaining < 0) {
+      text = `En descanso (se pasó por ${Math.abs(remaining)} min)`;
+      bgColor = '#fee2e2';
+      textColor = '#b91c1c';
+    }
+
+    return (
+      <View style={[styles.statusBadge, { marginTop: 4, backgroundColor: bgColor }]}>
+        <Ionicons name="cafe" size={12} color={textColor} />
+        <Text style={[styles.statusText, { color: textColor, fontSize: 11, marginLeft: 4 }]}>
+          {text}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={[styles.statusBadge, { marginTop: 4, backgroundColor: '#f3f4f6' }]}>
+      <Ionicons name="cafe-outline" size={12} color="#6b7280" />
+      <Text style={[styles.statusText, { color: '#6b7280', fontSize: 11, marginLeft: 4 }]}>
+        No ha tomado descanso
+      </Text>
+    </View>
+  );
+};
+
 export default function AdminNominaScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { showAlert } = useCustomAlert();
@@ -793,6 +852,7 @@ export default function AdminNominaScreen({ navigation }: any) {
           ) : (
             empleadosFiltrados.map((empleado) => {
               const status = getStatusTurnoHoy(empleado.IDusuarios);
+              const turnoActivo = turnosHoy.find(t => t.usuarioId === empleado.IDusuarios && t.estado === 'ACTIVO');
               return (
                 <View key={empleado.IDusuarios} style={styles.employeeListItem}>
                   <TouchableOpacity style={styles.employeeInfoContainer} onPress={() => openHistory(empleado)} activeOpacity={0.7}>
@@ -806,6 +866,9 @@ export default function AdminNominaScreen({ navigation }: any) {
                         <Ionicons name={status.icon as any} size={12} color={status.color} />
                         <Text style={[styles.statusText, { color: status.color, fontSize: 11, marginLeft: 4 }]}>{status.text}</Text>
                       </View>
+                      {turnoActivo && (
+                        <DescansoStatusAdmin turno={turnoActivo} />
+                      )}
                     </View>
                   </TouchableOpacity>
                   
