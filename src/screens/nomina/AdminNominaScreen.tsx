@@ -1189,7 +1189,6 @@ export default function AdminNominaScreen({ navigation }: any) {
                           </Text>
                         </View>
                       </View>
-                      
                       <View style={styles.historyDetails}>
                         <View style={styles.timeBox}>
                           <Text style={styles.timeLabel}>Entrada</Text>
@@ -1202,6 +1201,9 @@ export default function AdminNominaScreen({ navigation }: any) {
                         </View>
                       </View>
 
+                      <View style={{ marginBottom: 12, alignItems: 'flex-start' }}>
+                        <DescansoStatusAdmin turno={turno} />
+                      </View>
                       <View style={styles.historyFooter}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                           <Text style={styles.historyFooterText}>
