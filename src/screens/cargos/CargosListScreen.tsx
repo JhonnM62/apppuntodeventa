@@ -124,6 +124,7 @@ export default function CargosListScreen({ navigation }: any) {
   const [tarifas, setTarifas]         = useState<TarifasDias>(emptyTarifas());
   const [horarios, setHorarios]       = useState<Record<string, string>>(emptyHorarios());
   const [descuentoCena, setDescuentoCena] = useState('');
+  const [duracionDescanso, setDuracionDescanso] = useState('0');
   const [esFijo, setEsFijo]           = useState(false);
   const [saving, setSaving]           = useState(false);
 
@@ -177,12 +178,14 @@ export default function CargosListScreen({ navigation }: any) {
         horaSalidaDomingo: cargo.horaSalidaDomingo || '',
       });
       setDescuentoCena(cargo.descuentoCena ? fmt(cargo.descuentoCena) : '');
+      setDuracionDescanso(String(cargo.duracionDescansoMinutos ?? 0));
     } else {
       setEditingCargo(null);
       setNombre('');
       setTarifas(emptyTarifas());
       setHorarios(emptyHorarios());
       setDescuentoCena('');
+      setDuracionDescanso('0');
       setEsFijo(false);
     }
     setShowDropdown(false);
@@ -239,9 +242,9 @@ export default function CargosListScreen({ navigation }: any) {
         }
       });
       const cenaRaw = parsePrice(descuentoCena);
-      if (cenaRaw !== '' && !isNaN(Number(cenaRaw))) {
-        payload.descuentoCena = Number(cenaRaw);
-      }
+      if (cenaRaw !== '') payload.descuentoCena = Number(cenaRaw);
+      const descansoMin = parseInt(duracionDescanso, 10);
+      payload.duracionDescansoMinutos = isNaN(descansoMin) || descansoMin < 0 ? 0 : descansoMin;
 
       if (editingCargo) {
         await updateCargo(editingCargo.IDcargo, payload);
@@ -538,6 +541,23 @@ export default function CargosListScreen({ navigation }: any) {
                     keyboardType="numeric"
                     value={descuentoCena}
                     onChangeText={val => setDescuentoCena(formatPrice(val))}
+                  />
+                </View>
+              </View>
+
+              {/* Tiempo de descanso */}
+              <View style={styles.formGroup}>
+                <RNText style={styles.label}>☕ Tiempo de descanso</RNText>
+                <RNText style={styles.sublabel}>Duración del descanso en minutos (0 = sin descanso). Ej: 60 = 1 hora.</RNText>
+                <View style={styles.diaInputWrapper}>
+                  <RNText style={styles.diaPrefix}>min</RNText>
+                  <TextInput
+                    style={styles.diaInput}
+                    placeholder="0"
+                    placeholderTextColor="#9ca3af"
+                    keyboardType="numeric"
+                    value={duracionDescanso}
+                    onChangeText={val => setDuracionDescanso(val.replace(/[^0-9]/g, ''))}
                   />
                 </View>
               </View>

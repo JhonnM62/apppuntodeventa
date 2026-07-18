@@ -27,6 +27,8 @@ export interface Cargo {
   horaSalidaDomingo?: string;
   // Descuento si el empleado cena en el turno
   descuentoCena?: number;
+  // Duración del descanso en minutos (0 = sin descanso)
+  duracionDescansoMinutos?: number;
   createdAt: string;
   updatedAt: string;
 }

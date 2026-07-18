@@ -42,6 +42,16 @@ export const getTurnoActivo = async () => {
   return data; // { success: true, data: Turno | null }
 };
 
+export const iniciarDescanso = async (turnoId: string) => {
+  const { data } = await api.post(`/nomina/turnos/${turnoId}/descanso/iniciar`);
+  return data;
+};
+
+export const terminarDescanso = async (turnoId: string) => {
+  const { data } = await api.post(`/nomina/turnos/${turnoId}/descanso/terminar`);
+  return data;
+};
+
 /**
  * Convierte un URI (file://, blob:, data:) a un Blob real para FormData en Web.
  * En React Native el FileReader nativo del RN maneja { uri, name, type } directamente.

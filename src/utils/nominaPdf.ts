@@ -27,11 +27,24 @@ export const generarLiquidacionHTML = (data: {
   // Sort turnos: most recent first (descending by fecha)
   const turnosSorted = [...turnos].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
+  const formatDescanso = (t: any): string => {
+    if (!t.inicioDescanso) return '<span style="color:#9ca3af">Sin registro</span>';
+    const ini = new Date(t.inicioDescanso);
+    const fin = t.finDescanso ? new Date(t.finDescanso) : null;
+    const iniStr = ini.toLocaleTimeString('es-CO', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+    if (!fin) return `${iniStr} → en curso`;
+    const finStr = fin.toLocaleTimeString('es-CO', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+    const durMin = Math.round((fin.getTime() - ini.getTime()) / 60000);
+    const durStr = durMin >= 60 ? `${Math.floor(durMin/60)}h ${durMin%60 > 0 ? durMin%60+'min' : ''}`.trim() : `${durMin}min`;
+    return `${iniStr} – ${finStr} <span style="color:#6b7280">(${durStr})</span>`;
+  };
+
   const turnosRows = turnosSorted.map(t => `
     <tr>
       <td>${formatDate(t.fecha)}</td>
       <td>${formatTime(t.horaEntrada)}</td>
       <td>${formatTime(t.horaSalida)}</td>
+      <td>${formatDescanso(t)}</td>
       <td>${t.ceno ? 'SÍ' : 'NO'}</td>
       <td style="text-align: right">${formatMoney(t.valorTurno)}</td>
     </tr>
@@ -180,12 +193,13 @@ export const generarLiquidacionHTML = (data: {
             <th>Fecha</th>
             <th>Entrada</th>
             <th>Salida</th>
+            <th>Descanso</th>
             <th>Cena</th>
             <th style="text-align: right">Valor Pagado</th>
           </tr>
         </thead>
         <tbody>
-          ${turnosRows || '<tr><td colspan="5" style="text-align: center; color: #6b7280;">No hay turnos registrados</td></tr>'}
+          ${turnosRows || '<tr><td colspan="6" style="text-align: center; color: #6b7280;">No hay turnos registrados</td></tr>'}
         </tbody>
       </table>
 

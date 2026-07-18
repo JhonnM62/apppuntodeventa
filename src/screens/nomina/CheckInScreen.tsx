@@ -13,6 +13,7 @@ import { useSocket } from '../../hooks/useSocket';
 import useSocketEvent from '../../hooks/useSocketEvent';
 import useAuthStore from '../../store/useAuthStore';
 import SignatureModal from '../../components/ui/SignatureModal';
+import DescansoCard from './DescansoCard';
 import LiquidacionViewerModal from '../../components/ui/LiquidacionViewerModal';
 import { generarLiquidacionHTML } from '../../utils/nominaPdf';
 let ImagePicker: any;
@@ -65,6 +66,7 @@ export default function CheckInScreen({ navigation }: any) {
   const [distanciaMetros, setDistanciaMetros] = useState<number | null>(null);
 
   const [saving, setSaving] = useState(false);
+  const [descansoData, setDescansoData] = useState<{ inicioDescanso: string | null; finDescanso: string | null }>({ inicioDescanso: null, finDescanso: null });
 
   // useEffect inicial eliminado — useFocusEffect ya maneja la carga inicial y los re-focos.
 
@@ -166,9 +168,17 @@ export default function CheckInScreen({ navigation }: any) {
       setLoading(true);
       const [resTurno, resConfig] = await Promise.all([
         getTurnoActivo(),
-        getConfiguracion()
+        getConfiguracion(),
       ]);
       setTurnoActivo(resTurno.data);
+      if (resTurno.data) {
+        setDescansoData({
+          inicioDescanso: resTurno.data.inicioDescanso ?? null,
+          finDescanso:    resTurno.data.finDescanso    ?? null,
+        });
+      } else {
+        setDescansoData({ inicioDescanso: null, finDescanso: null });
+      }
       setConfiguracion(resConfig.data);
     } catch (error) {
       console.error(error);
@@ -365,6 +375,19 @@ export default function CheckInScreen({ navigation }: any) {
               </Text>
             )}
           </Card>
+
+          {/* Tarjeta de Descanso — solo cuando hay turno activo y el cargo tiene descanso configurado */}
+          {turnoActivo && (turnoActivo.usuario?.cargo?.duracionDescansoMinutos ?? 0) > 0 && (
+            <DescansoCard
+              turnoId={turnoActivo.IDturno}
+              horaEntrada={turnoActivo.horaEntrada}
+              duracionMinutos={turnoActivo.usuario.cargo.duracionDescansoMinutos}
+              cargo={turnoActivo.usuario.cargo}
+              inicioDescanso={descansoData.inicioDescanso}
+              finDescanso={descansoData.finDescanso}
+              onDescansoChange={(updated) => setDescansoData(updated)}
+            />
+          )}
 
           <View style={styles.actionSection}>
             <Text style={styles.sectionTitle}>PASO 1: FOTO OBLIGATORIA</Text>
