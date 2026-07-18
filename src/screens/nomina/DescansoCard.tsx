@@ -197,9 +197,17 @@ export default function DescansoCard({
     ? `${duracionMinutos / 60} hora${duracionMinutos > 60 ? 's' : ''}`
     : `${duracionMinutos} minutos`;
 
-  const minsToBreak = suggestedStart
-    ? Math.floor((suggestedStart.getTime() - now.getTime()) / 60000)
-    : null;
+  let suggestedStr = null;
+  if (cargo?.horaSugeridaDescanso) {
+    const match = cargo.horaSugeridaDescanso.match(/^(\d{1,2}):(\d{2})$/);
+    if (match) {
+      const d = new Date();
+      d.setHours(parseInt(match[1], 10), parseInt(match[2], 10), 0, 0);
+      suggestedStr = formatTime12h(d);
+    } else {
+      suggestedStr = cargo.horaSugeridaDescanso;
+    }
+  }
 
   return (
     <View style={[styles.card, styles.cardWaiting]}>
@@ -212,25 +220,13 @@ export default function DescansoCard({
           <Text style={styles.timeLabel}>Duración</Text>
           <Text style={[styles.timeValue, { color: '#92400e' }]}>{minsLabel}</Text>
         </View>
-        {suggestedStart && (
-          <>
-            <Ionicons name="arrow-forward" size={16} color="#92400e" style={{ marginTop: 14 }} />
-            <View style={styles.timeItem}>
-              <Text style={styles.timeLabel}>Sugerido</Text>
-              <Text style={[styles.timeValue, { color: '#92400e' }]}>
-                {formatTime12h(suggestedStart)} – {formatTime12h(suggestedEnd!)}
-              </Text>
-            </View>
-          </>
+        {suggestedStr && (
+          <View style={styles.timeItem}>
+            <Text style={styles.timeLabel}>Sugerido</Text>
+            <Text style={[styles.timeValue, { color: '#0d9488' }]}>{suggestedStr}</Text>
+          </View>
         )}
       </View>
-
-      {minsToBreak !== null && minsToBreak > 0 && (
-        <View style={styles.countdownBox}>
-          <Ionicons name="time-outline" size={16} color="#78350f" />
-          <Text style={styles.countdownText}>  Faltan {minsToBreak} min para tu descanso</Text>
-        </View>
-      )}
 
       <TouchableOpacity
         style={[styles.btn, styles.btnGreen, saving && styles.btnDisabled]}

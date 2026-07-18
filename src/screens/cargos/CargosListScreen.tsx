@@ -125,6 +125,7 @@ export default function CargosListScreen({ navigation }: any) {
   const [horarios, setHorarios]       = useState<Record<string, string>>(emptyHorarios());
   const [descuentoCena, setDescuentoCena] = useState('');
   const [duracionDescanso, setDuracionDescanso] = useState('0');
+  const [horaSugeridaDescanso, setHoraSugeridaDescanso] = useState('');
   const [esFijo, setEsFijo]           = useState(false);
   const [saving, setSaving]           = useState(false);
 
@@ -179,6 +180,7 @@ export default function CargosListScreen({ navigation }: any) {
       });
       setDescuentoCena(cargo.descuentoCena ? fmt(cargo.descuentoCena) : '');
       setDuracionDescanso(String(cargo.duracionDescansoMinutos ?? 0));
+      setHoraSugeridaDescanso(cargo.horaSugeridaDescanso || '');
     } else {
       setEditingCargo(null);
       setNombre('');
@@ -186,6 +188,7 @@ export default function CargosListScreen({ navigation }: any) {
       setHorarios(emptyHorarios());
       setDescuentoCena('');
       setDuracionDescanso('0');
+      setHoraSugeridaDescanso('');
       setEsFijo(false);
     }
     setShowDropdown(false);
@@ -193,7 +196,8 @@ export default function CargosListScreen({ navigation }: any) {
   };
 
   const openTimePicker = (field: string) => {
-    const currentVal = horarios[field];
+    let currentVal = horarios[field];
+    if (field === 'horaSugeridaDescanso') currentVal = horaSugeridaDescanso;
     let d = new Date();
     if (currentVal) {
       const [h, m] = currentVal.split(':').map(Number);
@@ -215,7 +219,11 @@ export default function CargosListScreen({ navigation }: any) {
     if (selectedDate && timePickerConfig.field) {
       const hh = selectedDate.getHours().toString().padStart(2, '0');
       const mm = selectedDate.getMinutes().toString().padStart(2, '0');
-      setHorarios(prev => ({ ...prev, [timePickerConfig.field]: `${hh}:${mm}` }));
+      if (timePickerConfig.field === 'horaSugeridaDescanso') {
+        setHoraSugeridaDescanso(`${hh}:${mm}`);
+      } else {
+        setHorarios(prev => ({ ...prev, [timePickerConfig.field]: `${hh}:${mm}` }));
+      }
       setTimePickerConfig(prev => ({ ...prev, currentValue: selectedDate }));
     }
   };
@@ -245,6 +253,11 @@ export default function CargosListScreen({ navigation }: any) {
       if (cenaRaw !== '') payload.descuentoCena = Number(cenaRaw);
       const descansoMin = parseInt(duracionDescanso, 10);
       payload.duracionDescansoMinutos = isNaN(descansoMin) || descansoMin < 0 ? 0 : descansoMin;
+      if (horaSugeridaDescanso) {
+        payload.horaSugeridaDescanso = horaSugeridaDescanso;
+      } else {
+        payload.horaSugeridaDescanso = null;
+      }
 
       if (editingCargo) {
         await updateCargo(editingCargo.IDcargo, payload);
@@ -351,7 +364,9 @@ export default function CargosListScreen({ navigation }: any) {
                       const isWeekend = idx >= 5;
                       const hEnt = (cargo as any)[`horaEntrada${d.key.replace('tarifa', '')}`];
                       const hSal = (cargo as any)[`horaSalida${d.key.replace('tarifa', '')}`];
-                      const shiftHours = calculateShiftHours(hEnt, hSal);
+                      const shiftHoursBase = calculateShiftHours(hEnt, hSal);
+                      const descansoHrs = (cargo.duracionDescansoMinutos || 0) / 60;
+                      const shiftHours = shiftHoursBase != null ? Number(Math.max(0, shiftHoursBase - descansoHrs).toFixed(1)) : null;
 
                       return (
                         <View key={d.key} style={[styles.dayCell, isWeekend && styles.dayCellWeekend]}>
@@ -386,6 +401,15 @@ export default function CargosListScreen({ navigation }: any) {
                       <Ionicons name="restaurant" size={11} color="#d97706" />
                       <Text style={styles.cenaText}>
                         {' '}Cena: <Text style={styles.cenaVal}>${fmt(cargo.descuentoCena)}</Text>
+                      </Text>
+                    </View>
+                  )}
+                  {/* Tiempo de descanso inline */}
+                  {cargo.duracionDescansoMinutos != null && Number(cargo.duracionDescansoMinutos) > 0 && (
+                    <View style={[styles.cenaRow, { marginTop: 4, backgroundColor: '#fef3c7' }]}>
+                      <Ionicons name="cafe" size={11} color="#d97706" />
+                      <Text style={[styles.cenaText, { color: '#b45309' }]}>
+                        {' '}Descanso: <Text style={{ fontWeight: 'bold' }}>{cargo.duracionDescansoMinutos} min</Text>
                       </Text>
                     </View>
                   )}
@@ -561,6 +585,27 @@ export default function CargosListScreen({ navigation }: any) {
                   />
                 </View>
               </View>
+
+              {/* Hora sugerida descanso */}
+              {Number(duracionDescanso) > 0 && (
+                <View style={styles.formGroup}>
+                  <RNText style={styles.label}>⏱ Hora sugerida de descanso (Opcional)</RNText>
+                  <RNText style={styles.sublabel}>Hora en la que se le sugerirá al empleado iniciar su descanso.</RNText>
+                  <TouchableOpacity
+                    style={[styles.diaInput, styles.timeInput, { marginTop: 8, paddingVertical: 12 }]}
+                    onPress={() => openTimePicker('horaSugeridaDescanso')}
+                  >
+                    <RNText style={{ color: horaSugeridaDescanso ? '#111827' : '#9ca3af', textAlign: 'center', fontSize: 16 }}>
+                      {horaSugeridaDescanso ? format12Hour(horaSugeridaDescanso) : 'Seleccionar hora'}
+                    </RNText>
+                  </TouchableOpacity>
+                  {horaSugeridaDescanso !== '' && (
+                    <TouchableOpacity onPress={() => setHoraSugeridaDescanso('')} style={{ marginTop: 8 }}>
+                      <RNText style={{ color: '#ef4444', textAlign: 'center', fontSize: 14 }}>Borrar hora sugerida</RNText>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
 
               <View style={{ height: 20 }} />
             </ScrollView>

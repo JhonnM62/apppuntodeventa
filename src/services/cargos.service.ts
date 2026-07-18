@@ -29,6 +29,8 @@ export interface Cargo {
   descuentoCena?: number;
   // Duración del descanso en minutos (0 = sin descanso)
   duracionDescansoMinutos?: number;
+  // Hora sugerida para iniciar el descanso
+  horaSugeridaDescanso?: string | null;
   createdAt: string;
   updatedAt: string;
 }
