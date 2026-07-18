@@ -198,12 +198,25 @@ export default function DescansoCard({
     : `${duracionMinutos} minutos`;
 
   let suggestedStr = null;
+  let remainingStr = null;
+
   if (cargo?.horaSugeridaDescanso) {
     const match = cargo.horaSugeridaDescanso.match(/^(\d{1,2}):(\d{2})$/);
     if (match) {
       const d = new Date();
       d.setHours(parseInt(match[1], 10), parseInt(match[2], 10), 0, 0);
       suggestedStr = formatTime12h(d);
+      
+      const diffSecs = Math.floor((d.getTime() - now.getTime()) / 1000);
+      if (diffSecs > 0) {
+        const h = Math.floor(diffSecs / 3600);
+        const m = Math.floor((diffSecs % 3600) / 60);
+        if (h > 0) {
+          remainingStr = `Falta${h > 1 ? 'n' : ''} ${h}h ${m}m`;
+        } else {
+          remainingStr = `Faltan ${m} min`;
+        }
+      }
     } else {
       suggestedStr = cargo.horaSugeridaDescanso;
     }
@@ -224,6 +237,11 @@ export default function DescansoCard({
           <View style={styles.timeItem}>
             <Text style={styles.timeLabel}>Sugerido</Text>
             <Text style={[styles.timeValue, { color: '#0d9488' }]}>{suggestedStr}</Text>
+            {remainingStr && (
+              <Text style={{ fontSize: 11, color: '#0f766e', marginTop: 2, fontWeight: '500' }}>
+                {remainingStr}
+              </Text>
+            )}
           </View>
         )}
       </View>
