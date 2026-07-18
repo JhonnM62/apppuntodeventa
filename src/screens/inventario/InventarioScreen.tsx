@@ -526,12 +526,26 @@ const InventarioScreen = ({ navigation }: any) => {
   };
 
   // filteredInventarios moved up
+  const findInsumo = (idOrName: string) => {
+    if (!idOrName) return undefined;
+    return insumos.find(i => 
+      i.IDalimentos === idOrName || 
+      i.IDalimentos?.toString() === idOrName.toString() ||
+      i.nombre === idOrName ||
+      i.Nombre === idOrName
+    );
+  };
+
+  const getInsumoId = (id: string) => {
+    const insumo = findInsumo(id);
+    return insumo ? insumo.IDalimentos : id;
+  };
+
   const getInsumoName = (id: string) => {
     if (!id) return 'Sin nombre';
-    const insumo = insumos.find(i => i.IDalimentos === id || i.IDalimentos?.toString() === id.toString());
+    const insumo = findInsumo(id);
     if (insumo?.nombre) return insumo.nombre;
     if (insumo?.Nombre) return insumo.Nombre;
-    console.log('[DEBUG] getInsumoName no match for:', id, 'available IDs:', insumos.slice(0,5).map(i=>i.IDalimentos));
     return id;
   };
 
@@ -576,7 +590,7 @@ const InventarioScreen = ({ navigation }: any) => {
 
   const getInsumoCategoria = (id: string) => {
     if (!id) return '';
-    const insumo = insumos.find(i => i.IDalimentos === id || i.IDalimentos?.toString() === id.toString());
+    const insumo = findInsumo(id);
     if (insumo) {
       if (insumo.categoriaNombre) return insumo.categoriaNombre;
       if (insumo.nombreCategoria) return insumo.nombreCategoria;
@@ -588,7 +602,7 @@ const InventarioScreen = ({ navigation }: any) => {
   };
 
   const getInsumoStock = (id: string) => {
-    const insumo = insumos.find(i => i.IDalimentos === id || i.IDalimentos?.toString() === id.toString());
+    const insumo = findInsumo(id);
     if (insumo?.disponible !== undefined && insumo?.disponible !== null) return Number(insumo.disponible) || 0;
     if (insumo?.Disponible !== undefined && insumo?.Disponible !== null) return Number(insumo.Disponible) || 0;
     return 0;
@@ -611,7 +625,7 @@ const InventarioScreen = ({ navigation }: any) => {
 
   const getInsumoImage = (id: string) => {
     if (!id) return null;
-    const insumo = insumos.find(i => i.IDalimentos === id || i.IDalimentos?.toString() === id.toString());
+    const insumo = findInsumo(id);
     const rawUrl = insumo?.imagen;
     return getImageUrl(rawUrl);
   };
@@ -3149,7 +3163,7 @@ const InventarioScreen = ({ navigation }: any) => {
                     style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#eff6ff', paddingVertical: 14, borderRadius: 12, marginBottom: 12 }}
                     onPress={() => {
                       setShowOrdenDetailModal(false);
-                      navigation.navigate('InsumoDetail', { id: selectedOrdenItem.nombreDelAlimento });
+                      navigation.navigate('InsumoDetail', { id: getInsumoId(selectedOrdenItem.nombreDelAlimento) });
                     }}
                   >
                     <Ionicons name="open-outline" size={18} color="#3b82f6" />
