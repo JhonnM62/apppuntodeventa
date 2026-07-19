@@ -122,7 +122,7 @@ export default function PrintPreviewModal({
             ) : (
               <ScrollView className="max-h-96" showsVerticalScrollIndicator={true}>
                 <View className="px-5 py-6 w-full items-center">
-                  <View style={{ backgroundColor: '#fff', padding: 16, borderWidth: 1, borderColor: '#e5e7eb', borderStyle: 'dashed', width: '100%', minHeight: 150 }}>
+                  <View style={{ backgroundColor: '#fff', padding: 16, borderWidth: 1, borderColor: '#e5e7eb', borderStyle: 'dashed', alignSelf: 'center', minHeight: 150 }}>
                     <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11, color: '#000', lineHeight: 14 }}>
                       {previewText}
                     </Text>

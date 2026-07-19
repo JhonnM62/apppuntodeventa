@@ -89,7 +89,7 @@ const usePrinterStore = create<PrinterState>()(
 
         let errorCount = 0;
         if (printComanda) {
-          const successComanda = await executePrint(ticketData, state.paperSize, state.currentPrinter.inner_mac_address, 'comanda');
+          const successComanda = await executePrint(ticketData, state.paperSize, state.currentPrinter?.inner_mac_address || '', 'comanda');
           if (!successComanda) errorCount++;
         }
 
@@ -97,7 +97,7 @@ const usePrinterStore = create<PrinterState>()(
           if (printComanda) {
             await new Promise(resolve => setTimeout(resolve, 1500));
           }
-          const successFactura = await executePrint(ticketData, state.paperSize, state.currentPrinter.inner_mac_address, 'factura');
+          const successFactura = await executePrint(ticketData, state.paperSize, state.currentPrinter?.inner_mac_address || '', 'factura');
           if (!successFactura) errorCount++;
         }
 
@@ -113,7 +113,7 @@ const usePrinterStore = create<PrinterState>()(
         }
 
         try {
-          const success = await executePrint(ticketData, state.paperSize, state.currentPrinter.inner_mac_address, type);
+          const success = await executePrint(ticketData, state.paperSize, state.currentPrinter?.inner_mac_address || '', type);
           if (!success) {
             Toast.show({ type: 'error', text1: 'Error', text2: `No se pudo imprimir la ${type}`, position: 'top' });
             return false;

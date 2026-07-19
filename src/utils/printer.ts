@@ -408,13 +408,13 @@ export const executePrint = async (
                 <style>
                   @page { margin: 0; }
                   body { 
-                    margin: 0; 
+                    margin: 0 auto; 
                     padding: 10px; 
                     font-family: monospace; 
-                    white-space: pre-wrap; 
+                    white-space: pre; 
                     font-size: 14px;
                     line-height: 1.2;
-                    width: ${paperSize === 58 ? '58mm' : '80mm'};
+                    width: max-content;
                     color: black;
                   }
                 </style>

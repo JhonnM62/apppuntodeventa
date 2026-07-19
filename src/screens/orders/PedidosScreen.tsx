@@ -133,7 +133,7 @@ const PedidosScreen = () => {
   const [printPreviewType, setPrintPreviewType] = useState<'comanda' | 'factura' | null>(null);
   const [printPreviewData, setPrintPreviewData] = useState<any>(null);
 
-  const mapVentaToTicketData = (venta: VentaItem): TicketData => {
+  const mapVentaToTicketData = (venta: any): TicketData => {
     let cleanOrderId = venta.pedido || venta.IDventas || '';
     if (cleanOrderId.toLowerCase().startsWith('pedido-')) {
       cleanOrderId = cleanOrderId.substring(7);
@@ -144,26 +144,30 @@ const PedidosScreen = () => {
       try {
         const parsed = JSON.parse(comentarios);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map((m: any) => ({ name: m.name, price: m.price || m.precio || 0, quantity: m.quantity || 1 }));
+          return parsed.map((m: any) => ({ name: m.name, price: Number(m.price || m.precio || 0), quantity: Number(m.quantity || 1) }));
         }
       } catch (e) {}
       return undefined;
     };
 
+    const fechaRaw = venta.fechaYHora || venta.fecha;
+    const formattedFecha = fechaRaw ? new Date(fechaRaw).toLocaleString('es-CO') : new Date().toLocaleString('es-CO');
+
     return {
       orderId: cleanOrderId,
-      fecha: venta.fechaYHora || venta.fecha || new Date().toLocaleString('es-CO'),
+      fecha: formattedFecha,
       cliente: venta.cliente || undefined,
-      total: venta.totalInput || 0,
-      efectivoRecibido: venta.efectivoRecibido,
-      devueltas: venta.devueltas,
+      total: Number(venta.totalInput || venta.total || venta.Total || 0),
+      efectivoRecibido: venta.efectivoRecibido ? Number(venta.efectivoRecibido) : undefined,
+      devueltas: venta.devueltas ? Number(venta.devueltas) : undefined,
       metodoPago: venta.medioDePago,
       estado: venta.estado,
-      productos: (venta.ordenVentas || []).map(prod => ({
-        cantidad: prod.cantidad || 1,
+      observaciones: venta.notas,
+      productos: (venta.ordenVentas || []).map((prod: any) => ({
+        cantidad: Number(prod.cantidad || 1),
         nombre: prod.nombre || 'Producto',
-        precioUnitario: prod.precio || 0,
-        subtotal: prod.precioTotal || ((prod.precio || 0) * (prod.cantidad || 1)),
+        precioUnitario: Number(prod.precio || 0),
+        subtotal: Number(prod.precioTotal || ((prod.precio || 0) * (prod.cantidad || 1))),
         modifiers: getModifiers(prod.comentarios)
       }))
     };
