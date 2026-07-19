@@ -399,7 +399,7 @@ export const executePrint = async (
       console.log(`Simulando impresión (${type}) (No hay BLEPrinter)\n`, payload);
       
       if (Platform.OS === 'web') {
-        const cleanPayload = Object.values(ESC_CMD).reduce((acc, cmd) => acc.split(cmd).join(''), payload);
+        const htmlPayload = getHtmlTicketPayload(ticketData, paperSize, type);
         const printWindow = window.open('', '_blank');
         if (printWindow) {
           printWindow.document.write(`
@@ -411,15 +411,16 @@ export const executePrint = async (
                     margin: 0 auto; 
                     padding: 10px; 
                     font-family: monospace; 
-                    white-space: pre; 
+                    white-space: pre-wrap; 
+                    word-break: break-all;
                     font-size: 14px;
                     line-height: 1.2;
-                    width: max-content;
+                    width: ${paperSize === 58 ? '300px' : '400px'};
                     color: black;
                   }
                 </style>
               </head>
-              <body>${cleanPayload}</body>
+              <body>${htmlPayload}</body>
             </html>
           `);
           printWindow.document.close();
@@ -453,4 +454,21 @@ export const executePrint = async (
 export const getCleanTicketPayload = (ticketData: TicketData, paperSize: 58 | 80, type: 'comanda' | 'factura'): string => {
   const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
   return Object.values(ESC_CMD).reduce((acc, cmd) => acc.split(cmd).join(''), payload);
+};
+
+export const getHtmlTicketPayload = (ticketData: TicketData, paperSize: 58 | 80, type: 'comanda' | 'factura'): string => {
+  const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
+  
+  let html = payload;
+  
+  html = html.split(ESC_CMD.ALIGN_CT).join('</div><div style="text-align: center; width: 100%;">');
+  html = html.split(ESC_CMD.ALIGN_LT).join('</div><div style="text-align: left; width: 100%;">');
+  html = html.split(ESC_CMD.TXT_4SQUARE).join('<span style="font-size: 1.6em; line-height: 1.2;">');
+  html = html.split(ESC_CMD.TXT_NORMAL).join('</span>');
+  html = html.split(ESC_CMD.TXT_BOLD_ON).join('<b>');
+  html = html.split(ESC_CMD.TXT_BOLD_OFF).join('</b>');
+  
+  html = '<div style="text-align: left; width: 100%;">' + html + '</div>';
+  
+  return html;
 };

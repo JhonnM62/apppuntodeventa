@@ -2203,7 +2203,7 @@ const styles = StyleSheet.create({
   moreProductsText: { fontSize: 12, color: '#6b7280', fontWeight: '600' },
   cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
   totalLabel: { fontSize: 12, fontWeight: '600', color: '#6b7280' },
-  totalAmount: { fontSize: 18, fontWeight: '800', color: '#111827' },
+  totalAmount: { fontSize: 18, fontWeight: '800', color: '#111827', marginLeft: 8 },
   timelineScroll: { paddingVertical: 10, paddingRight: 20 },
   timelineNodeRow: { flexDirection: 'row', alignItems: 'center' },
   timelineNodeBox: { alignItems: 'center', width: 80 },

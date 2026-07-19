@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS } from '../../lib/theme';
 import { Button } from '../ui/button';
 import usePrinterStore from '../../store/usePrinterStore';
-import { getCleanTicketPayload } from '../../utils/printer';
+import { getCleanTicketPayload, getHtmlTicketPayload } from '../../utils/printer';
 
 interface PrintPreviewModalProps {
   visible: boolean;
@@ -35,6 +35,9 @@ export default function PrintPreviewModal({
   const previewText = React.useMemo(() => {
     if (!ticketData || !type) return '';
     try {
+      if (Platform.OS === 'web') {
+        return getHtmlTicketPayload(ticketData, paperSize, type);
+      }
       return getCleanTicketPayload(ticketData, paperSize, type);
     } catch (e) {
       console.log('Error previewing ticket', e);
@@ -122,10 +125,18 @@ export default function PrintPreviewModal({
             ) : (
               <ScrollView className="max-h-96" showsVerticalScrollIndicator={true}>
                 <View className="px-5 py-6 w-full items-center">
-                  <View style={{ backgroundColor: '#fff', padding: 16, borderWidth: 1, borderColor: '#e5e7eb', borderStyle: 'dashed', alignSelf: 'center', minHeight: 150 }}>
-                    <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11, color: '#000', lineHeight: 14 }}>
-                      {previewText}
-                    </Text>
+                  <View style={{ backgroundColor: '#fff', padding: 16, borderWidth: 1, borderColor: '#e5e7eb', borderStyle: 'dashed', alignSelf: 'center', minHeight: 150, width: paperSize === 58 ? 250 : 350 }}>
+                    {Platform.OS === 'web' ? (
+                      // @ts-ignore - React Native Web allows DOM elements
+                      <div 
+                        dangerouslySetInnerHTML={{ __html: previewText }}
+                        style={{ fontFamily: 'monospace', fontSize: 12, color: '#000', lineHeight: '14px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }} 
+                      />
+                    ) : (
+                      <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11, color: '#000', lineHeight: 14 }}>
+                        {previewText}
+                      </Text>
+                    )}
                   </View>
                   
                   {timeLeft !== null && timeLeft > 0 && (
