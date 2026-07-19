@@ -117,7 +117,7 @@ const DescansoStatusAdmin = ({ turno }: { turno: any }) => {
   }
 
   return (
-    <View style={[styles.statusBadge, { marginTop: 8, backgroundColor: '#f3f4f6' }]}>
+    <View style={[styles.statusBadge, { marginTop: 8, backgroundColor: '#f3f4f6', alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }]}>
       <Ionicons name="cafe-outline" size={12} color="#6b7280" />
       <Text style={[styles.statusText, { color: '#6b7280', fontSize: 11, marginLeft: 4 }]}>
         No ha tomado descanso
