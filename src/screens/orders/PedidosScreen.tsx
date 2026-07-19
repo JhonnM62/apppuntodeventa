@@ -838,7 +838,7 @@ showAlert({
         )}
 
         <View style={styles.cardFooter}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <RNText style={styles.totalLabel}>TOTAL</RNText>
             <RNText style={styles.totalAmount}>{formatMoney(item.totalInput)}</RNText>
           </View>
