@@ -14,6 +14,7 @@ import { COLORS, SHADOWS } from '../../lib/theme';
 import { Button } from '../ui/button';
 import usePrinterStore from '../../store/usePrinterStore';
 import { getCleanTicketPayload, getHtmlTicketPayload } from '../../utils/printer';
+import { getConfiguracion } from '../../services/configuracion';
 
 interface PrintPreviewModalProps {
   visible: boolean;
@@ -32,18 +33,50 @@ export default function PrintPreviewModal({
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
 
+  const [enrichedTicketData, setEnrichedTicketData] = useState<any>(ticketData);
+
+  useEffect(() => {
+    const fetchConfig = async () => {
+      if (ticketData && !ticketData.comercio) {
+        try {
+          const configRes = await getConfiguracion();
+          const config = configRes?.data || configRes;
+          if (config && (config.nombreComercial || config.nit || config.direccion || config.telefono)) {
+            setEnrichedTicketData({
+              ...ticketData,
+              comercio: {
+                nombre: config.nombreComercial,
+                nit: config.nit,
+                direccion: config.direccion,
+                telefono: config.telefono,
+              }
+            });
+          } else {
+            setEnrichedTicketData(ticketData);
+          }
+        } catch (e) {
+          console.log('Error fetching configuracion for preview:', e);
+          setEnrichedTicketData(ticketData);
+        }
+      } else {
+        setEnrichedTicketData(ticketData);
+      }
+    };
+    if (visible) fetchConfig();
+  }, [ticketData, visible]);
+
   const previewText = React.useMemo(() => {
-    if (!ticketData || !type) return '';
+    if (!enrichedTicketData || !type) return '';
     try {
       if (Platform.OS === 'web') {
-        return getHtmlTicketPayload(ticketData, paperSize, type);
+        return getHtmlTicketPayload(enrichedTicketData, paperSize, type);
       }
-      return getCleanTicketPayload(ticketData, paperSize, type);
+      return getCleanTicketPayload(enrichedTicketData, paperSize, type);
     } catch (e) {
       console.log('Error previewing ticket', e);
       return '';
     }
-  }, [ticketData, type, paperSize]);
+  }, [enrichedTicketData, type, paperSize]);
 
   useEffect(() => {
     if (visible && manualAutoPrintEnabled) {
@@ -67,9 +100,9 @@ export default function PrintPreviewModal({
   }, [timeLeft, visible, isPrinting]);
 
   const handlePrint = async () => {
-    if (!type || !ticketData) return;
+    if (!type || !enrichedTicketData) return;
     setIsPrinting(true);
-    await printManual(ticketData, type);
+    await printManual(enrichedTicketData, type);
     onClose();
   };
 
