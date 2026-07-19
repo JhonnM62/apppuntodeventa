@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS } from '../../lib/theme';
 import { Button } from '../ui/button';
 import usePrinterStore from '../../store/usePrinterStore';
+import { getCleanTicketPayload } from '../../utils/printer';
 
 interface PrintPreviewModalProps {
   visible: boolean;
@@ -27,9 +28,19 @@ export default function PrintPreviewModal({
   type,
   onClose,
 }: PrintPreviewModalProps) {
-  const { manualAutoPrintEnabled, manualAutoPrintSeconds, printManual } = usePrinterStore();
+  const { manualAutoPrintEnabled, manualAutoPrintSeconds, printManual, paperSize } = usePrinterStore();
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [isPrinting, setIsPrinting] = useState(false);
+
+  const previewText = React.useMemo(() => {
+    if (!ticketData || !type) return '';
+    try {
+      return getCleanTicketPayload(ticketData, paperSize, type);
+    } catch (e) {
+      console.log('Error previewing ticket', e);
+      return '';
+    }
+  }, [ticketData, type, paperSize]);
 
   useEffect(() => {
     if (visible && manualAutoPrintEnabled) {
@@ -109,14 +120,13 @@ export default function PrintPreviewModal({
                 </Text>
               </View>
             ) : (
-              <ScrollView className="max-h-96" showsVerticalScrollIndicator={false}>
-                <View className="px-5 py-8 items-center">
-                  <Ionicons name="document-text-outline" size={64} color="#e5e7eb" />
-                  <Text className="text-gray-500 mt-4 text-center">
-                    {ticketData?.pedido 
-                      ? `Documento listo para imprimir: ${ticketData.pedido}` 
-                      : 'Documento listo para imprimir'}
-                  </Text>
+              <ScrollView className="max-h-96" showsVerticalScrollIndicator={true}>
+                <View className="px-5 py-6 w-full items-center">
+                  <View style={{ backgroundColor: '#fff', padding: 16, borderWidth: 1, borderColor: '#e5e7eb', borderStyle: 'dashed', width: '100%', minHeight: 150 }}>
+                    <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11, color: '#000', lineHeight: 14 }}>
+                      {previewText}
+                    </Text>
+                  </View>
                   
                   {timeLeft !== null && timeLeft > 0 && (
                     <View className="mt-6 bg-blue-50 px-4 py-2 rounded-full flex-row items-center">

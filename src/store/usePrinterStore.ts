@@ -38,6 +38,7 @@ interface PrinterState {
 
 import { executePrint } from '../utils/printer';
 import Toast from 'react-native-toast-message';
+import { Platform } from 'react-native';
 
 const usePrinterStore = create<PrinterState>()(
   persist(
@@ -76,7 +77,7 @@ const usePrinterStore = create<PrinterState>()(
       },
       printTicket: async (ticketData: any) => {
         const state = get();
-        if (!state.isConnected || !state.currentPrinter) {
+        if (Platform.OS !== 'web' && (!state.isConnected || !state.currentPrinter)) {
           Toast.show({ type: 'warning', text1: 'Impresión Fallida', text2: 'No hay impresora conectada', position: 'top' });
           return;
         }
@@ -106,7 +107,7 @@ const usePrinterStore = create<PrinterState>()(
       },
       printManual: async (ticketData: any, type: 'comanda' | 'factura') => {
         const state = get();
-        if (!state.isConnected || !state.currentPrinter) {
+        if (Platform.OS !== 'web' && (!state.isConnected || !state.currentPrinter)) {
           Toast.show({ type: 'warning', text1: 'Impresión Fallida', text2: 'No hay impresora conectada', position: 'top' });
           return false;
         }

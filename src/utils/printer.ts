@@ -449,3 +449,8 @@ export const executePrint = async (
     return false;
   }
 };
+
+export const getCleanTicketPayload = (ticketData: TicketData, paperSize: 58 | 80, type: 'comanda' | 'factura'): string => {
+  const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
+  return Object.values(ESC_CMD).reduce((acc, cmd) => acc.split(cmd).join(''), payload);
+};
