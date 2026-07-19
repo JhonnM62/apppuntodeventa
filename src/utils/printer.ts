@@ -47,6 +47,8 @@ const ESC_CMD = {
   ALIGN_CT: '\x1b\x61\x01',
   ALIGN_LT: '\x1b\x61\x00',
   TXT_NORMAL: '\x1b\x21\x00',
+  TXT_2HEIGHT: '\x1b\x21\x10',
+  TXT_2WIDTH: '\x1b\x21\x20',
   TXT_4SQUARE: '\x1b\x21\x30',
   TXT_BOLD_ON: '\x1b\x45\x01',
   TXT_BOLD_OFF: '\x1b\x45\x00',
@@ -286,7 +288,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
   payload += ESC_CMD.ALIGN_CT;
   payload += ESC_CMD.TXT_4SQUARE;
   payload += ESC_CMD.TXT_BOLD_ON;
-  payload += alignCenter('NUEVA ORDEN (COCINA)', width) + '\n';
+  payload += cleanText('NUEVA ORDEN (COCINA)') + '\n';
   payload += ESC_CMD.TXT_NORMAL;
   payload += ESC_CMD.TXT_BOLD_OFF;
   payload += ESC_CMD.ALIGN_LT;
@@ -327,7 +329,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
     
     if (nameLines.length === 0) return;
 
-    payload += ESC_CMD.TXT_BOLD_ON;
+    payload += ESC_CMD.TXT_2HEIGHT + ESC_CMD.TXT_BOLD_ON;
     if (nameLines.length === 1) {
       payload += alignLeft(`${qtyStr}${nameLines[0]}`, width) + '\n';
     } else {
@@ -336,7 +338,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
         payload += alignLeft(`${emptyQty}${nameLines[i]}`, width) + '\n';
       }
     }
-    payload += ESC_CMD.TXT_BOLD_OFF;
+    payload += ESC_CMD.TXT_NORMAL + ESC_CMD.TXT_BOLD_OFF;
 
     if (p.modifiers && p.modifiers.length > 0) {
       p.modifiers.forEach(mod => {
@@ -356,7 +358,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
     }
 
     if (index < data.productos.length - 1) {
-      payload += '\n';
+      payload += separator + '\n';
     }
   });
 
@@ -464,6 +466,8 @@ export const getHtmlTicketPayload = (ticketData: TicketData, paperSize: 58 | 80,
   html = html.split(ESC_CMD.ALIGN_CT).join('</div><div style="text-align: center; width: 100%;">');
   html = html.split(ESC_CMD.ALIGN_LT).join('</div><div style="text-align: left; width: 100%;">');
   html = html.split(ESC_CMD.TXT_4SQUARE).join('<span style="font-size: 1.6em; line-height: 1.2;">');
+  html = html.split(ESC_CMD.TXT_2HEIGHT).join('<span style="font-size: 1.2em; line-height: 1.2;">');
+  html = html.split(ESC_CMD.TXT_2WIDTH).join('<span style="font-size: 1.2em; line-height: 1.2; letter-spacing: 2px;">');
   html = html.split(ESC_CMD.TXT_NORMAL).join('</span>');
   html = html.split(ESC_CMD.TXT_BOLD_ON).join('<b>');
   html = html.split(ESC_CMD.TXT_BOLD_OFF).join('</b>');
