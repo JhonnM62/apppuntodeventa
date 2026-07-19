@@ -416,11 +416,10 @@ export const executePrint = async (
                     margin: 0 auto; 
                     padding: 10px; 
                     font-family: monospace; 
-                    white-space: pre-wrap; 
-                    word-break: break-all;
+                    white-space: pre; 
                     font-size: 14px;
                     line-height: 1.2;
-                    width: ${paperSize === 58 ? '300px' : '400px'};
+                    width: max-content;
                     color: black;
                   }
                 </style>
