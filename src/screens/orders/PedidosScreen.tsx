@@ -21,6 +21,8 @@ import useAuthStore from '../../store/useAuthStore';
 import { useProductStore } from '../../store/useProductStore';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useCustomAlert } from '../../context/CustomAlertContext';
+import usePrinterStore from '../../store/usePrinterStore';
+import PrintPreviewModal from '../../components/ui/PrintPreviewModal';
 
 const TABS = [
   { key: 'todos', label: 'TODOS', color: '#6366f1' },
@@ -123,6 +125,22 @@ const PedidosScreen = () => {
   const [cobrarVenta, setCobrarVenta] = useState<VentaItem | null>(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
+
+  // Manual Print Preview States
+  const { manualPreviewEnabled, printManual } = usePrinterStore();
+  const [printPreviewVisible, setPrintPreviewVisible] = useState(false);
+  const [printPreviewType, setPrintPreviewType] = useState<'comanda' | 'factura' | null>(null);
+  const [printPreviewData, setPrintPreviewData] = useState<any>(null);
+
+  const handleManualPrint = async (venta: any, type: 'comanda' | 'factura') => {
+    if (manualPreviewEnabled) {
+      setPrintPreviewData(venta);
+      setPrintPreviewType(type);
+      setPrintPreviewVisible(true);
+    } else {
+      await printManual(venta, type);
+    }
+  };
 
   const [filters, setFilters] = useState<FilterState>({
     searchText: '',
@@ -820,8 +838,25 @@ showAlert({
         )}
 
         <View style={styles.cardFooter}>
-          <RNText style={styles.totalLabel}>TOTAL</RNText>
-          <RNText style={styles.totalAmount}>{formatMoney(item.totalInput)}</RNText>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <RNText style={styles.totalLabel}>TOTAL</RNText>
+            <RNText style={styles.totalAmount}>{formatMoney(item.totalInput)}</RNText>
+          </View>
+          
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <TouchableOpacity 
+              onPress={(e) => { e.stopPropagation(); handleManualPrint(item, 'comanda'); }}
+              style={{ padding: 6, backgroundColor: '#fef3c7', borderRadius: 8 }}
+            >
+              <Ionicons name="restaurant-outline" size={18} color="#d97706" />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={(e) => { e.stopPropagation(); handleManualPrint(item, 'factura'); }}
+              style={{ padding: 6, backgroundColor: '#e0f2fe', borderRadius: 8 }}
+            >
+              <Ionicons name="receipt-outline" size={18} color="#0369a1" />
+            </TouchableOpacity>
+          </View>
         </View>
         </TouchableOpacity>
       </View>
@@ -1365,6 +1400,26 @@ showAlert({
                     </RNText>
                   </View>
                 )}
+              </View>
+
+              <View style={styles.modalActionsSection}>
+                <RNText style={[styles.modalSectionTitle, { marginBottom: 12 }]}>IMPRESIÓN MANUAL</RNText>
+                <View style={{ flexDirection: 'row', gap: 12 }}>
+                  <TouchableOpacity
+                    style={[styles.actionBtn, { flex: 1, backgroundColor: '#f59e0b' }]}
+                    onPress={() => { closeModal(); handleManualPrint(selectedVenta, 'comanda'); }}
+                  >
+                    <Ionicons name="restaurant-outline" size={20} color="#fff" />
+                    <RNText style={styles.actionBtnText}>Comanda</RNText>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.actionBtn, { flex: 1, backgroundColor: '#0ea5e9' }]}
+                    onPress={() => { closeModal(); handleManualPrint(selectedVenta, 'factura'); }}
+                  >
+                    <Ionicons name="receipt-outline" size={20} color="#fff" />
+                    <RNText style={styles.actionBtnText}>Ticket</RNText>
+                  </TouchableOpacity>
+                </View>
               </View>
 
               <View style={{ height: 40 }} />
@@ -2036,6 +2091,17 @@ showAlert({
         onCobrar={handleCobrarConfirm}
         total={getCobrarTotal(cobrarVenta)}
         editingPedidoId={cobrarVenta?.pedido || cobrarVenta?.IDventas}
+      />
+      
+      <PrintPreviewModal
+        visible={printPreviewVisible}
+        type={printPreviewType}
+        ticketData={printPreviewData}
+        onClose={() => {
+          setPrintPreviewVisible(false);
+          setPrintPreviewData(null);
+          setPrintPreviewType(null);
+        }}
       />
     </View>
   );

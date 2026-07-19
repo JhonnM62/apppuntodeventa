@@ -397,6 +397,38 @@ export const executePrint = async (
     if (!BLEPrinter) {
       const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
       console.log(`Simulando impresión (${type}) (No hay BLEPrinter)\n`, payload);
+      
+      if (Platform.OS === 'web') {
+        const cleanPayload = Object.values(ESC_CMD).reduce((acc, cmd) => acc.split(cmd).join(''), payload);
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(`
+            <html>
+              <head>
+                <style>
+                  @page { margin: 0; }
+                  body { 
+                    margin: 0; 
+                    padding: 10px; 
+                    font-family: monospace; 
+                    white-space: pre-wrap; 
+                    font-size: 14px;
+                    line-height: 1.2;
+                    width: ${paperSize === 58 ? '58mm' : '80mm'};
+                    color: black;
+                  }
+                </style>
+              </head>
+              <body>${cleanPayload}</body>
+            </html>
+          `);
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => { printWindow.print(); }, 500);
+        } else {
+          alert('El navegador bloqueó la ventana de impresión. Por favor, permite las ventanas emergentes (pop-ups) para este sitio.');
+        }
+      }
       return true; // Simulado
     }
 

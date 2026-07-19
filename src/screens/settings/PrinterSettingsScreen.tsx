@@ -5,6 +5,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import usePrinterStore, { PrinterDevice, PrinterConfig } from '../../store/usePrinterStore';
 import { updatePrinterConfigs } from '../../services/printer-config';
 import { useCustomAlert } from '../../context/CustomAlertContext';
+import { TextInput } from 'react-native';
 
 // Mock the BLE Printer for now since it requires physical device / native code
 // In real usage, you'd import { BLEPrinter } from 'react-native-thermal-receipt-printer-image-qr';
@@ -17,7 +18,7 @@ try {
 }
 
 const PrinterSettingsScreen = ({ navigation }: any) => {
-  const { currentPrinter, paperSize, isConnected, configs, setPrinter, setPaperSize, setConnected, fetchConfigs, setConfigs } = usePrinterStore();
+  const { currentPrinter, paperSize, isConnected, configs, setPrinter, setPaperSize, setConnected, fetchConfigs, setConfigs, manualPreviewEnabled, manualAutoPrintEnabled, manualAutoPrintSeconds, setManualPrintConfigs } = usePrinterStore();
   const { showAlert } = useCustomAlert();
   const [devices, setDevices] = useState<PrinterDevice[]>([]);
   const [scanning, setScanning] = useState(false);
@@ -386,11 +387,11 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
         {/* Impresión Automática */}
         <View style={styles.card}>
           <View style={styles.autoPrintHeader}>
-            <RNText style={styles.cardTitle}>Impresión Automática</RNText>
+            <RNText style={styles.cardTitle}>Impresión Automática (Fondo)</RNText>
             {isSavingConfigs && <ActivityIndicator size="small" color="#3b82f6" />}
           </View>
           <RNText style={styles.cardDescription}>
-            Selecciona en qué estados de la orden deseas que se imprima un ticket automáticamente.
+            Selecciona en qué estados de la orden deseas que se imprima un ticket automáticamente al cambiar de estado.
           </RNText>
 
           <View style={styles.switchesContainer}>
@@ -427,6 +428,61 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
                 </View>
               );
             })}
+          </View>
+        </View>
+
+        {/* Impresión Manual */}
+        <View style={styles.card}>
+          <RNText style={styles.cardTitle}>Impresión Manual (Botones Rápidos)</RNText>
+          <RNText style={styles.cardDescription}>
+            Configura el comportamiento al presionar los botones manuales de imprimir comanda y ticket.
+          </RNText>
+          
+          <View style={styles.switchesContainer}>
+            <View style={styles.switchRow}>
+              <View style={{ flex: 1 }}>
+                <RNText style={styles.switchLabel}>Habilitar Previsualización</RNText>
+                <RNText style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Mostrar modal antes de imprimir</RNText>
+              </View>
+              <Switch
+                value={manualPreviewEnabled}
+                onValueChange={(val) => setManualPrintConfigs(val, manualAutoPrintEnabled, manualAutoPrintSeconds)}
+                trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
+                thumbColor={manualPreviewEnabled ? '#3b82f6' : '#f3f4f6'}
+              />
+            </View>
+
+            {manualPreviewEnabled && (
+              <>
+                <View style={[styles.switchRow, { borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 12, marginTop: 4 }]}>
+                  <View style={{ flex: 1 }}>
+                    <RNText style={styles.switchLabel}>Impresión Automática</RNText>
+                    <RNText style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>Imprimir solo sin tocar botón</RNText>
+                  </View>
+                  <Switch
+                    value={manualAutoPrintEnabled}
+                    onValueChange={(val) => setManualPrintConfigs(manualPreviewEnabled, val, manualAutoPrintSeconds)}
+                    trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
+                    thumbColor={manualAutoPrintEnabled ? '#3b82f6' : '#f3f4f6'}
+                  />
+                </View>
+
+                {manualAutoPrintEnabled && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6, marginTop: 4 }}>
+                    <RNText style={styles.switchLabel}>Segundos de espera</RNText>
+                    <TextInput
+                      style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#d1d5db', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, width: 60, textAlign: 'center' }}
+                      keyboardType="numeric"
+                      value={manualAutoPrintSeconds.toString()}
+                      onChangeText={(text) => {
+                        const num = parseInt(text) || 0;
+                        setManualPrintConfigs(manualPreviewEnabled, manualAutoPrintEnabled, num);
+                      }}
+                    />
+                  </View>
+                )}
+              </>
+            )}
           </View>
         </View>
 

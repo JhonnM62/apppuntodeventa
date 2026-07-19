@@ -29,6 +29,11 @@ interface PrinterState {
   shouldPrintComanda: (estadoOrden: string) => boolean;
   shouldPrintFactura: (estadoOrden: string) => boolean;
   printTicket: (ticketData: any) => Promise<void>;
+  manualPreviewEnabled: boolean;
+  manualAutoPrintEnabled: boolean;
+  manualAutoPrintSeconds: number;
+  setManualPrintConfigs: (preview: boolean, autoPrint: boolean, seconds: number) => void;
+  printManual: (ticketData: any, type: 'comanda' | 'factura') => Promise<boolean>;
 }
 
 import { executePrint } from '../utils/printer';
@@ -41,6 +46,14 @@ const usePrinterStore = create<PrinterState>()(
       paperSize: 58,
       isConnected: false,
       configs: [],
+      manualPreviewEnabled: true,
+      manualAutoPrintEnabled: false,
+      manualAutoPrintSeconds: 3,
+      setManualPrintConfigs: (preview, autoPrint, seconds) => set({ 
+        manualPreviewEnabled: preview, 
+        manualAutoPrintEnabled: autoPrint, 
+        manualAutoPrintSeconds: seconds 
+      }),
       setPrinter: (printer) => set({ currentPrinter: printer }),
       setPaperSize: (size) => set({ paperSize: size }),
       setConnected: (status) => set({ isConnected: status }),
@@ -90,12 +103,38 @@ const usePrinterStore = create<PrinterState>()(
         if (errorCount > 0) {
           Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo imprimir correctamente', position: 'top' });
         }
+      },
+      printManual: async (ticketData: any, type: 'comanda' | 'factura') => {
+        const state = get();
+        if (!state.isConnected || !state.currentPrinter) {
+          Toast.show({ type: 'warning', text1: 'Impresión Fallida', text2: 'No hay impresora conectada', position: 'top' });
+          return false;
+        }
+
+        try {
+          const success = await executePrint(ticketData, state.paperSize, state.currentPrinter.inner_mac_address, type);
+          if (!success) {
+            Toast.show({ type: 'error', text1: 'Error', text2: `No se pudo imprimir la ${type}`, position: 'top' });
+            return false;
+          }
+          return true;
+        } catch (error) {
+          Toast.show({ type: 'error', text1: 'Error', text2: `Error al imprimir la ${type}`, position: 'top' });
+          return false;
+        }
       }
     }),
     {
       name: 'printer-storage',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({ currentPrinter: state.currentPrinter, paperSize: state.paperSize, configs: state.configs }),
+      partialize: (state) => ({ 
+        currentPrinter: state.currentPrinter, 
+        paperSize: state.paperSize, 
+        configs: state.configs,
+        manualPreviewEnabled: state.manualPreviewEnabled,
+        manualAutoPrintEnabled: state.manualAutoPrintEnabled,
+        manualAutoPrintSeconds: state.manualAutoPrintSeconds
+      }),
     }
   )
 );
