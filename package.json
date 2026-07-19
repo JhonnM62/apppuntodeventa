@@ -1,6 +1,6 @@
 {
   "name": "qhubomor-pos-app",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "index.js",
   "scripts": {
     "start": "npx cross-env REACT_NATIVE_PACKAGER_HOSTNAME=backendnestpv.autosystemprojects.site expo start --dev-client",
@@ -9,7 +9,10 @@
     "web": "expo start --web",
     "test": "jest",
     "typecheck": "node --max-old-space-size=4096 ./node_modules/typescript/bin/tsc --noEmit",
-    "bump-version": "node bump-version.js"
+    "bump-version": "node bump-version.js",
+    "prebuild": "npm run bump-version",
+    "build": "eas build -p android --profile preview",
+    "prepare": "husky"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.1.1",
@@ -88,6 +91,7 @@
     "babel-plugin-transform-import-meta": "^2.3.3",
     "babel-preset-expo": "~54.0.10",
     "cross-env": "^10.1.0",
+    "husky": "^9.1.7",
     "jest": "~29.7.0",
     "jest-expo": "~54.0.17",
     "react-test-renderer": "^19.1.0",

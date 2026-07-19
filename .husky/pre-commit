@@ -1,0 +1,2 @@
+npm run bump-version
+git add app.json package.json
