@@ -394,7 +394,7 @@ export const executePrint = async (
     } catch (err) {
       console.log('Error fetching configuracion for ticket:', err);
     }
-    if (!BLEPrinter) {
+    if (Platform.OS === 'web' || !BLEPrinter) {
       const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
       console.log(`Simulando impresión (${type}) (No hay BLEPrinter)\n`, payload);
       
