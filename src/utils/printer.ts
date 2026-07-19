@@ -34,6 +34,7 @@ export interface TicketData {
   metodoPago?: string;
   observaciones?: string;
   estado?: string;
+  vendedor?: string;
   comercio?: {
     nombre?: string;
     nit?: string;
@@ -175,6 +176,7 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
   payload += alignLeft(cleanText(`Fecha: ${data.fecha}`), width) + '\n';
   if (data.cliente) payload += alignLeft(cleanText(`Cliente: ${data.cliente}`), width) + '\n';
   if (data.estado) payload += alignLeft(cleanText(`Estado: ${data.estado}`), width) + '\n';
+  if (data.vendedor) payload += alignLeft(cleanText(`Atendió: ${data.vendedor}`), width) + '\n';
   payload += separator + '\n';
 
   // ENCABEZADOS DE PRODUCTOS
@@ -308,6 +310,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
   
   payload += alignLeft(cleanText(`Fecha: ${data.fecha}`), width) + '\n';
   if (data.cliente) payload += alignLeft(cleanText(`Cliente: ${data.cliente}`), width) + '\n';
+  if (data.vendedor) payload += alignLeft(cleanText(`Atendió: ${data.vendedor}`), width) + '\n';
   payload += separator + '\n';
 
   // PRODUCTOS (SIN PRECIOS)

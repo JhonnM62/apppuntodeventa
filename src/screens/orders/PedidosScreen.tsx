@@ -162,6 +162,7 @@ const PedidosScreen = () => {
       devueltas: venta.devueltas ? Number(venta.devueltas) : undefined,
       metodoPago: venta.medioDePago,
       estado: venta.estado,
+      vendedor: venta.usuarioRelacion?.nombre,
       observaciones: venta.notas,
       productos: (venta.ordenVentas || []).map((prod: any) => ({
         cantidad: Number(prod.cantidad || 1),

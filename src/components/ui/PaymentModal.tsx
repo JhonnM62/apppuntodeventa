@@ -20,6 +20,7 @@ import { Button } from './button';
 import usePrinterStore from '../../store/usePrinterStore';
 import { executePrint, TicketData } from '../../utils/printer';
 import useCartStore from '../../store/useCartStore';
+import useAuthStore from '../../store/useAuthStore';
 import { Cliente } from '../../services/clientes.service';
 
 type PaymentMethod = 'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'EFECTIVO Y OTROS';
@@ -101,6 +102,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   // Printer integration
   const { currentPrinter, paperSize, isConnected, shouldPrintComanda, shouldPrintFactura } = usePrinterStore();
   const { cart, discountPercent, setDiscountPercent, getDiscountAmount, getFinalTotalPrice } = useCartStore();
+  const { user } = useAuthStore();
   const actualTotal = getFinalTotalPrice();
 
   useEffect(() => {
@@ -221,6 +223,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       orderId: cleanOrderId,
       fecha: new Date().toLocaleString('es-CO'),
       total: actualTotal,
+      vendedor: user?.nombre,
       productos: cart.map(item => {
         const precioUnitario = Number(item.precioUnitario || item.Precio_Unitario || 0);
         const modifiersTotal = (item.modifiers || []).reduce((sum: number, mod: any) => sum + (Number(mod.price) * (mod.quantity || 1)), 0);
