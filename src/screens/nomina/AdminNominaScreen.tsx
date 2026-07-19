@@ -896,36 +896,41 @@ export default function AdminNominaScreen({ navigation }: any) {
               const status = getStatusTurnoHoy(empleado.IDusuarios);
               const turnoActivo = turnosHoy.find(t => t.usuarioId === empleado.IDusuarios && t.estado === 'ACTIVO');
               return (
-                <View key={empleado.IDusuarios} style={styles.employeeListItem}>
-                  <TouchableOpacity style={styles.employeeInfoContainer} onPress={() => openHistory(empleado)} activeOpacity={0.7}>
-                    <View style={styles.employeeAvatar}>
-                      <Text style={styles.employeeAvatarText}>{empleado.nombre.charAt(0).toUpperCase()}</Text>
-                    </View>
-                    <View style={styles.employeeDetails}>
-                      <Text style={styles.employeeName}>{empleado.nombre}</Text>
-                      <Text style={styles.employeeRole}>{empleado.cargo?.nombre || 'Sin cargo'} • {empleado.rol}</Text>
-                      <View style={[styles.statusBadge, { marginTop: 4 }]}>
-                        <Ionicons name={status.icon as any} size={12} color={status.color} />
-                        <Text style={[styles.statusText, { color: status.color, fontSize: 11, marginLeft: 4 }]}>{status.text}</Text>
+                <View key={empleado.IDusuarios} style={[styles.employeeListItem, { flexDirection: 'column', alignItems: 'stretch' }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <TouchableOpacity style={styles.employeeInfoContainer} onPress={() => openHistory(empleado)} activeOpacity={0.7}>
+                      <View style={styles.employeeAvatar}>
+                        <Text style={styles.employeeAvatarText}>{empleado.nombre.charAt(0).toUpperCase()}</Text>
                       </View>
-                      {turnoActivo && (
-                        <DescansoStatusAdmin turno={turnoActivo} />
-                      )}
+                      <View style={styles.employeeDetails}>
+                        <Text style={styles.employeeName}>{empleado.nombre}</Text>
+                        <Text style={styles.employeeRole}>{empleado.cargo?.nombre || 'Sin cargo'} • {empleado.rol}</Text>
+                        <View style={[styles.statusBadge, { marginTop: 4 }]}>
+                          <Ionicons name={status.icon as any} size={12} color={status.color} />
+                          <Text style={[styles.statusText, { color: status.color, fontSize: 11, marginLeft: 4 }]}>{status.text}</Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                    
+                    <View style={styles.employeeActionsRow}>
+                      <TouchableOpacity style={styles.iconBtnAction} onPress={() => {
+                        setEmpleadoTurnoManual(empleado);
+                        setShowTurnoManualModal(true);
+                      }}>
+                        <Ionicons name="add-circle" size={24} color="#3b82f6" />
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.primaryActionBtn} onPress={() => openResumen(empleado)}>
+                        <Text style={styles.primaryActionBtnText}>Resumen</Text>
+                        <Ionicons name="chevron-forward" size={16} color="#fff" />
+                      </TouchableOpacity>
                     </View>
-                  </TouchableOpacity>
-                  
-                  <View style={styles.employeeActionsRow}>
-                    <TouchableOpacity style={styles.iconBtnAction} onPress={() => {
-                      setEmpleadoTurnoManual(empleado);
-                      setShowTurnoManualModal(true);
-                    }}>
-                      <Ionicons name="add-circle" size={24} color="#3b82f6" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.primaryActionBtn} onPress={() => openResumen(empleado)}>
-                      <Text style={styles.primaryActionBtnText}>Resumen</Text>
-                      <Ionicons name="chevron-forward" size={16} color="#fff" />
-                    </TouchableOpacity>
                   </View>
+
+                  {turnoActivo && (
+                    <View style={{ marginTop: 8 }}>
+                      <DescansoStatusAdmin turno={turnoActivo} />
+                    </View>
+                  )}
                 </View>
               );
             })
@@ -1243,9 +1248,10 @@ export default function AdminNominaScreen({ navigation }: any) {
                         </View>
                       </View>
 
-                      <View style={{ marginBottom: 12, alignItems: 'flex-start' }}>
+                      <View style={{ marginTop: 8, alignItems: 'stretch' }}>
                         <DescansoStatusAdmin turno={turno} />
                       </View>
+                      
                       <View style={styles.historyFooter}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                           <Text style={styles.historyFooterText}>
