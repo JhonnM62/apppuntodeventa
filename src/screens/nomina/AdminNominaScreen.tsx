@@ -30,12 +30,24 @@ try {
 }
 import { generarLiquidacionHTML } from '../../utils/nominaPdf';
 
+const formatMinSec = (totalSec: number): string => {
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const s = totalSec % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+};
+
+const formatTime12h = (date: Date): string => {
+  return date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true });
+};
+
 const DescansoStatusAdmin = ({ turno }: { turno: any }) => {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
     if (turno?.inicioDescanso && !turno?.finDescanso) {
-      const interval = setInterval(() => setNow(new Date()), 10000); // Efficient: updates every 10s
+      const interval = setInterval(() => setNow(new Date()), 1000); // Actualización cada segundo
       return () => clearInterval(interval);
     }
   }, [turno?.inicioDescanso, turno?.finDescanso]);
@@ -43,11 +55,20 @@ const DescansoStatusAdmin = ({ turno }: { turno: any }) => {
   if (!turno) return null;
 
   if (turno.descansoRegistrado && turno.finDescanso) {
+    const inicio = new Date(turno.inicioDescanso);
+    const fin = new Date(turno.finDescanso);
+    const durReal = Math.floor((fin.getTime() - inicio.getTime()) / 1000);
+
     return (
-      <View style={[styles.statusBadge, { marginTop: 4, backgroundColor: '#f0fdf4' }]}>
-        <Ionicons name="cafe-outline" size={12} color="#15803d" />
-        <Text style={[styles.statusText, { color: '#15803d', fontSize: 11, marginLeft: 4 }]}>
-          Descanso tomado
+      <View style={{ marginTop: 8, backgroundColor: '#f0fdf4', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#bbf7d0' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+          <Ionicons name="checkmark-circle" size={14} color="#15803d" />
+          <Text style={{ color: '#15803d', fontSize: 12, marginLeft: 4, fontWeight: 'bold' }}>
+            Descanso completado
+          </Text>
+        </View>
+        <Text style={{ fontSize: 11, color: '#166534' }}>
+          {formatTime12h(inicio)} → {formatTime12h(fin)} • {formatMinSec(durReal)}
         </Text>
       </View>
     );
@@ -55,32 +76,48 @@ const DescansoStatusAdmin = ({ turno }: { turno: any }) => {
 
   if (turno.inicioDescanso && !turno.finDescanso) {
     const inicio = new Date(turno.inicioDescanso);
-    const duration = turno.usuario?.cargo?.duracionDescansoMinutos || 0;
-    const elapsedMinutes = Math.floor((now.getTime() - inicio.getTime()) / 60000);
-    const remaining = duration - elapsedMinutes;
+    const durationMinutos = turno.usuario?.cargo?.duracionDescansoMinutos || 0;
+    const regresoEstimado = new Date(inicio.getTime() + durationMinutos * 60 * 1000);
+    const elapsedSecs = Math.floor((now.getTime() - inicio.getTime()) / 1000);
+    const secsRemaining = Math.max(0, durationMinutos * 60 - elapsedSecs);
+    const isOvertime = secsRemaining === 0;
     
-    let text = `En descanso (faltan ${remaining} min)`;
-    let bgColor = '#fef3c7';
-    let textColor = '#b45309';
+    const bgColor = isOvertime ? '#fee2e2' : '#fef3c7';
+    const borderColor = isOvertime ? '#fecaca' : '#fde68a';
+    const textColor = isOvertime ? '#b91c1c' : '#b45309';
     
-    if (remaining < 0) {
-      text = `En descanso (se pasó por ${Math.abs(remaining)} min)`;
-      bgColor = '#fee2e2';
-      textColor = '#b91c1c';
-    }
-
     return (
-      <View style={[styles.statusBadge, { marginTop: 4, backgroundColor: bgColor }]}>
-        <Ionicons name="cafe" size={12} color={textColor} />
-        <Text style={[styles.statusText, { color: textColor, fontSize: 11, marginLeft: 4 }]}>
-          {text}
-        </Text>
+      <View style={{ marginTop: 8, backgroundColor: bgColor, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: borderColor }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+          <Ionicons name="cafe" size={14} color={textColor} />
+          <Text style={{ color: textColor, fontSize: 12, marginLeft: 4, fontWeight: 'bold' }}>
+            EN DESCANSO
+          </Text>
+        </View>
+        
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+          <View>
+            <Text style={{ fontSize: 10, color: textColor, opacity: 0.8 }}>Inicio</Text>
+            <Text style={{ fontSize: 11, color: textColor, fontWeight: '500' }}>{formatTime12h(inicio)}</Text>
+          </View>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Text style={{ fontSize: 10, color: textColor, opacity: 0.8 }}>Regreso est.</Text>
+            <Text style={{ fontSize: 11, color: textColor, fontWeight: '500' }}>{formatTime12h(regresoEstimado)}</Text>
+          </View>
+        </View>
+        
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.5)', padding: 4, borderRadius: 6 }}>
+          <Ionicons name="timer-outline" size={14} color={textColor} style={{ marginRight: 4 }} />
+          <Text style={{ color: textColor, fontSize: 12, fontWeight: 'bold' }}>
+            {isOvertime ? '¡Tiempo agotado!' : `${formatMinSec(secsRemaining)} restante`}
+          </Text>
+        </View>
       </View>
     );
   }
 
   return (
-    <View style={[styles.statusBadge, { marginTop: 4, backgroundColor: '#f3f4f6' }]}>
+    <View style={[styles.statusBadge, { marginTop: 8, backgroundColor: '#f3f4f6' }]}>
       <Ionicons name="cafe-outline" size={12} color="#6b7280" />
       <Text style={[styles.statusText, { color: '#6b7280', fontSize: 11, marginLeft: 4 }]}>
         No ha tomado descanso
