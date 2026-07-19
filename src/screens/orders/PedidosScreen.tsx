@@ -23,6 +23,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import usePrinterStore from '../../store/usePrinterStore';
 import PrintPreviewModal from '../../components/ui/PrintPreviewModal';
+import { TicketData } from '../../utils/printer';
 
 const TABS = [
   { key: 'todos', label: 'TODOS', color: '#6366f1' },
@@ -132,13 +133,50 @@ const PedidosScreen = () => {
   const [printPreviewType, setPrintPreviewType] = useState<'comanda' | 'factura' | null>(null);
   const [printPreviewData, setPrintPreviewData] = useState<any>(null);
 
+  const mapVentaToTicketData = (venta: VentaItem): TicketData => {
+    let cleanOrderId = venta.pedido || venta.IDventas || '';
+    if (cleanOrderId.toLowerCase().startsWith('pedido-')) {
+      cleanOrderId = cleanOrderId.substring(7);
+    }
+    
+    const getModifiers = (comentarios: string | undefined) => {
+      if (!comentarios) return undefined;
+      try {
+        const parsed = JSON.parse(comentarios);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map((m: any) => ({ name: m.name, price: m.price || m.precio || 0, quantity: m.quantity || 1 }));
+        }
+      } catch (e) {}
+      return undefined;
+    };
+
+    return {
+      orderId: cleanOrderId,
+      fecha: venta.fechaYHora || venta.fecha || new Date().toLocaleString('es-CO'),
+      cliente: venta.cliente || undefined,
+      total: venta.totalInput || 0,
+      efectivoRecibido: venta.efectivoRecibido,
+      devueltas: venta.devueltas,
+      metodoPago: venta.medioDePago,
+      estado: venta.estado,
+      productos: (venta.ordenVentas || []).map(prod => ({
+        cantidad: prod.cantidad || 1,
+        nombre: prod.nombre || 'Producto',
+        precioUnitario: prod.precio || 0,
+        subtotal: prod.precioTotal || ((prod.precio || 0) * (prod.cantidad || 1)),
+        modifiers: getModifiers(prod.comentarios)
+      }))
+    };
+  };
+
   const handleManualPrint = async (venta: any, type: 'comanda' | 'factura') => {
+    const ticketData = mapVentaToTicketData(venta);
     if (manualPreviewEnabled) {
-      setPrintPreviewData(venta);
+      setPrintPreviewData(ticketData);
       setPrintPreviewType(type);
       setPrintPreviewVisible(true);
     } else {
-      await printManual(venta, type);
+      await printManual(ticketData, type);
     }
   };
 
