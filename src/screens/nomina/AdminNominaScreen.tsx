@@ -13,6 +13,7 @@ import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin,
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import TurnoManualModal from './TurnoManualModal';
 import SignatureModal from '../../components/ui/SignatureModal';
+import { useSocketEvent } from '../../hooks/useSocketEvent';
 const CONCEPTOS_BONO = ['BONO', 'PREMIO', 'HORAS_EXTRAS'];
 
 let Print: any = null;
@@ -54,7 +55,7 @@ const DescansoStatusAdmin = ({ turno }: { turno: any }) => {
 
   if (turno.inicioDescanso && !turno.finDescanso) {
     const inicio = new Date(turno.inicioDescanso);
-    const duration = turno.duracionDescanso || 0;
+    const duration = turno.usuario?.cargo?.duracionDescansoMinutos || 0;
     const elapsedMinutes = Math.floor((now.getTime() - inicio.getTime()) / 60000);
     const remaining = duration - elapsedMinutes;
     
@@ -149,6 +150,10 @@ export default function AdminNominaScreen({ navigation }: any) {
     loadData();
     loadLiquidaciones();
   }, []);
+
+  useSocketEvent('turno_actualizado', () => {
+    loadData();
+  });
 
   const loadLiquidaciones = async () => {
     try {
