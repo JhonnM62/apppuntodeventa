@@ -60,6 +60,7 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
   const [todasLasCajas, setTodasLasCajas] = useState<CajaAuditItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [refreshingCajaId, setRefreshingCajaId] = useState<string | null>(null);
   
   // Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -380,7 +381,14 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
     );
   };
 
+  const handleRefreshCaja = async (cajaId: string) => {
+    setRefreshingCajaId(cajaId);
+    await loadAuditoria();
+    setRefreshingCajaId(null);
+  };
+
   const renderCaja = ({ item }: { item: CajaAuditItem }) => {
+    const isRefreshingThis = refreshingCajaId === item.cajaId;
     return (
       <View className="mb-5 shadow-sm rounded-xl bg-white" style={{ elevation: 2 }}>
         <View className="flex-row items-center justify-between p-4 rounded-t-xl" style={{ backgroundColor: COLORS.primary }}>
@@ -402,8 +410,31 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
               {item.conteos.length} insumo{item.conteos.length !== 1 ? 's' : ''} contabilizado{item.conteos.length !== 1 ? 's' : ''}
             </Text>
           </View>
-          <View className="w-10 h-10 rounded-full items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
-            <Ionicons name="cube-outline" size={20} color="#fff" />
+          <View className="flex-row items-center gap-2">
+            {/* Botón de refrescar la tarjeta */}
+            <TouchableOpacity
+              onPress={() => handleRefreshCaja(item.cajaId)}
+              disabled={isRefreshingThis}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: 'rgba(255,255,255,0.2)',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginRight: 6,
+                opacity: isRefreshingThis ? 0.6 : 1,
+              }}
+            >
+              {isRefreshingThis ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Ionicons name="refresh-outline" size={18} color="#fff" />
+              )}
+            </TouchableOpacity>
+            <View className="w-10 h-10 rounded-full items-center justify-center" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}>
+              <Ionicons name="cube-outline" size={20} color="#fff" />
+            </View>
           </View>
         </View>
         
