@@ -21,7 +21,18 @@
         "buildType": "apk"
       }
     },
-    "production": {}
+    "production": {},
+    "restaurante2": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api-restaurante2.autosystemprojects.site/api/v1",
+        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=\"-Xmx1536m -XX:MaxMetaspaceSize=512m\" -Dorg.gradle.daemon=false",
+        "EAS_BUILD_MAX_WORKERS": "2"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    }
   },
   "submit": {
     "production": {}

@@ -76,3 +76,63 @@ jobs:
               qhubomor-frontend
             
             echo "¡Despliegue del Frontend completado exitosamente!"
+
+            # =========================================================
+            # FÁBRICA DE NUEVOS FRONTENDS WEB
+            # Importante: cada cliente requiere su propia imagen porque
+            # la URL del backend queda "quemada" en el build de Expo/React.
+            # Para agregar un cliente: copia la llamada de abajo y cambia
+            # los parámetros (CLIENT_ID, PUERTO, DOMINIO, API_URL, SECRETO).
+            # =========================================================
+            deploy_new_client_web() {
+              CLIENT_ID=$1
+              PORT=$2
+              DOMAIN=$3
+              API_URL=$4
+              ENV_EXTRA=$5
+
+              echo "🚀 Desplegando Frontend para: $CLIENT_ID en $DOMAIN:$PORT"
+
+              # Crear .env con la URL del backend de este cliente
+              # ENV_EXTRA puede incluir variables adicionales del frontend
+              printf '%s\n' "$ENV_EXTRA" > /root/frontend-qhubomor/.env.$CLIENT_ID
+              echo "EXPO_PUBLIC_API_URL=$API_URL" >> /root/frontend-qhubomor/.env.$CLIENT_ID
+
+              # Copiar el .env al directorio raíz para que Docker lo tome en el build
+              cp /root/frontend-qhubomor/.env.$CLIENT_ID /root/frontend-qhubomor/.env
+
+              # Compilar imagen única para este cliente (con su API URL)
+              echo "Compilando imagen para $CLIENT_ID..."
+              cd /root/frontend-qhubomor
+              docker build --no-cache -t frontend-$CLIENT_ID .
+
+              # Detener y eliminar contenedor anterior de este cliente
+              docker stop frontend-$CLIENT_ID || true
+              docker rm frontend-$CLIENT_ID || true
+
+              # Levantar el nuevo contenedor
+              docker run -d \
+                --name frontend-$CLIENT_ID \
+                -p $PORT:80 \
+                --restart unless-stopped \
+                frontend-$CLIENT_ID
+
+              # Configurar subdominio + certificado SSL automáticamente
+              DOMAIN=$DOMAIN PORT=$PORT EMAIL=jonnymejia62@gmail.com \
+                bash /root/n8n/scripts/setup-nginx.sh
+
+              echo "✅ Frontend $CLIENT_ID desplegado en https://$DOMAIN"
+            }
+
+            # ----------------------------------------------------------
+            # LISTA DE CLIENTES ACTIVOS
+            # Para agregar uno nuevo: copia la línea de abajo,
+            # cambia los valores y crea el secreto en GitHub.
+            # ----------------------------------------------------------
+            deploy_new_client_web \
+              "restaurante2" \
+              "8072" \
+              "app-restaurante2.autosystemprojects.site" \
+              "https://api-restaurante2.autosystemprojects.site/api/v1" \
+              "${{ secrets.ENV_FRONTEND_RESTAURANTE2 }}"
+
