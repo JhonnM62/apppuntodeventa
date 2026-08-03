@@ -1,102 +1,106 @@
-2026-07-09T17:05:17.7803171Z Current runner version: '2.335.1'
-2026-07-09T17:05:17.7827626Z ##[group]Runner Image Provisioner
-2026-07-09T17:05:17.7828475Z Hosted Compute Agent
-2026-07-09T17:05:17.7829088Z Version: 20260624.560
-2026-07-09T17:05:17.7829774Z Commit: 925d229a51159bc391ae97e54a2dd1fe20af789d
-2026-07-09T17:05:17.7830464Z Build Date: 2026-06-24T18:26:47Z
-2026-07-09T17:05:17.7831267Z Worker ID: {ae12ab33-9daa-45ff-a194-c74e67392893}
-2026-07-09T17:05:17.7831995Z Azure Region: northcentralus
-2026-07-09T17:05:17.7832602Z ##[endgroup]
-2026-07-09T17:05:17.7834051Z ##[group]Operating System
-2026-07-09T17:05:17.7834647Z Ubuntu
-2026-07-09T17:05:17.7835239Z 24.04.4
-2026-07-09T17:05:17.7835745Z LTS
-2026-07-09T17:05:17.7836231Z ##[endgroup]
-2026-07-09T17:05:17.7836789Z ##[group]Runner Image
-2026-07-09T17:05:17.7837398Z Image: ubuntu-24.04
-2026-07-09T17:05:17.7837993Z Version: 20260705.232.1
-2026-07-09T17:05:17.7839210Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260705.232/images/ubuntu/Ubuntu2404-Readme.md
-2026-07-09T17:05:17.7841135Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260705.232
-2026-07-09T17:05:17.7842013Z ##[endgroup]
-2026-07-09T17:05:17.7843215Z ##[group]GITHUB_TOKEN Permissions
-2026-07-09T17:05:17.7845428Z Contents: read
-2026-07-09T17:05:17.7846116Z Metadata: read
-2026-07-09T17:05:17.7846651Z Packages: read
-2026-07-09T17:05:17.7847222Z ##[endgroup]
-2026-07-09T17:05:17.7849732Z Secret source: Actions
-2026-07-09T17:05:17.7850892Z Prepare workflow directory
-2026-07-09T17:05:17.8175919Z Prepare all required actions
-2026-07-09T17:05:17.8215152Z Getting action download info
-2026-07-09T17:05:18.0909926Z Download action repository 'appleboy/ssh-action@v1.0.3' (SHA:029f5b4aeeeb58fdfe1410a5d17f967dacf36262)
-2026-07-09T17:05:18.3920289Z Complete job name: deploy
-2026-07-09T17:05:18.4378944Z ##[group]Build container for action use: '/home/runner/work/_actions/appleboy/ssh-action/v1.0.3/Dockerfile'.
-2026-07-09T17:05:18.4618589Z ##[command]/usr/bin/docker build -t a89922:662ced22157f49dd98d4aa42c1508541 -f "/home/runner/work/_actions/appleboy/ssh-action/v1.0.3/Dockerfile" "/home/runner/work/_actions/appleboy/ssh-action/v1.0.3"
-2026-07-09T17:05:22.4420898Z #0 building with "default" instance using docker driver
-2026-07-09T17:05:22.4421668Z 
-2026-07-09T17:05:22.4422119Z #1 [internal] load build definition from Dockerfile
-2026-07-09T17:05:22.4422861Z #1 transferring dockerfile: 149B 0.0s done
-2026-07-09T17:05:22.4423409Z #1 DONE 0.1s
-2026-07-09T17:05:22.4423684Z 
-2026-07-09T17:05:22.4424016Z #2 [internal] load metadata for ghcr.io/appleboy/drone-ssh:1.7.3
-2026-07-09T17:05:22.7892711Z #2 DONE 0.5s
-2026-07-09T17:05:22.9218376Z 
-2026-07-09T17:05:22.9219310Z #3 [internal] load .dockerignore
-2026-07-09T17:05:22.9221791Z #3 transferring context: 2B done
-2026-07-09T17:05:22.9222749Z #3 DONE 0.0s
-2026-07-09T17:05:22.9223113Z 
-2026-07-09T17:05:22.9223362Z #4 [internal] load build context
-2026-07-09T17:05:22.9224184Z #4 transferring context: 108B done
-2026-07-09T17:05:22.9224826Z #4 DONE 0.0s
-2026-07-09T17:05:22.9225170Z 
-2026-07-09T17:05:22.9225889Z #5 [1/2] FROM ghcr.io/appleboy/drone-ssh:1.7.3@sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158
-2026-07-09T17:05:22.9227791Z #5 resolve ghcr.io/appleboy/drone-ssh:1.7.3@sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158 done
-2026-07-09T17:05:22.9229225Z #5 extracting sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca
-2026-07-09T17:05:23.0348389Z #5 extracting sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca 0.1s done
-2026-07-09T17:05:23.0349926Z #5 sha256:1a52f94820e830bc9734623deb03bbafa6a248fba19cdc2e5605c70d90d91441 1.24kB / 1.24kB done
-2026-07-09T17:05:23.0351893Z #5 sha256:c4781b8d012b16b6c7468dc9104fad0a63f2a8815b2af8b7176bb544253ea8c7 3.86kB / 3.86kB done
-2026-07-09T17:05:23.0353229Z #5 sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca 3.38MB / 3.38MB 0.1s done
-2026-07-09T17:05:23.0354739Z #5 sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6 284.83kB / 284.83kB 0.1s done
-2026-07-09T17:05:23.0356569Z #5 sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c 1.20kB / 1.20kB 0.1s done
-2026-07-09T17:05:23.0357942Z #5 sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 125B / 125B 0.1s done
-2026-07-09T17:05:23.0359302Z #5 sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158 2.38kB / 2.38kB done
-2026-07-09T17:05:23.0360881Z #5 extracting sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6
-2026-07-09T17:05:23.0362139Z #5 sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 2.44MB / 2.44MB 0.2s done
-2026-07-09T17:05:23.1960086Z #5 extracting sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6 0.0s done
-2026-07-09T17:05:23.3391547Z #5 extracting sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c
-2026-07-09T17:05:23.5837107Z #5 extracting sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c done
-2026-07-09T17:05:23.5838642Z #5 extracting sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 done
-2026-07-09T17:05:23.5840220Z #5 extracting sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 0.0s done
-2026-07-09T17:05:23.5841733Z #5 DONE 0.6s
-2026-07-09T17:05:23.5843109Z 
-2026-07-09T17:05:23.5843474Z #6 [2/2] COPY entrypoint.sh /bin/entrypoint.sh
-2026-07-09T17:05:23.5844324Z #6 DONE 0.0s
-2026-07-09T17:05:23.5844633Z 
-2026-07-09T17:05:23.5844904Z #7 exporting to image
-2026-07-09T17:05:23.5845513Z #7 exporting layers
-2026-07-09T17:05:24.0039210Z #7 exporting layers 0.6s done
-2026-07-09T17:05:24.0298801Z #7 writing image sha256:405fbbeef3be31e4686e114b0525e065c74f68ac0ba991d92e41fdf16c5a9566 done
-2026-07-09T17:05:24.0478753Z #7 naming to docker.io/library/a89922:662ced22157f49dd98d4aa42c1508541 done
-2026-07-09T17:05:24.0479410Z #7 DONE 0.6s
-2026-07-09T17:05:24.0487197Z ##[endgroup]
-2026-07-09T17:05:24.0734928Z ##[group]Run if [[ "$AUTH_SERVER" == *"@"* ]]; then
-2026-07-09T17:05:24.0735585Z [36;1mif [[ "$AUTH_SERVER" == *"@"* ]]; then[0m
-2026-07-09T17:05:24.0736285Z [36;1m  echo "username=$(echo $AUTH_SERVER | cut -d'@' -f1)" >> $GITHUB_OUTPUT[0m
-2026-07-09T17:05:24.0736947Z [36;1m  echo "host=$(echo $AUTH_SERVER | cut -d'@' -f2)" >> $GITHUB_OUTPUT[0m
-2026-07-09T17:05:24.0737499Z [36;1melse[0m
-2026-07-09T17:05:24.0737890Z [36;1m  echo "username=root" >> $GITHUB_OUTPUT[0m
-2026-07-09T17:05:24.0738374Z [36;1m  echo "host=$AUTH_SERVER" >> $GITHUB_OUTPUT[0m
-2026-07-09T17:05:24.0738793Z [36;1mfi[0m
-2026-07-09T17:05:24.0764635Z shell: /usr/bin/bash -e {0}
-2026-07-09T17:05:24.0765284Z env:
-2026-07-09T17:05:24.0765967Z   AUTH_SERVER: ***
-2026-07-09T17:05:24.0766330Z ##[endgroup]
-2026-07-09T17:05:24.1199211Z ##[group]Run appleboy/ssh-action@v1.0.3
-2026-07-09T17:05:24.1199584Z with:
-2026-07-09T17:05:24.1199796Z   host: 100.42.185.2
-2026-07-09T17:05:24.1200011Z   username: root
-2026-07-09T17:05:24.1200364Z   password: ***
-2026-07-09T17:05:24.1200808Z   command_timeout: 30m
-2026-07-09T17:05:24.1206354Z   script: set -e
+2026-08-03T17:59:28.6719201Z Current runner version: '2.336.0'
+2026-08-03T17:59:28.6743963Z ##[group]Runner Image Provisioner
+2026-08-03T17:59:28.6745345Z Hosted Compute Agent
+2026-08-03T17:59:28.6745985Z Version: 20260707.563
+2026-08-03T17:59:28.6746712Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+2026-08-03T17:59:28.6747554Z Build Date: 2026-07-07T19:33:50Z
+2026-08-03T17:59:28.6748323Z Worker ID: {74a24650-4da0-4ab5-9c6c-41b0fbf9bd33}
+2026-08-03T17:59:28.6749194Z Azure Region: westus
+2026-08-03T17:59:28.6749888Z ##[endgroup]
+2026-08-03T17:59:28.6751605Z ##[group]Operating System
+2026-08-03T17:59:28.6752311Z Ubuntu
+2026-08-03T17:59:28.6752838Z 24.04.4
+2026-08-03T17:59:28.6753469Z LTS
+2026-08-03T17:59:28.6754006Z ##[endgroup]
+2026-08-03T17:59:28.6754972Z ##[group]Runner Image
+2026-08-03T17:59:28.6755668Z Image: ubuntu-24.04
+2026-08-03T17:59:28.6756635Z Version: 20260720.247.2
+2026-08-03T17:59:28.6757981Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260720.247/images/ubuntu/Ubuntu2404-Readme.md
+2026-08-03T17:59:28.6759651Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260720.247
+2026-08-03T17:59:28.6760695Z ##[endgroup]
+2026-08-03T17:59:28.6762006Z ##[group]GITHUB_TOKEN Permissions
+2026-08-03T17:59:28.6764480Z Contents: read
+2026-08-03T17:59:28.6765224Z Metadata: read
+2026-08-03T17:59:28.6765853Z Packages: read
+2026-08-03T17:59:28.6766462Z ##[endgroup]
+2026-08-03T17:59:28.6768662Z Secret source: Actions
+2026-08-03T17:59:28.6769979Z Prepare workflow directory
+2026-08-03T17:59:28.7401850Z Prepare all required actions
+2026-08-03T17:59:28.7450380Z Getting action download info
+2026-08-03T17:59:29.0868040Z Download action repository 'appleboy/ssh-action@v1.0.3' (SHA:029f5b4aeeeb58fdfe1410a5d17f967dacf36262)
+2026-08-03T17:59:30.1657029Z Complete job name: deploy
+2026-08-03T17:59:30.2305645Z ##[group]Build container for action use: '/home/runner/work/_actions/appleboy/ssh-action/v1.0.3/Dockerfile'.
+2026-08-03T17:59:30.2360883Z ##[command]/usr/bin/docker build -t 15a407:15f937dd33b5462aa5d9ed104dcd05c7 -f "/home/runner/work/_actions/appleboy/ssh-action/v1.0.3/Dockerfile" "/home/runner/work/_actions/appleboy/ssh-action/v1.0.3"
+2026-08-03T17:59:30.8864912Z #0 building with "default" instance using docker driver
+2026-08-03T17:59:30.8865938Z 
+2026-08-03T17:59:30.8866550Z #1 [internal] load build definition from Dockerfile
+2026-08-03T17:59:30.8867868Z #1 transferring dockerfile: 149B done
+2026-08-03T17:59:30.8869133Z #1 DONE 0.0s
+2026-08-03T17:59:30.8869851Z 
+2026-08-03T17:59:30.8870740Z #2 [internal] load metadata for ghcr.io/appleboy/drone-ssh:1.7.3
+2026-08-03T17:59:31.5097789Z #2 DONE 0.8s
+2026-08-03T17:59:31.6308938Z 
+2026-08-03T17:59:31.6310569Z #3 [internal] load .dockerignore
+2026-08-03T17:59:31.6312630Z #3 transferring context: 2B done
+2026-08-03T17:59:31.6314732Z #3 DONE 0.0s
+2026-08-03T17:59:31.6315483Z 
+2026-08-03T17:59:31.6316095Z #4 [internal] load build context
+2026-08-03T17:59:31.6317751Z #4 transferring context: 108B done
+2026-08-03T17:59:31.6319242Z #4 DONE 0.0s
+2026-08-03T17:59:31.6320062Z 
+2026-08-03T17:59:31.6322296Z #5 [1/2] FROM ghcr.io/appleboy/drone-ssh:1.7.3@sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158
+2026-08-03T17:59:31.6327189Z #5 resolve ghcr.io/appleboy/drone-ssh:1.7.3@sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158 done
+2026-08-03T17:59:31.6332387Z #5 sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158 2.38kB / 2.38kB done
+2026-08-03T17:59:31.6336270Z #5 sha256:1a52f94820e830bc9734623deb03bbafa6a248fba19cdc2e5605c70d90d91441 1.24kB / 1.24kB done
+2026-08-03T17:59:31.6341358Z #5 sha256:c4781b8d012b16b6c7468dc9104fad0a63f2a8815b2af8b7176bb544253ea8c7 3.86kB / 3.86kB done
+2026-08-03T17:59:31.6344898Z #5 sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca 0B / 3.38MB 0.1s
+2026-08-03T17:59:31.6348864Z #5 sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6 0B / 284.83kB 0.1s
+2026-08-03T17:59:31.6353140Z #5 sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c 0B / 1.20kB 0.1s
+2026-08-03T17:59:31.7586279Z #5 sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca 3.38MB / 3.38MB 0.1s done
+2026-08-03T17:59:31.7593334Z #5 sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6 284.83kB / 284.83kB 0.1s done
+2026-08-03T17:59:31.7599240Z #5 sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c 1.20kB / 1.20kB 0.2s done
+2026-08-03T17:59:31.7603098Z #5 extracting sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca 0.1s done
+2026-08-03T17:59:31.7607951Z #5 sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 0B / 125B 0.2s
+2026-08-03T17:59:31.7612407Z #5 sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 0B / 2.44MB 0.2s
+2026-08-03T17:59:31.7617322Z #5 extracting sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6
+2026-08-03T17:59:31.9804044Z #5 sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 125B / 125B 0.2s done
+2026-08-03T17:59:31.9807932Z #5 sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 2.44MB / 2.44MB 0.3s done
+2026-08-03T17:59:31.9811407Z #5 extracting sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6 0.0s done
+2026-08-03T17:59:32.4152192Z #5 extracting sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c
+2026-08-03T17:59:32.5279379Z #5 extracting sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c done
+2026-08-03T17:59:32.5281151Z #5 extracting sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 done
+2026-08-03T17:59:32.5282378Z #5 extracting sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 0.0s done
+2026-08-03T17:59:32.5283324Z #5 DONE 1.0s
+2026-08-03T17:59:32.6898337Z 
+2026-08-03T17:59:32.6898859Z #6 [2/2] COPY entrypoint.sh /bin/entrypoint.sh
+2026-08-03T17:59:32.6899559Z #6 DONE 0.0s
+2026-08-03T17:59:32.6899812Z 
+2026-08-03T17:59:32.6899999Z #7 exporting to image
+2026-08-03T17:59:32.6900456Z #7 exporting layers
+2026-08-03T17:59:33.0052432Z #7 exporting layers 0.5s done
+2026-08-03T17:59:33.0279806Z #7 writing image sha256:71fe97b28b0e630532c645479c76b46e017cf61d8646934369597500190c287c done
+2026-08-03T17:59:33.0280817Z #7 naming to docker.io/library/15a407:15f937dd33b5462aa5d9ed104dcd05c7 done
+2026-08-03T17:59:33.0281519Z #7 DONE 0.5s
+2026-08-03T17:59:33.0379908Z ##[endgroup]
+2026-08-03T17:59:33.0637867Z ##[group]Run if [[ "$AUTH_SERVER" == *"@"* ]]; then
+2026-08-03T17:59:33.0638349Z [36;1mif [[ "$AUTH_SERVER" == *"@"* ]]; then[0m
+2026-08-03T17:59:33.0638802Z [36;1m  echo "username=$(echo $AUTH_SERVER | cut -d'@' -f1)" >> $GITHUB_OUTPUT[0m
+2026-08-03T17:59:33.0639313Z [36;1m  echo "host=$(echo $AUTH_SERVER | cut -d'@' -f2)" >> $GITHUB_OUTPUT[0m
+2026-08-03T17:59:33.0639697Z [36;1melse[0m
+2026-08-03T17:59:33.0639941Z [36;1m  echo "username=root" >> $GITHUB_OUTPUT[0m
+2026-08-03T17:59:33.0640281Z [36;1m  echo "host=$AUTH_SERVER" >> $GITHUB_OUTPUT[0m
+2026-08-03T17:59:33.0640630Z [36;1mfi[0m
+2026-08-03T17:59:33.0689226Z shell: /usr/bin/bash -e {0}
+2026-08-03T17:59:33.0689768Z env:
+2026-08-03T17:59:33.0690250Z   AUTH_SERVER: ***
+2026-08-03T17:59:33.0690488Z ##[endgroup]
+2026-08-03T17:59:33.1042838Z ##[group]Run appleboy/ssh-action@v1.0.3
+2026-08-03T17:59:33.1043218Z with:
+2026-08-03T17:59:33.1043429Z   host: 100.42.185.2
+2026-08-03T17:59:33.1043653Z   username: root
+2026-08-03T17:59:33.1044055Z   password: ***
+2026-08-03T17:59:33.1044528Z   command_timeout: 30m
+2026-08-03T17:59:33.1057197Z   script: set -e
 
 # 0. Limpiar imagenes viejas del proyecto y caché de construcción
 echo "Limpiando espacio en disco de imagenes viejas..."
@@ -143,187 +147,470 @@ docker run -d \
 
 echo "¡Despliegue del Frontend completado exitosamente!"
 
-2026-07-09T17:05:24.1211419Z   port: 22
-2026-07-09T17:05:24.1211614Z   timeout: 30s
-2026-07-09T17:05:24.1211819Z   proxy_port: 22
-2026-07-09T17:05:24.1212028Z   proxy_timeout: 30s
-2026-07-09T17:05:24.1212263Z ##[endgroup]
-2026-07-09T17:05:24.1326075Z ##[command]/usr/bin/docker run --name a89922662ced22157f49dd98d4aa42c1508541_9b2cc4 --label a89922 --workdir /github/workspace --rm -e "INPUT_HOST" -e "INPUT_USERNAME" -e "INPUT_PASSWORD" -e "INPUT_COMMAND_TIMEOUT" -e "INPUT_SCRIPT" -e "INPUT_PORT" -e "INPUT_PASSPHRASE" -e "INPUT_SYNC" -e "INPUT_USE_INSECURE_CIPHER" -e "INPUT_CIPHER" -e "INPUT_TIMEOUT" -e "INPUT_KEY" -e "INPUT_KEY_PATH" -e "INPUT_FINGERPRINT" -e "INPUT_PROXY_HOST" -e "INPUT_PROXY_PORT" -e "INPUT_PROXY_USERNAME" -e "INPUT_PROXY_PASSWORD" -e "INPUT_PROXY_PASSPHRASE" -e "INPUT_PROXY_TIMEOUT" -e "INPUT_PROXY_KEY" -e "INPUT_PROXY_KEY_PATH" -e "INPUT_PROXY_FINGERPRINT" -e "INPUT_PROXY_CIPHER" -e "INPUT_PROXY_USE_INSECURE_CIPHER" -e "INPUT_SCRIPT_STOP" -e "INPUT_ENVS" -e "INPUT_ENVS_FORMAT" -e "INPUT_DEBUG" -e "INPUT_ALLENVS" -e "INPUT_REQUEST_PTY" -e "HOME" -e "GITHUB_JOB" -e "GITHUB_REF" -e "GITHUB_SHA" -e "GITHUB_REPOSITORY" -e "GITHUB_REPOSITORY_OWNER" -e "GITHUB_REPOSITORY_OWNER_ID" -e "GITHUB_RUN_ID" -e "GITHUB_RUN_NUMBER" -e "GITHUB_RETENTION_DAYS" -e "GITHUB_RUN_ATTEMPT" -e "GITHUB_ACTOR_ID" -e "GITHUB_ACTOR" -e "GITHUB_WORKFLOW" -e "GITHUB_HEAD_REF" -e "GITHUB_BASE_REF" -e "GITHUB_EVENT_NAME" -e "GITHUB_SERVER_URL" -e "GITHUB_API_URL" -e "GITHUB_GRAPHQL_URL" -e "GITHUB_REF_NAME" -e "GITHUB_REF_PROTECTED" -e "GITHUB_REF_TYPE" -e "GITHUB_WORKFLOW_REF" -e "GITHUB_WORKFLOW_SHA" -e "GITHUB_REPOSITORY_ID" -e "GITHUB_TRIGGERING_ACTOR" -e "GITHUB_WORKSPACE" -e "GITHUB_ACTION" -e "GITHUB_EVENT_PATH" -e "GITHUB_ACTION_REPOSITORY" -e "GITHUB_ACTION_REF" -e "GITHUB_PATH" -e "GITHUB_ENV" -e "GITHUB_STEP_SUMMARY" -e "GITHUB_STATE" -e "GITHUB_OUTPUT" -e "RUNNER_OS" -e "RUNNER_ARCH" -e "RUNNER_NAME" -e "RUNNER_ENVIRONMENT" -e "RUNNER_TOOL_CACHE" -e "RUNNER_TEMP" -e "RUNNER_WORKSPACE" -e "ACTIONS_RUNTIME_URL" -e "ACTIONS_RUNTIME_TOKEN" -e "ACTIONS_CACHE_URL" -e "ACTIONS_RESULTS_URL" -e "ACTIONS_ORCHESTRATION_ID" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work/_temp":"/github/runner_temp" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" -v "/home/runner/work/_temp/_runner_file_commands":"/github/file_commands" -v "/home/runner/work/apppuntodeventa/apppuntodeventa":"/github/workspace" a89922:662ced22157f49dd98d4aa42c1508541
-2026-07-09T17:05:24.3268377Z ======CMD======
-2026-07-09T17:05:24.3268711Z set -e
-2026-07-09T17:05:24.3268857Z 
-2026-07-09T17:05:24.3352960Z # 0. Limpiar imagenes viejas del proyecto y caché de construcción
-2026-07-09T17:05:24.3353542Z echo "Limpiando espacio en disco de imagenes viejas..."
-2026-07-09T17:05:24.3353892Z docker image prune -f || true
-2026-07-09T17:05:24.3354158Z docker builder prune -f || true
-2026-07-09T17:05:24.3354335Z 
-2026-07-09T17:05:24.3354460Z # 1. Crear directorio del proyecto si no existe
-2026-07-09T17:05:24.3354794Z mkdir -p /root/frontend-qhubomor
-2026-07-09T17:05:24.3355059Z cd /root/frontend-qhubomor
-2026-07-09T17:05:24.3355551Z 
-2026-07-09T17:05:24.3355702Z # 2. Clonar el repositorio o actualizarlo si ya existe
-2026-07-09T17:05:24.3356018Z if [ ! -d ".git" ]; then
-2026-07-09T17:05:24.3356303Z   echo "Clonando repositorio por primera vez..."
-2026-07-09T17:05:24.3356749Z   # Reemplaza 'JhonnM62/frontend-repo' por el nombre real de tu repositorio en GitHub
-2026-07-09T17:05:24.3358083Z   git clone https://***@github.com/JhonnM62/apppuntodeventa.git .
-2026-07-09T17:05:24.3358424Z else
-2026-07-09T17:05:24.3358649Z   echo "Actualizando repositorio existente..."
-2026-07-09T17:05:24.3359150Z   # Asegúrate de colocar la ruta correcta de tu repositorio en GitHub
-2026-07-09T17:05:24.3359785Z   git remote set-url origin https://***@github.com/JhonnM62/apppuntodeventa.git
-2026-07-09T17:05:24.3360168Z   git fetch --all
-2026-07-09T17:05:24.3360391Z   git reset --hard origin/main
-2026-07-09T17:05:24.3360815Z   git clean -fd
-2026-07-09T17:05:24.3361015Z fi
-2026-07-09T17:05:24.3361139Z 
-2026-07-09T17:05:24.3361335Z # 3. Inyectar las variables de entorno desde los secretos de GitHub
-2026-07-09T17:05:24.3361871Z echo "***" > .env
-2026-07-09T17:05:24.3362009Z 
-2026-07-09T17:05:24.3362139Z # 4. Construir la nueva imagen de Docker (sin cache)
-2026-07-09T17:05:24.3362468Z echo "Construyendo imagen Docker para web..."
-2026-07-09T17:05:24.3362793Z docker build --no-cache -t qhubomor-frontend .
-2026-07-09T17:05:24.3363000Z 
-2026-07-09T17:05:24.3363135Z # 5. Detener y eliminar el contenedor anterior si existe
-2026-07-09T17:05:24.3363463Z echo "Deteniendo contenedor anterior..."
-2026-07-09T17:05:24.3363760Z docker stop qhubomor-frontend-app || true
-2026-07-09T17:05:24.3364053Z docker rm qhubomor-frontend-app || true
-2026-07-09T17:05:24.3364239Z 
-2026-07-09T17:05:24.3364364Z # 6. Levantar el nuevo contenedor en el puerto 8062
-2026-07-09T17:05:24.3364686Z echo "Levantando nuevo contenedor..."
-2026-07-09T17:05:24.3364972Z docker run -d \
-2026-07-09T17:05:24.3365288Z   --name qhubomor-frontend-app \
-2026-07-09T17:05:24.3365565Z   -p 8062:80 \
-2026-07-09T17:05:24.3365793Z   --restart unless-stopped \
-2026-07-09T17:05:24.3366043Z   qhubomor-frontend
-2026-07-09T17:05:24.3366181Z 
-2026-07-09T17:05:24.3366407Z echo "¡Despliegue del Frontend completado exitosamente!"
-2026-07-09T17:05:24.3366668Z 
-2026-07-09T17:05:24.3366754Z ======END======
-2026-07-09T17:05:25.6693794Z out: Limpiando espacio en disco de imagenes viejas...
-2026-07-09T17:05:25.6915598Z out: Total reclaimed space: 0B
-2026-07-09T17:05:25.7724381Z out: Total:	0B
-2026-07-09T17:05:25.7777013Z out: Actualizando repositorio existente...
-2026-07-09T17:05:25.7898133Z out: Fetching origin
-2026-07-09T17:05:26.2108011Z err: From https://github.com/JhonnM62/apppuntodeventa
-2026-07-09T17:05:26.2108881Z err:    6ebcc8e..f37df20  main       -> origin/main
-2026-07-09T17:05:26.2317413Z out: HEAD is now at f37df20 feat: add admin payroll management screen with turn handling, report generation, and automated settlement services
-2026-07-09T17:05:26.2338916Z out: Construyendo imagen Docker para web...
-2026-07-09T17:05:26.5449090Z err: #0 building with "default" instance using docker driver
-2026-07-09T17:05:26.5449687Z err: #1 [internal] load build definition from Dockerfile
-2026-07-09T17:05:26.5450140Z err: #1 transferring dockerfile: 851B done
-2026-07-09T17:05:26.5450490Z err: #1 DONE 0.0s
-2026-07-09T17:05:26.5451158Z err: #2 [internal] load metadata for docker.io/library/node:20-slim
-2026-07-09T17:05:26.5724295Z err: #2 DONE 0.2s
-2026-07-09T17:05:26.5725053Z err: #3 [internal] load metadata for docker.io/library/nginx:alpine
-2026-07-09T17:05:27.0750315Z err: #3 DONE 0.7s
-2026-07-09T17:05:27.1948383Z err: #4 [internal] load .dockerignore
-2026-07-09T17:05:27.1948813Z err: #4 transferring context: 2B done
-2026-07-09T17:05:27.1949152Z err: #4 DONE 0.1s
-2026-07-09T17:05:27.1949772Z err: #5 [deps 1/6] FROM docker.io/library/node:20-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0
-2026-07-09T17:05:27.1950406Z err: #5 CACHED
-2026-07-09T17:05:27.1951554Z err: #6 [stage-1 1/4] FROM docker.io/library/nginx:alpine@sha256:54f2a904c251d5a34adf545a72d32515a15e08418dae0266e23be2e18c66fefa
-2026-07-09T17:05:27.1952280Z err: #6 CACHED
-2026-07-09T17:05:27.1952529Z err: #7 [internal] load build context
-2026-07-09T17:05:27.4965108Z err: #7 ...
-2026-07-09T17:05:27.4965565Z err: #8 [builder 2/6] WORKDIR /app
-2026-07-09T17:05:27.4966539Z err: #8 DONE 0.2s
-2026-07-09T17:05:27.4966817Z err: #7 [internal] load build context
-2026-07-09T17:05:27.8136987Z err: #7 transferring context: 94.14MB 0.6s done
-2026-07-09T17:05:27.8137417Z err: #7 DONE 0.7s
-2026-07-09T17:05:27.9587789Z err: #9 [stage-1 2/4] COPY nginx.conf /etc/nginx/conf.d/default.conf
-2026-07-09T17:05:27.9588250Z err: #9 DONE 0.1s
-2026-07-09T17:05:27.9588547Z err: #10 [builder 3/6] COPY package*.json ./
-2026-07-09T17:05:28.1382541Z err: #10 DONE 0.2s
-2026-07-09T17:05:28.1383172Z err: #11 [builder 4/6] RUN npm install --legacy-peer-deps
-2026-07-09T17:05:31.3930853Z err: #11 3.405 npm warn deprecated whatwg-encoding@2.0.0: Use @exodus/bytes instead for a more spec-conformant and faster implementation
-2026-07-09T17:05:31.7354740Z err: #11 3.748 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
-2026-07-09T17:05:32.4842548Z err: #11 4.496 npm warn deprecated uuid@7.0.3: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
-2026-07-09T17:05:33.4138282Z err: #11 5.426 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
-2026-07-09T17:05:34.5372116Z err: #11 6.549 npm warn deprecated domexception@4.0.0: Use your platform's native DOMException instead
-2026-07-09T17:05:35.0390058Z err: #11 7.051 npm warn deprecated abab@2.0.6: Use your platform's native atob() and btoa() methods instead
-2026-07-09T17:05:36.3959404Z err: #11 8.406 npm warn deprecated @testing-library/jest-native@5.4.3: DEPRECATED: This package is no longer maintained.
-2026-07-09T17:05:36.3960358Z err: #11 8.406 npm warn deprecated Please use the built-in Jest matchers available in @testing-library/react-native v12.4+.
-2026-07-09T17:05:36.3961175Z err: #11 8.406 npm warn deprecated
-2026-07-09T17:05:36.3961932Z err: #11 8.406 npm warn deprecated See migration guide: https://callstack.github.io/react-native-testing-library/docs/migration/jest-matchers
-2026-07-09T17:05:36.5758886Z err: #11 8.588 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-07-09T17:05:36.7009817Z err: #11 8.713 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-07-09T17:05:36.8516015Z err: #11 8.713 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-07-09T17:05:37.2185337Z err: #11 9.231 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-07-09T17:05:37.4264701Z err: #11 9.439 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-07-09T17:05:37.9757388Z err: #11 9.988 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-07-09T17:05:38.1291668Z err: #11 10.14 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-07-09T17:05:49.5088319Z err: #11 21.52 
-2026-07-09T17:05:49.5089086Z err: #11 21.52 added 1196 packages, and audited 1197 packages in 21s
-2026-07-09T17:05:49.6112649Z err: #11 21.52 
-2026-07-09T17:05:49.6113062Z err: #11 21.52 119 packages are looking for funding
-2026-07-09T17:05:49.6113507Z err: #11 21.52   run `npm fund` for details
-2026-07-09T17:05:49.6113868Z err: #11 21.62 
-2026-07-09T17:05:49.6114219Z err: #11 21.62 28 vulnerabilities (2 low, 20 moderate, 5 high, 1 critical)
-2026-07-09T17:05:49.6114672Z err: #11 21.62 
-2026-07-09T17:05:49.6114997Z err: #11 21.62 To address issues that do not require attention, run:
-2026-07-09T17:05:49.6115415Z err: #11 21.62   npm audit fix
-2026-07-09T17:05:49.6115708Z err: #11 21.62 
-2026-07-09T17:05:49.6116040Z err: #11 21.62 To address all issues (including breaking changes), run:
-2026-07-09T17:05:49.6116468Z err: #11 21.62   npm audit fix --force
-2026-07-09T17:05:49.6116760Z err: #11 21.62 
-2026-07-09T17:05:49.6117016Z err: #11 21.62 Run `npm audit` for details.
-2026-07-09T17:05:49.7639128Z err: #11 21.62 npm notice
-2026-07-09T17:05:49.7639621Z err: #11 21.62 npm notice New major version of npm available! 10.8.2 -> 12.0.0
-2026-07-09T17:05:49.7640239Z err: #11 21.62 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.0
-2026-07-09T17:05:49.7641408Z err: #11 21.62 npm notice To update run: npm install -g npm@12.0.0
-2026-07-09T17:05:49.7641994Z err: #11 21.62 npm notice
-2026-07-09T17:05:49.8653437Z err: #11 DONE 21.9s
-2026-07-09T17:05:50.0234107Z err: #12 [builder 5/6] COPY . .
-2026-07-09T17:05:50.3142015Z err: #12 DONE 0.4s
-2026-07-09T17:05:50.4674384Z err: #13 [builder 6/6] RUN NODE_OPTIONS=--max-old-space-size=4096 npx expo export -p web
-2026-07-09T17:05:51.2945214Z err: #13 0.978 env: load .env
-2026-07-09T17:05:51.7914479Z err: #13 1.475 env: export EXPO_PUBLIC_API_URL
-2026-07-09T17:05:52.1002649Z err: #13 1.784 Starting Metro Bundler
-2026-07-09T17:05:55.2916783Z err: #13 4.975 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (52/93)
-2026-07-09T17:05:58.7924766Z err: #13 8.476 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (114/345)
-2026-07-09T17:06:02.2978930Z err: #13 11.98 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (134/374)
-2026-07-09T17:06:05.7995732Z err: #13 15.48 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (257/515)
-2026-07-09T17:06:09.3604074Z err: #13 19.04 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (351/656)
-2026-07-09T17:06:12.8938318Z err: #13 22.58 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 472/2798)
-2026-07-09T17:06:16.3981716Z err: #13 26.08 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 639/2940)
-2026-07-09T17:06:19.8991095Z err: #13 29.58 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (1139/2958)
-2026-07-09T17:06:23.4185894Z err: #13 33.10 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 39.4% (1856/2958)
-2026-07-09T17:06:26.9385498Z err: #13 36.62 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.8% (2474/3394)
-2026-07-09T17:06:30.4394531Z err: #13 40.12 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 64.4% (2835/3532)
-2026-07-09T17:06:33.9399124Z err: #13 43.62 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 71.6% (3068/3627)
-2026-07-09T17:06:37.4744057Z err: #13 47.16 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 88.0% (3421/3668)
-2026-07-09T17:06:41.0503412Z err: #13 50.73 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.4% (3752/3947)
-2026-07-09T17:06:43.4949265Z err: #13 53.18 Web Bundling failed 50571ms index.js (4083 modules)
-2026-07-09T17:06:43.6453073Z err: #13 53.18 SyntaxError: SyntaxError: /app/src/services/nomina.service.ts: Identifier 'getLiquidaciones' has already been declared. (288:13)
-2026-07-09T17:06:43.6453806Z err: #13 53.18 
-2026-07-09T17:06:43.6454315Z err: #13 53.18 [0m [90m 286 |[39m }[33m;[39m
-2026-07-09T17:06:43.6454705Z err: #13 53.18  [90m 287 |[39m
-2026-07-09T17:06:43.6456487Z err: #13 53.18 [31m[1m>[22m[39m[90m 288 |[39m [36mexport[39m [36mconst[39m getLiquidaciones [33m=[39m [36masync[39m (params[33m?[39m[33m:[39m { usuarioId[33m?[39m[33m:[39m string[33m;[39m page[33m?[39m[33m:[39m number[33m;[39m limit[33m?[39m[33m:[39m number }) [33m=>[39m {
-2026-07-09T17:06:43.6458471Z err: #13 53.18  [90m     |[39m              [31m[1m^[22m[39m
-2026-07-09T17:06:43.6459955Z err: #13 53.18  [90m 289 |[39m   [36mconst[39m { data } [33m=[39m [36mawait[39m api[33m.[39m[36mget[39m([32m'/nomina/liquidaciones'[39m[33m,[39m { params })[33m;[39m
-2026-07-09T17:06:43.6461589Z err: #13 53.18  [90m 290 |[39m   [36mreturn[39m data[33m;[39m
-2026-07-09T17:06:43.6462351Z err: #13 53.18  [90m 291 |[39m }[33m;[39m[0m
-2026-07-09T17:06:43.6463511Z err: #13 ERROR: process "/bin/sh -c NODE_OPTIONS=--max-old-space-size=4096 npx expo export -p web" did not complete successfully: exit code: 1
-2026-07-09T17:06:43.7057790Z err: ------
-2026-07-09T17:06:43.7058697Z err:  > [builder 6/6] RUN NODE_OPTIONS=--max-old-space-size=4096 npx expo export -p web:
-2026-07-09T17:06:43.7059292Z err: 53.18 Web Bundling failed 50571ms index.js (4083 modules)
-2026-07-09T17:06:43.7060051Z err: 53.18 SyntaxError: SyntaxError: /app/src/services/nomina.service.ts: Identifier 'getLiquidaciones' has already been declared. (288:13)
-2026-07-09T17:06:43.7060909Z err: 53.18 
-2026-07-09T17:06:43.7061412Z err: 53.18 [0m [90m 286 |[39m }[33m;[39m
-2026-07-09T17:06:43.7061781Z err: 53.18  [90m 287 |[39m
-2026-07-09T17:06:43.7063052Z err: 53.18 [31m[1m>[22m[39m[90m 288 |[39m [36mexport[39m [36mconst[39m getLiquidaciones [33m=[39m [36masync[39m (params[33m?[39m[33m:[39m { usuarioId[33m?[39m[33m:[39m string[33m;[39m page[33m?[39m[33m:[39m number[33m;[39m limit[33m?[39m[33m:[39m number }) [33m=>[39m {
-2026-07-09T17:06:43.7064241Z err: 53.18  [90m     |[39m              [31m[1m^[22m[39m
-2026-07-09T17:06:43.7065244Z err: 53.18  [90m 289 |[39m   [36mconst[39m { data } [33m=[39m [36mawait[39m api[33m.[39m[36mget[39m([32m'/nomina/liquidaciones'[39m[33m,[39m { params })[33m;[39m
-2026-07-09T17:06:43.7066078Z err: 53.18  [90m 290 |[39m   [36mreturn[39m data[33m;[39m
-2026-07-09T17:06:43.7066516Z err: 53.18  [90m 291 |[39m }[33m;[39m[0m
-2026-07-09T17:06:43.7066830Z err: ------
-2026-07-09T17:06:43.7132607Z err: Dockerfile:14
-2026-07-09T17:06:43.7133086Z err: --------------------
-2026-07-09T17:06:43.7133553Z err:   12 |     
-2026-07-09T17:06:43.7134048Z err:   13 |     # Construir la aplicación para web
-2026-07-09T17:06:43.7134605Z err:   14 | >>> RUN NODE_OPTIONS=--max-old-space-size=4096 npx expo export -p web
-2026-07-09T17:06:43.7135264Z err:   15 |     
-2026-07-09T17:06:43.7135539Z err:   16 |     # Etapa 2: Servidor Web (Nginx)
-2026-07-09T17:06:43.7135880Z err: --------------------
-2026-07-09T17:06:43.7136579Z err: ERROR: failed to solve: process "/bin/sh -c NODE_OPTIONS=--max-old-space-size=4096 npx expo export -p web" did not complete successfully: exit code: 1
-2026-07-09T17:06:43.7168402Z 2026/07/09 17:06:43 Process exited with status 1
-2026-07-09T17:06:43.7892505Z Cleaning up orphan processes
+# =========================================================
+# FÁBRICA DE NUEVOS FRONTENDS WEB
+# Importante: cada cliente requiere su propia imagen porque
+# la URL del backend queda "quemada" en el build de Expo/React.
+# Para agregar un cliente: copia la llamada de abajo y cambia
+# los parámetros (CLIENT_ID, PUERTO, DOMINIO, API_URL, SECRETO).
+# =========================================================
+deploy_new_client_web() {
+  CLIENT_ID=$1
+  PORT=$2
+  DOMAIN=$3
+  API_URL=$4
+  ENV_EXTRA=$5
+
+  echo "🚀 Desplegando Frontend para: $CLIENT_ID en $DOMAIN:$PORT"
+
+  # Crear .env con la URL del backend de este cliente
+  # ENV_EXTRA puede incluir variables adicionales del frontend
+  printf '%s\n' "$ENV_EXTRA" > /root/frontend-qhubomor/.env.$CLIENT_ID
+  echo "EXPO_PUBLIC_API_URL=$API_URL" >> /root/frontend-qhubomor/.env.$CLIENT_ID
+
+  # Copiar el .env al directorio raíz para que Docker lo tome en el build
+  cp /root/frontend-qhubomor/.env.$CLIENT_ID /root/frontend-qhubomor/.env
+
+  # Compilar imagen única para este cliente (con su API URL)
+  echo "Compilando imagen para $CLIENT_ID..."
+  cd /root/frontend-qhubomor
+  docker build --no-cache -t frontend-$CLIENT_ID .
+
+  # Detener y eliminar contenedor anterior de este cliente
+  docker stop frontend-$CLIENT_ID || true
+  docker rm frontend-$CLIENT_ID || true
+
+  # Levantar el nuevo contenedor
+  docker run -d \
+    --name frontend-$CLIENT_ID \
+    -p $PORT:80 \
+    --restart unless-stopped \
+    frontend-$CLIENT_ID
+
+  # Configurar subdominio + certificado SSL automáticamente
+  DOMAIN=$DOMAIN PORT=$PORT EMAIL=jonnymejia62@gmail.com \
+    bash /root/n8n/scripts/setup-nginx.sh
+
+  echo "✅ Frontend $CLIENT_ID desplegado en https://$DOMAIN"
+}
+
+# ----------------------------------------------------------
+# LISTA DE CLIENTES ACTIVOS
+# Para agregar uno nuevo: copia la línea de abajo,
+# cambia los valores y crea el secreto en GitHub.
+# ----------------------------------------------------------
+deploy_new_client_web \
+  "restaurante2" \
+  "8072" \
+  "app-restaurante2.autosystemprojects.site" \
+  "https://api-restaurante2.autosystemprojects.site/api/v1" \
+  ""
+
+2026-08-03T17:59:33.1069382Z   port: 22
+2026-08-03T17:59:33.1069582Z   timeout: 30s
+2026-08-03T17:59:33.1069974Z   proxy_port: 22
+2026-08-03T17:59:33.1070213Z   proxy_timeout: 30s
+2026-08-03T17:59:33.1070440Z ##[endgroup]
+2026-08-03T17:59:33.1185495Z ##[command]/usr/bin/docker run --name a40715f937dd33b5462aa5d9ed104dcd05c7_21e3dc --label 15a407 --workdir /github/workspace --rm -e "INPUT_HOST" -e "INPUT_USERNAME" -e "INPUT_PASSWORD" -e "INPUT_COMMAND_TIMEOUT" -e "INPUT_SCRIPT" -e "INPUT_PORT" -e "INPUT_PASSPHRASE" -e "INPUT_SYNC" -e "INPUT_USE_INSECURE_CIPHER" -e "INPUT_CIPHER" -e "INPUT_TIMEOUT" -e "INPUT_KEY" -e "INPUT_KEY_PATH" -e "INPUT_FINGERPRINT" -e "INPUT_PROXY_HOST" -e "INPUT_PROXY_PORT" -e "INPUT_PROXY_USERNAME" -e "INPUT_PROXY_PASSWORD" -e "INPUT_PROXY_PASSPHRASE" -e "INPUT_PROXY_TIMEOUT" -e "INPUT_PROXY_KEY" -e "INPUT_PROXY_KEY_PATH" -e "INPUT_PROXY_FINGERPRINT" -e "INPUT_PROXY_CIPHER" -e "INPUT_PROXY_USE_INSECURE_CIPHER" -e "INPUT_SCRIPT_STOP" -e "INPUT_ENVS" -e "INPUT_ENVS_FORMAT" -e "INPUT_DEBUG" -e "INPUT_ALLENVS" -e "INPUT_REQUEST_PTY" -e "HOME" -e "GITHUB_JOB" -e "GITHUB_REF" -e "GITHUB_SHA" -e "GITHUB_REPOSITORY" -e "GITHUB_REPOSITORY_OWNER" -e "GITHUB_REPOSITORY_OWNER_ID" -e "GITHUB_RUN_ID" -e "GITHUB_RUN_NUMBER" -e "GITHUB_RETENTION_DAYS" -e "GITHUB_RUN_ATTEMPT" -e "GITHUB_ACTOR_ID" -e "GITHUB_ACTOR" -e "GITHUB_WORKFLOW" -e "GITHUB_HEAD_REF" -e "GITHUB_BASE_REF" -e "GITHUB_EVENT_NAME" -e "GITHUB_SERVER_URL" -e "GITHUB_API_URL" -e "GITHUB_GRAPHQL_URL" -e "GITHUB_REF_NAME" -e "GITHUB_REF_PROTECTED" -e "GITHUB_REF_TYPE" -e "GITHUB_WORKFLOW_REF" -e "GITHUB_WORKFLOW_SHA" -e "GITHUB_REPOSITORY_ID" -e "GITHUB_TRIGGERING_ACTOR" -e "GITHUB_WORKSPACE" -e "GITHUB_ACTION" -e "GITHUB_EVENT_PATH" -e "GITHUB_ACTION_REPOSITORY" -e "GITHUB_ACTION_REF" -e "GITHUB_PATH" -e "GITHUB_ENV" -e "GITHUB_STEP_SUMMARY" -e "GITHUB_STATE" -e "GITHUB_OUTPUT" -e "GITHUB_ARTIFACTS" -e "GITHUB_ARTIFACTS_LIST" -e "RUNNER_OS" -e "RUNNER_ARCH" -e "RUNNER_NAME" -e "RUNNER_ENVIRONMENT" -e "RUNNER_TOOL_CACHE" -e "RUNNER_TEMP" -e "RUNNER_WORKSPACE" -e "ACTIONS_RUNTIME_URL" -e "ACTIONS_RUNTIME_TOKEN" -e "ACTIONS_CACHE_URL" -e "ACTIONS_RESULTS_URL" -e "ACTIONS_ORCHESTRATION_ID" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work/_temp":"/github/runner_temp" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" -v "/home/runner/work/_temp/_runner_file_commands":"/github/file_commands" -v "/home/runner/work/apppuntodeventa/apppuntodeventa":"/github/workspace" 15a407:15f937dd33b5462aa5d9ed104dcd05c7
+2026-08-03T17:59:33.3342977Z ======CMD======
+2026-08-03T17:59:33.3343280Z set -e
+2026-08-03T17:59:33.3343415Z 
+2026-08-03T17:59:33.3431951Z # 0. Limpiar imagenes viejas del proyecto y caché de construcción
+2026-08-03T17:59:33.3432492Z echo "Limpiando espacio en disco de imagenes viejas..."
+2026-08-03T17:59:33.3432857Z docker image prune -f || true
+2026-08-03T17:59:33.3433178Z docker builder prune -f || true
+2026-08-03T17:59:33.3433356Z 
+2026-08-03T17:59:33.3433495Z # 1. Crear directorio del proyecto si no existe
+2026-08-03T17:59:33.3433849Z mkdir -p /root/frontend-qhubomor
+2026-08-03T17:59:33.3434410Z cd /root/frontend-qhubomor
+2026-08-03T17:59:33.3434810Z 
+2026-08-03T17:59:33.3434984Z # 2. Clonar el repositorio o actualizarlo si ya existe
+2026-08-03T17:59:33.3435322Z if [ ! -d ".git" ]; then
+2026-08-03T17:59:33.3435610Z   echo "Clonando repositorio por primera vez..."
+2026-08-03T17:59:33.3436111Z   # Reemplaza 'JhonnM62/frontend-repo' por el nombre real de tu repositorio en GitHub
+2026-08-03T17:59:33.3437066Z   git clone https://***@github.com/JhonnM62/apppuntodeventa.git .
+2026-08-03T17:59:33.3437496Z else
+2026-08-03T17:59:33.3437749Z   echo "Actualizando repositorio existente..."
+2026-08-03T17:59:33.3438278Z   # Asegúrate de colocar la ruta correcta de tu repositorio en GitHub
+2026-08-03T17:59:33.3439004Z   git remote set-url origin https://***@github.com/JhonnM62/apppuntodeventa.git
+2026-08-03T17:59:33.3439702Z   git fetch --all
+2026-08-03T17:59:33.3439943Z   git reset --hard origin/main
+2026-08-03T17:59:33.3440201Z   git clean -fd
+2026-08-03T17:59:33.3440696Z fi
+2026-08-03T17:59:33.3440838Z 
+2026-08-03T17:59:33.3441035Z # 3. Inyectar las variables de entorno desde los secretos de GitHub
+2026-08-03T17:59:33.3441660Z echo "***" > .env
+2026-08-03T17:59:33.3441787Z 
+2026-08-03T17:59:33.3441948Z # 4. Construir la nueva imagen de Docker (sin cache)
+2026-08-03T17:59:33.3442304Z echo "Construyendo imagen Docker para web..."
+2026-08-03T17:59:33.3442653Z docker build --no-cache -t qhubomor-frontend .
+2026-08-03T17:59:33.3442866Z 
+2026-08-03T17:59:33.3443020Z # 5. Detener y eliminar el contenedor anterior si existe
+2026-08-03T17:59:33.3443373Z echo "Deteniendo contenedor anterior..."
+2026-08-03T17:59:33.3443691Z docker stop qhubomor-frontend-app || true
+2026-08-03T17:59:33.3444003Z docker rm qhubomor-frontend-app || true
+2026-08-03T17:59:33.3444765Z 
+2026-08-03T17:59:33.3444923Z # 6. Levantar el nuevo contenedor en el puerto 8062
+2026-08-03T17:59:33.3445287Z echo "Levantando nuevo contenedor..."
+2026-08-03T17:59:33.3445585Z docker run -d \
+2026-08-03T17:59:33.3445892Z   --name qhubomor-frontend-app \
+2026-08-03T17:59:33.3446174Z   -p 8062:80 \
+2026-08-03T17:59:33.3446406Z   --restart unless-stopped \
+2026-08-03T17:59:33.3446657Z   qhubomor-frontend
+2026-08-03T17:59:33.3446792Z 
+2026-08-03T17:59:33.3447034Z echo "¡Despliegue del Frontend completado exitosamente!"
+2026-08-03T17:59:33.3447294Z 
+2026-08-03T17:59:33.3447416Z # =========================================================
+2026-08-03T17:59:33.3447760Z # FÁBRICA DE NUEVOS FRONTENDS WEB
+2026-08-03T17:59:33.3448103Z # Importante: cada cliente requiere su propia imagen porque
+2026-08-03T17:59:33.3448530Z # la URL del backend queda "quemada" en el build de Expo/React.
+2026-08-03T17:59:33.3448949Z # Para agregar un cliente: copia la llamada de abajo y cambia
+2026-08-03T17:59:33.3449420Z # los parámetros (CLIENT_ID, PUERTO, DOMINIO, API_URL, SECRETO).
+2026-08-03T17:59:33.3449806Z # =========================================================
+2026-08-03T17:59:33.3450105Z deploy_new_client_web() {
+2026-08-03T17:59:33.3450347Z   CLIENT_ID=$1
+2026-08-03T17:59:33.3450556Z   PORT=$2
+2026-08-03T17:59:33.3450751Z   DOMAIN=$3
+2026-08-03T17:59:33.3450939Z   API_URL=$4
+2026-08-03T17:59:33.3451134Z   ENV_EXTRA=$5
+2026-08-03T17:59:33.3451251Z 
+2026-08-03T17:59:33.3451488Z   echo "🚀 Desplegando Frontend para: $CLIENT_ID en $DOMAIN:$PORT"
+2026-08-03T17:59:33.3451760Z 
+2026-08-03T17:59:33.3451900Z   # Crear .env con la URL del backend de este cliente
+2026-08-03T17:59:33.3452285Z   # ENV_EXTRA puede incluir variables adicionales del frontend
+2026-08-03T17:59:33.3452714Z   printf '%s\n' "$ENV_EXTRA" > /root/frontend-qhubomor/.env.$CLIENT_ID
+2026-08-03T17:59:33.3453207Z   echo "EXPO_PUBLIC_API_URL=$API_URL" >> /root/frontend-qhubomor/.env.$CLIENT_ID
+2026-08-03T17:59:33.3453516Z 
+2026-08-03T17:59:33.3453775Z   # Copiar el .env al directorio raíz para que Docker lo tome en el build
+2026-08-03T17:59:33.3454577Z   cp /root/frontend-qhubomor/.env.$CLIENT_ID /root/frontend-qhubomor/.env
+2026-08-03T17:59:33.3454897Z 
+2026-08-03T17:59:33.3455138Z   # Compilar imagen única para este cliente (con su API URL)
+2026-08-03T17:59:33.3455523Z   echo "Compilando imagen para $CLIENT_ID..."
+2026-08-03T17:59:33.3455831Z   cd /root/frontend-qhubomor
+2026-08-03T17:59:33.3456141Z   docker build --no-cache -t frontend-$CLIENT_ID .
+2026-08-03T17:59:33.3456361Z 
+2026-08-03T17:59:33.3456519Z   # Detener y eliminar contenedor anterior de este cliente
+2026-08-03T17:59:33.3456869Z   docker stop frontend-$CLIENT_ID || true
+2026-08-03T17:59:33.3457175Z   docker rm frontend-$CLIENT_ID || true
+2026-08-03T17:59:33.3457358Z 
+2026-08-03T17:59:33.3457472Z   # Levantar el nuevo contenedor
+2026-08-03T17:59:33.3457725Z   docker run -d \
+2026-08-03T17:59:33.3457955Z     --name frontend-$CLIENT_ID \
+2026-08-03T17:59:33.3458217Z     -p $PORT:80 \
+2026-08-03T17:59:33.3458441Z     --restart unless-stopped \
+2026-08-03T17:59:33.3458699Z     frontend-$CLIENT_ID
+2026-08-03T17:59:33.3458849Z 
+2026-08-03T17:59:33.3459068Z   # Configurar subdominio + certificado SSL automáticamente
+2026-08-03T17:59:33.3459617Z   DOMAIN=$DOMAIN PORT=$PORT EMAIL=jonnymejia62@gmail.com \
+2026-08-03T17:59:33.3459982Z     bash /root/n8n/scripts/setup-nginx.sh
+2026-08-03T17:59:33.3460178Z 
+2026-08-03T17:59:33.3460400Z   echo "✅ Frontend $CLIENT_ID desplegado en https://$DOMAIN"
+2026-08-03T17:59:33.3460732Z }
+2026-08-03T17:59:33.3460833Z 
+2026-08-03T17:59:33.3460973Z # ----------------------------------------------------------
+2026-08-03T17:59:33.3461284Z # LISTA DE CLIENTES ACTIVOS
+2026-08-03T17:59:33.3461615Z # Para agregar uno nuevo: copia la línea de abajo,
+2026-08-03T17:59:33.3461961Z # cambia los valores y crea el secreto en GitHub.
+2026-08-03T17:59:33.3462300Z # ----------------------------------------------------------
+2026-08-03T17:59:33.3462612Z deploy_new_client_web \
+2026-08-03T17:59:33.3462879Z   "restaurante2" \
+2026-08-03T17:59:33.3463203Z   "8072" \
+2026-08-03T17:59:33.3463446Z   "app-restaurante2.autosystemprojects.site" \
+2026-08-03T17:59:33.3463875Z   "https://api-restaurante2.autosystemprojects.site/api/v1" \
+2026-08-03T17:59:33.3464488Z   ""
+2026-08-03T17:59:33.3464602Z 
+2026-08-03T17:59:33.3464689Z ======END======
+2026-08-03T17:59:34.9379205Z out: Limpiando espacio en disco de imagenes viejas...
+2026-08-03T17:59:34.9840371Z out: Total reclaimed space: 0B
+2026-08-03T17:59:35.1140470Z out: Total:	0B
+2026-08-03T17:59:35.1208250Z out: Actualizando repositorio existente...
+2026-08-03T17:59:35.1359711Z out: Fetching origin
+2026-08-03T17:59:35.5115255Z err: From https://github.com/JhonnM62/apppuntodeventa
+2026-08-03T17:59:35.5115873Z err:    b7c2311..afe20b1  main       -> origin/main
+2026-08-03T17:59:35.5333853Z out: HEAD is now at afe20b1 feat: implement GitHub Actions deployment workflow and add build profile for restaurante2 in eas.json
+2026-08-03T17:59:35.5367007Z out: Construyendo imagen Docker para web...
+2026-08-03T17:59:35.8470244Z err: #0 building with "default" instance using docker driver
+2026-08-03T17:59:35.8471179Z err: #1 [internal] load build definition from Dockerfile
+2026-08-03T17:59:35.8472053Z err: #1 transferring dockerfile: 851B done
+2026-08-03T17:59:35.8472692Z err: #1 DONE 0.1s
+2026-08-03T17:59:35.8473409Z err: #2 [internal] load metadata for docker.io/library/node:20-slim
+2026-08-03T17:59:35.8567802Z err: #2 DONE 0.2s
+2026-08-03T17:59:35.8568483Z err: #3 [internal] load metadata for docker.io/library/nginx:alpine
+2026-08-03T17:59:36.4377845Z err: #3 DONE 0.7s
+2026-08-03T17:59:36.5529158Z err: #4 [internal] load .dockerignore
+2026-08-03T17:59:36.5529880Z err: #4 transferring context: 2B done
+2026-08-03T17:59:36.5530496Z err: #4 DONE 0.0s
+2026-08-03T17:59:36.5531652Z err: #5 [deps 1/6] FROM docker.io/library/node:20-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0
+2026-08-03T17:59:36.5532946Z err: #5 CACHED
+2026-08-03T17:59:36.5533826Z err: #6 [stage-1 1/4] FROM docker.io/library/nginx:alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3aeac22d2a470c1752
+2026-08-03T17:59:36.5535564Z err: #6 resolve docker.io/library/nginx:alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3aeac22d2a470c1752 0.0s done
+2026-08-03T17:59:36.5536374Z err: #6 CACHED
+2026-08-03T17:59:36.5536631Z err: #7 [builder 2/6] WORKDIR /app
+2026-08-03T17:59:36.5536937Z err: #7 DONE 0.1s
+2026-08-03T17:59:36.5537194Z err: #8 [internal] load build context
+2026-08-03T17:59:37.1439377Z err: #8 transferring context: 96.13MB 0.5s done
+2026-08-03T17:59:37.1440178Z err: #8 DONE 0.6s
+2026-08-03T17:59:37.1440785Z err: #9 [stage-1 2/4] COPY nginx.conf /etc/nginx/conf.d/default.conf
+2026-08-03T17:59:37.3150865Z err: #9 DONE 0.2s
+2026-08-03T17:59:37.3151357Z err: #10 [builder 3/6] COPY package*.json ./
+2026-08-03T17:59:37.4888899Z err: #10 DONE 0.2s
+2026-08-03T17:59:37.4889821Z err: #11 [builder 4/6] RUN npm install --legacy-peer-deps
+2026-08-03T17:59:41.3072522Z err: #11 3.969 npm warn deprecated whatwg-encoding@2.0.0: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+2026-08-03T17:59:41.7886123Z err: #11 4.451 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+2026-08-03T17:59:43.4721261Z err: #11 6.134 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-08-03T17:59:44.0856086Z err: #11 6.747 npm warn deprecated uuid@7.0.3: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+2026-08-03T17:59:44.4243625Z err: #11 7.086 npm warn deprecated domexception@4.0.0: Use your platform's native DOMException instead
+2026-08-03T17:59:44.9061865Z err: #11 7.568 npm warn deprecated abab@2.0.6: Use your platform's native atob() and btoa() methods instead
+2026-08-03T17:59:46.1072014Z err: #11 8.769 npm warn deprecated @testing-library/jest-native@5.4.3: DEPRECATED: This package is no longer maintained.
+2026-08-03T17:59:46.1073423Z err: #11 8.769 npm warn deprecated Please use the built-in Jest matchers available in @testing-library/react-native v12.4+.
+2026-08-03T17:59:46.1074587Z err: #11 8.769 npm warn deprecated
+2026-08-03T17:59:46.1075442Z err: #11 8.769 npm warn deprecated See migration guide: https://callstack.github.io/react-native-testing-library/docs/migration/jest-matchers
+2026-08-03T17:59:46.2427116Z err: #11 8.904 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-03T17:59:46.3629849Z err: #11 9.025 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-03T17:59:46.5476527Z err: #11 9.059 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-03T17:59:46.8071907Z err: #11 9.463 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-03T17:59:47.0819256Z err: #11 9.744 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-03T17:59:47.5387032Z err: #11 10.20 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-03T17:59:48.0699138Z err: #11 10.30 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-03T17:59:58.8023490Z err: #11 21.46 
+2026-08-03T17:59:58.8024060Z err: #11 21.46 > qhubomor-pos-app@1.0.4 prepare
+2026-08-03T17:59:58.8024893Z err: #11 21.46 > husky
+2026-08-03T17:59:58.8025178Z err: #11 21.46 
+2026-08-03T17:59:58.9905609Z err: #11 21.51 .git can't be found
+2026-08-03T17:59:58.9906447Z err: #11 21.53 added 1198 packages, and audited 1199 packages in 21s
+2026-08-03T17:59:58.9907009Z err: #11 21.53 
+2026-08-03T17:59:58.9907663Z err: #11 21.53 120 packages are looking for funding
+2026-08-03T17:59:58.9908366Z err: #11 21.53   run `npm fund` for details
+2026-08-03T17:59:58.9909038Z err: #11 21.65 
+2026-08-03T17:59:58.9909683Z err: #11 21.65 29 vulnerabilities (2 low, 17 moderate, 8 high, 2 critical)
+2026-08-03T17:59:58.9910422Z err: #11 21.65 
+2026-08-03T17:59:58.9911053Z err: #11 21.65 To address issues that do not require attention, run:
+2026-08-03T17:59:58.9911820Z err: #11 21.65   npm audit fix
+2026-08-03T17:59:58.9912417Z err: #11 21.65 
+2026-08-03T17:59:58.9913072Z err: #11 21.65 To address all issues (including breaking changes), run:
+2026-08-03T17:59:58.9914005Z err: #11 21.65   npm audit fix --force
+2026-08-03T17:59:58.9914980Z err: #11 21.65 
+2026-08-03T17:59:58.9915551Z err: #11 21.65 Run `npm audit` for details.
+2026-08-03T17:59:59.1426277Z err: #11 21.65 npm notice
+2026-08-03T17:59:59.1426895Z err: #11 21.65 npm notice New major version of npm available! 10.8.2 -> 12.0.2
+2026-08-03T17:59:59.1427744Z err: #11 21.65 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+2026-08-03T17:59:59.1428534Z err: #11 21.65 npm notice To update run: npm install -g npm@12.0.2
+2026-08-03T17:59:59.1429053Z err: #11 21.65 npm notice
+2026-08-03T17:59:59.1876575Z err: #11 DONE 21.8s
+2026-08-03T17:59:59.3446842Z err: #12 [builder 5/6] COPY . .
+2026-08-03T17:59:59.6530046Z err: #12 DONE 0.5s
+2026-08-03T17:59:59.8067923Z err: #13 [builder 6/6] RUN NODE_OPTIONS=--max-old-space-size=4096 npx expo export -p web
+2026-08-03T18:00:00.7751650Z err: #13 1.119 env: load .env
+2026-08-03T18:00:01.3358604Z err: #13 1.679 env: export EXPO_PUBLIC_API_URL
+2026-08-03T18:00:01.8082360Z err: #13 2.152 Starting Metro Bundler
+2026-08-03T18:00:04.8372390Z err: #13 5.180 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 47.9% (43/80)
+2026-08-03T18:00:08.3387301Z err: #13 8.682 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 47.9% (117/348)
+2026-08-03T18:00:11.8385829Z err: #13 12.18 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 47.9% (144/384)
+2026-08-03T18:00:15.3381019Z err: #13 15.68 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 47.9% (322/623)
+2026-08-03T18:00:18.8395550Z err: #13 19.18 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 47.9% ( 449/2779)
+2026-08-03T18:00:22.3797567Z err: #13 22.72 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 47.9% ( 730/3245)
+2026-08-03T18:00:25.9087629Z err: #13 26.25 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 47.9% (1367/3439)
+2026-08-03T18:00:29.4088036Z err: #13 29.75 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 47.9% (2218/3439)
+2026-08-03T18:00:32.9085432Z err: #13 33.25 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.5% (2879/3558)
+2026-08-03T18:00:36.4149971Z err: #13 36.76 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 82.2% (3292/3631)
+2026-08-03T18:00:39.9165985Z err: #13 40.26 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 89.9% (3536/3863)
+2026-08-03T18:00:43.4176668Z err: #13 43.76 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 98.2% (3986/4023)
+2026-08-03T18:00:44.7466796Z err: #13 45.09 Web Bundled 41910ms index.js (4098 modules)
+2026-08-03T18:00:45.3496791Z err: #13 45.69 Could not parse Expo config: android.googleServicesFile: "./google-services.json"
+2026-08-03T18:00:45.5678676Z err: #13 45.71 
+2026-08-03T18:00:45.5679529Z err: #13 45.73 › Assets (30):
+2026-08-03T18:00:45.5680501Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.3f78af31cca60105799838a1a7a59fbd.ttf (130 kB)
+2026-08-03T18:00:45.5681752Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Entypo.31b5ffea3daddc69dd01a1f3d6cf63c5.ttf (66.2 kB)
+2026-08-03T18:00:45.5682981Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/EvilIcons.140c53a7643ea949007aa9a282153849.ttf (13.5 kB)
+2026-08-03T18:00:45.5684557Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ca4b48e04dc1ce10bfbddb262c8b835f.ttf (55.6 kB)
+2026-08-03T18:00:45.5685788Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome.b06871f281fee6b241d60582ae9369b9.ttf (166 kB)
+2026-08-03T18:00:45.5687327Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Brands.3b89dd103490708d19a95adcae52210e.ttf (134 kB)
+2026-08-03T18:00:45.5688647Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Regular.1f77739ca9ff2188b539c36f30ffa2be.ttf (33.7 kB)
+2026-08-03T18:00:45.5689959Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Solid.605ed7926cf39a2ad5ec2d1f9d391d3d.ttf (203 kB)
+2026-08-03T18:00:45.5691149Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Brands.56c8d80832e37783f12c05db7c8849e2.ttf (209 kB)
+2026-08-03T18:00:45.5692232Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Regular.370dd5af19f8364907b6e2c41f45dbbf.ttf (68 kB)
+2026-08-03T18:00:45.5693460Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Solid.adec7d6f310bc577f05e8fe06a5daccf.ttf (424 kB)
+2026-08-03T18:00:45.5694648Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Fontisto.b49ae8ab2dbccb02c4d11caaacf09eab.ttf (314 kB)
+2026-08-03T18:00:45.5695643Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Foundation.e20945d7c929279ef7a6f1db184a4470.ttf (57 kB)
+2026-08-03T18:00:45.5696628Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.b4eb097d35f44ed943676fd56f6bdc51.ttf (390 kB)
+2026-08-03T18:00:45.5697688Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.6e435534bd35da5fef04168860a9b8fa.ttf (1.31 MB)
+2026-08-03T18:00:45.5698775Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.4e85bc9ebe07e0340c9c4fc2f6c38908.ttf (357 kB)
+2026-08-03T18:00:45.5699789Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Octicons.871378c6eab492a3e689a9385dc45a12.ttf (69.4 kB)
+2026-08-03T18:00:45.5700802Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/SimpleLineIcons.d2285965fe34b05465047401b8595dd0.ttf (54.1 kB)
+2026-08-03T18:00:45.5701799Z err: #13 45.73 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Zocial.1681f34aaca71b8dfb70756bca331eb2.ttf (25.8 kB)
+2026-08-03T18:00:45.5702761Z err: #13 45.73 node_modules/@react-navigation/elements/lib/module/assets/back-icon-mask.0a328cd9c1afd0afe8e3b1ec5165b1b4.png (653 B)
+2026-08-03T18:00:45.5703654Z err: #13 45.73 node_modules/@react-navigation/elements/lib/module/assets/back-icon.35ba0eaec5a4f5ed12ca16fabeae451d.png (207 B)
+2026-08-03T18:00:45.5704696Z err: #13 45.73 node_modules/@react-navigation/elements/lib/module/assets/clear-icon.c94f6478e7ae0cdd9f15de1fcb9e5e55.png (4 variations | 425 B)
+2026-08-03T18:00:45.5705657Z err: #13 45.73 node_modules/@react-navigation/elements/lib/module/assets/close-icon.808e1b1b9b53114ec2838071a7e6daa7.png (4 variations | 235 B)
+2026-08-03T18:00:45.5706561Z err: #13 45.73 node_modules/@react-navigation/elements/lib/module/assets/search-icon.286d67d3f74808a60a78d3ebf1a5fb57.png (928 B)
+2026-08-03T18:00:45.5707120Z err: #13 45.73 
+2026-08-03T18:00:45.5707400Z err: #13 45.73 › web bundles (2):
+2026-08-03T18:00:45.5707786Z err: #13 45.73 _expo/static/css/global-d6fd24242277608cd5021a4497f62140.css (61.9 kB)
+2026-08-03T18:00:45.5708315Z err: #13 45.73 _expo/static/js/web/index-c9986011bcf9ba250a7e632cb023f56c.js (7.64 MB)
+2026-08-03T18:00:45.5708708Z err: #13 45.73 
+2026-08-03T18:00:45.5708957Z err: #13 45.73 › Files (3):
+2026-08-03T18:00:45.5709202Z err: #13 45.73 favicon.ico (14.5 kB)
+2026-08-03T18:00:45.5709471Z err: #13 45.73 index.html (1.41 kB)
+2026-08-03T18:00:45.5709737Z err: #13 45.73 metadata.json (49 B)
+2026-08-03T18:00:45.5709991Z err: #13 45.76 
+2026-08-03T18:00:45.5710209Z err: #13 45.76 Exported: dist
+2026-08-03T18:00:49.1051167Z err: #13 DONE 49.4s
+2026-08-03T18:00:49.9104515Z err: #14 [stage-1 3/4] COPY --from=builder /app/dist /usr/share/nginx/html
+2026-08-03T18:00:50.1298870Z err: #14 DONE 0.1s
+2026-08-03T18:00:50.1299941Z err: #15 [stage-1 4/4] RUN sed -i 's/<script src=/<script type="module" src=/g' /usr/share/nginx/html/index.html
+2026-08-03T18:00:50.2349012Z err: #15 DONE 0.3s
+2026-08-03T18:00:50.3199995Z err: #16 exporting to image
+2026-08-03T18:00:50.3200406Z err: #16 exporting layers 0.1s done
+2026-08-03T18:00:50.3201027Z err: #16 writing image sha256:f40363bd96e55b5e058b417bc72258bc8a538b84886dcd93152bb213fc9cd21a done
+2026-08-03T18:00:50.3201738Z err: #16 naming to docker.io/library/qhubomor-frontend done
+2026-08-03T18:00:50.3202176Z err: #16 DONE 0.1s
+2026-08-03T18:00:50.3244147Z out: Deteniendo contenedor anterior...
+2026-08-03T18:00:50.6325303Z out: qhubomor-frontend-app
+2026-08-03T18:00:50.6556723Z out: qhubomor-frontend-app
+2026-08-03T18:00:50.6567580Z out: Levantando nuevo contenedor...
+2026-08-03T18:00:50.6862560Z out: 92ad39ceb244b787bf8e02f9890b7680acb9d64ed93984fb90d682d28997df49
+2026-08-03T18:00:50.8179762Z out: ¡Despliegue del Frontend completado exitosamente!
+2026-08-03T18:00:50.8180606Z out: 🚀 Desplegando Frontend para: restaurante2 en app-restaurante2.autosystemprojects.site:8072
+2026-08-03T18:00:50.8231903Z out: Compilando imagen para restaurante2...
+2026-08-03T18:00:51.2616990Z err: #0 building with "default" instance using docker driver
+2026-08-03T18:00:51.2617482Z err: #1 [internal] load build definition from Dockerfile
+2026-08-03T18:00:51.2617868Z err: #1 transferring dockerfile: 851B done
+2026-08-03T18:00:51.2618179Z err: #1 DONE 0.0s
+2026-08-03T18:00:51.2618520Z err: #2 [internal] load metadata for docker.io/library/node:20-slim
+2026-08-03T18:00:51.4860744Z err: #2 ...
+2026-08-03T18:00:51.4861252Z err: #3 [internal] load metadata for docker.io/library/nginx:alpine
+2026-08-03T18:00:51.4861724Z err: #3 DONE 0.4s
+2026-08-03T18:00:51.6043318Z err: #2 [internal] load metadata for docker.io/library/node:20-slim
+2026-08-03T18:00:51.6043831Z err: #2 DONE 0.4s
+2026-08-03T18:00:51.6044106Z err: #4 [internal] load .dockerignore
+2026-08-03T18:00:51.6044842Z err: #4 transferring context: 2B done
+2026-08-03T18:00:51.6045169Z err: #4 DONE 0.0s
+2026-08-03T18:00:51.6045786Z err: #5 [builder 1/6] FROM docker.io/library/node:20-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0
+2026-08-03T18:00:51.6046474Z err: #5 DONE 0.0s
+2026-08-03T18:00:51.6046746Z err: #6 [builder 2/6] WORKDIR /app
+2026-08-03T18:00:51.6047058Z err: #6 CACHED
+2026-08-03T18:00:51.6047667Z err: #7 [stage-1 1/4] FROM docker.io/library/nginx:alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3aeac22d2a470c1752
+2026-08-03T18:00:51.6048707Z err: #7 resolve docker.io/library/nginx:alpine@sha256:4a73073bd557c65b759505da037898b61f1be6cbcc3c2c3aeac22d2a470c1752 done
+2026-08-03T18:00:51.6049384Z err: #7 CACHED
+2026-08-03T18:00:51.6049641Z err: #8 [internal] load build context
+2026-08-03T18:00:51.6049998Z err: #8 transferring context: 117.87kB 0.0s done
+2026-08-03T18:00:51.7203961Z err: #8 DONE 0.1s
+2026-08-03T18:00:51.7204882Z err: #9 [stage-1 2/4] COPY nginx.conf /etc/nginx/conf.d/default.conf
+2026-08-03T18:00:51.7205441Z err: #9 DONE 0.1s
+2026-08-03T18:00:51.7584510Z err: #10 [builder 3/6] COPY package*.json ./
+2026-08-03T18:00:51.7585433Z err: #10 DONE 0.1s
+2026-08-03T18:00:51.9028650Z err: #11 [builder 4/6] RUN npm install --legacy-peer-deps
+2026-08-03T18:00:55.0464440Z err: #11 3.301 npm warn deprecated whatwg-encoding@2.0.0: Use @exodus/bytes instead for a more spec-conformant and faster implementation
+2026-08-03T18:00:55.5564545Z err: #11 3.811 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
+2026-08-03T18:00:56.4492670Z err: #11 4.707 npm warn deprecated uuid@7.0.3: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+2026-08-03T18:00:56.9216392Z err: #11 5.180 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+2026-08-03T18:00:57.7673628Z err: #11 6.026 npm warn deprecated domexception@4.0.0: Use your platform's native DOMException instead
+2026-08-03T18:00:58.3679567Z err: #11 6.626 npm warn deprecated abab@2.0.6: Use your platform's native atob() and btoa() methods instead
+2026-08-03T18:00:59.0043506Z err: #11 7.263 npm warn deprecated @testing-library/jest-native@5.4.3: DEPRECATED: This package is no longer maintained.
+2026-08-03T18:00:59.0045634Z err: #11 7.263 npm warn deprecated Please use the built-in Jest matchers available in @testing-library/react-native v12.4+.
+2026-08-03T18:00:59.0047254Z err: #11 7.263 npm warn deprecated
+2026-08-03T18:00:59.0048151Z err: #11 7.263 npm warn deprecated See migration guide: https://callstack.github.io/react-native-testing-library/docs/migration/jest-matchers
+2026-08-03T18:00:59.5578039Z err: #11 7.816 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-03T18:00:59.7755014Z err: #11 8.034 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-03T18:00:59.9469845Z err: #11 8.054 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-03T18:01:00.2088992Z err: #11 8.467 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-03T18:01:00.4655015Z err: #11 8.724 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-03T18:01:00.8371422Z err: #11 9.095 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-03T18:01:01.0026923Z err: #11 9.261 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+2026-08-03T18:01:10.9882417Z err: #11 19.25 
+2026-08-03T18:01:10.9882850Z err: #11 19.25 > qhubomor-pos-app@1.0.4 prepare
+2026-08-03T18:01:10.9883329Z err: #11 19.25 > husky
+2026-08-03T18:01:10.9883653Z err: #11 19.25 
+2026-08-03T18:01:11.1793949Z err: #11 19.29 .git can't be found
+2026-08-03T18:01:11.1795162Z err: #11 19.31 added 1198 packages, and audited 1199 packages in 19s
+2026-08-03T18:01:11.1795733Z err: #11 19.31 
+2026-08-03T18:01:11.1796103Z err: #11 19.31 120 packages are looking for funding
+2026-08-03T18:01:11.1796585Z err: #11 19.31   run `npm fund` for details
+2026-08-03T18:01:11.1796992Z err: #11 19.44 
+2026-08-03T18:01:11.1797464Z err: #11 19.44 29 vulnerabilities (2 low, 17 moderate, 8 high, 2 critical)
+2026-08-03T18:01:11.1798003Z err: #11 19.44 
+2026-08-03T18:01:11.1798751Z err: #11 19.44 To address issues that do not require attention, run:
+2026-08-03T18:01:11.1799284Z err: #11 19.44   npm audit fix
+2026-08-03T18:01:11.1799626Z err: #11 19.44 
+2026-08-03T18:01:11.1800043Z err: #11 19.44 To address all issues (including breaking changes), run:
+2026-08-03T18:01:11.1800572Z err: #11 19.44   npm audit fix --force
+2026-08-03T18:01:11.1800882Z err: #11 19.44 
+2026-08-03T18:01:11.1801141Z err: #11 19.44 Run `npm audit` for details.
+2026-08-03T18:01:11.3310048Z err: #11 19.44 npm notice
+2026-08-03T18:01:11.3310812Z err: #11 19.44 npm notice New major version of npm available! 10.8.2 -> 12.0.2
+2026-08-03T18:01:11.3311567Z err: #11 19.44 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+2026-08-03T18:01:11.3312266Z err: #11 19.44 npm notice To update run: npm install -g npm@12.0.2
+2026-08-03T18:01:11.3313079Z err: #11 19.44 npm notice
+2026-08-03T18:01:11.4463093Z err: #11 DONE 19.7s
+2026-08-03T18:01:11.6027566Z err: #12 [builder 5/6] COPY . .
+2026-08-03T18:01:11.8452437Z err: #12 DONE 0.4s
+2026-08-03T18:01:12.0025956Z err: #13 [builder 6/6] RUN NODE_OPTIONS=--max-old-space-size=4096 npx expo export -p web
+2026-08-03T18:01:12.7555337Z err: #13 0.904 env: load .env
+2026-08-03T18:01:13.0893840Z err: #13 1.238 env: export EXPO_PUBLIC_API_URL
+2026-08-03T18:01:13.3871843Z err: #13 1.535 Starting Metro Bundler
+2026-08-03T18:01:16.5991897Z err: #13 4.747 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 46.7% ( 67/165)
+2026-08-03T18:01:20.0996968Z err: #13 8.248 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 46.7% (140/375)
+2026-08-03T18:01:23.6001210Z err: #13 11.75 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 46.7% (200/471)
+2026-08-03T18:01:27.1011711Z err: #13 15.25 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 46.7% (334/633)
+2026-08-03T18:01:30.6099168Z err: #13 18.76 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 46.7% ( 473/2794)
+2026-08-03T18:01:34.1103486Z err: #13 22.26 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 46.7% (1004/2959)
+2026-08-03T18:01:37.6105060Z err: #13 25.76 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 46.7% (1866/2959)
+2026-08-03T18:01:41.1415253Z err: #13 29.29 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 64.0% (2610/3455)
+2026-08-03T18:01:44.6835991Z err: #13 32.83 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 68.8% (3024/3645)
+2026-08-03T18:01:48.1831185Z err: #13 36.33 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 88.1% (3431/3655)
+2026-08-03T18:01:51.6846754Z err: #13 39.83 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.4% (3767/3962)
+2026-08-03T18:01:54.3831800Z err: #13 42.53 Web Bundled 40318ms index.js (4098 modules)
+2026-08-03T18:01:55.0565116Z err: #13 43.20 Could not parse Expo config: android.googleServicesFile: "./google-services.json"
+2026-08-03T18:01:55.2766318Z err: #13 43.23 
+2026-08-03T18:01:55.2767101Z err: #13 43.25 › Assets (30):
+2026-08-03T18:01:55.2768413Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.3f78af31cca60105799838a1a7a59fbd.ttf (130 kB)
+2026-08-03T18:01:55.2770288Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Entypo.31b5ffea3daddc69dd01a1f3d6cf63c5.ttf (66.2 kB)
+2026-08-03T18:01:55.2771641Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/EvilIcons.140c53a7643ea949007aa9a282153849.ttf (13.5 kB)
+2026-08-03T18:01:55.2772968Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ca4b48e04dc1ce10bfbddb262c8b835f.ttf (55.6 kB)
+2026-08-03T18:01:55.2774505Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome.b06871f281fee6b241d60582ae9369b9.ttf (166 kB)
+2026-08-03T18:01:55.2775899Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Brands.3b89dd103490708d19a95adcae52210e.ttf (134 kB)
+2026-08-03T18:01:55.2777337Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Regular.1f77739ca9ff2188b539c36f30ffa2be.ttf (33.7 kB)
+2026-08-03T18:01:55.2778784Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Solid.605ed7926cf39a2ad5ec2d1f9d391d3d.ttf (203 kB)
+2026-08-03T18:01:55.2779874Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Brands.56c8d80832e37783f12c05db7c8849e2.ttf (209 kB)
+2026-08-03T18:01:55.2780920Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Regular.370dd5af19f8364907b6e2c41f45dbbf.ttf (68 kB)
+2026-08-03T18:01:55.2781968Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Solid.adec7d6f310bc577f05e8fe06a5daccf.ttf (424 kB)
+2026-08-03T18:01:55.2782977Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Fontisto.b49ae8ab2dbccb02c4d11caaacf09eab.ttf (314 kB)
+2026-08-03T18:01:55.2783958Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Foundation.e20945d7c929279ef7a6f1db184a4470.ttf (57 kB)
+2026-08-03T18:01:55.2785243Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.b4eb097d35f44ed943676fd56f6bdc51.ttf (390 kB)
+2026-08-03T18:01:55.2786300Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.6e435534bd35da5fef04168860a9b8fa.ttf (1.31 MB)
+2026-08-03T18:01:55.2787394Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.4e85bc9ebe07e0340c9c4fc2f6c38908.ttf (357 kB)
+2026-08-03T18:01:55.2788410Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Octicons.871378c6eab492a3e689a9385dc45a12.ttf (69.4 kB)
+2026-08-03T18:01:55.2789413Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/SimpleLineIcons.d2285965fe34b05465047401b8595dd0.ttf (54.1 kB)
+2026-08-03T18:01:55.2790421Z err: #13 43.25 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Zocial.1681f34aaca71b8dfb70756bca331eb2.ttf (25.8 kB)
+2026-08-03T18:01:55.2791352Z err: #13 43.25 node_modules/@react-navigation/elements/lib/module/assets/back-icon-mask.0a328cd9c1afd0afe8e3b1ec5165b1b4.png (653 B)
+2026-08-03T18:01:55.2792258Z err: #13 43.25 node_modules/@react-navigation/elements/lib/module/assets/back-icon.35ba0eaec5a4f5ed12ca16fabeae451d.png (207 B)
+2026-08-03T18:01:55.2793201Z err: #13 43.25 node_modules/@react-navigation/elements/lib/module/assets/clear-icon.c94f6478e7ae0cdd9f15de1fcb9e5e55.png (4 variations | 425 B)
+2026-08-03T18:01:55.2794287Z err: #13 43.25 node_modules/@react-navigation/elements/lib/module/assets/close-icon.808e1b1b9b53114ec2838071a7e6daa7.png (4 variations | 235 B)
+2026-08-03T18:01:55.2795198Z err: #13 43.25 node_modules/@react-navigation/elements/lib/module/assets/search-icon.286d67d3f74808a60a78d3ebf1a5fb57.png (928 B)
+2026-08-03T18:01:55.2795764Z err: #13 43.25 
+2026-08-03T18:01:55.2796049Z err: #13 43.25 › web bundles (2):
+2026-08-03T18:01:55.2796442Z err: #13 43.25 _expo/static/css/global-d6fd24242277608cd5021a4497f62140.css (61.9 kB)
+2026-08-03T18:01:55.2796981Z err: #13 43.25 _expo/static/js/web/index-4cbdaa00dff39ce90b54967b3b2cb1b3.js (7.64 MB)
+2026-08-03T18:01:55.2797393Z err: #13 43.25 
+2026-08-03T18:01:55.2797637Z err: #13 43.25 › Files (3):
+2026-08-03T18:01:55.2797877Z err: #13 43.25 favicon.ico (14.5 kB)
+2026-08-03T18:01:55.2798138Z err: #13 43.25 index.html (1.41 kB)
+2026-08-03T18:01:55.2798395Z err: #13 43.25 metadata.json (49 B)
+2026-08-03T18:01:55.2798633Z err: #13 43.27 
+2026-08-03T18:01:55.2798835Z err: #13 43.27 Exported: dist
+2026-08-03T18:01:58.7608042Z err: #13 DONE 46.9s
+2026-08-03T18:01:59.5692663Z err: #14 [stage-1 3/4] COPY --from=builder /app/dist /usr/share/nginx/html
+2026-08-03T18:01:59.7882429Z err: #14 DONE 0.1s
+2026-08-03T18:01:59.7883069Z err: #15 [stage-1 4/4] RUN sed -i 's/<script src=/<script type="module" src=/g' /usr/share/nginx/html/index.html
+2026-08-03T18:01:59.9346350Z err: #15 DONE 0.3s
+2026-08-03T18:02:00.0193733Z err: #16 exporting to image
+2026-08-03T18:02:00.0194851Z err: #16 exporting layers 0.0s done
+2026-08-03T18:02:00.0195932Z err: #16 writing image sha256:fdef7551f228768815f46a794445175c4c0b96df79d7620a7c698480197c7d8f done
+2026-08-03T18:02:00.0196757Z err: #16 naming to docker.io/library/frontend-restaurante2 done
+2026-08-03T18:02:00.0197252Z err: #16 DONE 0.1s
+2026-08-03T18:02:00.0516142Z err: Error response from daemon: No such container: frontend-restaurante2
+2026-08-03T18:02:00.0662224Z err: Error response from daemon: No such container: frontend-restaurante2
+2026-08-03T18:02:00.1066789Z out: a967f1afc15c9c93951232f01bb28fd55fb9b1915b4736a34b2a09925f6f4a90
+2026-08-03T18:02:00.3504514Z err: bash: /root/n8n/scripts/setup-nginx.sh: No such file or directory
+2026-08-03T18:02:00.3527608Z 2026/08/03 18:02:00 Process exited with status 127
+2026-08-03T18:02:00.4432496Z Cleaning up orphan processes

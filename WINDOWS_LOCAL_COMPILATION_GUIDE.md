@@ -77,3 +77,41 @@ scp root@100.42.185.2:/opt/build-farm/apppuntodeventa/*.apk "C:\Users\Administra
 ```
 
 Esto se conectará al servidor, tomará el archivo `.apk` recién creado, y lo pegará en tu carpeta local de APKs.
+
+---
+
+## 📦 PASO 5: Compilar APK para Múltiples Clientes / Restaurantes
+
+Cada cliente tiene su propio perfil definido en `eas.json`. Para compilar el APK de un cliente específico, solo debes pasar el nombre del perfil con `-Profile`:
+
+### Cliente Principal (producción actual):
+```powershell
+cd C:\APIS_v2.3\puntodeventafront\scripts
+.\auto-deploy-windows.ps1 -Profile preview
+```
+
+### Restaurante 2:
+```powershell
+cd C:\APIS_v2.3\puntodeventafront\scripts
+.\auto-deploy-windows.ps1 -Profile restaurante2
+```
+
+### Agregar un nuevo cliente en el futuro:
+1. Agrega el perfil en `eas.json`:
+```json
+"nombre_cliente": {
+  "distribution": "internal",
+  "env": {
+    "EXPO_PUBLIC_API_URL": "https://api-nombre-cliente.autosystemprojects.site/api/v1",
+    "GRADLE_OPTS": "-Dorg.gradle.jvmargs=\"-Xmx1536m -XX:MaxMetaspaceSize=512m\" -Dorg.gradle.daemon=false",
+    "EAS_BUILD_MAX_WORKERS": "2"
+  },
+  "android": { "buildType": "apk" }
+}
+```
+2. Compila con:
+```powershell
+.\auto-deploy-windows.ps1 -Profile nombre_cliente
+```
+
+Cada APK generado tendrá la URL del backend de su cliente "quemada" internamente.

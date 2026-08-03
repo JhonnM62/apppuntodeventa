@@ -3,9 +3,9 @@ FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# Instalar dependencias
+# Instalar dependencias (ignorando husky para evitar error de .git faltante)
 COPY package*.json ./
-RUN npm install --legacy-peer-deps
+RUN npm install --legacy-peer-deps --ignore-scripts
 
 # Copiar el código fuente y las variables de entorno
 COPY . .

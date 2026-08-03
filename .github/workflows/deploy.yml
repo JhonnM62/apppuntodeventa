@@ -117,9 +117,9 @@ jobs:
                 --restart unless-stopped \
                 frontend-$CLIENT_ID
 
-              # Configurar subdominio + certificado SSL automáticamente
+              # Configurar subdominio + certificado SSL automáticamente usando el script de n8n
               DOMAIN=$DOMAIN PORT=$PORT EMAIL=jonnymejia62@gmail.com \
-                bash /root/n8n/scripts/setup-nginx.sh
+                bash /root/frontend-qhubomor/scripts/setup-nginx.sh
 
               echo "✅ Frontend $CLIENT_ID desplegado en https://$DOMAIN"
             }
