@@ -87,6 +87,7 @@ const MenuCard = ({ item, onPress }: { item: MenuItem; onPress: (item: MenuItem)
 
 const AvatarMenu = ({ user, onLogout, navigation }: { user: any; onLogout: () => void; navigation: any }) => {
   const [menuVisible, setMenuVisible] = useState(false);
+  const { primaryColor } = useSettingsStore();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-10)).current;
 
