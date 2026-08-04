@@ -117,7 +117,7 @@ const Tab = createBottomTabNavigator<BottomTabParamList>();
 
 const HomeTabs = () => {
   const insets = useSafeAreaInsets();
-  const { user } = useAuthStore();
+  const { user, primaryColor } = useAuthStore();
   
   // To ensure re-renders when ventas change, we need to select from the state directly
   const pendingOrders = useSalesStore(state => {
@@ -143,7 +143,7 @@ const HomeTabs = () => {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#4CAF50',
+          backgroundColor: primaryColor || '#4CAF50',
           borderTopWidth: 0,
           elevation: 10,
           paddingTop: 8,
