@@ -12,6 +12,7 @@ import { useSalesStore } from '../store/useSalesStore';
 import { Text } from 'react-native';
 import SessionExpiredModal from '../components/ui/SessionExpiredModal';
 import { useGlobalSalesSync } from '../hooks/useGlobalSalesSync';
+import { useSettingsStore } from '../store/useSettingsStore';
 import AgentChatModal from '../components/ui/AgentChat/AgentChatModal';
 
 // Screens
@@ -117,7 +118,8 @@ const Tab = createBottomTabNavigator<BottomTabParamList>();
 
 const HomeTabs = () => {
   const insets = useSafeAreaInsets();
-  const { user, primaryColor } = useAuthStore();
+  const { user } = useAuthStore();
+  const { primaryColor } = useSettingsStore();
   
   // To ensure re-renders when ventas change, we need to select from the state directly
   const pendingOrders = useSalesStore(state => {
