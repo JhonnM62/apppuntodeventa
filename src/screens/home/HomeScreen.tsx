@@ -11,6 +11,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import NotificationCenterModal from '../../components/ui/NotificationCenterModal';
 import useCartStore from '../../store/useCartStore';
+import { useSettingsStore } from '../../store/useSettingsStore';
 import { FlashList as OriginalFlashList } from '@shopify/flash-list';
 const FlashList = OriginalFlashList as any;
 
@@ -137,7 +138,7 @@ const AvatarMenu = ({ user, onLogout, navigation }: { user: any; onLogout: () =>
               borderColor: '#e5e7eb'
             }}
           >
-            <View className="p-4" style={{ backgroundColor: '#4CAF50' }}>
+            <View className="p-4" style={{ backgroundColor: primaryColor }}>
               <Text className="text-white text-base font-bold">{user?.name || user?.nombre || 'Usuario'}</Text>
               <Text className="text-white/75 text-[13px] mt-0.5">{user?.email || 'usuario@ejemplo.com'}</Text>
             </View>
@@ -177,6 +178,7 @@ type Props = {
 const HomeScreen = ({ navigation }: Props) => {
   const { user, logout } = useAuthStore();
   const { unreadCount, setUnreadCount } = useNotificationStore();
+  const { primaryColor } = useSettingsStore();
   const [notificationModalVisible, setNotificationModalVisible] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -270,8 +272,8 @@ const HomeScreen = ({ navigation }: Props) => {
   return (
     <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
       <StatusBar style="light" backgroundColor="transparent" translucent />
-      <View style={{ backgroundColor: '#4CAF50', paddingTop: insets.top }}>
-        <View className="py-3.5 px-5 flex-row items-center justify-between shadow-md z-10" style={{ backgroundColor: '#4CAF50' }}>
+      <View style={{ backgroundColor: primaryColor, paddingTop: insets.top }}>
+        <View className="py-3.5 px-5 flex-row items-center justify-between shadow-md z-10" style={{ backgroundColor: primaryColor }}>
           <Text className="text-white text-[22px] font-bold tracking-widest">INICIO</Text>
           <View className="flex-row items-center">
             <TouchableOpacity 
@@ -280,7 +282,7 @@ const HomeScreen = ({ navigation }: Props) => {
             >
               <Ionicons name="notifications-outline" size={26} color="#fff" />
               {unreadCount > 0 && (
-                <View className="absolute top-0.5 right-0.5 bg-red-500 rounded-full w-4 h-4 items-center justify-center border border-[#4CAF50]">
+                <View className="absolute top-0.5 right-0.5 bg-red-500 rounded-full w-4 h-4 items-center justify-center border" style={{ borderColor: primaryColor }}>
                   <Text className="text-white text-[9px] font-bold">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </Text>

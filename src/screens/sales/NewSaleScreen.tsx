@@ -26,6 +26,7 @@ import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import QuantityNumpad from '../../components/ui/QuantityNumpad';
+import { useSettingsStore } from '../../store/useSettingsStore';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Sales'>;
@@ -48,6 +49,7 @@ const CATEGORIES_ORDER = ['LO MAS VENDIDO', 'GRANIZADOS', 'BEBIDAS', 'COMIDAS', 
 const NewSaleScreen = ({ navigation, route }: Props) => {
   const { showAlert } = useCustomAlert();
   const insets = useSafeAreaInsets();
+  const { primaryColor } = useSettingsStore();
   const cachedMesas = useMesaStore((state) => state.mesas);
   const setCachedMesas = useMesaStore((state) => state.setMesas);
   const shouldRefetchMesas = useMesaStore((state) => state.shouldRefetch);
@@ -255,7 +257,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   const categories = useMemo(() => {
     const cats = ['LO MAS VENDIDO'];
-    cachedProductos.forEach(p => {
+    const visibleProductos = cachedProductos.filter(p => !p.mostrar || p.mostrar === 'si');
+    visibleProductos.forEach(p => {
       const cat = p.categoriaNombre || p.categoria;
       if (cat && cat !== 'LO MAS VENDIDO' && !cats.includes(cat)) {
         cats.push(cat);
@@ -267,13 +270,19 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   }, [cachedProductos]);
 
   const filteredProducts = useMemo(() => {
-    let filtered = cachedProductos;
+    // Only show visible products
+    let filtered = cachedProductos.filter(p => !p.mostrar || p.mostrar === 'si');
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(p =>
         p.nombre?.toLowerCase().includes(query)
       );
+    } else if (activeCategory === 'LO MAS VENDIDO') {
+      // Show all visible products sorted by orden, take first 10
+      filtered = [...filtered]
+        .sort((a, b) => (a.orden ?? 999) - (b.orden ?? 999))
+        .slice(0, 10);
     } else if (activeCategory) {
       filtered = filtered.filter(p =>
         (p.categoriaNombre || p.categoria) === activeCategory
@@ -1360,7 +1369,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const renderCategoryChip = (cat: string, index: number) => (
     <TouchableOpacity
       key={`${cat}-${index}`}
-      style={[styles.categoryChip, activeCategory === cat && styles.categoryChipActive]}
+      style={[styles.categoryChip, activeCategory === cat && [styles.categoryChipActive, { backgroundColor: primaryColor, borderColor: primaryColor }]]}
       onPress={() => setActiveCategory(cat)}
     >
       <Text style={[styles.categoryChipText, activeCategory === cat && styles.categoryChipTextActive]}>
@@ -1373,7 +1382,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     <>
       <StatusBar style="dark" backgroundColor="#fff" />
       <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={styles.topBar}>
+        <View style={[styles.topBar, { backgroundColor: primaryColor }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
@@ -1417,7 +1426,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         keyboardShouldPersistTaps="handled"
         onScroll={handleScroll}
         scrollEventThrottle={16}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#4CAF50" />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={primaryColor} />}
       >
         <View style={styles.headerSection}>
           <View style={styles.headerTop}>
@@ -1579,7 +1588,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
           {loading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#4CAF50" />
+              <ActivityIndicator size="large" color={primaryColor} />
             </View>
           ) : filteredProducts.length === 0 ? (
             <View style={styles.emptyContainer}>
@@ -1601,7 +1610,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       {cart.length > 0 && (
         <View style={[styles.cartBar, { paddingBottom: Platform.OS === 'ios' ? 34 : 16 }]}>
           <View style={styles.cartBarInfo}>
-            <View style={styles.cartBadgeLarge}>
+            <View style={[styles.cartBadgeLarge, { backgroundColor: primaryColor }]}>
               <Text style={styles.cartBadgeText}>{getTotalItems()}</Text>
             </View>
             <View>
@@ -1609,7 +1618,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               <Text style={styles.cartBarTotal}>${useCartStore.getState().getFinalTotalPrice().toLocaleString()}</Text>
             </View>
           </View>
-          <Button style={styles.checkoutButton} onPress={handleCheckout} disabled={isSubmitting}>
+          <Button style={[styles.checkoutButton, { backgroundColor: primaryColor }]} onPress={handleCheckout} disabled={isSubmitting}>
             {isSubmitting ? (
               <ActivityIndicator color="#fff" />
             ) : (
@@ -1653,7 +1662,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
-  topBar: { backgroundColor: '#4CAF50', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10 },
+  topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10 },
   backButton: { padding: 8 },
   totalContainer: { flex: 1, marginLeft: 8 },
   totalText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
@@ -1663,8 +1672,8 @@ const styles = StyleSheet.create({
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   timeBox: { flexDirection: 'row', alignItems: 'center' },
   timeText: { fontSize: 16, fontWeight: '700', color: '#111827', marginLeft: 6 },
-  mesaButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1.5, borderColor: '#4CAF50', backgroundColor: 'transparent' },
-  mesaButtonText: { fontSize: 13, fontWeight: '600', color: '#4CAF50', marginHorizontal: 6 },
+  mesaButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 16, borderWidth: 1.5, backgroundColor: 'transparent' },
+  mesaButtonText: { fontSize: 13, fontWeight: '600', marginHorizontal: 6 },
   mesaSelector: { marginLeft: -12, marginRight: -12 },
   mesaChip: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, marginLeft: 12, borderRadius: 16, backgroundColor: '#f3f4f6', borderWidth: 1, borderColor: '#e5e7eb' },
   mesaChipActive: { backgroundColor: '#4CAF50', borderColor: '#4CAF50' },
