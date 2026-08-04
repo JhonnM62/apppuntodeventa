@@ -1,6 +1,6 @@
 {
   "name": "qhubomor-pos-app",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "main": "index.js",
   "scripts": {
     "start": "npx cross-env REACT_NATIVE_PACKAGER_HOSTNAME=backendnestpv.autosystemprojects.site expo start --dev-client",

@@ -21,8 +21,9 @@ if ! command -v nginx &> /dev/null || ! command -v certbot &> /dev/null; then
     exit 1
 fi
 
-echo "📝 Generando archivo de configuración de Nginx..."
-sudo cat <<EOF > "$NGINX_CONF_PATH"
+if [ ! -f "$NGINX_CONF_PATH" ] || ! grep -q "ssl_certificate" "$NGINX_CONF_PATH"; then
+    echo "📝 Generando archivo de configuración inicial de Nginx..."
+    sudo cat <<EOF > "$NGINX_CONF_PATH"
 server {
     server_name $DOMAIN;
     location / {
@@ -35,7 +36,10 @@ server {
     }
 }
 EOF
-echo "✅ Archivo de configuración generado."
+    echo "✅ Archivo de configuración generado."
+else
+    echo "✅ El archivo de configuración de Nginx ya existe y tiene SSL. No se sobrescribirá."
+fi
 
 # Habilitar sitio
 sudo ln -sf "$NGINX_CONF_PATH" "$NGINX_ENABLED_PATH"
