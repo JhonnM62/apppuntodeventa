@@ -161,7 +161,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       // Only fetch products if needed
       if (shouldRefetchProducts() || !hasCachedProducts) {
         productsPromiseIndex = promises.length;
-        promises.push(getProducts());
+        promises.push(getProducts({ limit: 1500 }));
       }
       
       // Only fetch mesas if needed
@@ -257,7 +257,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   const categories = useMemo(() => {
     const cats = ['LO MAS VENDIDO'];
-    const visibleProductos = cachedProductos.filter(p => !p.mostrar || String(p.mostrar).toLowerCase() === 'si' || String(p.mostrar).toLowerCase() === 'visible' || String(p.mostrar) === 'true');
+    const visibleProductos = cachedProductos.filter(p => !p.mostrar || String(p.mostrar).toLowerCase().trim() === 'si' || String(p.mostrar).toLowerCase().trim() === 'visible' || String(p.mostrar).trim() === 'true');
     visibleProductos.forEach(p => {
       const cat = p.categoriaNombre || p.categoria;
       if (cat && cat !== 'LO MAS VENDIDO' && !cats.includes(cat)) {
@@ -271,7 +271,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   const filteredProducts = useMemo(() => {
     // Only show visible products
-    let filtered = cachedProductos.filter(p => !p.mostrar || String(p.mostrar).toLowerCase() === 'si' || String(p.mostrar).toLowerCase() === 'visible' || String(p.mostrar) === 'true');
+    let filtered = cachedProductos.filter(p => !p.mostrar || String(p.mostrar).toLowerCase().trim() === 'si' || String(p.mostrar).toLowerCase().trim() === 'visible' || String(p.mostrar).trim() === 'true');
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
