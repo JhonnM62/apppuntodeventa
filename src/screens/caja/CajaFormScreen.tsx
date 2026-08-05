@@ -14,6 +14,7 @@ import { getConfiguracion } from '../../services/configuracion';
 import { Text } from '../../components/ui/text';
 import { Input } from '../../components/ui/input';
 import useAuthStore from '../../store/useAuthStore';
+import { useSettingsStore } from '../../store/useSettingsStore';
 import { insumosService, InsumoItem } from '../../services/insumos';
 import { getProducts } from '../../services/products';
 import { abrirCaja, getResumenCaja, deleteCaja, getCajas, cerrarCaja, updateCaja, reabrirCaja, getVerificacionPendiente } from '../../services/caja';
@@ -125,6 +126,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const { cajaId } = route.params || {};
   const isNew = !cajaId;
   const { user } = useAuthStore();
+  const { primaryColor } = useSettingsStore();
   const { canCreate, canEdit, canDelete } = usePermissions('caja');
   const { showAlert } = useCustomAlert();
   const isAdmin = user?.rol === 'Admin app' || user?.rol === 'Admin negocio';
@@ -1044,8 +1046,8 @@ export default function CajaFormScreen({ route, navigation }: any) {
           </View>
         </View>
       )}
-      <View style={{ backgroundColor: '#4CAF50', paddingTop: insets.top }}>
-        <View className="bg-primary flex-row items-center justify-between px-4 py-3 shadow-md" style={{ backgroundColor: '#4CAF50' }}>
+      <View style={{ backgroundColor: primaryColor, paddingTop: insets.top }}>
+        <View className="bg-primary flex-row items-center justify-between px-4 py-3 shadow-md" style={{ backgroundColor: primaryColor }}>
           <View className="flex-row items-center flex-1">
             <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 mr-2">
               <Ionicons name="arrow-back" size={24} color="#fff" />
