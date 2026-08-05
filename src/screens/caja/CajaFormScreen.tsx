@@ -415,7 +415,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
     try {
       const [insumosRes, prodRes, configRes] = await Promise.all([
         insumosService.getAll({ limit: 1000 }),
-        getProducts(),
+        getProducts({ limit: 1000 }),
         getConfiguracion()
       ]);
 
