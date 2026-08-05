@@ -257,7 +257,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   const categories = useMemo(() => {
     const cats = ['LO MAS VENDIDO'];
-    const visibleProductos = cachedProductos.filter(p => !p.mostrar || p.mostrar === 'si');
+    const visibleProductos = cachedProductos.filter(p => !p.mostrar || String(p.mostrar).toLowerCase() === 'si' || String(p.mostrar).toLowerCase() === 'visible' || String(p.mostrar) === 'true');
     visibleProductos.forEach(p => {
       const cat = p.categoriaNombre || p.categoria;
       if (cat && cat !== 'LO MAS VENDIDO' && !cats.includes(cat)) {
@@ -271,7 +271,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   const filteredProducts = useMemo(() => {
     // Only show visible products
-    let filtered = cachedProductos.filter(p => !p.mostrar || p.mostrar === 'si');
+    let filtered = cachedProductos.filter(p => !p.mostrar || String(p.mostrar).toLowerCase() === 'si' || String(p.mostrar).toLowerCase() === 'visible' || String(p.mostrar) === 'true');
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
