@@ -134,7 +134,7 @@ export default function CajaListScreen({ navigation }: any) {
       return (
         <View className="bg-gray-200/80 px-4 py-2 mt-4 mb-2 rounded-lg flex-row justify-between items-center mx-1">
           <Text className="font-black text-gray-800 uppercase tracking-wider text-sm">{item.title}</Text>
-          <View className="bg-green-600 rounded-full px-2.5 py-0.5 shadow-sm">
+          <View className={`rounded-full px-2.5 py-0.5 shadow-sm ${activeTab === 'activos' ? 'bg-green-600' : 'bg-gray-500'}`}>
             <Text className="text-xs text-white font-black">{item.count} {item.count === 1 ? 'caja' : 'cajas'}</Text>
           </View>
         </View>
@@ -253,8 +253,8 @@ export default function CajaListScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
-      <SafeAreaView style={{ backgroundColor: '#4CAF50' }} edges={['top']}>
-        <View className="bg-primary flex-row items-center justify-between px-4 py-3 shadow-md" style={{ backgroundColor: '#4CAF50' }}>
+      <SafeAreaView style={{ backgroundColor: '#16a34a' }} edges={['top']}>
+        <View className="bg-primary flex-row items-center justify-between px-4 py-3 shadow-md" style={{ backgroundColor: '#16a34a' }}>
           <View className="flex-row items-center">
             <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 mr-2">
               <Ionicons name="arrow-back" size={24} color="#fff" />

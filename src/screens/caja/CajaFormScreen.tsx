@@ -892,7 +892,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
         }) || []
       };
 
-      await generateAndShareCajaPDF(updatedResumenData);
+      await generateAndShareCajaPDF(updatedResumenData, modoOperacion);
     } catch (error) {
       console.error("Error al generar PDF:", error);
       Toast.show({ type: 'error', text1: 'Error', text2: 'Hubo un problema al generar el reporte PDF.' });
