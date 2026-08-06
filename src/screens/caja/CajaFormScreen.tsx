@@ -236,6 +236,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [selectedVenta, setSelectedVenta] = useState<any>(null);
   const [adminFormVisible, setAdminFormVisible] = useState(false);
   const [fetchingSaleId, setFetchingSaleId] = useState<string | null>(null);
+  const [insumosSearchQuery, setInsumosSearchQuery] = useState('');
 
   const scrollViewRef = useRef<KeyboardAwareScrollView>(null);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -1234,7 +1235,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
         extraScrollHeight={100}
         extraHeight={100}
         enableAutomaticScroll={true}
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: 60 }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 150 }}
       >
           
           {activeTab === 'form' && (
@@ -1530,21 +1531,69 @@ export default function CajaFormScreen({ route, navigation }: any) {
               <Text className="text-gray-400 mt-2">No hay insumos registrados</Text>
             </View>
           ) : (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="w-full">
-              <View className="flex-col min-w-[600px] sm:min-w-full">
-                {/* Header Row */}
-                <View className="flex-row items-center bg-gray-100 border-b border-gray-200 p-2">
-                  <View className="w-10 shrink-0 items-center" />
-                  <Text className="w-40 shrink-0 font-bold text-xs text-gray-600">Para qué producto</Text>
-                  <Text className="w-48 shrink-0 font-bold text-xs text-gray-600">Insumos</Text>
-                  <Text className="w-24 shrink-0 font-bold text-xs text-gray-600 text-center">Cant. Apertura</Text>
-                  <Text className="w-24 shrink-0 font-bold text-xs text-gray-600 text-center">Cant. Cierre</Text>
+            <View className="w-full">
+              <View className="px-3 py-2 border-b border-gray-100">
+                <View className="flex-row items-center bg-gray-100 rounded-lg px-3 py-1.5 border border-gray-200">
+                  <Ionicons name="search" size={16} color="#9ca3af" />
+                  <TextInput
+                    className="flex-1 ml-2 text-sm text-gray-800"
+                    placeholder="Buscar insumo por nombre o categoría..."
+                    value={insumosSearchQuery}
+                    onChangeText={setInsumosSearchQuery}
+                    placeholderTextColor="#9ca3af"
+                  />
+                  {insumosSearchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => setInsumosSearchQuery('')}>
+                      <Ionicons name="close-circle" size={16} color="#9ca3af" />
+                    </TouchableOpacity>
+                  )}
                 </View>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} className="w-full">
+                <View className="flex-col min-w-[600px] sm:min-w-full">
+                  {/* Header Row */}
+                  <View className="flex-row items-center bg-gray-100 border-b border-gray-200 p-2">
+                    <View className="w-10 shrink-0 items-center" />
+                    <Text className="w-40 shrink-0 font-bold text-xs text-gray-600">Para qué producto</Text>
+                    <Text className="w-48 shrink-0 font-bold text-xs text-gray-600">Insumos</Text>
+                    <Text className="w-24 shrink-0 font-bold text-xs text-gray-600 text-center">Cant. Apertura</Text>
+                    <Text className="w-24 shrink-0 font-bold text-xs text-gray-600 text-center">Cant. Cierre</Text>
+                  </View>
 
-                {/* Items */}
-                {fields.map((item, index) => (
-                  <View key={item.id} className={`border-b border-gray-100 p-2 ${modifiedInsumoIndexes.has(index) ? 'bg-amber-50' : 'bg-white'}`}>
-                    <View className="flex-row items-center">
+                  {/* Items */}
+                  {(() => {
+                    const getStock = (item: any) => {
+                      const cierre = Number(item.cantDeCierre);
+                      if (!isNaN(cierre) && item.cantDeCierre !== '' && item.cantDeCierre !== null && item.cantDeCierre !== undefined) return cierre;
+                      const apertura = Number(item.cantApertura);
+                      if (!isNaN(apertura) && item.cantApertura !== '' && item.cantApertura !== null && item.cantApertura !== undefined) return apertura;
+                      return 999999;
+                    };
+                    return fields
+                      .map((item, originalIndex) => ({ item, originalIndex }))
+                      .filter(({ item }) => {
+                        if (!insumosSearchQuery) return true;
+                        const searchLower = insumosSearchQuery.toLowerCase();
+                        const nombre = (item.nombreInsumoReal || item.nombreInsumo || '').toLowerCase();
+                        const cat = (item.categoria || '').toLowerCase();
+                        return nombre.includes(searchLower) || cat.includes(searchLower);
+                      })
+                      .sort((a, b) => {
+                        const stockA = getStock(a.item);
+                        const stockB = getStock(b.item);
+                        if (stockA !== stockB) return stockA - stockB;
+                        
+                        const catA = (a.item.categoria || '').toLowerCase();
+                        const catB = (b.item.categoria || '').toLowerCase();
+                        if (catA !== catB) return catA.localeCompare(catB);
+                        
+                        const nameA = (a.item.nombreInsumoReal || a.item.nombreInsumo || '').toLowerCase();
+                        const nameB = (b.item.nombreInsumoReal || b.item.nombreInsumo || '').toLowerCase();
+                        return nameA.localeCompare(nameB);
+                      })
+                      .map(({ item, originalIndex: index }) => (
+                        <View key={item.id} className={`border-b border-gray-100 p-2 ${modifiedInsumoIndexes.has(index) ? 'bg-amber-50' : 'bg-white'}`}>
+                          <View className="flex-row items-center">
                       {canDelete && !isReadOnly ? (
                         <TouchableOpacity onPress={() => handleRemoveInsumo(index)} className="w-10 items-center justify-center p-2">
                           <Ionicons name="trash-outline" size={20} color="#ef4444" />
@@ -1665,10 +1714,11 @@ export default function CajaFormScreen({ route, navigation }: any) {
                       </View>
                     )}
                   </View>
-                ))}
+                ))})()}
               </View>
             </ScrollView>
-          )}
+          </View>
+        )}
         </View>
         </>
       )}
