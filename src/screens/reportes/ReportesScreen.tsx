@@ -375,7 +375,7 @@ export default function ReportesScreen({ navigation }: any) {
   return (
     // ⚠️ REGLA 2: root container con style puro, SafeAreaView con style puro
     <View style={S.root}>
-      <StatusBar style="light" backgroundColor="#16a34a" translucent={false} />
+      <StatusBar style="light" backgroundColor="#22C55E" translucent={false} />
       <SafeAreaView style={S.safeArea} edges={['top']}>
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
