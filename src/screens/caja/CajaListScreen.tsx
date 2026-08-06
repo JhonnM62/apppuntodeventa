@@ -253,8 +253,8 @@ export default function CajaListScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
-      <SafeAreaView style={{ backgroundColor: '#16a34a' }} edges={['top']}>
-        <View className="bg-primary flex-row items-center justify-between px-4 py-3 shadow-md" style={{ backgroundColor: '#16a34a' }}>
+      <SafeAreaView className="bg-primary" edges={['top']}>
+        <View className="bg-primary flex-row items-center justify-between px-4 py-3 shadow-md">
           <View className="flex-row items-center">
             <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 mr-2">
               <Ionicons name="arrow-back" size={24} color="#fff" />
@@ -276,8 +276,8 @@ export default function CajaListScreen({ navigation }: any) {
                 }
               }}
             >
-              <Ionicons name={cajaActiva ? "lock-closed" : "add"} size={18} color={cajaActiva ? "#fff" : "#4CAF50"} />
-              <Text className={`font-bold ml-1 ${cajaActiva ? 'text-white' : 'text-green-600'}`}>
+              <Ionicons name={cajaActiva ? "lock-closed" : "add"} size={18} color={cajaActiva ? "#fff" : "#0ea5e9"} />
+              <Text className={`font-bold ml-1 ${cajaActiva ? 'text-white' : 'text-primary'}`}>
                 {cajaActiva ? 'Ir a caja' : 'Abrir'}
               </Text>
             </TouchableOpacity>

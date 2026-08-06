@@ -126,7 +126,14 @@ const buildGeneralHTML = (resumen: any, fileName: string): string => {
   .summary-label{font-size:12px;color:#64748b;text-transform:uppercase;}
   .summary-value{font-size:18px;font-weight:bold;color:#0f172a;margin-top:5px;}
   .observations{font-size:14px;white-space:pre-wrap;page-break-inside:avoid;}
-  @media print{.no-print{display:none;}}
+  @media print{
+    .no-print{display:none;}
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -307,7 +314,14 @@ const buildRestauranteHTML = (resumen: any, fileName: string): string => {
   .ventas-table th{background:#6b7280;}
   .highlight-row td{background:#fca5a5;font-weight:bold;}
   .obs{font-size:12px;padding:8px;border:1px solid #e5e7eb;margin-top:8px;}
-  @media print{.no-print{display:none;}}
+  @media print{
+    .no-print{display:none;}
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+  }
 </style>
 </head>
 <body>
