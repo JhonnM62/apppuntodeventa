@@ -940,8 +940,8 @@ export default function HistorialVentasScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
-      <SafeAreaView style={{ backgroundColor: '#4CAF50' }} edges={['top']}>
-        <View className="bg-primary flex-row items-center px-4 py-3 shadow-md" style={{ backgroundColor: '#4CAF50' }}>
+      <SafeAreaView className="bg-primary" edges={['top']}>
+        <View className="bg-primary flex-row items-center px-4 py-3 shadow-md">
           <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 mr-2">
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>

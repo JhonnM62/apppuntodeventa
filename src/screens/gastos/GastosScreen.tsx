@@ -153,7 +153,7 @@ export default function GastosScreen({ navigation }: any) {
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'bottom']}>
-      <View className="bg-green-600 px-4 py-4 flex-row items-center justify-between shadow-sm z-10">
+      <View className="bg-primary px-4 py-4 flex-row items-center justify-between shadow-sm z-10">
         <View className="flex-row items-center flex-1">
           <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3 p-1">
             <Ionicons name="arrow-back" size={24} color="white" />

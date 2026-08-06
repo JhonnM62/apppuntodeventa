@@ -235,12 +235,12 @@ export default function ReporteDetalleScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }} edges={['top']}>
-      <View className="bg-green-600 px-4 py-3 flex-row items-center justify-between shadow-sm z-10 relative">
+      <View className="bg-primary px-4 py-3 flex-row items-center justify-between shadow-sm z-10 relative">
         <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3 p-1">
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         
-        <View className="flex-1 bg-green-700/80 rounded-xl flex-row items-center px-3 py-2">
+        <View className="flex-1 bg-black/20 rounded-xl flex-row items-center px-3 py-2">
           <Ionicons name="search" size={18} color="#a7f3d0" />
           <TextInput
             className="flex-1 ml-2 text-white font-bold text-sm p-0 m-0"
