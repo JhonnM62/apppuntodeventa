@@ -70,7 +70,6 @@ const MODULES = [
     icon: 'palette-swatch',
     color: '#f43f5e',
     route: 'ConfiguracionAvanzada',
-    adminOnly: true,
   },
   {
     id: 'notificaciones',
