@@ -584,7 +584,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               venta: {
                 ...editingVenta,
                 ...payload.venta,
-                IDventas: editingSaleId
+                IDventas: editingSaleId,
+                ordenVentas: payload.productos
               },
               productos: payload.productos 
             });
@@ -812,7 +813,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               venta: {
                 ...editingVenta,
                 ...payload.venta,
-                IDventas: editingSaleId
+                IDventas: editingSaleId,
+                ordenVentas: payload.productos
               },
               productos: payload.productos
             });

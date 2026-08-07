@@ -1288,25 +1288,30 @@ showAlert({
                     {selectedVenta.estado === 'EN_EL_CARRITO' && (
                       <>
                         <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#3b82f6' }]}
-                          onPress={() => handleChangeEstado('TOMADO')}
+                          style={[styles.actionBtn, { backgroundColor: '#f59e0b' }]}
+                          onPress={() => {
+                            if (selectedVenta.ordenVentas && selectedVenta.ordenVentas.length > 0) {
+                              useCartStore.getState().loadCartFromVenta(selectedVenta.ordenVentas);
+                            } else {
+                              useCartStore.getState().clearCart();
+                            }
+                            useCartStore.getState().setEditingSale(selectedVenta.IDventas, selectedVenta);
+                            closeModal();
+                            navigation.navigate('Sales', { screen: 'NewSale' } as any);
+                          }}
                         >
-                          <Ionicons name="hand-left-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Marcar Tomado</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
-                          onPress={handleOpenCobrar}
-                        >
-                          <Ionicons name="cash-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Cobrar</RNText>
+                          <Ionicons name="cart-outline" size={20} color="#fff" />
+                          <RNText style={styles.actionBtnText}>Continuar Editando</RNText>
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
-                          onPress={() => handleChangeEstado('DEUDOR')}
+                          onPress={() => {
+                            useCartStore.getState().clearCart();
+                            handleChangeEstado('TOMADO');
+                          }}
                         >
-                          <Ionicons name="alert-circle-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Marcar Deudor</RNText>
+                          <Ionicons name="close-circle-outline" size={20} color="#fff" />
+                          <RNText style={styles.actionBtnText}>Descartar Edición</RNText>
                         </TouchableOpacity>
                       </>
                     )}
@@ -1318,6 +1323,13 @@ showAlert({
                         >
                           <Ionicons name="checkmark-done-outline" size={20} color="#fff" />
                           <RNText style={styles.actionBtnText}>Marcar Listo</RNText>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
+                          onPress={() => handleChangeEstado('ENTREGADO')}
+                        >
+                          <Ionicons name="home-outline" size={20} color="#fff" />
+                          <RNText style={styles.actionBtnText}>Marcar Entregado</RNText>
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[styles.actionBtn, { backgroundColor: '#6b7280' }]}
@@ -1475,6 +1487,15 @@ showAlert({
                   >
                     <Ionicons name="receipt-outline" size={20} color="#fff" />
                     <RNText style={styles.actionBtnText}>Ticket</RNText>
+                  </TouchableOpacity>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
+                  <TouchableOpacity
+                    style={[styles.actionBtn, { flex: 1, backgroundColor: '#22c55e' }]}
+                    onPress={handleOpenCobrar}
+                  >
+                    <Ionicons name="cash-outline" size={20} color="#fff" />
+                    <RNText style={styles.actionBtnText}>Cobrar</RNText>
                   </TouchableOpacity>
                 </View>
               </View>
