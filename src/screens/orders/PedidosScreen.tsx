@@ -913,6 +913,21 @@ showAlert({
             >
               <Ionicons name="receipt-outline" size={18} color="#0369a1" />
             </TouchableOpacity>
+            <TouchableOpacity 
+              onPress={(e) => { 
+                e.stopPropagation(); 
+                if (item.ordenVentas && item.ordenVentas.length > 0) {
+                  useCartStore.getState().loadCartFromVenta(item.ordenVentas);
+                } else {
+                  useCartStore.getState().clearCart();
+                }
+                setCobrarVenta(item);
+                setPaymentModalVisible(true);
+              }}
+              style={{ padding: 6, backgroundColor: '#dcfce7', borderRadius: 8 }}
+            >
+              <Ionicons name="cash-outline" size={18} color="#16a34a" />
+            </TouchableOpacity>
           </View>
         </View>
         </TouchableOpacity>
@@ -1487,15 +1502,6 @@ showAlert({
                   >
                     <Ionicons name="receipt-outline" size={20} color="#fff" />
                     <RNText style={styles.actionBtnText}>Ticket</RNText>
-                  </TouchableOpacity>
-                </View>
-                <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
-                  <TouchableOpacity
-                    style={[styles.actionBtn, { flex: 1, backgroundColor: '#22c55e' }]}
-                    onPress={handleOpenCobrar}
-                  >
-                    <Ionicons name="cash-outline" size={20} color="#fff" />
-                    <RNText style={styles.actionBtnText}>Cobrar</RNText>
                   </TouchableOpacity>
                 </View>
               </View>
