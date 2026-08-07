@@ -1069,10 +1069,10 @@ showAlert({
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <RNText style={styles.modalTitle}>{selectedVenta.pedido}</RNText>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
+                <RNText style={[styles.modalTitle, { flexShrink: 1 }]} numberOfLines={2}>{selectedVenta.pedido}</RNText>
                 {realtimeDuration && (
-                  <View style={[styles.timerBadge, { backgroundColor: (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') ? '#d1fae5' : '#fee2e2' }]}>
+                  <View style={[styles.timerBadge, { backgroundColor: (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') ? '#d1fae5' : '#fee2e2', flexShrink: 0 }]}>
                     <Ionicons name="time-outline" size={14} color={(selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') ? '#10b981' : '#ef4444'} />
                     <RNText style={[styles.timerText, { color: (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') ? '#10b981' : '#ef4444' }]}>
                       {realtimeDuration}
@@ -1080,7 +1080,7 @@ showAlert({
                   </View>
                 )}
               </View>
-              <TouchableOpacity onPress={closeModal} style={styles.closeBtn}>
+              <TouchableOpacity onPress={closeModal} style={[styles.closeBtn, { flexShrink: 0 }]}>
                 <Ionicons name="close" size={24} color="#374151" />
               </TouchableOpacity>
             </View>
