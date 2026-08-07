@@ -17,6 +17,7 @@ import useAuthStore from '../../store/useAuthStore';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import Toast from 'react-native-toast-message';
 import { reabrirCaja } from '../../services/caja';
+import { useSettingsStore } from '../../store/useSettingsStore';
 
 import { useCajaCacheStore } from '../../store/useCajaCacheStore';
 
@@ -24,6 +25,7 @@ export default function CajaListScreen({ navigation }: any) {
   const { canCreate } = usePermissions('caja');
   const { user } = useAuthStore();
   const { showAlert } = useCustomAlert();
+  const { primaryColor } = useSettingsStore();
 
   // Use global cache store for SWR (Stale-While-Revalidate) pattern
   const { cajas, cajaActiva, lastFetch } = useCajaCacheStore();
@@ -134,7 +136,7 @@ export default function CajaListScreen({ navigation }: any) {
       return (
         <View className="bg-gray-200/80 px-4 py-2 mt-4 mb-2 rounded-lg flex-row justify-between items-center mx-1">
           <Text className="font-black text-gray-800 uppercase tracking-wider text-sm">{item.title}</Text>
-          <View className={`rounded-full px-2.5 py-0.5 shadow-sm ${activeTab === 'activos' ? 'bg-green-600' : 'bg-gray-500'}`}>
+          <View className={`rounded-full px-2.5 py-0.5 shadow-sm ${activeTab === 'activos' ? '' : 'bg-gray-500'}`} style={activeTab === 'activos' ? { backgroundColor: primaryColor || '#16a34a' } : {}}>
             <Text className="text-xs text-white font-black">{item.count} {item.count === 1 ? 'caja' : 'cajas'}</Text>
           </View>
         </View>
@@ -224,7 +226,7 @@ export default function CajaListScreen({ navigation }: any) {
                 <Text className="text-white text-[10px] font-black uppercase tracking-wider">NO CUADRÓ</Text>
               </View>
             ) : item.cuadroCaja === 'SI CUADRO CAJA' ? (
-              <View className="bg-green-600 px-2.5 py-1 rounded-md flex-row items-center mr-2 shadow-sm mb-1">
+              <View className="px-2.5 py-1 rounded-md flex-row items-center mr-2 shadow-sm mb-1" style={{ backgroundColor: primaryColor || '#16a34a' }}>
                 <Ionicons name="checkmark-done" size={12} color="#fff" style={{marginRight: 4}} />
                 <Text className="text-white text-[10px] font-black uppercase tracking-wider">CUADRÓ SÍ</Text>
               </View>
@@ -307,7 +309,7 @@ export default function CajaListScreen({ navigation }: any) {
             onPress={() => setActiveTab('activos')}
             className={`flex-1 py-1.5 items-center rounded-md ${activeTab === 'activos' ? 'bg-white shadow-sm' : ''}`}
           >
-            <Text className={`font-bold text-xs ${activeTab === 'activos' ? 'text-green-700' : 'text-gray-500'}`}>Activos</Text>
+            <Text className={`font-bold text-xs ${activeTab === 'activos' ? '' : 'text-gray-500'}`} style={activeTab === 'activos' ? { color: primaryColor || '#15803d' } : {}}>Activos</Text>
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setActiveTab('cerrados')}
@@ -320,7 +322,7 @@ export default function CajaListScreen({ navigation }: any) {
 
       <View className="flex-1 px-4 pt-2">
         {loading ? (
-          <ActivityIndicator size="large" color="#22c55e" className="mt-10" />
+          <ActivityIndicator size="large" color={primaryColor || "#22c55e"} className="mt-10" />
         ) : (
           <FlashList
             data={processedData}

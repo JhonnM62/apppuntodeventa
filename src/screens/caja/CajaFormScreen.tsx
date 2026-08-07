@@ -1517,7 +1517,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 </TouchableOpacity>
               )}
               {!isReadOnly && (
-                <TouchableOpacity onPress={() => setModalInsumosVisible(true)} className="bg-green-600 px-2 py-1.5 rounded flex-row items-center">
+                <TouchableOpacity onPress={() => setModalInsumosVisible(true)} className="px-2 py-1.5 rounded flex-row items-center" style={{ backgroundColor: primaryColor || '#16a34a' }}>
                   <Ionicons name="add" size={14} color="#fff" />
                   <Text className="text-white font-semibold ml-1 text-xs">Agregar</Text>
                 </TouchableOpacity>
@@ -1900,7 +1900,8 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
                     {!isReadOnly && (
                       <TouchableOpacity
-                          className={`flex-1 py-3 rounded-xl ml-2 items-center justify-center ${isCuadrada ? 'bg-green-600' : 'bg-red-600'}`}
+                          className={`flex-1 py-3 rounded-xl ml-2 items-center justify-center ${isCuadrada ? '' : 'bg-red-600'}`}
+                          style={isCuadrada ? { backgroundColor: primaryColor || '#16a34a' } : {}}
                           onPress={() => {
                             // Append to observaciones
                             const currentObs = watch('observaciones') || '';
@@ -2429,7 +2430,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 <TouchableOpacity onPress={() => {
                   setModalProductosVisible(false);
                   setSelectedIndexForProduct(null);
-                }} className="bg-green-600 px-4 py-2 rounded-lg">
+                }} className="px-4 py-2 rounded-lg" style={{ backgroundColor: primaryColor || '#16a34a' }}>
                   <Text className="text-white font-bold text-sm">Listo</Text>
                 </TouchableOpacity>
               </View>
@@ -2548,7 +2549,8 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
               {resumenData?.caja?.cierre === 'cerrada' && isAdmin && (
                 <TouchableOpacity 
-                  className="bg-green-600 py-3.5 rounded-xl items-center mt-2 shadow-sm"
+                  className="py-3.5 rounded-xl items-center mt-2 shadow-sm"
+                  style={{ backgroundColor: primaryColor || '#16a34a' }}
                   onPress={async () => {
                     setGuardarModalVisible(false);
                     setSaving(true);

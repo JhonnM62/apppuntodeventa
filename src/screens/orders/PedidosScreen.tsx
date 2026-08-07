@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput, KeyboardAvoidingView, Platform, AppState, AppStateStatus } from 'react-native';
 import { FlashList as OriginalFlashList } from '@shopify/flash-list';
 const FlashList = OriginalFlashList as any;
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -296,7 +296,18 @@ const PedidosScreen = () => {
 
   useEffect(() => {
     fetchVentas();
-  }, []);
+
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      if (nextAppState === 'active') {
+        // App has come to the foreground, fetch latest sales
+        fetchVentas(true);
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [fetchVentas]);
 
   // ── Sockets: escuchar REFRESH_VENTAS del backend ──────────────────────────
   useSocketEvent<{ action: string; venta?: any; ventaId?: string; ventaIds?: string[] }>(
@@ -817,9 +828,12 @@ showAlert({
               )}
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.estado) + '20' }]}>
+              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.estado) + '20', flexDirection: 'row', alignItems: 'center' }]}>
+                {item.estado === 'EN_EL_CARRITO' && (
+                  <Ionicons name="lock-closed" size={10} color={getStatusColor(item.estado)} style={{ marginRight: 4 }} />
+                )}
                 <RNText style={[styles.statusText, { color: getStatusColor(item.estado) }]}>
-                  {item.estado?.replace(/_/g, ' ') || 'SIN ESTADO'}
+                  {item.estado === 'EN_EL_CARRITO' ? 'EDITANDO' : (item.estado?.replace(/_/g, ' ') || 'SIN ESTADO')}
                 </RNText>
               </View>
               {isAdminApp && !isSelectionMode && (
@@ -1070,9 +1084,9 @@ showAlert({
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
-                <RNText style={[styles.modalTitle, { flexShrink: 1 }]} numberOfLines={2}>{selectedVenta.pedido}</RNText>
+                <RNText style={[styles.modalTitle, { flexShrink: 1 }]} numberOfLines={1} ellipsizeMode="tail">{selectedVenta.pedido}</RNText>
                 {realtimeDuration && (
-                  <View style={[styles.timerBadge, { backgroundColor: (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') ? '#d1fae5' : '#fee2e2', flexShrink: 0 }]}>
+                  <View style={[styles.timerBadge, { backgroundColor: (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') ? '#d1fae5' : '#fee2e2', flexShrink: 0, marginLeft: 8 }]}>
                     <Ionicons name="time-outline" size={14} color={(selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') ? '#10b981' : '#ef4444'} />
                     <RNText style={[styles.timerText, { color: (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') ? '#10b981' : '#ef4444' }]}>
                       {realtimeDuration}

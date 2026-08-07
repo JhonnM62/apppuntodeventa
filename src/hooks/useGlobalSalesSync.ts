@@ -71,7 +71,9 @@ export const useGlobalSalesSync = () => {
         }
       } else {
         // Fallback for standard updates without action wrapper
-        if (data.IDventas) {
+        if (data.venta) {
+          updateVenta(data.venta.IDventas || data.IDventas || data.ventaId, data.venta);
+        } else if (data.IDventas) {
           updateVenta(data.IDventas, data);
         } else if (data.ventaId) {
           updateVenta(data.ventaId, data);
