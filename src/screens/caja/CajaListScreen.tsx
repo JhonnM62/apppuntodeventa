@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Keyboard, TextInput } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Keyboard, TextInput, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList as OriginalFlashList } from '@shopify/flash-list';
@@ -255,8 +255,9 @@ export default function CajaListScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
-      <SafeAreaView className="bg-primary" edges={['top']}>
-        <View className="bg-primary flex-row items-center justify-between px-4 py-3 shadow-md">
+      <SafeAreaView style={{ backgroundColor: primaryColor || '#10b981' }} edges={['top']}>
+        <StatusBar backgroundColor={primaryColor || '#10b981'} barStyle="light-content" />
+        <View style={{ backgroundColor: primaryColor || '#10b981' }} className="flex-row items-center justify-between px-4 py-3 shadow-md">
           <View className="flex-row items-center">
             <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 mr-2">
               <Ionicons name="arrow-back" size={24} color="#fff" />

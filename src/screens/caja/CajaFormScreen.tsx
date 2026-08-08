@@ -1903,41 +1903,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                           className={`flex-1 py-3 rounded-xl ml-2 items-center justify-center ${isCuadrada ? '' : 'bg-red-600'}`}
                           style={isCuadrada ? { backgroundColor: primaryColor || '#16a34a' } : {}}
                           onPress={() => {
-                            // Append to observaciones
-                            const currentObs = watch('observaciones') || '';
-                            
-                            let rangoInfo = '';
-                          if (resumenData?.rangoPedidos) {
-                            rangoInfo = `\nRango: Pedido #${resumenData.rangoPedidos.primerPedido} al #${resumenData.rangoPedidos.ultimoPedido} (${resumenData.rangoPedidos.totalVentas} ventas procesadas)`;
-                          }
-                          
-                          const timestampArqueo = horaCongelada 
-                            ? `Corte: ${new Date(horaCongelada).toLocaleString('es-CO')}`
-                            : `${new Date().toLocaleString('es-CO')}`;
-
-                          let insumosInfo = '';
-                          if (resumenData?.insumos && resumenData.insumos.length > 0) {
-                            const insumosDescuadrados = resumenData.insumos.filter((ins: any) => ins.diferencia !== 0);
-                            if (insumosDescuadrados.length > 0) {
-                              insumosInfo = '\nINSUMOS DESCUADRADOS:\n' + insumosDescuadrados.map((ins: any) => 
-                                `- ${ins.nombreReal || ins.nombreInsumo}: ${ins.diferencia > 0 ? '+' : ''}${ins.diferencia} ${ins.diferencia < 0 ? '(Faltan)' : '(Sobran)'}`
-                              ).join('\n');
-                            } else {
-                              insumosInfo = '\nINSUMOS: Todos cuadrados perfectamente.';
-                            }
-                          }
-
-                          const cuadreText = `\n\n--- ARQUEO PARCIAL [${timestampArqueo}] ---\n` +
-                            `Reportado: ${formatCurrency(efectivoContado)} Efectivo | ${formatCurrency(transContadas)} Transferencias\n` +
-                            `Sistema: ${formatCurrency(Number(resumenData?.resumen?.efectivoApertura || 0) + Number(resumenData?.resumen?.totalEfectivo || 0))} Efectivo | ${formatCurrency((resumenData?.resumen?.totalTransferencia || 0) + (resumenData?.resumen?.totalNequi || 0))} Transferencias\n` +
-                            `Diferencia: ${totalDiff > 0 ? '+' : ''}${formatCurrency(totalDiff)}\n` +
-                            `Estado: ${isCuadrada ? 'CUADRADA' : 'DESCUADRADA'}${rangoInfo}${insumosInfo}\n------------------------\n`;
-
-                          const newObs = currentObs + cuadreText;
-                          setValue('observaciones', newObs);
-
                           handleSubmit((data) => {
-                            data.observaciones = newObs;
                             onSave(data, false);
                           }, onError)();
                         }}

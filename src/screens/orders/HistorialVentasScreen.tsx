@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Modal, ScrollView, Image, TextInput, Platform, KeyboardAvoidingView, RefreshControl } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Modal, ScrollView, Image, TextInput, Platform, KeyboardAvoidingView, RefreshControl, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { FlashList as OriginalFlashList } from '@shopify/flash-list';
@@ -40,9 +40,11 @@ import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { usePermissions } from '../../hooks/usePermissions';
 import AdminSaleFormModal from './AdminSaleFormModal';
 import { useProductStore } from '../../store/useProductStore';
+import { useSettingsStore } from '../../store/useSettingsStore';
 
 export default function HistorialVentasScreen({ navigation }: any) {
   const { canCreate, canEdit, canDelete } = usePermissions('historial_ventas');
+  const { primaryColor } = useSettingsStore();
   // Tabs cache state for instantaneous switching
   const [cache, setCache] = useState<Record<string, { data: any[]; page: number; hasNextPage: boolean; total: number; initialized: boolean }>>({
     activas: { data: [], page: 1, hasNextPage: true, total: 0, initialized: false },
@@ -940,8 +942,9 @@ export default function HistorialVentasScreen({ navigation }: any) {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
-      <SafeAreaView className="bg-primary" edges={['top']}>
-        <View className="bg-primary flex-row items-center px-4 py-3 shadow-md">
+      <SafeAreaView style={{ backgroundColor: primaryColor || '#10b981' }} edges={['top']}>
+        <StatusBar backgroundColor={primaryColor || '#10b981'} barStyle="light-content" />
+        <View style={{ backgroundColor: primaryColor || '#10b981' }} className="flex-row items-center px-4 py-3 shadow-md">
           <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 mr-2">
             <Ionicons name="arrow-back" size={24} color="#fff" />
           </TouchableOpacity>
