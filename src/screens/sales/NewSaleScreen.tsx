@@ -1386,8 +1386,12 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     <>
       <StatusBar style="dark" backgroundColor="#fff" />
       <SafeAreaView style={styles.container} edges={['top']}>
-        <View style={[styles.topBar, { backgroundColor: primaryColor }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+        <KeyboardAvoidingView 
+          style={{ flex: 1 }} 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          <View style={[styles.topBar, { backgroundColor: primaryColor }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <View style={styles.totalContainer}>
@@ -1659,6 +1663,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           onCancel={() => { setNumpadVisible(false); setNumpadItem(null); }}
         />
       )}
+        </KeyboardAvoidingView>
     </SafeAreaView>
     </>
   );
