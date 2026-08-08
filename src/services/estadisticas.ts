@@ -28,3 +28,10 @@ export const getEstadisticasGenerales = async (startDate?: string, endDate?: str
   });
   return data;
 };
+
+export const getInsumosDescuadres = async (startDate: string, endDate: string) => {
+  const { data } = await api.get('/estadisticas/insumos-descuadres', {
+    params: { startDate, endDate }
+  });
+  return data;
+};

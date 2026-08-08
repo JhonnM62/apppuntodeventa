@@ -1,20 +1,23 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { EstadisticasGenerales, getEstadisticasGenerales } from '../services/estadisticas';
+import { EstadisticasGenerales, getEstadisticasGenerales, getInsumosDescuadres } from '../services/estadisticas';
 
 interface EstadisticasState {
   data: EstadisticasGenerales | null;
+  auditoriaData: any | null;
   isLoading: boolean;
   error: string | null;
   lastFetched: number | null;
   fetchData: (startDate?: string, endDate?: string, categoriaProducto?: string, vendedorId?: string) => Promise<void>;
+  fetchAuditoriaData: (startDate: string, endDate: string) => Promise<void>;
 }
 
 export const useEstadisticasStore = create<EstadisticasState>()(
   persist(
     (set, get) => ({
       data: null,
+      auditoriaData: null,
       isLoading: false,
       error: null,
       lastFetched: null,
@@ -25,6 +28,15 @@ export const useEstadisticasStore = create<EstadisticasState>()(
         try {
           const result = await getEstadisticasGenerales(startDate, endDate, categoriaProducto, vendedorId);
           set({ data: result, isLoading: false, lastFetched: Date.now() });
+        } catch (error: any) {
+          set({ error: error.message || 'Error', isLoading: false });
+        }
+      },
+      fetchAuditoriaData: async (startDate, endDate) => {
+        set({ isLoading: true, error: null });
+        try {
+          const result = await getInsumosDescuadres(startDate, endDate);
+          set({ auditoriaData: result, isLoading: false });
         } catch (error: any) {
           set({ error: error.message || 'Error', isLoading: false });
         }

@@ -8,7 +8,9 @@ import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Toast from 'react-native-toast-message';
 import { useEstadisticasStore } from '../../store/useEstadisticasStore';
+import AuditoriaInsumosView from './AuditoriaInsumosView';
 import categoriasService, { CategoriaItem } from '../../services/categorias';
+import { getConfiguracion } from '../../services/configuracion';
 import api from '../../services/api';
 
 // Carga dinámica de módulos nativos
@@ -24,8 +26,11 @@ try { Sharing = require('expo-sharing'); } catch (e) {}
 
 export default function EstadisticasScreen({ navigation }: any) {
   const { width } = useWindowDimensions();
-  const { data, isLoading, fetchData } = useEstadisticasStore();
+  const { data, isLoading, fetchData, fetchAuditoriaData } = useEstadisticasStore();
+  const [modoOperacion, setModoOperacion] = useState('GENERAL');
+  const [nombreNegocio, setNombreNegocio] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'graficos' | 'auditoria'>('graficos');
 
   // Filtros
   const [startDate, setStartDate] = useState(startOfMonth(new Date()));
@@ -52,6 +57,11 @@ export default function EstadisticasScreen({ navigation }: any) {
       setCategorias(cats);
       const res = await api.get('/usuarios'); // Asumiendo endpoint
       setVendedores(res.data.data || res.data);
+      
+      const configRes = await getConfiguracion();
+      const config = configRes?.data || configRes;
+      if (config?.modoOperacion) setModoOperacion(config.modoOperacion);
+      if (config?.nombreComercial) setNombreNegocio(config.nombreComercial);
     } catch (e) {
       console.log('Error loading filters', e);
     }
@@ -64,7 +74,10 @@ export default function EstadisticasScreen({ navigation }: any) {
       selectedCategoria,
       selectedVendedor
     );
-  }, [startDate, endDate, selectedCategoria, selectedVendedor, fetchData]);
+    if (modoOperacion === 'RESTAURANTE') {
+      await fetchAuditoriaData(format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'));
+    }
+  }, [startDate, endDate, selectedCategoria, selectedVendedor, fetchData, fetchAuditoriaData, modoOperacion]);
 
   useEffect(() => {
     loadFilters();
@@ -79,6 +92,9 @@ export default function EstadisticasScreen({ navigation }: any) {
       selectedCategoria,
       selectedVendedor
     );
+    if (modoOperacion === 'RESTAURANTE') {
+      fetchAuditoriaData(format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'));
+    }
   }, []); // Empty deps = solo una vez al montar
 
   const onRefresh = async () => {
@@ -89,6 +105,9 @@ export default function EstadisticasScreen({ navigation }: any) {
       selectedCategoria,
       selectedVendedor
     );
+    if (modoOperacion === 'RESTAURANTE') {
+      await fetchAuditoriaData(format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'));
+    }
     setRefreshing(false);
   };
 
@@ -456,10 +475,32 @@ export default function EstadisticasScreen({ navigation }: any) {
           />
         )}
 
-        {isLoading && !data ? (
-          <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 50 }} />
-        ) : data ? (
-          <>
+        {modoOperacion === 'RESTAURANTE' && (
+          <View className="flex-row bg-white rounded-xl mb-4 p-1 shadow-sm">
+            <TouchableOpacity 
+              className={`flex-1 py-2 rounded-lg items-center ${activeTab === 'graficos' ? 'bg-blue-100' : ''}`}
+              onPress={() => setActiveTab('graficos')}
+            >
+              <Text className={`font-bold ${activeTab === 'graficos' ? 'text-blue-700' : 'text-gray-500'}`}>Estadísticas</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              className={`flex-1 py-2 rounded-lg items-center ${activeTab === 'auditoria' ? 'bg-blue-100' : ''}`}
+              onPress={() => setActiveTab('auditoria')}
+            >
+              <Text className={`font-bold ${activeTab === 'auditoria' ? 'text-blue-700' : 'text-gray-500'}`}>Auditoría Insumos</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {activeTab === 'auditoria' && modoOperacion === 'RESTAURANTE' ? (
+          <View style={{ flex: 1, minHeight: 400 }}>
+            <AuditoriaInsumosView startDate={startDate} endDate={endDate} nombreNegocio={nombreNegocio} />
+          </View>
+        ) : (
+          isLoading && !data ? (
+            <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 50 }} />
+          ) : data ? (
+            <>
             {/* Tarjetas de Resumen */}
             <View className="flex-row mb-2">
               {renderCard('Ventas Totales', data.totales.ventas, 'trending-up', ['#3b82f6', '#2563eb'])}
@@ -535,7 +576,7 @@ export default function EstadisticasScreen({ navigation }: any) {
               )}
             </View>
           </>
-        ) : null}
+        ) : null)}
       </ScrollView>
     </SafeAreaView>
   );
