@@ -576,12 +576,13 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
         import('../../services/sales').then(async ({ updateVentaCompleta }) => {
           try {
-            await updateVentaCompleta(editingSaleId, payload);
+            const response = await updateVentaCompleta(editingSaleId, payload);
+            const ventaActualizada = response?.data || response;
             emitOrdenActualizada({ 
               ventaId: editingSaleId, 
               IDventas: editingSaleId, 
               estado: paymentData.estado,
-              venta: {
+              venta: ventaActualizada.IDventas ? ventaActualizada : {
                 ...editingVenta,
                 ...payload.venta,
                 IDventas: editingSaleId,
@@ -805,12 +806,13 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
         import('../../services/sales').then(async ({ updateVentaCompleta }) => {
           try {
-            await updateVentaCompleta(editingSaleId, payload);
+            const response = await updateVentaCompleta(editingSaleId, payload);
+            const ventaActualizada = response?.data || response;
             emitOrdenActualizada({ 
               ventaId: editingSaleId, 
               IDventas: editingSaleId, 
               estado: data.estado,
-              venta: {
+              venta: ventaActualizada.IDventas ? ventaActualizada : {
                 ...editingVenta,
                 ...payload.venta,
                 IDventas: editingSaleId,
