@@ -84,7 +84,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         setValor(gastoToEdit.valor ? gastoToEdit.valor.toString() : '');
         setMedioDePago(gastoToEdit.medioDePago || 'Efectivo');
         setFotoUri(gastoToEdit.fotos || null);
-        setFecha(gastoToEdit.fecha ? new Date(gastoToEdit.fecha) : new Date());
+        setFecha(gastoToEdit.fechaYHora ? new Date(gastoToEdit.fechaYHora) : (gastoToEdit.fecha ? new Date(gastoToEdit.fecha) : new Date()));
       } else {
         setTipo('NEGOCIO');
         setConcepto('');
@@ -158,6 +158,7 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         medioDePago,
         fotos: finalFotoUrl || undefined,
         fecha: fecha.toISOString(),
+        fechaYHora: fecha.toISOString(),
       };
 
       if (gastoToEdit) {
