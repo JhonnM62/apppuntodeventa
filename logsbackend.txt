@@ -1,100 +1,84 @@
-[Nest] 19  - 08/08/2026, 4:39:27 AM     LOG [AppGateway] Client w4j3kDIwVb7OhXJ8AACP joined room: caja
-[Nest] 19  - 08/08/2026, 4:39:52 AM     LOG [AppGateway] Client disconnected: w4j3kDIwVb7OhXJ8AACP (was in rooms: user_cmsi402g000kpd7oclpbv65o3, kitchen, caja)
-[Nest] 19  - 08/08/2026, 4:39:56 AM     LOG [AppGateway] Client o3NGmJa1o8E0kvwkAACR mapped to user cmsi402g000kpd7oclpbv65o3 and joined user_cmsi402g000kpd7oclpbv65o3
-[Nest] 19  - 08/08/2026, 4:39:56 AM     LOG [AppGateway] Client o3NGmJa1o8E0kvwkAACR joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:39:57 AM     LOG [AppGateway] Client o3NGmJa1o8E0kvwkAACR joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:43:53 AM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[LLgIUZEEYR5IXm3BVvDR3A]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 4:43:53 AM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[R96aBEE1DFEEktKwYaK0Pw]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 4:44:05 AM     LOG [AppGateway] Client disconnected: o3NGmJa1o8E0kvwkAACR (was in rooms: user_cmsi402g000kpd7oclpbv65o3, kitchen)
-[Nest] 19  - 08/08/2026, 4:44:14 AM     LOG [AppGateway] Client taTxpnrNTu_jf6MJAACT mapped to user cmsi402g000kpd7oclpbv65o3 and joined user_cmsi402g000kpd7oclpbv65o3
-[Nest] 19  - 08/08/2026, 4:44:15 AM     LOG [AppGateway] Client taTxpnrNTu_jf6MJAACT joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:44:15 AM     LOG [AppGateway] Client taTxpnrNTu_jf6MJAACT joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:44:28 AM     LOG [AppGateway] Client disconnected: taTxpnrNTu_jf6MJAACT (was in rooms: user_cmsi402g000kpd7oclpbv65o3, kitchen)
-[Nest] 19  - 08/08/2026, 4:46:06 AM     LOG [AppGateway] Client 4B5AQQtFlZXcK7mYAACV mapped to user cmsi402g000kpd7oclpbv65o3 and joined user_cmsi402g000kpd7oclpbv65o3
-[Nest] 19  - 08/08/2026, 4:46:07 AM     LOG [AppGateway] Client 4B5AQQtFlZXcK7mYAACV joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:46:07 AM     LOG [AppGateway] Client 4B5AQQtFlZXcK7mYAACV joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:46:20 AM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[LLgIUZEEYR5IXm3BVvDR3A]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 4:46:20 AM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[R96aBEE1DFEEktKwYaK0Pw]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 4:46:41 AM     LOG [AppGateway] Client disconnected: 4B5AQQtFlZXcK7mYAACV (was in rooms: user_cmsi402g000kpd7oclpbv65o3, kitchen)
-[Nest] 19  - 08/08/2026, 4:48:16 AM     LOG [AppGateway] Client M389iniki9YY_HpHAACX mapped to user cmsi402g000kpd7oclpbv65o3 and joined user_cmsi402g000kpd7oclpbv65o3
-[Nest] 19  - 08/08/2026, 4:48:17 AM     LOG [AppGateway] Client M389iniki9YY_HpHAACX joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:48:17 AM     LOG [AppGateway] Client M389iniki9YY_HpHAACX joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:48:22 AM     LOG [AppGateway] Client M389iniki9YY_HpHAACX joined room: caja
-[Nest] 19  - 08/08/2026, 4:48:36 AM     LOG [AppGateway] Client disconnected: M389iniki9YY_HpHAACX (was in rooms: user_cmsi402g000kpd7oclpbv65o3, kitchen, caja)
-[Nest] 19  - 08/08/2026, 4:48:52 AM     LOG [AppGateway] Client UBmEBixEwDGWZGcOAACZ mapped to user cmsi402g000kpd7oclpbv65o3 and joined user_cmsi402g000kpd7oclpbv65o3
-[Nest] 19  - 08/08/2026, 4:48:52 AM     LOG [AppGateway] Client UBmEBixEwDGWZGcOAACZ joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:48:52 AM     LOG [AppGateway] Client UBmEBixEwDGWZGcOAACZ joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:48:53 AM     LOG [AppGateway] Client UBmEBixEwDGWZGcOAACZ joined room: caja
-[Nest] 19  - 08/08/2026, 4:49:03 AM     LOG [AppGateway] Client disconnected: UBmEBixEwDGWZGcOAACZ (was in rooms: user_cmsi402g000kpd7oclpbv65o3, kitchen, caja)
-[Nest] 19  - 08/08/2026, 4:49:16 AM     LOG [AppGateway] Client Ka6BQIIGU2AKjVW0AACb mapped to user cmsducjti0001cuyw6xltgir1 and joined user_cmsducjti0001cuyw6xltgir1
-[Nest] 19  - 08/08/2026, 4:49:16 AM     LOG [AppGateway] Client Ka6BQIIGU2AKjVW0AACb joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:49:17 AM     LOG [AppGateway] Client Ka6BQIIGU2AKjVW0AACb joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:49:20 AM     LOG [AppGateway] Client Ka6BQIIGU2AKjVW0AACb joined room: caja
-[Nest] 19  - 08/08/2026, 4:49:21 AM     LOG [AppGateway] Client Ka6BQIIGU2AKjVW0AACb joined room: caja
-[Nest] 19  - 08/08/2026, 4:49:41 AM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[LLgIUZEEYR5IXm3BVvDR3A]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 4:49:41 AM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[R96aBEE1DFEEktKwYaK0Pw]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 4:49:42 AM     LOG [AppGateway] Client CNPEfRF3-w5AvpWdAACd mapped to user cmsi402g000kpd7oclpbv65o3 and joined user_cmsi402g000kpd7oclpbv65o3
-[Nest] 19  - 08/08/2026, 4:49:43 AM     LOG [AppGateway] Client CNPEfRF3-w5AvpWdAACd joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:49:43 AM     LOG [AppGateway] Client CNPEfRF3-w5AvpWdAACd joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:50:03 AM     LOG [AppGateway] Client CNPEfRF3-w5AvpWdAACd joined room: caja
-[Nest] 19  - 08/08/2026, 4:50:34 AM     LOG [AppGateway] Client disconnected: CNPEfRF3-w5AvpWdAACd (was in rooms: user_cmsi402g000kpd7oclpbv65o3, kitchen, caja)
-[Nest] 19  - 08/08/2026, 4:50:47 AM     LOG [AppGateway] Client qdriz0_BP7zXd0LKAACf mapped to user cmsi402g000kpd7oclpbv65o3 and joined user_cmsi402g000kpd7oclpbv65o3
-[Nest] 19  - 08/08/2026, 4:50:48 AM     LOG [AppGateway] Client qdriz0_BP7zXd0LKAACf joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:50:48 AM     LOG [AppGateway] Client qdriz0_BP7zXd0LKAACf joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:51:03 AM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[LLgIUZEEYR5IXm3BVvDR3A]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 4:51:03 AM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[R96aBEE1DFEEktKwYaK0Pw]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 4:51:30 AM     LOG [AppGateway] Client disconnected: iK5Xj7yDQP8CtJ7wAACL (was in rooms: user_cmsducjti0001cuyw6xltgir1, kitchen)
-[Nest] 19  - 08/08/2026, 4:51:49 AM     LOG [AppGateway] Client disconnected: qdriz0_BP7zXd0LKAACf (was in rooms: user_cmsi402g000kpd7oclpbv65o3, kitchen)
-[Nest] 19  - 08/08/2026, 4:58:13 AM     LOG [AppGateway] Client FFARB1kmLQ0CjtYKAACh mapped to user cmsi402g000kpd7oclpbv65o3 and joined user_cmsi402g000kpd7oclpbv65o3
-[Nest] 19  - 08/08/2026, 4:58:13 AM     LOG [AppGateway] Client FFARB1kmLQ0CjtYKAACh joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:58:13 AM     LOG [AppGateway] Client FFARB1kmLQ0CjtYKAACh joined room: kitchen
-[Nest] 19  - 08/08/2026, 4:58:17 AM     LOG [AppGateway] Client FFARB1kmLQ0CjtYKAACh joined room: caja
-[Nest] 19  - 08/08/2026, 4:58:21 AM     LOG [AppGateway] Client FFARB1kmLQ0CjtYKAACh joined room: caja
-[Nest] 19  - 08/08/2026, 4:58:43 AM     LOG [AppGateway] Client disconnected: FFARB1kmLQ0CjtYKAACh (was in rooms: user_cmsi402g000kpd7oclpbv65o3, kitchen, caja)
-[Nest] 19  - 08/08/2026, 5:00:08 AM     LOG [AppGateway] Client byWDSogz6HUZuxJ-AACj mapped to user cmsi402g000kpd7oclpbv65o3 and joined user_cmsi402g000kpd7oclpbv65o3
-[Nest] 19  - 08/08/2026, 5:00:09 AM     LOG [AppGateway] Client byWDSogz6HUZuxJ-AACj joined room: kitchen
-[Nest] 19  - 08/08/2026, 5:00:09 AM     LOG [AppGateway] Client byWDSogz6HUZuxJ-AACj joined room: kitchen
-[Nest] 19  - 08/08/2026, 5:04:23 AM     LOG [AppGateway] Client 5NKb8yDvEuWKWBjHAACl mapped to user cmsducjti0001cuyw6xltgir1 and joined user_cmsducjti0001cuyw6xltgir1
-[Nest] 19  - 08/08/2026, 5:04:23 AM     LOG [AppGateway] Client 5NKb8yDvEuWKWBjHAACl joined room: kitchen
-[Nest] 19  - 08/08/2026, 5:04:23 AM     LOG [AppGateway] Client 5NKb8yDvEuWKWBjHAACl joined room: kitchen
-[Nest] 19  - 08/08/2026, 5:15:32 AM     LOG [AppGateway] Client disconnected: byWDSogz6HUZuxJ-AACj (was in rooms: user_cmsi402g000kpd7oclpbv65o3, kitchen)
-[Nest] 19  - 08/08/2026, 5:17:19 AM     LOG [AppGateway] Client disconnected: 5NKb8yDvEuWKWBjHAACl (was in rooms: user_cmsducjti0001cuyw6xltgir1, kitchen)
-[Nest] 19  - 08/08/2026, 5:18:11 AM     LOG [AppGateway] Client disconnected: Ka6BQIIGU2AKjVW0AACb (was in rooms: user_cmsducjti0001cuyw6xltgir1, kitchen, caja)
-[Nest] 19  - 08/08/2026, 1:20:01 PM     LOG [AppGateway] Client RLtXfZ2gNCcdcKVPAACn mapped to user cmsducjti0001cuyw6xltgir1 and joined user_cmsducjti0001cuyw6xltgir1
-[Nest] 19  - 08/08/2026, 1:20:01 PM     LOG [AppGateway] Client RLtXfZ2gNCcdcKVPAACn joined room: kitchen
-[Nest] 19  - 08/08/2026, 1:20:01 PM     LOG [AppGateway] Client RLtXfZ2gNCcdcKVPAACn joined room: kitchen
-[Nest] 19  - 08/08/2026, 1:20:39 PM     LOG [AppGateway] Client RLtXfZ2gNCcdcKVPAACn joined room: caja
-[Nest] 19  - 08/08/2026, 1:20:43 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[Nest] 19  - 08/08/2026, 1:20:43 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[Nest] 19  - 08/08/2026, 1:20:43 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[Nest] 19  - 08/08/2026, 1:20:43 PM     LOG [AppGateway] Emitting to Ventas room and all clients: refreshVentas
-[Nest] 19  - 08/08/2026, 1:20:43 PM     LOG [AppGateway] Broadcasting event refreshVentas to all clients in namespace
-[Nest] 19  - 08/08/2026, 1:20:43 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[LLgIUZEEYR5IXm3BVvDR3A]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:20:43 PM     LOG [AppGateway] Nueva orden received: cmskej2r800p0e7rk5e3nojvs
-[Nest] 19  - 08/08/2026, 1:20:48 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[R96aBEE1DFEEktKwYaK0Pw]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:20:48 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[LLgIUZEEYR5IXm3BVvDR3A]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:20:48 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[R96aBEE1DFEEktKwYaK0Pw]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:20:48 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[LLgIUZEEYR5IXm3BVvDR3A]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:20:48 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[R96aBEE1DFEEktKwYaK0Pw]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:20:48 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[LLgIUZEEYR5IXm3BVvDR3A]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:21:02 PM     LOG [AppGateway] Client RLtXfZ2gNCcdcKVPAACn joined room: kitchen
-[Nest] 19  - 08/08/2026, 1:21:02 PM     LOG [AppGateway] Client RLtXfZ2gNCcdcKVPAACn joined room: caja
-[Nest] 19  - 08/08/2026, 1:21:23 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[Nest] 19  - 08/08/2026, 1:21:23 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[Nest] 19  - 08/08/2026, 1:21:23 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[Nest] 19  - 08/08/2026, 1:21:28 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[R96aBEE1DFEEktKwYaK0Pw]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:21:28 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[LLgIUZEEYR5IXm3BVvDR3A]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:21:28 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[R96aBEE1DFEEktKwYaK0Pw]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:21:28 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[LLgIUZEEYR5IXm3BVvDR3A]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:21:28 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[R96aBEE1DFEEktKwYaK0Pw]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:21:28 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[LLgIUZEEYR5IXm3BVvDR3A]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:31:20 PM     LOG [AppGateway] Client m95rmwLLpRS7S9I_AACp mapped to user cmsi402g000kpd7oclpbv65o3 and joined user_cmsi402g000kpd7oclpbv65o3
-[Nest] 19  - 08/08/2026, 1:31:21 PM     LOG [AppGateway] Client m95rmwLLpRS7S9I_AACp joined room: kitchen
-[Nest] 19  - 08/08/2026, 1:31:21 PM     LOG [AppGateway] Client m95rmwLLpRS7S9I_AACp joined room: kitchen
-[Nest] 19  - 08/08/2026, 1:31:22 PM     LOG [AppGateway] Client m95rmwLLpRS7S9I_AACp joined room: caja
-[Nest] 19  - 08/08/2026, 1:36:05 PM     LOG [AppGateway] Client RLtXfZ2gNCcdcKVPAACn joined room: caja
-[Nest] 19  - 08/08/2026, 1:36:06 PM     LOG [AppGateway] Client RLtXfZ2gNCcdcKVPAACn joined room: caja
-[Nest] 19  - 08/08/2026, 1:36:16 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[R96aBEE1DFEEktKwYaK0Pw]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:36:16 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[LLgIUZEEYR5IXm3BVvDR3A]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:36:27 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[R96aBEE1DFEEktKwYaK0Pw]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
-[Nest] 19  - 08/08/2026, 1:36:27 PM   ERROR [NotificationsService] Error en ticket para ExponentPushToken[LLgIUZEEYR5IXm3BVvDR3A]: Unable to retrieve the FCM server key for the recipient's app. Make sure you have provided a server key as directed by the Expo FCM documentation.
+    at async DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:72:32)
+    at async DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:72:32)
+    at async DependenciesScanner.scan (/app/node_modules/@nestjs/core/scanner.js:28:9)
+    at async /app/node_modules/@nestjs/core/nest-factory.js:111:17
+    at async ExceptionsZone.asyncRun (/app/node_modules/@nestjs/core/errors/exceptions-zone.js:22:13)
+    at async NestFactoryStatic.initialize (/app/node_modules/@nestjs/core/nest-factory.js:110:13)
+    at async NestFactoryStatic.create (/app/node_modules/@nestjs/core/nest-factory.js:43:9)
+    at async bootstrap (/app/dist/main.js:10:17)
+> puntodeventabackend@0.0.1 start:prod
+> node dist/main
+[Nest] 19  - 08/08/2026, 4:09:05 PM     LOG [NestFactory] Starting Nest application...
+[Nest] 19  - 08/08/2026, 4:09:05 PM   ERROR [ExceptionHandler] UndefinedModuleException [Error]: Nest cannot create the EstadisticasModule instance.
+The module at index [1] of the EstadisticasModule "imports" array is undefined.
+Potential causes:
+- A circular dependency between modules. Use forwardRef() to avoid it. Read more: https://docs.nestjs.com/fundamentals/circular-dependency
+- The module at index [1] is of type "undefined". Check your import statements and the type of the module.
+Scope [AppModule -> CajaModule -> AiModule]
+    at DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:64:23)
+    at async DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:72:32)
+    at async DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:72:32)
+    at async DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:72:32)
+    at async DependenciesScanner.scan (/app/node_modules/@nestjs/core/scanner.js:28:9)
+    at async /app/node_modules/@nestjs/core/nest-factory.js:111:17
+    at async ExceptionsZone.asyncRun (/app/node_modules/@nestjs/core/errors/exceptions-zone.js:22:13)
+    at async NestFactoryStatic.initialize (/app/node_modules/@nestjs/core/nest-factory.js:110:13)
+    at async NestFactoryStatic.create (/app/node_modules/@nestjs/core/nest-factory.js:43:9)
+    at async bootstrap (/app/dist/main.js:10:17)
+> puntodeventabackend@0.0.1 start:prod
+> node dist/main
+[Nest] 18  - 08/08/2026, 4:09:13 PM     LOG [NestFactory] Starting Nest application...
+[Nest] 18  - 08/08/2026, 4:09:13 PM   ERROR [ExceptionHandler] UndefinedModuleException [Error]: Nest cannot create the EstadisticasModule instance.
+The module at index [1] of the EstadisticasModule "imports" array is undefined.
+Potential causes:
+- A circular dependency between modules. Use forwardRef() to avoid it. Read more: https://docs.nestjs.com/fundamentals/circular-dependency
+- The module at index [1] is of type "undefined". Check your import statements and the type of the module.
+Scope [AppModule -> CajaModule -> AiModule]
+    at DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:64:23)
+    at async DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:72:32)
+    at async DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:72:32)
+    at async DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:72:32)
+    at async DependenciesScanner.scan (/app/node_modules/@nestjs/core/scanner.js:28:9)
+    at async /app/node_modules/@nestjs/core/nest-factory.js:111:17
+    at async ExceptionsZone.asyncRun (/app/node_modules/@nestjs/core/errors/exceptions-zone.js:22:13)
+    at async NestFactoryStatic.initialize (/app/node_modules/@nestjs/core/nest-factory.js:110:13)
+    at async NestFactoryStatic.create (/app/node_modules/@nestjs/core/nest-factory.js:43:9)
+    at async bootstrap (/app/dist/main.js:10:17)
+> puntodeventabackend@0.0.1 start:prod
+> node dist/main
+[Nest] 18  - 08/08/2026, 4:09:27 PM     LOG [NestFactory] Starting Nest application...
+[Nest] 18  - 08/08/2026, 4:09:27 PM   ERROR [ExceptionHandler] UndefinedModuleException [Error]: Nest cannot create the EstadisticasModule instance.
+The module at index [1] of the EstadisticasModule "imports" array is undefined.
+Potential causes:
+- A circular dependency between modules. Use forwardRef() to avoid it. Read more: https://docs.nestjs.com/fundamentals/circular-dependency
+- The module at index [1] is of type "undefined". Check your import statements and the type of the module.
+Scope [AppModule -> CajaModule -> AiModule]
+    at DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:64:23)
+    at async DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:72:32)
+    at async DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:72:32)
+    at async DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:72:32)
+    at async DependenciesScanner.scan (/app/node_modules/@nestjs/core/scanner.js:28:9)
+    at async /app/node_modules/@nestjs/core/nest-factory.js:111:17
+    at async ExceptionsZone.asyncRun (/app/node_modules/@nestjs/core/errors/exceptions-zone.js:22:13)
+    at async NestFactoryStatic.initialize (/app/node_modules/@nestjs/core/nest-factory.js:110:13)
+    at async NestFactoryStatic.create (/app/node_modules/@nestjs/core/nest-factory.js:43:9)
+    at async bootstrap (/app/dist/main.js:10:17)
+> puntodeventabackend@0.0.1 start:prod
+> node dist/main
+[Nest] 19  - 08/08/2026, 4:09:54 PM     LOG [NestFactory] Starting Nest application...
+[Nest] 19  - 08/08/2026, 4:09:54 PM   ERROR [ExceptionHandler] UndefinedModuleException [Error]: Nest cannot create the EstadisticasModule instance.
+The module at index [1] of the EstadisticasModule "imports" array is undefined.
+Potential causes:
+- A circular dependency between modules. Use forwardRef() to avoid it. Read more: https://docs.nestjs.com/fundamentals/circular-dependency
+- The module at index [1] is of type "undefined". Check your import statements and the type of the module.
+Scope [AppModule -> CajaModule -> AiModule]
+    at DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:64:23)
+    at async DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:72:32)
+    at async DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:72:32)
+    at async DependenciesScanner.scanForModules (/app/node_modules/@nestjs/core/scanner.js:72:32)
+    at async DependenciesScanner.scan (/app/node_modules/@nestjs/core/scanner.js:28:9)
+    at async /app/node_modules/@nestjs/core/nest-factory.js:111:17
+    at async ExceptionsZone.asyncRun (/app/node_modules/@nestjs/core/errors/exceptions-zone.js:22:13)
+    at async NestFactoryStatic.initialize (/app/node_modules/@nestjs/core/nest-factory.js:110:13)
+    at async NestFactoryStatic.create (/app/node_modules/@nestjs/core/nest-factory.js:43:9)
+    at async bootstrap (/app/dist/main.js:10:17)

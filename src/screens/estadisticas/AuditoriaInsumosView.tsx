@@ -66,15 +66,45 @@ export default function AuditoriaInsumosView({ startDate, endDate, nombreNegocio
         </div>
       `).join('');
 
-      const tableRows = data.map((r: any) => `
-        <tr>
+      const tableRows = data.map((r: any) => {
+        let detailsHtml = '';
+        if (r.detalles && r.detalles.length > 0) {
+          const detailRows = r.detalles.map((d: any) => `
+            <tr>
+              <td colspan="3" style="padding: 4px 8px; border-bottom: 1px dotted #e5e7eb; padding-left: 20px; font-size: 10px; color: #6b7280;">
+                ${format(new Date(d.fecha), 'dd MMM yyyy', { locale: es })}
+              </td>
+              <td style="padding: 4px 8px; border-bottom: 1px dotted #e5e7eb; text-align: center; font-size: 10px; color: #be123c; font-weight: bold;">
+                ${d.tipo === 'FALTANTE' ? '-' + d.diferencia : ''}
+              </td>
+              <td style="padding: 4px 8px; border-bottom: 1px dotted #e5e7eb; text-align: center; font-size: 10px; color: #047857; font-weight: bold;">
+                ${d.tipo === 'SOBRANTE' ? '+' + Math.abs(d.diferencia) : ''}
+              </td>
+            </tr>
+          `).join('');
+          
+          detailsHtml = `
+            <tr>
+              <td colspan="5" style="padding: 0; background-color: #f9fafb;">
+                <table style="margin: 0; width: 100%; border: none; font-size: 10px;">
+                  ${detailRows}
+                </table>
+              </td>
+            </tr>
+          `;
+        }
+
+        return `
+        <tr style="background-color: #fff;">
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; font-weight: bold;">${r.nombre}</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center;">${r.gastadoFisico}</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center;">${r.ventasSistema}</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #be123c; font-weight: bold;">${r.totalFaltantes > 0 ? r.totalFaltantes : '-'}</td>
           <td style="padding: 8px; border-bottom: 1px solid #e5e7eb; text-align: center; color: #047857; font-weight: bold;">${r.totalSobrantes > 0 ? r.totalSobrantes : '-'}</td>
         </tr>
-      `).join('');
+        ${detailsHtml}
+        `;
+      }).join('');
 
       const html = `
         <html>
@@ -175,29 +205,48 @@ export default function AuditoriaInsumosView({ startDate, endDate, nombreNegocio
           </View>
 
           {data.map((row: any, idx: number) => (
-            <View key={idx} className="flex-row p-3 border-b border-gray-50 items-center">
-              <View className="flex-[2] pr-2">
-                <Text className="font-bold text-xs text-gray-800">{row.nombre}</Text>
-                <Text className="text-[10px] text-gray-400 mt-0.5">Sistema: {row.ventasSistema} | Físico: {row.gastadoFisico}</Text>
+            <View key={idx} className="border-b border-gray-100 bg-white">
+              <View className="flex-row p-3 items-center">
+                <View className="flex-[2] pr-2">
+                  <Text className="font-bold text-xs text-gray-800">{row.nombre}</Text>
+                  <Text className="text-[10px] text-gray-400 mt-0.5">Sistema: {row.ventasSistema} | Físico: {row.gastadoFisico}</Text>
+                </View>
+                <View className="flex-[1] items-center justify-center">
+                  {row.totalFaltantes > 0 ? (
+                    <View className="bg-red-100 px-2 py-1 rounded-md">
+                      <Text className="text-red-700 font-bold text-xs">-{row.totalFaltantes}</Text>
+                    </View>
+                  ) : (
+                    <Text className="text-gray-300">-</Text>
+                  )}
+                </View>
+                <View className="flex-[1] items-center justify-center">
+                  {row.totalSobrantes > 0 ? (
+                    <View className="bg-green-100 px-2 py-1 rounded-md">
+                      <Text className="text-green-700 font-bold text-xs">+{row.totalSobrantes}</Text>
+                    </View>
+                  ) : (
+                    <Text className="text-gray-300">-</Text>
+                  )}
+                </View>
               </View>
-              <View className="flex-[1] items-center justify-center">
-                {row.totalFaltantes > 0 ? (
-                  <View className="bg-red-100 px-2 py-1 rounded-md">
-                    <Text className="text-red-700 font-bold text-xs">-{row.totalFaltantes}</Text>
-                  </View>
-                ) : (
-                  <Text className="text-gray-300">-</Text>
-                )}
-              </View>
-              <View className="flex-[1] items-center justify-center">
-                {row.totalSobrantes > 0 ? (
-                  <View className="bg-green-100 px-2 py-1 rounded-md">
-                    <Text className="text-green-700 font-bold text-xs">+{row.totalSobrantes}</Text>
-                  </View>
-                ) : (
-                  <Text className="text-gray-300">-</Text>
-                )}
-              </View>
+              {row.detalles && row.detalles.length > 0 && (
+                <View className="bg-gray-50 px-4 py-2 border-t border-gray-100">
+                  <Text className="text-[10px] font-bold text-gray-500 mb-1">DÍAS CON DESCUADRE:</Text>
+                  {row.detalles.map((d: any, i: number) => (
+                    <View key={i} className="flex-row justify-between mb-1">
+                      <Text className="text-[10px] text-gray-600">
+                        {format(new Date(d.fecha), 'dd MMM yyyy', { locale: es })}
+                      </Text>
+                      {d.tipo === 'FALTANTE' ? (
+                        <Text className="text-[10px] font-bold text-red-600">-{d.diferencia}</Text>
+                      ) : (
+                        <Text className="text-[10px] font-bold text-green-600">+{Math.abs(d.diferencia)}</Text>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              )}
             </View>
           ))}
         </View>
