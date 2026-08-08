@@ -217,7 +217,6 @@ const SettingsScreen = ({ navigation }: Props) => {
                 'mesas': 'configuracion',
                 'notificaciones': 'configuracion',
                 'config_negocio': 'configuracion',
-                'config_avanzada': 'configuracion',
               };
 
               const key = permissionMapping[modulo.id];
