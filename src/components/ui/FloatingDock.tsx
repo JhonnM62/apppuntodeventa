@@ -99,7 +99,7 @@ const hasRoutePermission = (user: any, routeName: string) => {
   }
 
   // Rutas básicas sin permisos estrictos
-  if (['Inicio', 'CheckIn', 'MisTurnos'].includes(routeName)) return true;
+  if (['Inicio', 'CheckIn', 'MisTurnos', 'ConfiguracionAvanzada'].includes(routeName)) return true;
   
   return false;
 };
