@@ -782,7 +782,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       presentationStyle="pageSheet"
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.modalOverlay}
         keyboardVerticalOffset={0}
       >

@@ -523,7 +523,10 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
-    setPaymentModalVisible(true);
+    Keyboard.dismiss();
+    setTimeout(() => {
+      setPaymentModalVisible(true);
+    }, 150);
   };
 
   const handlePaymentConfirm = async (paymentData: {

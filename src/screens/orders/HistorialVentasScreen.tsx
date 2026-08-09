@@ -27,6 +27,7 @@ try {
 
 import { Text } from '../../components/ui/text';
 import { getSales, getSalesHoy, deleteSale, restoreSale, hardDeleteSale, emptyTrashSales, deleteSalesBulk, hardDeleteSalesBulk } from '../../services/sales';
+import { useSalesStore } from '../../store/useSalesStore';
 import { formatCurrency, formatTime12h, formatDateToDDMMAAAA } from '../../utils/formatters';
 import { useSocket, useSocketEvent } from '../../hooks';
 import { Room, SocketEvent } from '../../types/socket.types';
@@ -141,23 +142,29 @@ export default function HistorialVentasScreen({ navigation }: any) {
         activas: { ...prev.activas, data: prev.activas.data.map(v => v.IDventas === data.venta.IDventas ? data.venta : v) },
         eliminadas: { ...prev.eliminadas, data: prev.eliminadas.data.map(v => v.IDventas === data.venta.IDventas ? data.venta : v) }
       }));
+      useSalesStore.getState().updateVenta(data.venta.IDventas, data.venta);
     } else if (data?.action === 'delete' && data?.ventaId) {
       setCache(prev => ({
         ...prev,
         activas: { ...prev.activas, data: prev.activas.data.filter(v => v.IDventas !== data.ventaId) },
         eliminadas: { ...prev.eliminadas, data: prev.eliminadas.data.filter(v => v.IDventas !== data.ventaId) }
       }));
+      useSalesStore.getState().removeVenta(data.ventaId);
     } else if (data?.action === 'bulkDelete' && data?.ventaIds) {
       setCache(prev => ({
         ...prev,
         activas: { ...prev.activas, data: prev.activas.data.filter(v => !data.ventaIds.includes(v.IDventas)) },
         eliminadas: { ...prev.eliminadas, data: prev.eliminadas.data.filter(v => !data.ventaIds.includes(v.IDventas)) }
       }));
+      data.ventaIds.forEach((id: string) => useSalesStore.getState().removeVenta(id));
     } else if (data?.action === 'create') {
       // Background silent fetch solo para creaciones si estamos en la tab de activas
       if (activeTab === 'activas') {
         fetchVentas(1, 'activas', false, searchText, true, activeFilters);
         fetchStatsHoy();
+      }
+      if (data?.venta) {
+        useSalesStore.getState().addVenta(data.venta);
       }
     }
   }, [activeTab, searchText, activeFilters]);
