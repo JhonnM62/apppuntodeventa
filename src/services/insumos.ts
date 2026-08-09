@@ -11,6 +11,9 @@ export type InsumoItem = {
   categoriaNombre?: string;
   Unidades?: string;
   unidades?: string;
+  cantidadPorPaquete?: number;
+  paquetesEnBodega?: number;
+  ultimoAjustePendiente?: any;
   Cantidad?: number;
   cantidad?: number;
   imagen?: string;

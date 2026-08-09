@@ -27,6 +27,8 @@ import { FlashList as OriginalFlashList } from '@shopify/flash-list';
 const FlashList = OriginalFlashList as any;
 import { insumosService, InsumoItem, CreateInsumoDto } from '../../services/insumos';
 import { inventarioService } from '../../services/inventario';
+import { MovimientosInsumosModal } from '../../components/inventario/MovimientosInsumosModal';
+import api from '../../services/api';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
@@ -55,9 +57,11 @@ const InsumosScreen = ({ navigation }: Props) => {
   const [isEditing, setIsEditing] = useState(false);
   const [alertas, setAlertas] = useState<any[]>([]);
   const [showAlerts, setShowAlerts] = useState(false);
+  const [showMovimientosModal, setShowMovimientosModal] = useState(false);
+  const ajustesPendientes = insumos.filter(i => i.ultimoAjustePendiente);
 
   const handleScroll = useScrollDirection();
-  const [stockModal, setStockModal] = useState<{ tipo: 'entrada' | 'salida'; cantidad: number; observacion: string }>({
+  const [stockModal, setStockModal] = useState<{ tipo: 'entrada' | 'salida'; cantidad: number; observacion: string; cantidadPorPaquete?: number; paquetesEnBodega?: number; ultimoAjustePendiente?: any }>({
     tipo: 'entrada',
     cantidad: 0,
     observacion: '',
@@ -142,6 +146,27 @@ const InsumosScreen = ({ navigation }: Props) => {
     llevar_control_en_caja: 'NO',
     cuadrarInsumos: false
   });
+
+  const handleAprobarAjuste = async (id: string) => {
+    try {
+      await api.patch(`/insumos/${id}/aprobar-ajuste`);
+      showAlert({ title: 'Éxito', message: 'Ajuste aprobado correctamente.', type: 'success' });
+      fetchInsumos();
+    } catch (error) {
+      console.error(error);
+      showAlert({ title: 'Error', message: 'Hubo un error al aprobar el ajuste.', type: 'error' });
+    }
+  };
+
+  const handleRechazarAjuste = async (id: string) => {
+    try {
+      await api.patch(`/insumos/${id}/rechazar-ajuste`);
+      showAlert({ title: 'Ajuste rechazado', message: 'El ajuste ha sido descartado.', type: 'info' });
+      fetchInsumos();
+    } catch (error: any) {
+      showAlert({ title: 'Error', message: error.response?.data?.message || 'No se pudo rechazar el ajuste.', type: 'error' });
+    }
+  };
 
   const fetchInsumos = useCallback(async () => {
     try {
@@ -1032,6 +1057,14 @@ if (status !== 'granted') {
                 </View>
               </TouchableOpacity>
             )}
+            
+            <TouchableOpacity
+              className="w-11 h-11 rounded-xl bg-blue-500 items-center justify-center mr-2"
+              onPress={() => setShowMovimientosModal(true)}
+            >
+              <Ionicons name="receipt-outline" size={22} color="#fff" />
+            </TouchableOpacity>
+
             {canCreate && (
               <>
                 <TouchableOpacity
@@ -1052,6 +1085,33 @@ if (status !== 'granted') {
           </View>
         </View>
       </SafeAreaView>
+
+      {ajustesPendientes.length > 0 && canEdit && (
+        <View className="px-4 py-2 bg-yellow-50 border-b border-yellow-200 z-10">
+          <View className="flex-row items-center mb-2">
+            <Ionicons name="warning" size={20} color="#ca8a04" />
+            <RNText className="ml-2 font-bold text-yellow-800">Ajustes Pendientes por Aprobar</RNText>
+          </View>
+          {ajustesPendientes.map(insumo => (
+            <View key={insumo.IDalimentos} className="flex-row items-center justify-between bg-white p-2 rounded-lg mb-2 shadow-sm border border-yellow-100">
+              <View className="flex-1 mr-2">
+                <RNText className="font-semibold text-gray-800">{insumo.nombre}</RNText>
+                <RNText className="text-xs text-gray-500">
+                  Motivo: {insumo.ultimoAjustePendiente.motivo} (Delta: {insumo.ultimoAjustePendiente.delta > 0 ? '+' : ''}{insumo.ultimoAjustePendiente.delta})
+                </RNText>
+              </View>
+              <View className="flex-row">
+                <TouchableOpacity onPress={() => handleRechazarAjuste(insumo.IDalimentos)} className="bg-red-100 p-2 rounded mr-2">
+                  <Ionicons name="close" size={20} color="#ef4444" />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => handleAprobarAjuste(insumo.IDalimentos)} className="bg-green-100 p-2 rounded">
+                  <Ionicons name="checkmark" size={20} color="#22c55e" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
 
       <FlashList
         ref={flashListRef}
@@ -1396,6 +1456,11 @@ if (status !== 'granted') {
           </View>
         </SafeAreaView>
       </Modal>
+
+      <MovimientosInsumosModal 
+        visible={showMovimientosModal} 
+        onClose={() => setShowMovimientosModal(false)} 
+      />
 
       <Modal visible={showImageOptions} animationType="fade" transparent onRequestClose={() => setShowImageOptions(false)}>
         <TouchableOpacity 
@@ -1862,6 +1927,8 @@ if (status !== 'granted') {
               />
             </View>
           </ScrollView>
+
+
 
           <View className="px-4 py-4 border-t border-gray-200 flex-row gap-3">
             <TouchableOpacity

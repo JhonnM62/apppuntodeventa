@@ -263,9 +263,13 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [showTimePickerCierre, setShowTimePickerCierre] = useState(false);
   
   const [addQtyModalVisible, setAddQtyModalVisible] = useState(false);
+  const [subQtyModalVisible, setSubQtyModalVisible] = useState(false);
   const [addQtyIndex, setAddQtyIndex] = useState<number | null>(null);
-  const [addQtyAmount, setAddQtyAmount] = useState<string>('');
-  
+  const [addQtyAmount, setAddQtyAmount] = useState('');
+  const [subQtyAmount, setSubQtyAmount] = useState('');
+  const [subQtyReason, setSubQtyReason] = useState('');
+  const [isSubmittingAdjustment, setIsSubmittingAdjustment] = useState(false);
+
   const { control, handleSubmit, reset, watch, formState: { errors, dirtyFields }, setValue, getValues } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -1662,18 +1666,33 @@ export default function CajaFormScreen({ route, navigation }: any) {
                                 className={`flex-1 min-w-[40px] text-center font-bold bg-gray-50 border ${errors.insumos?.[index]?.cantApertura ? 'border-red-500' : 'border-gray-200'} rounded py-1 text-gray-900`}
                                 placeholder="0"
                               />
-                              {!isReadOnly && isAdmin && (
-                                <TouchableOpacity 
-                                  className="ml-1 bg-green-500 rounded w-6 h-6 items-center justify-center"
-                                  onPress={() => {
-                                    setAddQtyIndex(index);
-                                    setAddQtyAmount('');
-                                    setAddQtyModalVisible(true);
-                                  }}
-                                >
-                                  <Ionicons name="add" size={16} color="white" />
-                                </TouchableOpacity>
-                              )}
+                              <View className="flex-row mt-1 justify-center space-x-1">
+                                {!isReadOnly && isAdmin && (
+                                  <TouchableOpacity 
+                                    className="bg-green-500 rounded w-6 h-6 items-center justify-center mr-1"
+                                    onPress={() => {
+                                      setAddQtyIndex(index);
+                                      setAddQtyAmount('');
+                                      setAddQtyModalVisible(true);
+                                    }}
+                                  >
+                                    <Ionicons name="add" size={16} color="white" />
+                                  </TouchableOpacity>
+                                )}
+                                {!isReadOnly && isAdmin && (
+                                  <TouchableOpacity 
+                                    className="bg-red-500 rounded w-6 h-6 items-center justify-center"
+                                    onPress={() => {
+                                      setAddQtyIndex(index);
+                                      setSubQtyAmount('');
+                                      setSubQtyReason('');
+                                      setSubQtyModalVisible(true);
+                                    }}
+                                  >
+                                    <Ionicons name="remove" size={16} color="white" />
+                                  </TouchableOpacity>
+                                )}
+                              </View>
                             </View>
                           )}
                         />
@@ -2593,15 +2612,20 @@ export default function CajaFormScreen({ route, navigation }: any) {
         >
           <View className="flex-1 bg-black/50 justify-center items-center px-4">
             <View className="bg-white rounded-2xl p-5 w-full max-w-sm">
-              <Text className="text-lg font-bold text-gray-800 mb-2">Sumar a la Apertura</Text>
-              <Text className="text-sm text-gray-500 mb-4">Ingresa la cantidad que deseas agregar a la apertura existente.</Text>
+              <Text className="text-lg font-bold text-gray-800 mb-2">Abrir Paquete de Insumo</Text>
+              <Text className="text-sm text-gray-500 mb-2">Ingresa la cantidad real extraída del paquete para sumarla a la apertura.</Text>
+              {addQtyIndex !== null && (
+                <Text className="text-xs text-blue-600 mb-4 font-semibold">
+                  Teórico por paquete: {allInsumos.find((i: any) => i.IDalimentos === fields[addQtyIndex]?.nombreInsumo)?.cantidadPorPaquete || 'N/A'}
+                </Text>
+              )}
               
               <TextInput
                 className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-lg text-center font-bold text-gray-900 mb-4"
                 keyboardType="numeric"
                 value={addQtyAmount}
                 onChangeText={setAddQtyAmount}
-                placeholder="Ej. 10"
+                placeholder="Ej. 32"
                 autoFocus
               />
               
@@ -2609,22 +2633,123 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 <TouchableOpacity 
                   className="px-4 py-2 bg-gray-200 rounded-lg"
                   onPress={() => setAddQtyModalVisible(false)}
+                  disabled={isSubmittingAdjustment}
                 >
                   <Text className="text-gray-700 font-bold">Cancelar</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
-                  className="px-4 py-2 bg-blue-600 rounded-lg"
-                  onPress={() => {
+                  className="px-4 py-2 bg-green-600 rounded-lg items-center justify-center min-w-[80px]"
+                  disabled={isSubmittingAdjustment}
+                  onPress={async () => {
                     if (addQtyIndex !== null && addQtyAmount && !isNaN(Number(addQtyAmount))) {
                       const amountToAdd = Number(addQtyAmount);
-                      const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
-                      setValue(`insumos.${addQtyIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
-                      setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
+                      const insumoId = fields[addQtyIndex].nombreInsumo;
+                      
+                      setIsSubmittingAdjustment(true);
+                      try {
+                        await api.post('/movimientos-insumos/abrir-paquete', {
+                          insumoId: insumoId,
+                          cajaId: cajaId,
+                          cantidadReal: amountToAdd
+                        });
+                        
+                        const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
+                        setValue(`insumos.${addQtyIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
+                        setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
+                        showAlert({ title: 'Éxito', message: 'Paquete abierto y stock sumado a la caja.', type: 'success' });
+                      } catch (error: any) {
+                        showAlert({ title: 'Error', message: error.response?.data?.message || 'No se pudo registrar la apertura.', type: 'error' });
+                      } finally {
+                        setIsSubmittingAdjustment(false);
+                      }
                     }
                     setAddQtyModalVisible(false);
                   }}
                 >
-                  <Text className="text-white font-bold">Sumar</Text>
+                  {isSubmittingAdjustment ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text className="text-white font-bold">Abrir Paquete</Text>
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Subtract Quantity Modal */}
+        <Modal
+          visible={subQtyModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setSubQtyModalVisible(false)}
+        >
+          <View className="flex-1 bg-black/50 justify-center items-center px-4">
+            <View className="bg-white rounded-2xl p-5 w-full max-w-sm">
+              <Text className="text-lg font-bold text-gray-800 mb-2">Descuento de Producción</Text>
+              <Text className="text-sm text-gray-500 mb-4">Se deducirá del stock general y de tu cantidad de apertura actual (ej. daño, consumo interno).</Text>
+              
+              <TextInput
+                className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-lg text-center font-bold text-gray-900 mb-3"
+                keyboardType="numeric"
+                value={subQtyAmount}
+                onChangeText={setSubQtyAmount}
+                placeholder="Cantidad (Ej. 5)"
+                autoFocus
+              />
+
+              <TextInput
+                className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-sm text-gray-900 mb-4"
+                value={subQtyReason}
+                onChangeText={setSubQtyReason}
+                placeholder="Motivo del descuento (Opcional)"
+                multiline
+              />
+              
+              <View className="flex-row justify-end space-x-3">
+                <TouchableOpacity 
+                  className="px-4 py-2 bg-gray-200 rounded-lg"
+                  onPress={() => setSubQtyModalVisible(false)}
+                  disabled={isSubmittingAdjustment}
+                >
+                  <Text className="text-gray-700 font-bold">Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  className="px-4 py-2 bg-red-600 rounded-lg items-center justify-center min-w-[80px]"
+                  disabled={isSubmittingAdjustment}
+                  onPress={async () => {
+                    if (addQtyIndex !== null && subQtyAmount && !isNaN(Number(subQtyAmount))) {
+                      const amountToSub = Number(subQtyAmount);
+                      const insumoId = fields[addQtyIndex].nombreInsumo;
+                      
+                      setIsSubmittingAdjustment(true);
+                      try {
+                        await api.post('/movimientos-insumos/descuento-produccion', {
+                          insumoId: insumoId,
+                          cajaId: cajaId,
+                          cantidadDescontada: amountToSub,
+                          observacion: subQtyReason
+                        });
+                        
+                        const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
+                        const newVal = Math.max(0, currentVal - amountToSub);
+                        setValue(`insumos.${addQtyIndex}.cantApertura`, newVal, { shouldDirty: true });
+                        setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
+                        showAlert({ title: 'Éxito', message: 'Descuento registrado y deducido de caja.', type: 'success' });
+                      } catch (error: any) {
+                        showAlert({ title: 'Error', message: error.response?.data?.message || 'No se pudo descontar el insumo.', type: 'error' });
+                      } finally {
+                        setIsSubmittingAdjustment(false);
+                      }
+                    }
+                    setSubQtyModalVisible(false);
+                  }}
+                >
+                  {isSubmittingAdjustment ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text className="text-white font-bold">Descontar</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </View>
