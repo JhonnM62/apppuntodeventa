@@ -450,7 +450,8 @@ if (filterCuadrarInsumos !== 'all') {
       descontar_cant_de_ventas: insumo.descontarCantDeVentas || insumo.descontar_cant_de_ventas || 'NO',
       notificar_a_whatsapp: insumo.notificarAWhatsapp || insumo.notificar_a_whatsapp || 'NO',
       llevar_control_en_caja: insumo.llevarControlEnCaja || insumo.llevar_control_en_caja || 'NO',
-      cuadrarInsumos: insumo.cuadrarInsumos || false
+      cuadrarInsumos: insumo.cuadrarInsumos || false,
+      cantidadPorPaquete: insumo.cantidadPorPaquete
     });
     setLocalImageUri(null); // Reset local image when opening edit, rely on imageUrl if exists
     setIsEditing(true);
@@ -1318,6 +1319,19 @@ if (status !== 'granted') {
                 placeholder="kg"
                 value={formData.unidades}
                 onChangeText={(t) => setFormData(p => ({ ...p, unidades: t }))}
+              />
+            </View>
+
+            <View className="mt-4">
+              <Input
+                label="Cantidad teórica por paquete (opcional)"
+                placeholder="Ej: 34"
+                keyboardType="numeric"
+                value={formData.cantidadPorPaquete ? String(formData.cantidadPorPaquete) : ''}
+                onChangeText={(t) => {
+                  const parsed = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                  setFormData(p => ({ ...p, cantidadPorPaquete: isNaN(parsed) ? null as any : parsed }));
+                }}
               />
             </View>
 

@@ -316,6 +316,9 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
         estado: estadoActivo ? 'ACTIVO' : 'INACTIVO',
         imageUrl: finalImageUrl,
         imagen: finalImageUrl,
+        cantidadPorPaquete: formData.cantidadPorPaquete,
+        paquetesEnBodega: formData.paquetesEnBodega,
+        ajusteRequiereAprobacion: formData.ajusteRequiereAprobacion,
       };
       console.log('[DEBUG] Enviando actualización Insumo:', dataToSave);
       await insumosService.update(insumo.IDalimentos, dataToSave);
@@ -785,6 +788,19 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                   placeholder="kg"
                   value={formData.unidades}
                   onChangeText={(t) => setFormData(p => ({ ...p, unidades: t }))}
+                />
+              </View>
+
+              <View style={{ marginTop: 16 }}>
+                <Input
+                  label="Cantidad teórica por paquete (opcional)"
+                  placeholder="Ej: 34"
+                  keyboardType="numeric"
+                  value={formData.cantidadPorPaquete ? String(formData.cantidadPorPaquete) : ''}
+                  onChangeText={(t) => {
+                    const parsed = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                    setFormData(p => ({ ...p, cantidadPorPaquete: isNaN(parsed) ? null as any : parsed }));
+                  }}
                 />
               </View>
 

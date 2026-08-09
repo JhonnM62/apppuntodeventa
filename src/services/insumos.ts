@@ -66,6 +66,9 @@ export type CreateInsumoDto = {
   imagencard?: string;
   fecha?: string;
   estado?: string;
+  cantidadPorPaquete?: number;
+  paquetesEnBodega?: number;
+  ajusteRequiereAprobacion?: boolean;
 };
 
 export type UpdateInsumoDto = Partial<CreateInsumoDto>;
