@@ -1903,10 +1903,23 @@ export default function CajaFormScreen({ route, navigation }: any) {
                           className={`flex-1 py-3 rounded-xl ml-2 items-center justify-center ${isCuadrada ? '' : 'bg-red-600'}`}
                           style={isCuadrada ? { backgroundColor: primaryColor || '#16a34a' } : {}}
                           onPress={() => {
-                          handleSubmit((data) => {
-                            onSave(data, false);
-                          }, onError)();
-                        }}
+                            const currentObs = watch('observaciones') || '';
+                            const timestampArqueo = horaCongelada 
+                              ? `Corte: ${new Date(horaCongelada).toLocaleString('es-CO')}`
+                              : `${new Date().toLocaleString('es-CO')}`;
+                              
+                            const cuadreText = `\n\n--- ARQUEO PARCIAL [${timestampArqueo}] ---\n` +
+                              `Reportado: ${formatCurrency(efectivoContado)} Efectivo | ${formatCurrency(transContadas)} Transferencias\n` +
+                              `Diferencias: ${formatCurrency(diffEfectivo)} Efectivo | ${formatCurrency(diffTrans)} Transferencias\n`;
+                              
+                            setValue('observaciones', currentObs + cuadreText);
+
+                            handleSubmit((data) => {
+                              // Asegurarse de que onSave reciba las observaciones actualizadas
+                              data.observaciones = currentObs + cuadreText;
+                              onSave(data, false);
+                            }, onError)();
+                          }}
                       >
                         <Text className="text-white font-bold text-[10px] uppercase text-center leading-tight">Confirmar Arqueo Parcial</Text>
                       </TouchableOpacity>

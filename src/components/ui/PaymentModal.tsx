@@ -16,6 +16,7 @@ import {
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 import { Ionicons } from '@expo/vector-icons';
+import { useKeyboardHeight } from '../../hooks/useKeyboardHeight';
 import { Button } from './button';
 import usePrinterStore from '../../store/usePrinterStore';
 import { executePrint, TicketData } from '../../utils/printer';
@@ -98,6 +99,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [selectedBank, setSelectedBank] = useState<string | null>(null);
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(2000));
+  const keyboardHeight = useKeyboardHeight();
 
   // Printer integration
   const { currentPrinter, paperSize, isConnected, shouldPrintComanda, shouldPrintFactura } = usePrinterStore();
@@ -780,9 +782,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       animationType="slide"
       onRequestClose={handleClose}
       presentationStyle="pageSheet"
+      transparent={true}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        enabled={Platform.OS === 'ios'}
         style={styles.modalOverlay}
         keyboardVerticalOffset={0}
       >
@@ -795,8 +799,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             accessibilityLabel="Cerrar modal"
           />
         </Animated.View>
-
-        <Animated.View style={[styles.modalContent, { transform: [{ translateY: slideAnim }], maxHeight: windowHeight * 0.94 }]}>
+        <Animated.View style={[styles.modalContent, { 
+          transform: [{ translateY: slideAnim }], 
+          maxHeight: windowHeight * 0.94,
+          marginBottom: Platform.OS === 'android' ? keyboardHeight : 0
+        }]}>
           <View style={styles.handle} />
 
           <View style={styles.header}>

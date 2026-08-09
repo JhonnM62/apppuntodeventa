@@ -1391,7 +1391,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       <SafeAreaView style={styles.container} edges={['top']}>
         <KeyboardAvoidingView 
           style={{ flex: 1 }} 
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          enabled={Platform.OS === 'ios'}
         >
           <View style={[styles.topBar, { backgroundColor: primaryColor }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
