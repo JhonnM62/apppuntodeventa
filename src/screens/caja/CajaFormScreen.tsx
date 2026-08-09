@@ -2650,9 +2650,14 @@ export default function CajaFormScreen({ route, navigation }: any) {
                     </Text>
                     
                     {addQtyMode === 'paquete' && (
-                      <Text className="text-xs text-blue-600 mb-4 font-semibold">
-                        Teórico por paquete: {insumoData?.cantidadPorPaquete || 'N/A'}
-                      </Text>
+                      <View className="flex-row justify-between mb-4">
+                        <Text className="text-xs text-blue-600 font-semibold">
+                          Teórico por paquete: {insumoData?.cantidadPorPaquete || 'N/A'}
+                        </Text>
+                        <Text className="text-xs text-blue-600 font-semibold">
+                          Paquetes en bodega: {insumoData?.paquetesEnBodega || 0}
+                        </Text>
+                      </View>
                     )}
                     
                     <TextInput

@@ -783,6 +783,13 @@ if (status !== 'granted') {
                 <RNText className="text-xs text-gray-400">Min: {item.apartir_de_cantidad || item.apartirDeCantidad || item.apartir_de_cantidad === 0 || item.apartirDeCantidad === 0 ? (item.apartir_de_cantidad ?? item.apartirDeCantidad) : 0}</RNText>
                 <RNText className="text-xs text-gray-400">Max: {item.agregar_cantidad || item.agregarCantidad || item.agregar_cantidad === 0 || item.agregarCantidad === 0 ? (item.agregar_cantidad ?? item.agregarCantidad) : 100}</RNText>
               </View>
+              
+              {Number(item.paquetesEnBodega) > 0 && (
+                <View className="flex-row justify-between mt-2 pt-2 border-t border-gray-200">
+                  <RNText className="text-xs font-semibold text-blue-600">📦 Paquetes en bodega:</RNText>
+                  <RNText className="text-xs font-bold text-blue-700">{item.paquetesEnBodega}</RNText>
+                </View>
+              )}
             </View>
 
             <View className="flex-row items-center justify-between mt-3 pt-3 border-t border-gray-100">
