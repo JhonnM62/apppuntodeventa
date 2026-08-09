@@ -120,7 +120,9 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
     descontar_cant_de_ventas: 'NO',
     notificar_a_whatsapp: 'NO',
     llevar_control_en_caja: 'NO',
-    cuadrarInsumos: false
+    cuadrarInsumos: false,
+    cantidadPorPaquete: undefined,
+    paquetesEnBodega: undefined
   });
 
   const insumoId = route.params?.id;
@@ -264,7 +266,9 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
       descontar_cant_de_ventas: insumo.descontarCantDeVentas || insumo.descontar_cant_de_ventas || 'NO',
       notificar_a_whatsapp: insumo.notificarAWhatsapp || insumo.notificar_a_whatsapp || 'NO',
       llevar_control_en_caja: insumo.llevarControlEnCaja || insumo.llevar_control_en_caja || 'NO',
-      cuadrarInsumos: insumo.cuadrarInsumos || false
+      cuadrarInsumos: insumo.cuadrarInsumos || false,
+      cantidadPorPaquete: insumo.cantidadPorPaquete,
+      paquetesEnBodega: insumo.paquetesEnBodega
     });
     setEstadoActivo((insumo.estado || (insumo as any).Estado || 'ACTIVO').toUpperCase() === 'ACTIVO');
     setShowEditModal(true);
