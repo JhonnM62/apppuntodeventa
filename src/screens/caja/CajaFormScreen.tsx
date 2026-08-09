@@ -1912,7 +1912,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                               `Reportado: ${formatCurrency(efectivoContado)} Efectivo | ${formatCurrency(transContadas)} Transferencias\n` +
                               `Diferencias: ${formatCurrency(diffEfectivo)} Efectivo | ${formatCurrency(diffTrans)} Transferencias\n`;
                               
-                            setValue('observaciones', currentObs + cuadreText);
+                            setValue('observaciones', currentObs + cuadreText, { shouldDirty: true });
 
                             handleSubmit((data) => {
                               // Asegurarse de que onSave reciba las observaciones actualizadas
@@ -1966,7 +1966,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                               `Estado: ${isCuadrada ? 'CUADRADA' : 'DESCUADRADA'}${rangoInfo}${insumosInfoCierre}\n------------------------\n`;
 
                             const newObs = currentObs + cuadreText;
-                            setValue('observaciones', newObs);
+                            setValue('observaciones', newObs, { shouldDirty: true });
                             handleSubmit((data) => {
                                data.observaciones = newObs;
                                onSave(data, true);
