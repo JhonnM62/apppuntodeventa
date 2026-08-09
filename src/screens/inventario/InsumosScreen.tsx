@@ -1336,7 +1336,7 @@ if (status !== 'granted') {
                   label="Cant. teórica/paquete"
                   placeholder="Ej: 34"
                   keyboardType="numeric"
-                  value={formData.cantidadPorPaquete ? String(formData.cantidadPorPaquete) : ''}
+                  value={formData.cantidadPorPaquete !== null && formData.cantidadPorPaquete !== undefined ? String(formData.cantidadPorPaquete) : ''}
                   onChangeText={(t) => {
                     const parsed = parseInt(t.replace(/[^0-9]/g, ''), 10);
                     setFormData(p => ({ ...p, cantidadPorPaquete: isNaN(parsed) ? null as any : parsed }));
@@ -1348,7 +1348,7 @@ if (status !== 'granted') {
                   label="Paquetes en Bodega"
                   placeholder="Ej: 5"
                   keyboardType="numeric"
-                  value={formData.paquetesEnBodega ? String(formData.paquetesEnBodega) : ''}
+                  value={formData.paquetesEnBodega !== null && formData.paquetesEnBodega !== undefined ? String(formData.paquetesEnBodega) : ''}
                   onChangeText={(t) => {
                     const parsed = parseInt(t.replace(/[^0-9]/g, ''), 10);
                     setFormData(p => ({ ...p, paquetesEnBodega: isNaN(parsed) ? null as any : parsed }));

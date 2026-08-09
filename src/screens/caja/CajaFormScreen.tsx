@@ -2619,7 +2619,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
             <View className="bg-white rounded-2xl p-5 w-full max-w-sm">
               {addQtyIndex !== null && (() => {
                 const insumoData = allInsumos.find((i: any) => i.IDalimentos === fields[addQtyIndex]?.nombreInsumo);
-                const showTabs = Number(insumoData?.paquetesEnBodega) > 0;
+                const showTabs = Number(insumoData?.cantidadPorPaquete) > 0;
 
                 return (
                   <>
@@ -2709,10 +2709,28 @@ export default function CajaFormScreen({ route, navigation }: any) {
                               }
                             } else {
                               // Modo libre
-                              const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
-                              setValue(`insumos.${addQtyIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
-                              setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
-                              setAddQtyModalVisible(false);
+                              const insumoId = fields[addQtyIndex].nombreInsumo;
+                              setIsSubmittingAdjustment(true);
+                              try {
+                                await api.post('/movimientos-insumos/entrada-libre', {
+                                  insumoId: insumoId,
+                                  cajaId: cajaId,
+                                  cantidadAgregada: amountToAdd
+                                });
+
+                                const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
+                                setValue(`insumos.${addQtyIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
+                                setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
+                                showAlert({ title: 'Éxito', message: 'Entrada registrada y sumada al stock global.', type: 'success' });
+                                setAddQtyModalVisible(false);
+                              } catch (error: any) {
+                                const errorData = error.response?.data;
+                                const backendMessage = errorData?.message;
+                                const finalMsg = Array.isArray(backendMessage) ? backendMessage.join('\n') : (backendMessage || 'No se pudo registrar la entrada.');
+                                showAlert({ title: 'Error', message: finalMsg, type: 'error' });
+                              } finally {
+                                setIsSubmittingAdjustment(false);
+                              }
                             }
                           }
                         }}
@@ -2789,7 +2807,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                         const newVal = Math.max(0, currentVal - amountToSub);
                         setValue(`insumos.${addQtyIndex}.cantApertura`, newVal, { shouldDirty: true });
                         setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
-                        showAlert({ title: 'Éxito', message: 'Descuento registrado y deducido de caja.', type: 'success' });
+                        showAlert({ title: 'Éxito', message: 'Consumo interno registrado y descontado del stock global.', type: 'success' });
                       } catch (error: any) {
                         showAlert({ title: 'Error', message: error.response?.data?.message || 'No se pudo descontar el insumo.', type: 'error' });
                       } finally {

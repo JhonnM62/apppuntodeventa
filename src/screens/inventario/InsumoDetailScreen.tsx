@@ -180,21 +180,24 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
       const precioNum = Number(updateValues.precioActual.replace(/[^0-9.]/g, ''));
       const cantidadIngresada = Number(updateValues.cantidad.replace(/[^0-9]/g, ''));
       const stockActual = Number(insumo.disponible) || 0;
-      if (!isNaN(precioNum) && precioNum >= 0) {
-        payload.precio = precioNum;
+      if (!isNaN(precioNum) && precioNum >= 0 && precioNum !== Number(insumo.precio)) {
+        await insumosService.update(insumo.IDalimentos!, { precio: precioNum });
       }
-      if (!isNaN(cantidadIngresada) && cantidadIngresada >= 0) {
-        payload.disponible = stockActual + cantidadIngresada;
+      
+      if (!isNaN(cantidadIngresada) && cantidadIngresada > 0) {
+        await insumosService.agregarStock(
+          insumo.IDalimentos!, 
+          cantidadIngresada, 
+          `Ajuste manual desde detalle (Stock anterior: ${stockActual})`
+        );
       }
-      if (Object.keys(payload).length > 0) {
-        await insumosService.update(insumo.IDalimentos!, payload);
-        await loadInsumo();
-        Toast.show({ 
-          type: 'success', 
-          text1: '¡Actualizado con éxito!', 
-          text2: `Nuevo stock: ${stockActual + cantidadIngresada} und` 
-        });
-      }
+      
+      await loadInsumo();
+      Toast.show({ 
+        type: 'success', 
+        text1: '¡Actualizado con éxito!', 
+        text2: `Nuevo stock: ${stockActual + (isNaN(cantidadIngresada) ? 0 : cantidadIngresada)} und` 
+      });
       setShowUpdatePriceStockModal(false);
     } catch (error: any) {
       const errorMsg = error?.response?.data?.message || error?.message || 'No se pudo actualizar';
@@ -801,7 +804,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                     label="Cant. teórica/paquete"
                     placeholder="Ej: 34"
                     keyboardType="numeric"
-                    value={formData.cantidadPorPaquete ? String(formData.cantidadPorPaquete) : ''}
+                    value={formData.cantidadPorPaquete !== null && formData.cantidadPorPaquete !== undefined ? String(formData.cantidadPorPaquete) : ''}
                     onChangeText={(t) => {
                       const parsed = parseInt(t.replace(/[^0-9]/g, ''), 10);
                       setFormData(p => ({ ...p, cantidadPorPaquete: isNaN(parsed) ? null as any : parsed }));
@@ -813,7 +816,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                     label="Paquetes en Bodega"
                     placeholder="Ej: 5"
                     keyboardType="numeric"
-                    value={formData.paquetesEnBodega ? String(formData.paquetesEnBodega) : ''}
+                    value={formData.paquetesEnBodega !== null && formData.paquetesEnBodega !== undefined ? String(formData.paquetesEnBodega) : ''}
                     onChangeText={(t) => {
                       const parsed = parseInt(t.replace(/[^0-9]/g, ''), 10);
                       setFormData(p => ({ ...p, paquetesEnBodega: isNaN(parsed) ? null as any : parsed }));
