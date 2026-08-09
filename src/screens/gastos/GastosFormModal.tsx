@@ -158,7 +158,6 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
         medioDePago,
         fotos: finalFotoUrl || undefined,
         fecha: fecha.toISOString(),
-        fechaYHora: fecha.toISOString(),
       };
 
       if (gastoToEdit) {
