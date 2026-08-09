@@ -451,7 +451,8 @@ if (filterCuadrarInsumos !== 'all') {
       notificar_a_whatsapp: insumo.notificarAWhatsapp || insumo.notificar_a_whatsapp || 'NO',
       llevar_control_en_caja: insumo.llevarControlEnCaja || insumo.llevar_control_en_caja || 'NO',
       cuadrarInsumos: insumo.cuadrarInsumos || false,
-      cantidadPorPaquete: insumo.cantidadPorPaquete
+      cantidadPorPaquete: insumo.cantidadPorPaquete,
+      paquetesEnBodega: insumo.paquetesEnBodega
     });
     setLocalImageUri(null); // Reset local image when opening edit, rely on imageUrl if exists
     setIsEditing(true);
@@ -1322,17 +1323,31 @@ if (status !== 'granted') {
               />
             </View>
 
-            <View className="mt-4">
-              <Input
-                label="Cantidad teórica por paquete (opcional)"
-                placeholder="Ej: 34"
-                keyboardType="numeric"
-                value={formData.cantidadPorPaquete ? String(formData.cantidadPorPaquete) : ''}
-                onChangeText={(t) => {
-                  const parsed = parseInt(t.replace(/[^0-9]/g, ''), 10);
-                  setFormData(p => ({ ...p, cantidadPorPaquete: isNaN(parsed) ? null as any : parsed }));
-                }}
-              />
+            <View className="flex-row mt-4 space-x-2">
+              <View className="flex-1">
+                <Input
+                  label="Cant. teórica/paquete"
+                  placeholder="Ej: 34"
+                  keyboardType="numeric"
+                  value={formData.cantidadPorPaquete ? String(formData.cantidadPorPaquete) : ''}
+                  onChangeText={(t) => {
+                    const parsed = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                    setFormData(p => ({ ...p, cantidadPorPaquete: isNaN(parsed) ? null as any : parsed }));
+                  }}
+                />
+              </View>
+              <View className="flex-1">
+                <Input
+                  label="Paquetes en Bodega"
+                  placeholder="Ej: 5"
+                  keyboardType="numeric"
+                  value={formData.paquetesEnBodega ? String(formData.paquetesEnBodega) : ''}
+                  onChangeText={(t) => {
+                    const parsed = parseInt(t.replace(/[^0-9]/g, ''), 10);
+                    setFormData(p => ({ ...p, paquetesEnBodega: isNaN(parsed) ? null as any : parsed }));
+                  }}
+                />
+              </View>
             </View>
 
             <View className="mt-4">

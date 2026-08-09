@@ -265,6 +265,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [addQtyModalVisible, setAddQtyModalVisible] = useState(false);
   const [subQtyModalVisible, setSubQtyModalVisible] = useState(false);
   const [addQtyIndex, setAddQtyIndex] = useState<number | null>(null);
+  const [addQtyMode, setAddQtyMode] = useState<'libre' | 'paquete'>('libre');
   const [addQtyAmount, setAddQtyAmount] = useState('');
   const [subQtyAmount, setSubQtyAmount] = useState('');
   const [subQtyReason, setSubQtyReason] = useState('');
@@ -1671,8 +1672,12 @@ export default function CajaFormScreen({ route, navigation }: any) {
                                   <TouchableOpacity 
                                     className="bg-green-500 rounded w-6 h-6 items-center justify-center mr-1"
                                     onPress={() => {
+                                      const insumoId = getValues(`insumos.${index}.nombreInsumo`);
+                                      const insumoData = allInsumos.find((i: any) => i.IDalimentos === insumoId);
+                                      const hasPaquetes = insumoData && Number(insumoData.paquetesEnBodega) > 0;
                                       setAddQtyIndex(index);
                                       setAddQtyAmount('');
+                                      setAddQtyMode(hasPaquetes ? 'paquete' : 'libre');
                                       setAddQtyModalVisible(true);
                                     }}
                                   >
@@ -2612,67 +2617,111 @@ export default function CajaFormScreen({ route, navigation }: any) {
         >
           <View className="flex-1 bg-black/50 justify-center items-center px-4">
             <View className="bg-white rounded-2xl p-5 w-full max-w-sm">
-              <Text className="text-lg font-bold text-gray-800 mb-2">Abrir Paquete de Insumo</Text>
-              <Text className="text-sm text-gray-500 mb-2">Ingresa la cantidad real extraída del paquete para sumarla a la apertura.</Text>
-              {addQtyIndex !== null && (
-                <Text className="text-xs text-blue-600 mb-4 font-semibold">
-                  Teórico por paquete: {allInsumos.find((i: any) => i.IDalimentos === fields[addQtyIndex]?.nombreInsumo)?.cantidadPorPaquete || 'N/A'}
-                </Text>
-              )}
-              
-              <TextInput
-                className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-lg text-center font-bold text-gray-900 mb-4"
-                keyboardType="numeric"
-                value={addQtyAmount}
-                onChangeText={setAddQtyAmount}
-                placeholder="Ej. 32"
-                autoFocus
-              />
-              
-              <View className="flex-row justify-end space-x-3">
-                <TouchableOpacity 
-                  className="px-4 py-2 bg-gray-200 rounded-lg"
-                  onPress={() => setAddQtyModalVisible(false)}
-                  disabled={isSubmittingAdjustment}
-                >
-                  <Text className="text-gray-700 font-bold">Cancelar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  className="px-4 py-2 bg-green-600 rounded-lg items-center justify-center min-w-[80px]"
-                  disabled={isSubmittingAdjustment}
-                  onPress={async () => {
-                    if (addQtyIndex !== null && addQtyAmount && !isNaN(Number(addQtyAmount))) {
-                      const amountToAdd = Number(addQtyAmount);
-                      const insumoId = fields[addQtyIndex].nombreInsumo;
-                      
-                      setIsSubmittingAdjustment(true);
-                      try {
-                        await api.post('/movimientos-insumos/abrir-paquete', {
-                          insumoId: insumoId,
-                          cajaId: cajaId,
-                          cantidadReal: amountToAdd
-                        });
-                        
-                        const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
-                        setValue(`insumos.${addQtyIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
-                        setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
-                        showAlert({ title: 'Éxito', message: 'Paquete abierto y stock sumado a la caja.', type: 'success' });
-                      } catch (error: any) {
-                        showAlert({ title: 'Error', message: error.response?.data?.message || 'No se pudo registrar la apertura.', type: 'error' });
-                      } finally {
-                        setIsSubmittingAdjustment(false);
-                      }
-                    }
-                    setAddQtyModalVisible(false);
-                  }}
-                >
-                  {isSubmittingAdjustment ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Text className="text-white font-bold">Abrir Paquete</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
+              {addQtyIndex !== null && (() => {
+                const insumoData = allInsumos.find((i: any) => i.IDalimentos === fields[addQtyIndex]?.nombreInsumo);
+                const showTabs = Number(insumoData?.paquetesEnBodega) > 0;
+
+                return (
+                  <>
+                    {showTabs && (
+                      <View className="flex-row bg-gray-100 rounded-lg p-1 mb-4">
+                        <TouchableOpacity
+                          className={`flex-1 p-2 rounded-md items-center ${addQtyMode === 'paquete' ? 'bg-white shadow-sm' : ''}`}
+                          onPress={() => setAddQtyMode('paquete')}
+                        >
+                          <Text className={`font-semibold ${addQtyMode === 'paquete' ? 'text-blue-600' : 'text-gray-500'}`}>Abrir Paquete</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          className={`flex-1 p-2 rounded-md items-center ${addQtyMode === 'libre' ? 'bg-white shadow-sm' : ''}`}
+                          onPress={() => setAddQtyMode('libre')}
+                        >
+                          <Text className={`font-semibold ${addQtyMode === 'libre' ? 'text-blue-600' : 'text-gray-500'}`}>Cant. Libre</Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
+
+                    <Text className="text-lg font-bold text-gray-800 mb-2">
+                      {addQtyMode === 'paquete' ? 'Abrir Paquete de Insumo' : 'Añadir Cantidad Libre'}
+                    </Text>
+                    <Text className="text-sm text-gray-500 mb-2">
+                      {addQtyMode === 'paquete' 
+                        ? 'Ingresa la cantidad real extraída del paquete para sumarla a la apertura.'
+                        : 'Ingresa la cantidad manual a sumar a la apertura (no descuenta paquetes de bodega).'}
+                    </Text>
+                    
+                    {addQtyMode === 'paquete' && (
+                      <Text className="text-xs text-blue-600 mb-4 font-semibold">
+                        Teórico por paquete: {insumoData?.cantidadPorPaquete || 'N/A'}
+                      </Text>
+                    )}
+                    
+                    <TextInput
+                      className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-lg text-center font-bold text-gray-900 mb-4"
+                      keyboardType="numeric"
+                      value={addQtyAmount}
+                      onChangeText={setAddQtyAmount}
+                      placeholder="Ej. 32"
+                      autoFocus
+                    />
+                    
+                    <View className="flex-row justify-end space-x-3">
+                      <TouchableOpacity 
+                        className="px-4 py-2 bg-gray-200 rounded-lg"
+                        onPress={() => setAddQtyModalVisible(false)}
+                        disabled={isSubmittingAdjustment}
+                      >
+                        <Text className="text-gray-700 font-bold">Cancelar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        className="px-4 py-2 bg-green-600 rounded-lg items-center justify-center min-w-[80px]"
+                        disabled={isSubmittingAdjustment}
+                        onPress={async () => {
+                          if (addQtyIndex !== null && addQtyAmount && !isNaN(Number(addQtyAmount))) {
+                            const amountToAdd = Number(addQtyAmount);
+                            
+                            if (addQtyMode === 'paquete') {
+                              const insumoId = fields[addQtyIndex].nombreInsumo;
+                              setIsSubmittingAdjustment(true);
+                              try {
+                                await api.post('/movimientos-insumos/abrir-paquete', {
+                                  insumoId: insumoId,
+                                  cajaId: cajaId,
+                                  cantidadReal: amountToAdd
+                                });
+                                
+                                const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
+                                setValue(`insumos.${addQtyIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
+                                setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
+                                showAlert({ title: 'Éxito', message: 'Paquete abierto y stock sumado a la caja.', type: 'success' });
+                                setAddQtyModalVisible(false);
+                              } catch (error: any) {
+                                const errorData = error.response?.data;
+                                const backendMessage = errorData?.message;
+                                const finalMsg = Array.isArray(backendMessage) ? backendMessage.join('\n') : (backendMessage || 'No se pudo registrar la apertura.');
+                                showAlert({ title: 'Error', message: finalMsg, type: 'error' });
+                              } finally {
+                                setIsSubmittingAdjustment(false);
+                              }
+                            } else {
+                              // Modo libre
+                              const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
+                              setValue(`insumos.${addQtyIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
+                              setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
+                              setAddQtyModalVisible(false);
+                            }
+                          }
+                        }}
+                      >
+                        {isSubmittingAdjustment ? (
+                          <ActivityIndicator size="small" color="#fff" />
+                        ) : (
+                          <Text className="text-white font-bold">{addQtyMode === 'paquete' ? 'Abrir Paquete' : 'Añadir'}</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                );
+              })()}
             </View>
           </View>
         </Modal>
