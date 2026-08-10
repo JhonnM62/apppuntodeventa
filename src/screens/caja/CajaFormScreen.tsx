@@ -1684,7 +1684,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
                                     <Ionicons name="add" size={16} color="white" />
                                   </TouchableOpacity>
                                 )}
-                                {!isReadOnly && isAdmin && (
+                                {!isReadOnly && isAdmin && modoOperacion === 'RESTAURANTE' && (
                                   <TouchableOpacity 
                                     className="bg-red-500 rounded w-6 h-6 items-center justify-center"
                                     onPress={() => {

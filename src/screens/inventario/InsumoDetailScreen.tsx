@@ -669,16 +669,16 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                         paddingHorizontal: 16,
                         paddingVertical: 8,
                         borderRadius: 20,
-                        backgroundColor: formData.nombreCategoria === cat.nombre || formData.categoria === cat.IDcategoriainsumos ? '#3b82f6' : '#f3f4f6',
+                        backgroundColor: formData.nombreCategoria === cat.nombre || formData.categoria === cat.nombre ? '#3b82f6' : '#f3f4f6',
                         marginRight: 8,
                         borderWidth: 1,
-                        borderColor: formData.nombreCategoria === cat.nombre || formData.categoria === cat.IDcategoriainsumos ? '#2563eb' : '#e5e7eb'
+                        borderColor: formData.nombreCategoria === cat.nombre || formData.categoria === cat.nombre ? '#2563eb' : '#e5e7eb'
                       }}
-                      onPress={() => setFormData(p => ({ ...p, categoria: cat.IDcategoriainsumos, nombreCategoria: cat.nombre }))}
+                      onPress={() => setFormData(p => ({ ...p, categoria: cat.nombre, nombreCategoria: cat.nombre }))}
                     >
                       <RNText style={{
-                        color: formData.nombreCategoria === cat.nombre || formData.categoria === cat.IDcategoriainsumos ? '#fff' : '#4b5563',
-                        fontWeight: formData.nombreCategoria === cat.nombre || formData.categoria === cat.IDcategoriainsumos ? '700' : '500'
+                        color: formData.nombreCategoria === cat.nombre || formData.categoria === cat.nombre ? '#fff' : '#4b5563',
+                        fontWeight: formData.nombreCategoria === cat.nombre || formData.categoria === cat.nombre ? '700' : '500'
                       }}>
                         {cat.nombre}
                       </RNText>
@@ -689,7 +689,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
                 <Input
                   placeholder="O escribe una nueva categoría..."
                   value={formData.nombreCategoria}
-                  onChangeText={(t) => setFormData(p => ({ ...p, nombreCategoria: t, categoria: '' }))}
+                  onChangeText={(t) => setFormData(p => ({ ...p, nombreCategoria: t, categoria: t }))}
                 />
               </View>
 
