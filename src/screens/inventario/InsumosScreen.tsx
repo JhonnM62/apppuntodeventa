@@ -27,6 +27,7 @@ import { FlashList as OriginalFlashList } from '@shopify/flash-list';
 const FlashList = OriginalFlashList as any;
 import { insumosService, InsumoItem, CreateInsumoDto } from '../../services/insumos';
 import { inventarioService } from '../../services/inventario';
+import { categoriasInsumosService, CategoriaInsumoItem } from '../../services/categoriasInsumos';
 import { MovimientosInsumosModal } from '../../components/inventario/MovimientosInsumosModal';
 import api from '../../services/api';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -58,6 +59,7 @@ const InsumosScreen = ({ navigation }: Props) => {
   const [alertas, setAlertas] = useState<any[]>([]);
   const [showAlerts, setShowAlerts] = useState(false);
   const [showMovimientosModal, setShowMovimientosModal] = useState(false);
+  const [categoriasList, setCategoriasList] = useState<CategoriaInsumoItem[]>([]);
   const ajustesPendientes = insumos.filter(i => i.ultimoAjustePendiente);
 
   const handleScroll = useScrollDirection();
@@ -192,6 +194,7 @@ const InsumosScreen = ({ navigation }: Props) => {
   useEffect(() => {
     fetchInsumos();
     fetchAlertas();
+    categoriasInsumosService.getAll().then(setCategoriasList).catch(console.error);
   }, [fetchInsumos]);
 
   useSocketEvent(SocketEvent.REFRESH_INSUMOS, () => {
@@ -1205,17 +1208,30 @@ if (status !== 'granted') {
 
             <View className="mt-4">
               <RNText style={{ fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 }}>Categoría</RNText>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                {getCategoriasInsumos().map((cat) => (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                {categoriasList.map(cat => (
                   <TouchableOpacity
-                    key={cat}
-                    style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginRight: 8, marginBottom: 8, backgroundColor: formData.nombreCategoria === cat ? '#3b82f6' : '#f3f4f6' }}
-                    onPress={() => setFormData(p => ({ ...p, categoria: cat, nombreCategoria: cat }))}
+                    key={cat.IDcategoriainsumos}
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 20,
+                      backgroundColor: formData.nombreCategoria === cat.nombre || formData.categoria === cat.IDcategoriainsumos ? '#3b82f6' : '#f3f4f6',
+                      marginRight: 8,
+                      borderWidth: 1,
+                      borderColor: formData.nombreCategoria === cat.nombre || formData.categoria === cat.IDcategoriainsumos ? '#2563eb' : '#e5e7eb'
+                    }}
+                    onPress={() => setFormData(p => ({ ...p, categoria: cat.IDcategoriainsumos, nombreCategoria: cat.nombre }))}
                   >
-                    <RNText style={{ fontSize: 12, fontWeight: '500', color: formData.nombreCategoria === cat ? '#fff' : '#6b7280' }}>{cat}</RNText>
+                    <RNText style={{
+                      color: formData.nombreCategoria === cat.nombre || formData.categoria === cat.IDcategoriainsumos ? '#fff' : '#4b5563',
+                      fontWeight: formData.nombreCategoria === cat.nombre || formData.categoria === cat.IDcategoriainsumos ? '700' : '500'
+                    }}>
+                      {cat.nombre}
+                    </RNText>
                   </TouchableOpacity>
                 ))}
-              </View>
+              </ScrollView>
               <Input
                 placeholder="O escribe una nueva categoría..."
                 value={formData.nombreCategoria}

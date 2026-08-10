@@ -23,6 +23,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { insumosService, InsumoItem, MovimientoStock, CreateInsumoDto } from '../../services/insumos';
 import { inventarioService } from '../../services/inventario';
+import { categoriasInsumosService, CategoriaInsumoItem } from '../../services/categoriasInsumos';
 import { usePermissions } from '../../hooks/usePermissions';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 
@@ -95,6 +96,11 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const mainScrollRef = useRef<ScrollView>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [categoriasList, setCategoriasList] = useState<CategoriaInsumoItem[]>([]);
+
+  useEffect(() => {
+    categoriasInsumosService.getAll().then(setCategoriasList).catch(console.error);
+  }, []);
 
   useEffect(() => {
     const showSub = Keyboard.addListener(Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow', (e) => setKeyboardHeight(e.endCoordinates.height));
@@ -322,9 +328,8 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
         disponible: formData.disponible,
         estado: estadoActivo ? 'ACTIVO' : 'INACTIVO',
         imageUrl: finalImageUrl,
-        imagen: finalImageUrl,
-        cantidadPorPaquete: formData.cantidadPorPaquete,
-        paquetesEnBodega: formData.paquetesEnBodega,
+        cantidadPorPaquete: String(formData.cantidadPorPaquete) === '' ? null : Number(formData.cantidadPorPaquete),
+        paquetesEnBodega: String(formData.paquetesEnBodega) === '' ? null : Number(formData.paquetesEnBodega),
         ajusteRequiereAprobacion: formData.ajusteRequiereAprobacion,
       };
       console.log('[DEBUG] Enviando actualización Insumo:', dataToSave);
@@ -655,6 +660,32 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
 
               <View style={{ marginTop: 16 }}>
                 <RNText style={{ fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 8 }}>Categoría</RNText>
+                
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
+                  {categoriasList.map(cat => (
+                    <TouchableOpacity
+                      key={cat.IDcategoriainsumos}
+                      style={{
+                        paddingHorizontal: 16,
+                        paddingVertical: 8,
+                        borderRadius: 20,
+                        backgroundColor: formData.nombreCategoria === cat.nombre || formData.categoria === cat.IDcategoriainsumos ? '#3b82f6' : '#f3f4f6',
+                        marginRight: 8,
+                        borderWidth: 1,
+                        borderColor: formData.nombreCategoria === cat.nombre || formData.categoria === cat.IDcategoriainsumos ? '#2563eb' : '#e5e7eb'
+                      }}
+                      onPress={() => setFormData(p => ({ ...p, categoria: cat.IDcategoriainsumos, nombreCategoria: cat.nombre }))}
+                    >
+                      <RNText style={{
+                        color: formData.nombreCategoria === cat.nombre || formData.categoria === cat.IDcategoriainsumos ? '#fff' : '#4b5563',
+                        fontWeight: formData.nombreCategoria === cat.nombre || formData.categoria === cat.IDcategoriainsumos ? '700' : '500'
+                      }}>
+                        {cat.nombre}
+                      </RNText>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+
                 <Input
                   placeholder="O escribe una nueva categoría..."
                   value={formData.nombreCategoria}
