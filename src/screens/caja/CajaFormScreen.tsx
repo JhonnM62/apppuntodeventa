@@ -637,10 +637,17 @@ export default function CajaFormScreen({ route, navigation }: any) {
       }
 
       if (cleanData.insumos) {
-        cleanData.insumos = cleanData.insumos.map((i: any) => ({
-          ...i,
-          cantDeCierre: i.cantDeCierre === '' || isNaN(Number(i.cantDeCierre)) ? undefined : Number(i.cantDeCierre)
-        }));
+        cleanData.insumos = cleanData.insumos.map((i: any) => {
+          const processed: any = {
+            ...i,
+            cantDeCierre: i.cantDeCierre === '' || isNaN(Number(i.cantDeCierre)) ? undefined : Number(i.cantDeCierre)
+          };
+          // Prevenir que meseros o no-admins sobreescriban la apertura por accidente al guardar
+          if (!isAdmin) {
+            delete processed.cantApertura;
+          }
+          return processed;
+        });
 
         if (!isNew && isFinalClose) {
           const faltanInsumos = cleanData.insumos.some((i: any) => i.cantDeCierre === undefined);
