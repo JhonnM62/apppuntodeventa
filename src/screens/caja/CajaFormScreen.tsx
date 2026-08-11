@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { View, ScrollView, ActivityIndicator, TouchableOpacity, Image, Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard, Dimensions, Alert, RefreshControl } from 'react-native';
+import { View, ScrollView, ActivityIndicator, TouchableOpacity, Image, Modal, TextInput, KeyboardAvoidingView, Platform, Keyboard, Dimensions, Alert, RefreshControl, Switch } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
@@ -267,6 +267,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [addQtyIndex, setAddQtyIndex] = useState<number | null>(null);
   const [addQtyMode, setAddQtyMode] = useState<'libre' | 'paquete'>('libre');
   const [addQtyAmount, setAddQtyAmount] = useState('');
+  const [syncGlobalStock, setSyncGlobalStock] = useState(false);
   const [subQtyAmount, setSubQtyAmount] = useState('');
   const [subQtyReason, setSubQtyReason] = useState('');
   const [isSubmittingAdjustment, setIsSubmittingAdjustment] = useState(false);
@@ -2703,8 +2704,23 @@ export default function CajaFormScreen({ route, navigation }: any) {
                       placeholder="Ej. 32"
                       autoFocus
                     />
+
+                    {addQtyMode === 'paquete' && (
+                      <View className="flex-row items-center justify-between bg-white p-3 rounded-lg border border-gray-200 mb-4">
+                        <View className="flex-1 mr-3">
+                          <Text className="text-gray-800 font-bold">Cuadrar con Stock Global</Text>
+                          <Text className="text-gray-500 text-xs">Si se desactiva, solo se sumará a esta caja y no descontará paquetes ni modificará el stock principal del inventario.</Text>
+                        </View>
+                        <Switch
+                          value={syncGlobalStock}
+                          onValueChange={setSyncGlobalStock}
+                          trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
+                          thumbColor={syncGlobalStock ? '#2563eb' : '#f3f4f6'}
+                        />
+                      </View>
+                    )}
                     
-                    <View className="flex-row justify-end space-x-3">
+                    <View className="flex-row justify-end mt-2 space-x-3 gap-3">
                       <TouchableOpacity 
                         className="px-4 py-2 bg-gray-200 rounded-lg"
                         onPress={() => setAddQtyModalVisible(false)}
@@ -2726,7 +2742,8 @@ export default function CajaFormScreen({ route, navigation }: any) {
                                 await api.post('/movimientos-insumos/abrir-paquete', {
                                   insumoId: insumoId,
                                   cajaId: cajaId,
-                                  cantidadReal: amountToAdd
+                                  cantidadReal: amountToAdd,
+                                  syncGlobalStock: syncGlobalStock
                                 });
                                 
                                 const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
