@@ -930,6 +930,35 @@ export default function CajaFormScreen({ route, navigation }: any) {
     });
   };
 
+  const handleArquearInsumos = async () => {
+    Alert.alert(
+      'Confirmar Arqueo',
+      '¿Estás seguro de que deseas arquear los insumos físicos de esta caja contra el inventario global? Esto ajustará las diferencias de cierre.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { 
+          text: 'Arquear', 
+          style: 'destructive',
+          onPress: async () => {
+            if (!cajaId) {
+              showAlert({ title: 'Error', message: 'Debes guardar la caja primero antes de arquear.', type: 'error' });
+              return;
+            }
+            try {
+              setSaving(true);
+              const response = await api.post(`/caja/${cajaId}/arquear-insumos`);
+              showAlert({ title: 'Arqueo Exitoso', message: response.data?.message || 'Se han ajustado las diferencias.', type: 'success' });
+            } catch (error: any) {
+              showAlert({ title: 'Error', message: error.response?.data?.message || 'Hubo un error al arquear.', type: 'error' });
+            } finally {
+              setSaving(false);
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const copyPreviousCajaInsumos = async () => {
     try {
       setSaving(true);
@@ -1522,10 +1551,16 @@ export default function CajaFormScreen({ route, navigation }: any) {
                 </TouchableOpacity>
               )}
               {!isReadOnly && (
-                <TouchableOpacity onPress={() => setModalInsumosVisible(true)} className="px-2 py-1.5 rounded flex-row items-center" style={{ backgroundColor: primaryColor || '#16a34a' }}>
-                  <Ionicons name="add" size={14} color="#fff" />
-                  <Text className="text-white font-semibold ml-1 text-xs">Agregar</Text>
-                </TouchableOpacity>
+                <>
+                  <TouchableOpacity onPress={handleArquearInsumos} className="px-2 py-1.5 rounded flex-row items-center mr-2 bg-orange-500">
+                    <Ionicons name="sync" size={14} color="#fff" />
+                    <Text className="text-white font-semibold ml-1 text-xs">Arquear</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => setModalInsumosVisible(true)} className="px-2 py-1.5 rounded flex-row items-center" style={{ backgroundColor: primaryColor || '#16a34a' }}>
+                    <Ionicons name="add" size={14} color="#fff" />
+                    <Text className="text-white font-semibold ml-1 text-xs">Agregar</Text>
+                  </TouchableOpacity>
+                </>
               )}
             </View>
           </View>

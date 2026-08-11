@@ -118,7 +118,9 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
         categoriasService.getAll()
       ]);
       setInsumosList(insumosRes || []);
-      setCategoriasList((categoriasRes as any)?.data || categoriasRes || []);
+      const rawCats = (categoriasRes as any)?.data || categoriasRes || [];
+      const validCats = rawCats.filter((c: any) => c.nombre && !c.nombre.match(/^[0-9a-f]{8}$/i));
+      setCategoriasList(validCats);
 
       if (!isNew) {
         const product = await getProductById(id);

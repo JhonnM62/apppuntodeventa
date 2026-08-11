@@ -194,7 +194,10 @@ const InsumosScreen = ({ navigation }: Props) => {
   useEffect(() => {
     fetchInsumos();
     fetchAlertas();
-    categoriasInsumosService.getAll().then(setCategoriasList).catch(console.error);
+    categoriasInsumosService.getAll().then((cats) => {
+      const validCats = (cats || []).filter(c => c.nombre && !c.nombre.match(/^[0-9a-f]{8}$/i));
+      setCategoriasList(validCats);
+    }).catch(console.error);
   }, [fetchInsumos]);
 
   useSocketEvent(SocketEvent.REFRESH_INSUMOS, () => {

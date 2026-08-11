@@ -99,7 +99,10 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const [categoriasList, setCategoriasList] = useState<CategoriaInsumoItem[]>([]);
 
   useEffect(() => {
-    categoriasInsumosService.getAll().then(setCategoriasList).catch(console.error);
+    categoriasInsumosService.getAll().then((cats) => {
+      const validCats = (cats || []).filter(c => c.nombre && !c.nombre.match(/^[0-9a-f]{8}$/i));
+      setCategoriasList(validCats);
+    }).catch(console.error);
   }, []);
 
   useEffect(() => {
@@ -259,11 +262,15 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
 
   const openEditModal = () => {
     if (!insumo) return;
-    setFormData({
-      nombre: insumo.nombre || insumo.Nombre || '',
-      categoria: insumo.categoria || insumo.Categoria || '',
-      nombreCategoria: insumo.nombreCategoria || insumo.NombreCategoria || insumo.categoriaNombre || '',
-      unidades: insumo.unidades || insumo.Unidades || '',
+      const catName = insumo.nombreCategoria || insumo.NombreCategoria || insumo.categoriaNombre || '';
+      const catIdFallback = insumo.categoria || insumo.Categoria || '';
+      const finalCat = catName ? catName : (catIdFallback.length === 8 ? '' : catIdFallback);
+
+      setFormData({
+        nombre: insumo.nombre || insumo.Nombre || '',
+        categoria: finalCat,
+        nombreCategoria: finalCat,
+        unidades: insumo.unidades || insumo.Unidades || '',
       cantidad: insumo.cantidad || insumo.Cantidad || 0,
       precio: insumo.precio || insumo.Precio || 0,
       imageUrl: insumo.imageUrl || insumo['Image Url'] || '',
