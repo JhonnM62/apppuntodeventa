@@ -9,6 +9,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getConfiguracion, updateConfiguracion, getConfiguracionWhatsapp, updateConfiguracionWhatsapp } from '../../services/configuracion';
 import { getConfiguracionIA, updateConfiguracionIA } from '../../services/api';
+import { Picker } from '@react-native-picker/picker';
+import divipolaData from '../../data/divipola.json';
 
 let Location: any;
 try {
@@ -69,6 +71,8 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     factusEntorno: 'SANDBOX'
   });
   
+  const [selectedDepto, setSelectedDepto] = useState<string>('');
+  
   // Para el Time Picker
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [tempDate, setTempDate] = useState(new Date());
@@ -127,6 +131,13 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           factusMunicipioCodigo: dataNegocio.factusMunicipioCodigo || '52356',
           factusEntorno: dataNegocio.factusEntorno || 'SANDBOX'
         });
+
+        // Initialize Department based on municipality
+        const munCode = dataNegocio.factusMunicipioCodigo || '52356';
+        const depto = divipolaData.find(d => d.municipios.some(m => m.codigo_dane === munCode));
+        if (depto) {
+          setSelectedDepto(depto.codigo_dane);
+        }
       }
 
       const dataIA = resIA.data ? resIA.data : resIA;
@@ -491,33 +502,46 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             autoCapitalize="none"
           />
 
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
-            <View style={{ flex: 1, marginRight: 8 }}>
-              <Text style={styles.label}>Código Municipio DIAN</Text>
-              <TextInput
-                style={styles.input}
-                value={factusConfig.factusMunicipioCodigo}
-                onChangeText={(text) => setFactusConfig({...factusConfig, factusMunicipioCodigo: text})}
-                placeholder="Ej. 52356 (Ipiales)"
-              />
-            </View>
-            <View style={{ flex: 1, marginLeft: 8 }}>
-              <Text style={styles.label}>Entorno</Text>
-              <View style={{ flexDirection: 'row', marginTop: 4 }}>
-                <TouchableOpacity
-                  style={[styles.modelBtn, factusConfig.factusEntorno === 'SANDBOX' && styles.modelBtnActive, { flex: 1 }]}
-                  onPress={() => setFactusConfig({...factusConfig, factusEntorno: 'SANDBOX'})}
-                >
-                  <Text style={[styles.modelBtnText, factusConfig.factusEntorno === 'SANDBOX' && styles.modelBtnTextActive, { fontSize: 12 }]}>Sandbox</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modelBtn, factusConfig.factusEntorno === 'PRODUCCION' && styles.modelBtnActive, { flex: 1, marginLeft: 4 }]}
-                  onPress={() => setFactusConfig({...factusConfig, factusEntorno: 'PRODUCCION'})}
-                >
-                  <Text style={[styles.modelBtnText, factusConfig.factusEntorno === 'PRODUCCION' && styles.modelBtnTextActive, { fontSize: 12 }]}>Prod</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+          <Text style={styles.label}>Ubicación (Facturación Electrónica)</Text>
+          <View style={[styles.input, { paddingHorizontal: 0, paddingVertical: 0, marginBottom: 8 }]}>
+            <Picker
+              selectedValue={selectedDepto}
+              onValueChange={(itemValue) => setSelectedDepto(itemValue)}
+            >
+              <Picker.Item label="Seleccione Departamento" value="" />
+              {divipolaData.map(d => (
+                <Picker.Item key={d.codigo_dane} label={d.nombre} value={d.codigo_dane} />
+              ))}
+            </Picker>
+          </View>
+
+          <View style={[styles.input, { paddingHorizontal: 0, paddingVertical: 0, marginBottom: 12 }]}>
+            <Picker
+              selectedValue={factusConfig.factusMunicipioCodigo}
+              onValueChange={(itemValue) => setFactusConfig({...factusConfig, factusMunicipioCodigo: itemValue})}
+              enabled={!!selectedDepto}
+            >
+              <Picker.Item label="Seleccione Municipio" value="" />
+              {divipolaData.find(d => d.codigo_dane === selectedDepto)?.municipios.map(m => (
+                <Picker.Item key={m.codigo_dane} label={m.nombre} value={m.codigo_dane} />
+              ))}
+            </Picker>
+          </View>
+
+          <Text style={styles.label}>Entorno (API Factus)</Text>
+          <View style={{ flexDirection: 'row', marginTop: 4, marginBottom: 12 }}>
+            <TouchableOpacity
+              style={[styles.modelBtn, factusConfig.factusEntorno === 'SANDBOX' && styles.modelBtnActive, { flex: 1 }]}
+              onPress={() => setFactusConfig({...factusConfig, factusEntorno: 'SANDBOX'})}
+            >
+              <Text style={[styles.modelBtnText, factusConfig.factusEntorno === 'SANDBOX' && styles.modelBtnTextActive, { fontSize: 13, textAlign: 'center' }]}>Sandbox (Pruebas)</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.modelBtn, factusConfig.factusEntorno === 'PRODUCCION' && styles.modelBtnActive, { flex: 1, marginLeft: 8 }]}
+              onPress={() => setFactusConfig({...factusConfig, factusEntorno: 'PRODUCCION'})}
+            >
+              <Text style={[styles.modelBtnText, factusConfig.factusEntorno === 'PRODUCCION' && styles.modelBtnTextActive, { fontSize: 13, textAlign: 'center' }]}>Producción</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
