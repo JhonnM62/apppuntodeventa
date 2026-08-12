@@ -185,7 +185,8 @@ const PedidosScreen = () => {
       closeModal();
     } catch (error: any) {
       console.error('Error Factura:', error?.response?.data || error);
-      const msg = error?.response?.data?.message || (typeof error?.response?.data === 'string' ? error.response.data : 'Error al emitir factura DIAN');
+      const data = error?.response?.data;
+      const msg = data?.error?.message || data?.message || (typeof data === 'string' ? data : 'Error al emitir factura DIAN');
       Toast.show({ type: 'error', text1: 'Error', text2: msg });
     } finally {
       setIsEmittingDian(false);
