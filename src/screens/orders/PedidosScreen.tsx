@@ -9,6 +9,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { getSales, updateVentaEstado, updateVentaPago, deleteSale, deleteSalesBulk, getVentaById } from '../../services/sales';
+import { emitirFacturaDian } from '../../services/facturacion';
 import { useSocket, useSocketEvent, useSocketEmitter } from '../../hooks';
 import { Room, SocketEvent } from '../../types/socket.types';
 import Toast from 'react-native-toast-message';
@@ -172,6 +173,22 @@ const PedidosScreen = () => {
         modifiers: getModifiers(prod.comentarios)
       }))
     };
+  };
+
+  const [isEmittingDian, setIsEmittingDian] = useState(false);
+
+  const handleEmitirFacturaDian = async (venta: VentaItem) => {
+    try {
+      setIsEmittingDian(true);
+      await emitirFacturaDian(venta.IDventas);
+      Toast.show({ type: 'success', text1: 'Éxito', text2: 'Factura DIAN emitida correctamente' });
+      closeModal();
+    } catch (error: any) {
+      console.error(error);
+      Toast.show({ type: 'error', text1: 'Error', text2: error?.response?.data?.message || 'Error al emitir factura DIAN' });
+    } finally {
+      setIsEmittingDian(false);
+    }
   };
 
   const handleManualPrint = async (venta: any, type: 'comanda' | 'factura') => {
@@ -1504,6 +1521,24 @@ showAlert({
                     <RNText style={styles.actionBtnText}>Ticket</RNText>
                   </TouchableOpacity>
                 </View>
+              </View>
+
+              <View style={[styles.modalActionsSection, { marginTop: 16 }]}>
+                <RNText style={[styles.modalSectionTitle, { marginBottom: 12 }]}>FACTURACIÓN DIAN (FACTUS)</RNText>
+                <TouchableOpacity
+                  style={[styles.actionBtn, { backgroundColor: '#2563eb', flexDirection: 'row', justifyContent: 'center' }, isEmittingDian && { opacity: 0.7 }]}
+                  onPress={() => handleEmitirFacturaDian(selectedVenta)}
+                  disabled={isEmittingDian}
+                >
+                  {isEmittingDian ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <>
+                      <Ionicons name="document-text-outline" size={20} color="#fff" />
+                      <RNText style={styles.actionBtnText}>Emitir Factura Electrónica</RNText>
+                    </>
+                  )}
+                </TouchableOpacity>
               </View>
 
               <View style={{ height: 40 }} />

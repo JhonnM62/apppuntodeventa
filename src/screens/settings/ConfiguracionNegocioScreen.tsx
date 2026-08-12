@@ -57,6 +57,17 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     receiver: '',
     isGroup: false,
   });
+
+  // Estados para Factus
+  const [factusConfig, setFactusConfig] = useState({
+    emitirFacturaAutomatica: false,
+    factusEmail: '',
+    factusPassword: '',
+    factusClientId: '',
+    factusClientSecret: '',
+    factusMunicipioCodigo: '52356',
+    factusEntorno: 'SANDBOX'
+  });
   
   // Para el Time Picker
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -106,6 +117,16 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         if (dataNegocio.longitudNegocio !== null && dataNegocio.longitudNegocio !== undefined) setLongitudNegocio(String(dataNegocio.longitudNegocio));
         if (dataNegocio.radioGeocercaM !== null && dataNegocio.radioGeocercaM !== undefined) setRadioGeocercaM(String(dataNegocio.radioGeocercaM));
         if (dataNegocio.minutosGraciaLlegadaTarde !== null && dataNegocio.minutosGraciaLlegadaTarde !== undefined) setMinutosGraciaLlegadaTarde(String(dataNegocio.minutosGraciaLlegadaTarde));
+        
+        setFactusConfig({
+          emitirFacturaAutomatica: dataNegocio.emitirFacturaAutomatica ?? false,
+          factusEmail: dataNegocio.factusEmail || '',
+          factusPassword: dataNegocio.factusPassword || '',
+          factusClientId: dataNegocio.factusClientId || '',
+          factusClientSecret: dataNegocio.factusClientSecret || '',
+          factusMunicipioCodigo: dataNegocio.factusMunicipioCodigo || '52356',
+          factusEntorno: dataNegocio.factusEntorno || 'SANDBOX'
+        });
       }
 
       const dataIA = resIA.data ? resIA.data : resIA;
@@ -148,7 +169,8 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           latitudNegocio: latitudNegocio ? parseFloat(latitudNegocio) : undefined,
           longitudNegocio: longitudNegocio ? parseFloat(longitudNegocio) : undefined,
           radioGeocercaM: radioGeocercaM ? parseInt(radioGeocercaM, 10) : 100,
-          minutosGraciaLlegadaTarde: minutosGraciaLlegadaTarde ? parseInt(minutosGraciaLlegadaTarde, 10) : 5
+          minutosGraciaLlegadaTarde: minutosGraciaLlegadaTarde ? parseInt(minutosGraciaLlegadaTarde, 10) : 5,
+          ...factusConfig
         } as any),
         updateConfiguracionIA({
           apiKey: iaConfig.apiKey,
@@ -402,6 +424,100 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             >
               <Ionicons name="add" size={20} color="#374151" />
             </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* FACTURACION ELECTRONICA */}
+        <View style={[styles.card, { marginTop: 20, borderColor: '#bfdbfe', borderWidth: 1 }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={[styles.iaIconContainer, { backgroundColor: '#bfdbfe' }]}>
+                <Ionicons name="document-text" size={20} color="#2563eb" />
+              </View>
+              <Text style={[styles.sectionTitleIA, { color: '#2563eb' }]}>
+                Facturación Electrónica (Factus)
+              </Text>
+            </View>
+            <Switch
+              value={factusConfig.emitirFacturaAutomatica}
+              onValueChange={(val) => setFactusConfig({...factusConfig, emitirFacturaAutomatica: val})}
+              trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
+              thumbColor={factusConfig.emitirFacturaAutomatica ? '#2563eb' : '#f3f4f6'}
+            />
+          </View>
+          
+          <View style={[styles.infoCardIA, { backgroundColor: '#eff6ff' }]}>
+            <Ionicons name="information-circle" size={24} color="#2563eb" />
+            <Text style={[styles.infoTextIA, { color: '#1e3a8a' }]}>
+              Si activas esta opción, se emitirá una factura electrónica automáticamente a nombre de "Consumidor Final" cuando se cobre un pedido (sino tiene cliente asociado).
+            </Text>
+          </View>
+          
+          <Text style={styles.label}>Factus Email</Text>
+          <TextInput
+            style={styles.input}
+            value={factusConfig.factusEmail}
+            onChangeText={(text) => setFactusConfig({...factusConfig, factusEmail: text})}
+            placeholder="correo@ejemplo.com"
+            autoCapitalize="none"
+          />
+
+          <Text style={styles.label}>Factus Password</Text>
+          <TextInput
+            style={styles.input}
+            value={factusConfig.factusPassword}
+            onChangeText={(text) => setFactusConfig({...factusConfig, factusPassword: text})}
+            placeholder="Contraseña de API"
+            secureTextEntry={true}
+            autoCapitalize="none"
+          />
+          
+          <Text style={styles.label}>Client ID</Text>
+          <TextInput
+            style={styles.input}
+            value={factusConfig.factusClientId}
+            onChangeText={(text) => setFactusConfig({...factusConfig, factusClientId: text})}
+            placeholder="Client ID"
+            autoCapitalize="none"
+          />
+
+          <Text style={styles.label}>Client Secret</Text>
+          <TextInput
+            style={styles.input}
+            value={factusConfig.factusClientSecret}
+            onChangeText={(text) => setFactusConfig({...factusConfig, factusClientSecret: text})}
+            placeholder="Client Secret"
+            secureTextEntry={true}
+            autoCapitalize="none"
+          />
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+            <View style={{ flex: 1, marginRight: 8 }}>
+              <Text style={styles.label}>Código Municipio DIAN</Text>
+              <TextInput
+                style={styles.input}
+                value={factusConfig.factusMunicipioCodigo}
+                onChangeText={(text) => setFactusConfig({...factusConfig, factusMunicipioCodigo: text})}
+                placeholder="Ej. 52356 (Ipiales)"
+              />
+            </View>
+            <View style={{ flex: 1, marginLeft: 8 }}>
+              <Text style={styles.label}>Entorno</Text>
+              <View style={{ flexDirection: 'row', marginTop: 4 }}>
+                <TouchableOpacity
+                  style={[styles.modelBtn, factusConfig.factusEntorno === 'SANDBOX' && styles.modelBtnActive, { flex: 1 }]}
+                  onPress={() => setFactusConfig({...factusConfig, factusEntorno: 'SANDBOX'})}
+                >
+                  <Text style={[styles.modelBtnText, factusConfig.factusEntorno === 'SANDBOX' && styles.modelBtnTextActive, { fontSize: 12 }]}>Sandbox</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modelBtn, factusConfig.factusEntorno === 'PRODUCCION' && styles.modelBtnActive, { flex: 1, marginLeft: 4 }]}
+                  onPress={() => setFactusConfig({...factusConfig, factusEntorno: 'PRODUCCION'})}
+                >
+                  <Text style={[styles.modelBtnText, factusConfig.factusEntorno === 'PRODUCCION' && styles.modelBtnTextActive, { fontSize: 12 }]}>Prod</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </View>
 
