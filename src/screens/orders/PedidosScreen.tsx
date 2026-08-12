@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput, KeyboardAvoidingView, Platform, AppState, AppStateStatus } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput, KeyboardAvoidingView, Platform, AppState, AppStateStatus, Linking } from 'react-native';
 import { FlashList as OriginalFlashList } from '@shopify/flash-list';
 const FlashList = OriginalFlashList as any;
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -62,6 +62,7 @@ type VentaItem = {
   ordenVentas?: OrderVenta[];
   usuarioRelacion?: { nombre?: string; email?: string };
   registroDeTiempo?: any[];
+  facturaElectronica?: any;
 };
 
 type OrderVenta = {
@@ -1527,20 +1528,38 @@ showAlert({
 
               <View style={[styles.modalActionsSection, { marginTop: 16 }]}>
                 <RNText style={[styles.modalSectionTitle, { marginBottom: 12 }]}>FACTURACIÓN DIAN (FACTUS)</RNText>
-                <TouchableOpacity
-                  style={[styles.actionBtn, { backgroundColor: '#2563eb', flexDirection: 'row', justifyContent: 'center' }, isEmittingDian && { opacity: 0.7 }]}
-                  onPress={() => handleEmitirFacturaDian(selectedVenta)}
-                  disabled={isEmittingDian}
-                >
-                  {isEmittingDian ? (
-                    <ActivityIndicator color="#fff" size="small" />
-                  ) : (
-                    <>
-                      <Ionicons name="document-text-outline" size={20} color="#fff" />
-                      <RNText style={styles.actionBtnText}>Emitir Factura Electrónica</RNText>
-                    </>
-                  )}
-                </TouchableOpacity>
+                
+                {selectedVenta.facturaElectronica && selectedVenta.facturaElectronica.estado === 'VALIDADA' ? (
+                  <View style={{ gap: 10 }}>
+                    <RNText style={{ fontSize: 14, color: '#16a34a', fontWeight: 'bold', textAlign: 'center' }}>
+                      Factura Emitida (CUFE: {selectedVenta.facturaElectronica.cufe?.substring(0, 15)}...)
+                    </RNText>
+                    {selectedVenta.facturaElectronica.pdfUrl && (
+                      <TouchableOpacity
+                        style={[styles.actionBtn, { backgroundColor: '#10b981', flexDirection: 'row', justifyContent: 'center' }]}
+                        onPress={() => Linking.openURL(selectedVenta.facturaElectronica.pdfUrl)}
+                      >
+                        <Ionicons name="download-outline" size={20} color="#fff" />
+                        <RNText style={styles.actionBtnText}>Descargar / Ver PDF DIAN</RNText>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={[styles.actionBtn, { backgroundColor: '#2563eb', flexDirection: 'row', justifyContent: 'center' }, isEmittingDian && { opacity: 0.7 }]}
+                    onPress={() => handleEmitirFacturaDian(selectedVenta)}
+                    disabled={isEmittingDian}
+                  >
+                    {isEmittingDian ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <>
+                        <Ionicons name="document-text-outline" size={20} color="#fff" />
+                        <RNText style={styles.actionBtnText}>Emitir Factura Electrónica</RNText>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
               </View>
 
               <View style={{ height: 40 }} />
