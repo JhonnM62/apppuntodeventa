@@ -10,7 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getConfiguracion, updateConfiguracion, getConfiguracionWhatsapp, updateConfiguracionWhatsapp } from '../../services/configuracion';
 import { getConfiguracionIA, updateConfiguracionIA } from '../../services/api';
 import { Picker } from '@react-native-picker/picker';
-import divipolaData from '../../data/divipola.json';
+import divipolaData from '../../data/divipola';
 
 let Location: any;
 try {
