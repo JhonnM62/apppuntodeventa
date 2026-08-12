@@ -136,6 +136,9 @@ export default function CajaFormScreen({ route, navigation }: any) {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [modalArquearVisible, setModalArquearVisible] = useState(false);
+  const [arquearPreviewList, setArquearPreviewList] = useState<any[]>([]);
+  const [selectedArquearIds, setSelectedArquearIds] = useState<string[]>([]);
   const [allInsumos, setAllInsumos] = useState<InsumoItem[]>([]);
   const [allProductos, setAllProductos] = useState<any[]>([]);
   const [modoOperacion, setModoOperacion] = useState<'GENERAL' | 'RESTAURANTE'>('GENERAL');
@@ -939,32 +942,36 @@ export default function CajaFormScreen({ route, navigation }: any) {
   };
 
   const handleArquearInsumos = async () => {
-    Alert.alert(
-      'Confirmar Arqueo',
-      '¿Estás seguro de que deseas arquear los insumos físicos de esta caja contra el inventario global? Esto ajustará las diferencias de cierre.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Arquear', 
-          style: 'destructive',
-          onPress: async () => {
-            if (!cajaId) {
-              showAlert({ title: 'Error', message: 'Debes guardar la caja primero antes de arquear.', type: 'error' });
-              return;
-            }
-            try {
-              setSaving(true);
-              const response = await api.post(`/caja/${cajaId}/arquear-insumos`);
-              showAlert({ title: 'Arqueo Exitoso', message: response.data?.message || 'Se han ajustado las diferencias.', type: 'success' });
-            } catch (error: any) {
-              showAlert({ title: 'Error', message: error.response?.data?.message || 'Hubo un error al arquear.', type: 'error' });
-            } finally {
-              setSaving(false);
-            }
-          }
-        }
-      ]
-    );
+    if (!cajaId) {
+      showAlert({ title: 'Error', message: 'Debes guardar la caja primero antes de arquear.', type: 'error' });
+      return;
+    }
+    try {
+      setSaving(true);
+      const response = await api.get(`/caja/${cajaId}/arquear-insumos-preview`);
+      if (response.data?.success && response.data?.data) {
+        setArquearPreviewList(response.data.data);
+        setSelectedArquearIds(response.data.data.map((item: any) => item.IDalimentos));
+        setModalArquearVisible(true);
+      }
+    } catch (error: any) {
+      showAlert({ title: 'Error', message: error.response?.data?.message || 'Hubo un error al calcular la diferencia.', type: 'error' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const confirmArquearInsumos = async () => {
+    try {
+      setSaving(true);
+      const response = await api.post(`/caja/${cajaId}/arquear-insumos`, { insumosIds: selectedArquearIds });
+      showAlert({ title: 'Arqueo Exitoso', message: response.data?.message || 'Se han ajustado las diferencias.', type: 'success' });
+      setModalArquearVisible(false);
+    } catch (error: any) {
+      showAlert({ title: 'Error', message: error.response?.data?.message || 'Hubo un error al arquear.', type: 'error' });
+    } finally {
+      setSaving(false);
+    }
   };
 
   const copyPreviousCajaInsumos = async () => {
@@ -2992,6 +2999,91 @@ export default function CajaFormScreen({ route, navigation }: any) {
                   })
                 )}
               </ScrollView>
+            </View>
+          </View>
+        </Modal>
+        <Modal
+          visible={modalArquearVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setModalArquearVisible(false)}
+        >
+          <View className="flex-1 justify-center bg-black/50 p-4">
+            <View className="bg-white rounded-lg max-h-[80%] overflow-hidden">
+              <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
+                <Text className="font-bold text-lg text-gray-800">Diferencias de Arqueo</Text>
+                <TouchableOpacity onPress={() => setModalArquearVisible(false)} className="p-1">
+                  <Ionicons name="close" size={24} color="#6b7280" />
+                </TouchableOpacity>
+              </View>
+
+              <ScrollView className="p-4" showsVerticalScrollIndicator={false}>
+                <View className="flex-row px-2 pb-2 mb-2 border-b border-gray-100">
+                  <View className="w-8" />
+                  <Text className="flex-1 font-semibold text-gray-600 text-xs">Insumo</Text>
+                  <Text className="w-16 font-semibold text-gray-600 text-xs text-right">Global</Text>
+                  <Text className="w-16 font-semibold text-gray-600 text-xs text-right">Físico</Text>
+                  <Text className="w-16 font-semibold text-gray-600 text-xs text-right">Dif</Text>
+                </View>
+
+                {arquearPreviewList.length === 0 ? (
+                  <Text className="text-gray-500 text-center py-4">No hay diferencias para arquear.</Text>
+                ) : (
+                  arquearPreviewList.map((item, index) => {
+                    const isSelected = selectedArquearIds.includes(item.IDalimentos);
+                    const isPositive = item.diferencia > 0;
+                    return (
+                      <TouchableOpacity 
+                        key={index} 
+                        className="flex-row items-center py-3 px-2 border-b border-gray-100 bg-gray-50 mb-1 rounded"
+                        onPress={() => {
+                          if (isSelected) {
+                            setSelectedArquearIds(prev => prev.filter(id => id !== item.IDalimentos));
+                          } else {
+                            setSelectedArquearIds(prev => [...prev, item.IDalimentos]);
+                          }
+                        }}
+                      >
+                        <View className="w-8 justify-center">
+                          <Ionicons 
+                            name={isSelected ? "checkbox" : "square-outline"} 
+                            size={22} 
+                            color={isSelected ? primaryColor || "#16a34a" : "#9ca3af"} 
+                          />
+                        </View>
+                        <Text className="flex-1 font-medium text-gray-800 text-sm" numberOfLines={1}>
+                          {item.nombre}
+                        </Text>
+                        <Text className="w-16 text-gray-600 text-sm text-right">{item.stockSistema}</Text>
+                        <Text className="w-16 text-gray-800 text-sm text-right font-medium">{item.stockFisico}</Text>
+                        <Text className={`w-16 text-sm text-right font-bold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                          {isPositive ? '+' : ''}{item.diferencia}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })
+                )}
+              </ScrollView>
+
+              <View className="flex-row justify-end items-center p-4 border-t border-gray-200">
+                <Text className="text-gray-500 text-xs mr-4">
+                  {selectedArquearIds.length} insumo(s) seleccionado(s)
+                </Text>
+                <TouchableOpacity 
+                  onPress={() => setModalArquearVisible(false)} 
+                  className="px-4 py-2 rounded border border-gray-300 mr-2 bg-white"
+                >
+                  <Text className="text-gray-700 font-medium">Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  onPress={confirmArquearInsumos}
+                  disabled={selectedArquearIds.length === 0}
+                  className={`px-4 py-2 rounded flex-row items-center ${selectedArquearIds.length === 0 ? 'bg-gray-400' : 'bg-orange-500'}`}
+                >
+                  <Ionicons name="sync" size={16} color="#fff" />
+                  <Text className="text-white font-medium ml-1">Confirmar Arqueo</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </Modal>
