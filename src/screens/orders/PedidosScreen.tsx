@@ -9,7 +9,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { getSales, updateVentaEstado, updateVentaPago, deleteSale, deleteSalesBulk, getVentaById } from '../../services/sales';
-import { emitirFacturaDian } from '../../services/facturacion';
+import { emitirFacturaDian, eliminarFacturaDian } from '../../services/facturacion';
 import { useSocket, useSocketEvent, useSocketEmitter } from '../../hooks';
 import { Room, SocketEvent } from '../../types/socket.types';
 import Toast from 'react-native-toast-message';
@@ -189,6 +189,20 @@ const PedidosScreen = () => {
       const data = error?.response?.data;
       const msg = data?.error?.message || data?.message || (typeof data === 'string' ? data : 'Error al emitir factura DIAN');
       Toast.show({ type: 'error', text1: 'Error', text2: msg });
+    } finally {
+      setIsEmittingDian(false);
+    }
+  };
+
+  const handleEliminarFacturaDian = async (venta: VentaItem) => {
+    try {
+      setIsEmittingDian(true);
+      await eliminarFacturaDian(venta.IDventas);
+      Toast.show({ type: 'success', text1: 'Éxito', text2: 'Factura eliminada correctamente' });
+      closeModal();
+    } catch (error: any) {
+      console.error('Error al eliminar Factura:', error?.response?.data || error);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo eliminar la factura' });
     } finally {
       setIsEmittingDian(false);
     }
@@ -1543,6 +1557,40 @@ showAlert({
                         <RNText style={styles.actionBtnText}>Descargar / Ver PDF DIAN</RNText>
                       </TouchableOpacity>
                     )}
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: '#ef4444', flexDirection: 'row', justifyContent: 'center' }, isEmittingDian && { opacity: 0.7 }]}
+                      onPress={() => handleEliminarFacturaDian(selectedVenta)}
+                      disabled={isEmittingDian}
+                    >
+                      {isEmittingDian ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                      ) : (
+                        <>
+                          <Ionicons name="trash-outline" size={20} color="#fff" />
+                          <RNText style={styles.actionBtnText}>Eliminar Factura</RNText>
+                        </>
+                      )}
+                    </TouchableOpacity>
+                  </View>
+                ) : selectedVenta.facturaElectronica ? (
+                  <View style={{ gap: 10 }}>
+                    <RNText style={{ fontSize: 14, color: '#ef4444', fontWeight: 'bold', textAlign: 'center' }}>
+                      Factura en estado: {selectedVenta.facturaElectronica.estado}
+                    </RNText>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: '#ef4444', flexDirection: 'row', justifyContent: 'center' }, isEmittingDian && { opacity: 0.7 }]}
+                      onPress={() => handleEliminarFacturaDian(selectedVenta)}
+                      disabled={isEmittingDian}
+                    >
+                      {isEmittingDian ? (
+                        <ActivityIndicator color="#fff" size="small" />
+                      ) : (
+                        <>
+                          <Ionicons name="trash-outline" size={20} color="#fff" />
+                          <RNText style={styles.actionBtnText}>Eliminar Intento Fallido</RNText>
+                        </>
+                      )}
+                    </TouchableOpacity>
                   </View>
                 ) : (
                   <TouchableOpacity
