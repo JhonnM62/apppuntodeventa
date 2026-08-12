@@ -139,7 +139,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [modalArquearVisible, setModalArquearVisible] = useState(false);
   const [arquearPreviewList, setArquearPreviewList] = useState<any[]>([]);
   const [selectedArquearIds, setSelectedArquearIds] = useState<string[]>([]);
-  const [syncGlobalStock, setSyncGlobalStock] = useState(true);
+  const [syncGlobalStockArqueo, setSyncGlobalStockArqueo] = useState(true);
   const [allInsumos, setAllInsumos] = useState<InsumoItem[]>([]);
   const [allProductos, setAllProductos] = useState<any[]>([]);
   const [modoOperacion, setModoOperacion] = useState<'GENERAL' | 'RESTAURANTE'>('GENERAL');
@@ -967,7 +967,7 @@ setSaving(false);
       setSaving(true);
       const response = await api.post(`/caja/${cajaId}/arquear-insumos`, { 
         insumosIds: selectedArquearIds,
-        syncGlobalStock: syncGlobalStock
+        syncGlobalStock: syncGlobalStockArqueo
       });
       showAlert({ title: 'Arqueo Exitoso', message: response.data?.message || 'Se han ajustado las diferencias.', type: 'success' });
       setModalArquearVisible(false);
@@ -3075,10 +3075,10 @@ setSaving(false);
                   <Text className="text-orange-700 text-xs">Si desmarcas esta opción, solo se guardará el arqueo en la caja, sin alterar el inventario general.</Text>
                 </View>
                 <Switch 
-                  value={syncGlobalStock}
-                  onValueChange={setSyncGlobalStock}
+                  value={syncGlobalStockArqueo}
+                  onValueChange={setSyncGlobalStockArqueo}
                   trackColor={{ false: '#d1d5db', true: '#f97316' }}
-                  thumbColor={syncGlobalStock ? '#fff' : '#f4f3f4'}
+                  thumbColor={syncGlobalStockArqueo ? '#fff' : '#f4f3f4'}
                 />
               </View>
 
