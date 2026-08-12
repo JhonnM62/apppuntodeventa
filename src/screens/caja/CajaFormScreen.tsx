@@ -139,6 +139,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [modalArquearVisible, setModalArquearVisible] = useState(false);
   const [arquearPreviewList, setArquearPreviewList] = useState<any[]>([]);
   const [selectedArquearIds, setSelectedArquearIds] = useState<string[]>([]);
+  const [syncGlobalStock, setSyncGlobalStock] = useState(true);
   const [allInsumos, setAllInsumos] = useState<InsumoItem[]>([]);
   const [allProductos, setAllProductos] = useState<any[]>([]);
   const [modoOperacion, setModoOperacion] = useState<'GENERAL' | 'RESTAURANTE'>('GENERAL');
@@ -957,14 +958,17 @@ export default function CajaFormScreen({ route, navigation }: any) {
     } catch (error: any) {
       showAlert({ title: 'Error', message: error.response?.data?.message || 'Hubo un error al calcular la diferencia.', type: 'error' });
     } finally {
-      setSaving(false);
+setSaving(false);
     }
   };
 
   const confirmArquearInsumos = async () => {
     try {
       setSaving(true);
-      const response = await api.post(`/caja/${cajaId}/arquear-insumos`, { insumosIds: selectedArquearIds });
+      const response = await api.post(`/caja/${cajaId}/arquear-insumos`, { 
+        insumosIds: selectedArquearIds,
+        syncGlobalStock: syncGlobalStock
+      });
       showAlert({ title: 'Arqueo Exitoso', message: response.data?.message || 'Se han ajustado las diferencias.', type: 'success' });
       setModalArquearVisible(false);
     } catch (error: any) {
@@ -1418,7 +1422,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           <View className="mb-3">
             <Text className="text-gray-600 text-xs font-semibold mb-1 uppercase">Efectivo Inicial <Text className="text-red-500">*</Text></Text>
             <Controller control={control} name="efectivoDeApertura" render={({ field: { onChange, value } }) => (
-              <CurrencyInputWrapper editable={!isReadOnly} value={value} onChange={onChange} className={cn("font-bold bg-gray-50 border-gray-300 text-gray-900", errors.efectivoDeApertura && "border-red-500")} style={{ fontSize: 15 }} />
+              <CurrencyInputWrapper editable={!isReadOnly && isAdmin} value={value} onChange={onChange} className={cn("font-bold bg-gray-50 border-gray-300 text-gray-900", errors.efectivoDeApertura && "border-red-500")} style={{ fontSize: 15 }} />
             )} />
             {errors.efectivoDeApertura && (
               <Text className="text-red-500 text-xs mt-1 font-medium">{errors.efectivoDeApertura.message as unknown as string}</Text>
@@ -3064,6 +3068,19 @@ export default function CajaFormScreen({ route, navigation }: any) {
                   })
                 )}
               </ScrollView>
+
+              <View className="mb-4 bg-orange-50 rounded-lg p-3 flex-row items-center justify-between border border-orange-100 mx-4">
+                <View className="flex-1 pr-3">
+                  <Text className="font-semibold text-orange-900 text-sm">Cuadrar con el stock global</Text>
+                  <Text className="text-orange-700 text-xs">Si desmarcas esta opción, solo se guardará el arqueo en la caja, sin alterar el inventario general.</Text>
+                </View>
+                <Switch 
+                  value={syncGlobalStock}
+                  onValueChange={setSyncGlobalStock}
+                  trackColor={{ false: '#d1d5db', true: '#f97316' }}
+                  thumbColor={syncGlobalStock ? '#fff' : '#f4f3f4'}
+                />
+              </View>
 
               <View className="flex-row justify-end items-center p-4 border-t border-gray-200">
                 <Text className="text-gray-500 text-xs mr-4">
