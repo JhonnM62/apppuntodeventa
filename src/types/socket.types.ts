@@ -33,6 +33,12 @@ export enum SocketEvent {
 export enum Room {
   KITCHEN = 'kitchen',
   CAJA = 'caja',
+  INVENTARIO = 'inventario',
+  INSUMOS = 'insumos',
+  PRODUCTOS = 'productos',
+  CATEGORIAS = 'categorias',
+  GASTOS = 'gastos',
+  VENTAS = 'ventas',
 }
 
 export enum ConnectionState {

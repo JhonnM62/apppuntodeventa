@@ -150,6 +150,10 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [historyEmpleado, setHistoryEmpleado] = useState<any>(null);
   const [historyTurnos, setHistoryTurnos] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [selectedHistoryTurnos, setSelectedHistoryTurnos] = useState<string[]>([]);
+  const [showBatchEditModal, setShowBatchEditModal] = useState(false);
+  const [batchEditForm, setBatchEditForm] = useState<any>({});
+  const [batchSaving, setBatchSaving] = useState(false);
 
   // Edit Turno State
   const [editingTurno, setEditingTurno] = useState<any>(null);
@@ -541,13 +545,9 @@ export default function AdminNominaScreen({ navigation }: any) {
       console.error(error);
       showAlert({ type: 'error', title: 'Error', message: 'No se pudo cargar el resumen del empleado' });
       setSelectedEmpleado(null);
-    } finally {
-      setLoadingResumen(false);
-    }
-  };
-
   const openHistory = async (empleado: any) => {
     setHistoryEmpleado(empleado);
+    setSelectedHistoryTurnos([]);
     try {
       setLoadingHistory(true);
       const res = await getTurnos({ usuarioId: empleado.IDusuarios, limit: 30 });
@@ -620,13 +620,6 @@ export default function AdminNominaScreen({ navigation }: any) {
     } finally {
       setSavingTurno(false);
     }
-  };
-
-  
-  const handleOpenLlegadas = () => {
-    const pendientes = (resumen?.descuentos || []).filter((d: any) => d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE');
-    setSelectedLlegadas(pendientes.map((d: any) => d.IDdescuento));
-    setShowLlegadasModal(true);
   };
 
   const handleAplicarLlegadas = async () => {
@@ -1212,7 +1205,7 @@ export default function AdminNominaScreen({ navigation }: any) {
                 <Text style={styles.modalTitle}>Historial de Turnos</Text>
                 <Text style={styles.modalSubtitle}>{historyEmpleado?.nombre}</Text>
               </View>
-              <TouchableOpacity onPress={() => setHistoryEmpleado(null)} style={{ padding: 4 }}>
+              <TouchableOpacity onPress={() => { setHistoryEmpleado(null); setSelectedHistoryTurnos([]); }} style={{ padding: 4 }}>
                 <Ionicons name="close" size={24} color="#6b7280" />
               </TouchableOpacity>
             </View>
@@ -1220,61 +1213,256 @@ export default function AdminNominaScreen({ navigation }: any) {
             {loadingHistory ? (
               <ActivityIndicator size="large" color="#4CAF50" style={{ margin: 40 }} />
             ) : (
-              <ScrollView style={{ flex: 1 }}>
-                {historyTurnos.length === 0 ? (
-                  <Text style={{ textAlign: 'center', marginTop: 20, color: '#6b7280' }}>No hay turnos registrados</Text>
-                ) : (
-                  historyTurnos.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map(turno => (
-                    <View key={turno.IDturno} style={styles.historyCard}>
-                      <View style={styles.historyHeader}>
-                        <Text style={styles.historyDate}>
-                          {new Date(turno.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })}
-                        </Text>
-                        <View style={[styles.statusTag, { backgroundColor: turno.estado === 'ACTIVO' ? '#dcfce7' : '#f3f4f6' }]}>
-                          <Text style={[styles.statusTagText, { color: turno.estado === 'ACTIVO' ? '#16a34a' : '#6b7280' }]}>
-                            {turno.estado}
-                          </Text>
-                        </View>
-                      </View>
-                      <View style={styles.historyDetails}>
-                        <View style={styles.timeBox}>
-                          <Text style={styles.timeLabel}>Entrada</Text>
-                          <Text style={styles.timeValue}>{new Date(turno.horaEntrada).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})}</Text>
-                        </View>
-                        <Ionicons name="arrow-forward" size={16} color="#9ca3af" />
-                        <View style={styles.timeBox}>
-                          <Text style={styles.timeLabel}>Salida</Text>
-                          <Text style={styles.timeValue}>{turno.horaSalida ? new Date(turno.horaSalida).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'}) : '--:--'}</Text>
-                        </View>
-                      </View>
+              <>
+                {historyTurnos.length > 0 && (
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12, paddingHorizontal: 4 }}>
+                    <TouchableOpacity 
+                      onPress={() => {
+                        if (selectedHistoryTurnos.length === historyTurnos.length) {
+                          setSelectedHistoryTurnos([]);
+                        } else {
+                          setSelectedHistoryTurnos(historyTurnos.map(t => t.IDturno));
+                        }
+                      }}
+                      style={{ padding: 8, flexDirection: 'row', alignItems: 'center' }}
+                    >
+                      <Ionicons 
+                        name={selectedHistoryTurnos.length === historyTurnos.length && historyTurnos.length > 0 ? "checkbox" : "square-outline"} 
+                        size={20} color="#3b82f6" style={{ marginRight: 6 }} 
+                      />
+                      <Text style={{ color: '#3b82f6', fontWeight: '500' }}>
+                        {selectedHistoryTurnos.length === historyTurnos.length && historyTurnos.length > 0 ? 'Deseleccionar Todo' : 'Seleccionar Todo'}
+                      </Text>
+                    </TouchableOpacity>
 
-                      <View style={{ marginTop: 8, alignItems: 'stretch' }}>
-                        <DescansoStatusAdmin turno={turno} />
-                      </View>
-                      
-                      <View style={styles.historyFooter}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                          <Text style={styles.historyFooterText}>
-                            {turno.ceno ? '🍔 Cenó' : '❌ No cenó'}
-                          </Text>
-                          <Text style={[styles.historyFooterValue, { marginLeft: 12 }]}>
-                            Turno: ${Number(turno.valorTurno || 0).toLocaleString('es-CO')}
-                          </Text>
-                        </View>
-                        <View style={{ flexDirection: 'row' }}>
-                          <TouchableOpacity style={styles.iconBtn} onPress={() => handleEditTurno(turno)}>
-                            <Ionicons name="pencil" size={18} color="#3b82f6" />
-                          </TouchableOpacity>
-                          <TouchableOpacity style={[styles.iconBtn, { marginLeft: 8 }]} onPress={() => handleDeleteTurno(turno)}>
-                            <Ionicons name="trash" size={18} color="#ef4444" />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </View>
-                  ))
+                    {selectedHistoryTurnos.length > 0 && (
+                      <TouchableOpacity 
+                        onPress={() => {
+                          setBatchEditForm({});
+                          setShowBatchEditModal(true);
+                        }}
+                        style={{ backgroundColor: '#3b82f6', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, flexDirection: 'row', alignItems: 'center' }}
+                      >
+                        <Ionicons name="create-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                        <Text style={{ color: '#ffffff', fontWeight: 'bold' }}>
+                          Editar Seleccionados ({selectedHistoryTurnos.length})
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 )}
-              </ScrollView>
+                <ScrollView style={{ flex: 1 }}>
+                  {historyTurnos.length === 0 ? (
+                    <Text style={{ textAlign: 'center', marginTop: 20, color: '#6b7280' }}>No hay turnos registrados</Text>
+                  ) : (
+                    historyTurnos.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map(turno => (
+                      <TouchableOpacity 
+                        key={turno.IDturno} 
+                        style={[styles.historyCard, selectedHistoryTurnos.includes(turno.IDturno) && { borderColor: '#3b82f6', borderWidth: 2 }]}
+                        onPress={() => {
+                          setSelectedHistoryTurnos(prev => 
+                            prev.includes(turno.IDturno) ? prev.filter(id => id !== turno.IDturno) : [...prev, turno.IDturno]
+                          );
+                        }}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <View style={{ marginRight: 12, marginLeft: 4 }}>
+                            <Ionicons 
+                              name={selectedHistoryTurnos.includes(turno.IDturno) ? "checkbox" : "square-outline"} 
+                              size={24} 
+                              color={selectedHistoryTurnos.includes(turno.IDturno) ? "#3b82f6" : "#d1d5db"} 
+                            />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <View style={styles.historyHeader}>
+                              <Text style={styles.historyDate}>
+                                {new Date(turno.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })}
+                              </Text>
+                              <View style={[styles.statusTag, { backgroundColor: turno.estado === 'ACTIVO' ? '#dcfce7' : '#f3f4f6' }]}>
+                                <Text style={[styles.statusTagText, { color: turno.estado === 'ACTIVO' ? '#16a34a' : '#6b7280' }]}>
+                                  {turno.estado}
+                                </Text>
+                              </View>
+                            </View>
+                            <View style={styles.historyDetails}>
+                              <View style={styles.timeBox}>
+                                <Text style={styles.timeLabel}>Entrada</Text>
+                                <Text style={styles.timeValue}>{new Date(turno.horaEntrada).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'})}</Text>
+                              </View>
+                              <Ionicons name="arrow-forward" size={16} color="#9ca3af" />
+                              <View style={styles.timeBox}>
+                                <Text style={styles.timeLabel}>Salida</Text>
+                                <Text style={styles.timeValue}>{turno.horaSalida ? new Date(turno.horaSalida).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'}) : '--:--'}</Text>
+                              </View>
+                            </View>
+
+                            <View style={{ marginTop: 8, alignItems: 'stretch' }}>
+                              <DescansoStatusAdmin turno={turno} />
+                            </View>
+                            
+                            <View style={styles.historyFooter}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                <Text style={styles.historyFooterText}>
+                                  {turno.ceno ? '🍔 Cenó' : '❌ No cenó'}
+                                </Text>
+                                <Text style={[styles.historyFooterValue, { marginLeft: 12 }]}>
+                                  Turno: ${Number(turno.valorTurno || 0).toLocaleString('es-CO')}
+                                </Text>
+                              </View>
+                              <View style={{ flexDirection: 'row' }}>
+                                <TouchableOpacity style={styles.iconBtn} onPress={() => handleEditTurno(turno)}>
+                                  <Ionicons name="pencil" size={18} color="#3b82f6" />
+                                </TouchableOpacity>
+                                <TouchableOpacity style={[styles.iconBtn, { marginLeft: 8 }]} onPress={() => handleDeleteTurno(turno)}>
+                                  <Ionicons name="trash" size={18} color="#ef4444" />
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    ))
+                  )}
+                </ScrollView>
+              </>
             )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal Edición Múltiple de Turnos */}
+      <Modal visible={showBatchEditModal} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { width: '85%' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <Text style={styles.modalTitle}>Edición Múltiple ({selectedHistoryTurnos.length})</Text>
+              <TouchableOpacity onPress={() => setShowBatchEditModal(false)} style={{ padding: 4 }}>
+                <Ionicons name="close" size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <Text style={{ color: '#6b7280', fontSize: 13, marginBottom: 16 }}>
+              Nota: Los campos que dejes en blanco mantendrán su valor original. Al cambiar la hora, se preservará el día original de cada turno.
+            </Text>
+
+            <ScrollView>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Estado del turno (Opcional)</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+                  {['ACTIVO', 'COMPLETADO', 'LIQUIDADO', 'ANULADO'].map(est => (
+                    <TouchableOpacity 
+                      key={est}
+                      style={[styles.statusChip, batchEditForm.estado === est && styles.statusChipActive]}
+                      onPress={() => setBatchEditForm({...batchEditForm, estado: batchEditForm.estado === est ? undefined : est})}
+                    >
+                      <Text style={[styles.statusChipText, batchEditForm.estado === est && styles.statusChipTextActive]}>{est}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Hora Entrada (Opcional)</Text>
+                {Platform.OS === 'web' ? (
+                  React.createElement('input', {
+                    type: 'time',
+                    value: batchEditForm.horaEntrada ? new Date(batchEditForm.horaEntrada).toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'}) : '',
+                    onChange: (e: any) => {
+                      if (!e.target.value) {
+                        setBatchEditForm({...batchEditForm, horaEntrada: undefined});
+                        return;
+                      }
+                      const [h, m] = e.target.value.split(':');
+                      const d = new Date();
+                      d.setHours(Number(h), Number(m), 0, 0);
+                      setBatchEditForm({...batchEditForm, horaEntrada: d.toISOString()});
+                    },
+                    style: {
+                      width: '100%',
+                      padding: 12,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: '#d1d5db',
+                      fontSize: 16,
+                    }
+                  })
+                ) : (
+                  <TouchableOpacity
+                    style={styles.timePickerBtn}
+                    onPress={() => setPickerConfig({ show: true, mode: 'time', field: 'horaEntrada' })}
+                  >
+                    <Ionicons name="time-outline" size={20} color="#4b5563" style={{ marginRight: 8 }} />
+                    <Text style={{ fontSize: 16, color: batchEditForm.horaEntrada ? '#1f2937' : '#9ca3af' }}>
+                      {batchEditForm.horaEntrada ? new Date(batchEditForm.horaEntrada).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'}) : 'Seleccionar hora'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Hora Salida (Opcional)</Text>
+                {Platform.OS === 'web' ? (
+                  React.createElement('input', {
+                    type: 'time',
+                    value: batchEditForm.horaSalida ? new Date(batchEditForm.horaSalida).toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'}) : '',
+                    onChange: (e: any) => {
+                      if (!e.target.value) {
+                        setBatchEditForm({...batchEditForm, horaSalida: undefined});
+                        return;
+                      }
+                      const [h, m] = e.target.value.split(':');
+                      const d = new Date();
+                      d.setHours(Number(h), Number(m), 0, 0);
+                      setBatchEditForm({...batchEditForm, horaSalida: d.toISOString()});
+                    },
+                    style: {
+                      width: '100%',
+                      padding: 12,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: '#d1d5db',
+                      fontSize: 16,
+                    }
+                  })
+                ) : (
+                  <TouchableOpacity
+                    style={styles.timePickerBtn}
+                    onPress={() => setPickerConfig({ show: true, mode: 'time', field: 'horaSalida' })}
+                  >
+                    <Ionicons name="time-outline" size={20} color="#4b5563" style={{ marginRight: 8 }} />
+                    <Text style={{ fontSize: 16, color: batchEditForm.horaSalida ? '#1f2937' : '#9ca3af' }}>
+                      {batchEditForm.horaSalida ? new Date(batchEditForm.horaSalida).toLocaleTimeString('es-CO', {hour: '2-digit', minute:'2-digit'}) : 'Seleccionar hora'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Precio del Turno (Opcional)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={batchEditForm.valorTurno?.toString() || ''}
+                  onChangeText={(val) => setBatchEditForm({...batchEditForm, valorTurno: val})}
+                  keyboardType="numeric"
+                  placeholder="Ej. 68400"
+                />
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+                <Button
+                  title="Cancelar"
+                  onPress={() => setShowBatchEditModal(false)}
+                  variant="outline"
+                  style={{ flex: 1 }}
+                />
+                <Button
+                  title={batchSaving ? "Guardando..." : "Guardar Cambios"}
+                  onPress={handleBatchEditSubmit}
+                  disabled={batchSaving}
+                  style={{ flex: 1, backgroundColor: '#3b82f6' }}
+                />
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>

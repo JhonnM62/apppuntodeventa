@@ -26,6 +26,7 @@
 // ============================================================
 
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import { io, Socket } from 'socket.io-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
@@ -226,8 +227,26 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       disconnectSocket();
     }
 
+    const appStateSubscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active' && token) {
+        console.log('[SocketContext] App foregrounded, forcing socket reconnect to avoid silent drops');
+        if (socketRef.current) {
+          // Force disconnect and reconnect to ensure the connection is completely fresh
+          socketRef.current.disconnect();
+          setTimeout(() => {
+            if (isMountedRef.current && token) {
+              socketRef.current?.connect();
+            }
+          }, 500);
+        } else {
+          initSocket();
+        }
+      }
+    });
+
     return () => {
       isMountedRef.current = false;
+      appStateSubscription.remove();
       socketRef.current?.disconnect();
       socketRef.current = null;
     };

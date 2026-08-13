@@ -238,6 +238,12 @@ const PedidosScreen = () => {
   const { user } = useAuthStore();
   const isAdminApp = user?.rol === 'Admin app';
 
+  useEffect(() => {
+    if (isConnected) {
+      joinRoom(Room.VENTAS);
+    }
+  }, [isConnected, joinRoom]);
+
   const productCategorias = useProductStore((state) => state.categorias);
 
 
