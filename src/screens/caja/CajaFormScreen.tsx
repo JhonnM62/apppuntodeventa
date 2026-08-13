@@ -1707,8 +1707,9 @@ setSaving(false);
                           <Text className="text-[10px] text-gray-400 mt-0.5">{item.categoria}</Text>
                           {(() => {
                             const insumoRef = allInsumos.find((i: any) => i.IDalimentos === item.nombreInsumo || i.nombre === item.nombreInsumoReal);
-                            if (insumoRef && insumoRef.cantidad !== undefined) {
-                              const stockNum = Number(insumoRef.cantidad);
+                            if (insumoRef) {
+                              const stockRaw = insumoRef.disponible ?? insumoRef.Disponible ?? 0;
+                              const stockNum = Number(stockRaw);
                               const stockStr = stockNum % 1 === 0 ? stockNum.toString() : stockNum.toFixed(2);
                               return (
                                 <View className="bg-emerald-100 px-1.5 py-0.5 rounded flex-row items-center mt-1 self-start">
