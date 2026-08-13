@@ -360,6 +360,10 @@ export default function CajaFormScreen({ route, navigation }: any) {
     fetchResumenSilenciosamente();
   });
 
+  useSocketEvent('refreshInsumos', () => {
+    fetchInitialData(false, true);
+  });
+
   const handleOpenCuadreModal = async (prod: any, diff: number) => {
     setCuadreProduct(prod);
     setCuadreDiff(diff);
@@ -1699,8 +1703,24 @@ setSaving(false);
                           </View>
                         )}
                         <View className="flex-1">
-                          <Text className="text-sm font-medium text-gray-800" numberOfLines={1}>{item.nombreInsumoReal || item.nombreInsumo}</Text>
-                          <Text className="text-[10px] text-gray-400">{item.categoria}</Text>
+                          <View className="flex-row items-center flex-wrap">
+                            <Text className="text-sm font-medium text-gray-800 mr-1" numberOfLines={1}>{item.nombreInsumoReal || item.nombreInsumo}</Text>
+                            {(() => {
+                              const insumoRef = allInsumos.find((i: any) => i.IDalimentos === item.nombreInsumo || i.nombre === item.nombreInsumoReal);
+                              if (insumoRef && insumoRef.cantidad !== undefined) {
+                                return (
+                                  <View className="bg-emerald-100 px-1.5 py-0.5 rounded flex-row items-center mt-0.5">
+                                    <Ionicons name="cube-outline" size={10} color="#047857" style={{marginRight: 2}} />
+                                    <Text className="text-[9px] text-emerald-800 font-bold">
+                                      Stock: {Number(insumoRef.cantidad).toFixed(2)} {insumoRef.unidades || insumoRef.Unidades || ''}
+                                    </Text>
+                                  </View>
+                                );
+                              }
+                              return null;
+                            })()}
+                          </View>
+                          <Text className="text-[10px] text-gray-400 mt-0.5">{item.categoria}</Text>
                         </View>
                       </View>
 
