@@ -545,6 +545,11 @@ export default function AdminNominaScreen({ navigation }: any) {
       console.error(error);
       showAlert({ type: 'error', title: 'Error', message: 'No se pudo cargar el resumen del empleado' });
       setSelectedEmpleado(null);
+    } finally {
+      setLoadingResumen(false);
+    }
+  };
+
   const openHistory = async (empleado: any) => {
     setHistoryEmpleado(empleado);
     setSelectedHistoryTurnos([]);
@@ -617,9 +622,73 @@ export default function AdminNominaScreen({ navigation }: any) {
       console.error(error);
       const msg = error?.response?.data?.message || 'No se pudo guardar el turno';
       showAlert({ type: 'error', title: 'Error', message: Array.isArray(msg) ? msg[0] : msg });
-    } finally {
-      setSavingTurno(false);
+      } finally {
+        setSavingTurno(false);
+      }
+    };
+
+  const handleBatchEditSubmit = async () => {
+    if (selectedHistoryTurnos.length === 0) return;
+    
+    if (!batchEditForm.estado && !batchEditForm.horaEntrada && !batchEditForm.horaSalida && !batchEditForm.valorTurno) {
+      showAlert({ type: 'error', title: 'Error', message: 'No se ingresó ningún valor para editar.' });
+      return;
     }
+
+    setBatchSaving(true);
+    try {
+      const updatePromises = selectedHistoryTurnos.map(async (turnoId) => {
+        const originalTurno = historyTurnos.find(t => t.IDturno === turnoId);
+        if (!originalTurno) return Promise.resolve();
+
+        const payload: any = {};
+        
+        if (batchEditForm.estado) payload.estado = batchEditForm.estado;
+        if (batchEditForm.valorTurno) payload.valorTurno = Number(batchEditForm.valorTurno);
+        
+        if (batchEditForm.horaEntrada) {
+          const inputDate = new Date(batchEditForm.horaEntrada);
+          const origDate = new Date(originalTurno.horaEntrada);
+          origDate.setHours(inputDate.getHours(), inputDate.getMinutes(), 0, 0);
+          payload.horaEntrada = origDate.toISOString();
+        }
+        
+        if (batchEditForm.horaSalida) {
+          const inputDate = new Date(batchEditForm.horaSalida);
+          const origDate = originalTurno.horaSalida ? new Date(originalTurno.horaSalida) : new Date(originalTurno.horaEntrada);
+          origDate.setHours(inputDate.getHours(), inputDate.getMinutes(), 0, 0);
+          
+          const currentEntrada = payload.horaEntrada ? new Date(payload.horaEntrada) : new Date(originalTurno.horaEntrada);
+          if (origDate < currentEntrada) {
+            origDate.setDate(origDate.getDate() + 1);
+          }
+          
+          payload.horaSalida = origDate.toISOString();
+        }
+        
+        return updateTurnoAdmin(turnoId, payload);
+      });
+
+      await Promise.all(updatePromises);
+      showAlert({ type: 'success', title: 'Éxito', message: `${selectedHistoryTurnos.length} turnos actualizados correctamente` });
+      setShowBatchEditModal(false);
+      setBatchEditForm({});
+      setSelectedHistoryTurnos([]);
+      if (historyEmpleado) openHistory(historyEmpleado);
+      loadData();
+    } catch (error: any) {
+      console.error(error);
+      const msg = error?.response?.data?.message || 'No se pudieron actualizar los turnos';
+      showAlert({ type: 'error', title: 'Error', message: Array.isArray(msg) ? msg[0] : msg });
+    } finally {
+      setBatchSaving(false);
+    }
+  };
+
+  const handleOpenLlegadas = () => {
+    const pendientes = (resumen?.descuentos || []).filter((d: any) => d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE');
+    setSelectedLlegadas(pendientes.map((d: any) => d.IDdescuento));
+    setShowLlegadasModal(true);
   };
 
   const handleAplicarLlegadas = async () => {
@@ -1450,17 +1519,19 @@ export default function AdminNominaScreen({ navigation }: any) {
 
               <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
                 <Button
-                  title="Cancelar"
                   onPress={() => setShowBatchEditModal(false)}
                   variant="outline"
                   style={{ flex: 1 }}
-                />
+                >
+                  <Text style={{ color: '#111827' }}>Cancelar</Text>
+                </Button>
                 <Button
-                  title={batchSaving ? "Guardando..." : "Guardar Cambios"}
                   onPress={handleBatchEditSubmit}
                   disabled={batchSaving}
                   style={{ flex: 1, backgroundColor: '#3b82f6' }}
-                />
+                >
+                  <Text style={{ color: '#fff' }}>{batchSaving ? "Guardando..." : "Guardar Cambios"}</Text>
+                </Button>
               </View>
             </ScrollView>
           </View>
@@ -1773,6 +1844,7 @@ const styles = StyleSheet.create({
   input: { backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 10, fontSize: 14, color: '#111827' },
   
   datePickerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 12 },
+  timePickerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 12 },
   datePickerText: { fontSize: 16, color: '#111827' },
   
   cenoBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: '#f3f4f6', borderRadius: 8, marginHorizontal: 4, borderWidth: 1, borderColor: '#e5e7eb' },
