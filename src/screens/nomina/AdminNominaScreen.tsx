@@ -630,7 +630,7 @@ export default function AdminNominaScreen({ navigation }: any) {
   const handleBatchEditSubmit = async () => {
     if (selectedHistoryTurnos.length === 0) return;
     
-    if (!batchEditForm.estado && !batchEditForm.horaEntrada && !batchEditForm.horaSalida && !batchEditForm.valorTurno) {
+    if (!batchEditForm.estado && !batchEditForm.horaEntrada && !batchEditForm.horaSalida && !batchEditForm.valorTurno && batchEditForm.ceno === undefined) {
       showAlert({ type: 'error', title: 'Error', message: 'No se ingresó ningún valor para editar.' });
       return;
     }
@@ -645,6 +645,7 @@ export default function AdminNominaScreen({ navigation }: any) {
         
         if (batchEditForm.estado) payload.estado = batchEditForm.estado;
         if (batchEditForm.valorTurno) payload.valorTurno = Number(batchEditForm.valorTurno);
+        if (batchEditForm.ceno !== undefined) payload.ceno = batchEditForm.ceno;
         
         if (batchEditForm.horaEntrada) {
           const inputDate = new Date(batchEditForm.horaEntrada);
@@ -1427,6 +1428,24 @@ export default function AdminNominaScreen({ navigation }: any) {
                       <Text style={[styles.statusChipText, batchEditForm.estado === est && styles.statusChipTextActive]}>{est}</Text>
                     </TouchableOpacity>
                   ))}
+                </View>
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>¿Cenó? (Opcional)</Text>
+                <View style={{ flexDirection: 'row', marginTop: 4 }}>
+                  <TouchableOpacity 
+                    style={[styles.cenoBtn, batchEditForm.ceno === true && styles.cenoBtnActive]}
+                    onPress={() => setBatchEditForm({...batchEditForm, ceno: batchEditForm.ceno === true ? undefined : true})}
+                  >
+                    <Text style={[styles.cenoBtnText, batchEditForm.ceno === true && styles.cenoBtnTextActive]}>Sí</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.cenoBtn, batchEditForm.ceno === false && styles.cenoBtnActiveError]}
+                    onPress={() => setBatchEditForm({...batchEditForm, ceno: batchEditForm.ceno === false ? undefined : false})}
+                  >
+                    <Text style={[styles.cenoBtnText, batchEditForm.ceno === false && styles.cenoBtnTextActiveError]}>No</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
 
