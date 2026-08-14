@@ -88,13 +88,15 @@ const usePrinterStore = create<PrinterState>()(
         if (!printComanda && !printFactura) return;
 
         let errorCount = 0;
+        let errorMessage = 'Fallo de conexión o impresión';
         if (printComanda) {
-          const successComanda = await executePrint(ticketData, state.paperSize, state.currentPrinter?.inner_mac_address || '', 'comanda');
-          if (!successComanda) {
-            errorCount++;
-            set({ isConnected: false });
-          } else {
+          try {
+            await executePrint(ticketData, state.paperSize, state.currentPrinter?.inner_mac_address || '', 'comanda');
             set({ isConnected: true });
+          } catch(err: any) {
+            errorCount++;
+            errorMessage = err.message;
+            set({ isConnected: false });
           }
         }
 
@@ -102,17 +104,18 @@ const usePrinterStore = create<PrinterState>()(
           if (printComanda) {
             await new Promise(resolve => setTimeout(resolve, 1500));
           }
-          const successFactura = await executePrint(ticketData, state.paperSize, state.currentPrinter?.inner_mac_address || '', 'factura');
-          if (!successFactura) {
-            errorCount++;
-            set({ isConnected: false });
-          } else {
+          try {
+            await executePrint(ticketData, state.paperSize, state.currentPrinter?.inner_mac_address || '', 'factura');
             set({ isConnected: true });
+          } catch(err: any) {
+            errorCount++;
+            errorMessage = err.message;
+            set({ isConnected: false });
           }
         }
 
         if (errorCount > 0) {
-          Toast.show({ type: 'error', text1: 'Error', text2: 'Fallo de conexión o impresión', position: 'top' });
+          Toast.show({ type: 'error', text1: 'Error', text2: errorMessage, position: 'top' });
         }
       },
       printManual: async (ticketData: any, type: 'comanda' | 'factura') => {
@@ -123,16 +126,12 @@ const usePrinterStore = create<PrinterState>()(
         }
 
         try {
-          const success = await executePrint(ticketData, state.paperSize, state.currentPrinter?.inner_mac_address || '', type);
-          if (!success) {
-            set({ isConnected: false });
-            Toast.show({ type: 'error', text1: 'Error', text2: `Fallo de conexión o impresión de ${type}`, position: 'top' });
-            return false;
-          }
+          await executePrint(ticketData, state.paperSize, state.currentPrinter?.inner_mac_address || '', type);
           set({ isConnected: true });
           return true;
-        } catch (error) {
-          Toast.show({ type: 'error', text1: 'Error', text2: `Error al imprimir la ${type}`, position: 'top' });
+        } catch (error: any) {
+          set({ isConnected: false });
+          Toast.show({ type: 'error', text1: 'Error', text2: error.message || `Error al imprimir la ${type}`, position: 'top' });
           return false;
         }
       }

@@ -247,6 +247,14 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
 
       if (BLEPrinter) {
         try {
+          await BLEPrinter.init();
+          await new Promise(resolve => setTimeout(resolve, 200));
+        } catch (initErr) {
+          console.log('Test print init error:', initErr);
+          throw initErr;
+        }
+
+        try {
           await BLEPrinter.connectPrinter(currentPrinter.inner_mac_address);
           setConnected(true);
         } catch (e) {
