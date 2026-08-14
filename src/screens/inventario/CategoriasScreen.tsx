@@ -67,34 +67,30 @@ const CategoriasScreen = () => {
     const invalidCategories = categoriesToDelete.filter(c => c.productos && c.productos.length > 0);
     
     if (invalidCategories.length > 0) {
-      Alert.alert('Error', `No se pueden eliminar ${invalidCategories.length} categorías porque tienen productos asociados.`);
+      showAlert({ type: 'error', title: 'Error', message: `No se pueden eliminar ${invalidCategories.length} categorías porque tienen productos asociados.` });
       return;
     }
 
-    Alert.alert(
-      "Eliminar categorías",
-      `¿Estás seguro de eliminar ${selectedItems.length} categoría(s)?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Eliminar", 
-          style: "destructive",
-          onPress: async () => {
-            setIsDeletingBatch(true);
-            try {
-              await Promise.all(selectedItems.map(id => categoriasService.delete(id)));
-              setSelectedItems([]);
-              loadCategorias();
-              showAlert({ type: 'success', title: 'Éxito', message: 'Categorías eliminadas.' });
-            } catch (error: any) {
-              showAlert({ type: 'error', title: 'Error', message: 'No se pudieron eliminar todas las categorías.' });
-            } finally {
-              setIsDeletingBatch(false);
-            }
-          }
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar categorías',
+      message: `¿Estás seguro de eliminar ${selectedItems.length} categoría(s)?`,
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        setIsDeletingBatch(true);
+        try {
+          await Promise.all(selectedItems.map(id => categoriasService.delete(id)));
+          setSelectedItems([]);
+          loadCategorias();
+          showAlert({ type: 'success', title: 'Éxito', message: 'Categorías eliminadas.' });
+        } catch (error: any) {
+          showAlert({ type: 'error', title: 'Error', message: 'No se pudieron eliminar todas las categorías.' });
+        } finally {
+          setIsDeletingBatch(false);
         }
-      ]
-    );
+      },
+      onCancel: () => {},
+    });
   };
 
   const handleSave = async () => {

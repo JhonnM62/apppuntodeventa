@@ -9,8 +9,10 @@ import { Text } from '../../components/ui/text';
 import { Input } from '../../components/ui/input';
 import { categoriasInsumosService, CategoriaInsumoItem } from '../../services/categoriasInsumos';
 import { usePermissions } from '../../hooks/usePermissions';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 
 export default function CategoriasInsumosScreen({ navigation }: any) {
+  const { showAlert } = useCustomAlert();
   const [categorias, setCategorias] = useState<CategoriaInsumoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -49,31 +51,27 @@ export default function CategoriasInsumosScreen({ navigation }: any) {
   };
 
   const handleBatchDelete = () => {
-    Alert.alert(
-      "Eliminar categorías",
-      `¿Estás seguro de eliminar ${selectedItems.length} categoría(s)?`,
-      [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Eliminar", 
-          style: "destructive",
-          onPress: async () => {
-            setIsDeletingBatch(true);
-            try {
-              await Promise.all(selectedItems.map(id => categoriasInsumosService.remove(id)));
-              setSelectedItems([]);
-              fetchCategorias();
-              Toast.show({ type: 'success', text1: 'Éxito', text2: 'Categorías eliminadas.' });
-            } catch (error) {
-              console.error("Error deleting categories:", error);
-              Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudieron eliminar todas las categorías.' });
-            } finally {
-              setIsDeletingBatch(false);
-            }
-          }
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar categorías',
+      message: `¿Estás seguro de eliminar ${selectedItems.length} categoría(s)?`,
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        setIsDeletingBatch(true);
+        try {
+          await Promise.all(selectedItems.map(id => categoriasInsumosService.remove(id)));
+          setSelectedItems([]);
+          fetchCategorias();
+          showAlert({ type: 'success', title: 'Éxito', message: 'Categorías eliminadas.' });
+        } catch (error) {
+          console.error("Error deleting categories:", error);
+          showAlert({ type: 'error', title: 'Error', message: 'No se pudieron eliminar todas las categorías.' });
+        } finally {
+          setIsDeletingBatch(false);
         }
-      ]
-    );
+      },
+      onCancel: () => {}
+    });
   };
 
   const filteredData = useMemo(() => {
