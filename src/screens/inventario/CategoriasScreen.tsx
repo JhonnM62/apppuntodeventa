@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, Modal, TextInput, ActivityIndicator, RefreshControl, FlatList } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, Modal, TextInput, ActivityIndicator, RefreshControl, FlatList, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Text } from '../../components/ui/text';
@@ -63,34 +63,38 @@ const CategoriasScreen = () => {
 
   const handleBatchDelete = () => {
     // Only allow deletion if none of the selected categories have products
-    const categoriesToDelete = categorias.filter(c => selectedItems.includes(c.IDcategoria));
+    const categoriesToDelete = categorias.filter(c => selectedItems.map(String).includes(String(c.IDcategoria)));
     const invalidCategories = categoriesToDelete.filter(c => c.productos && c.productos.length > 0);
     
     if (invalidCategories.length > 0) {
-      showAlert({ type: 'error', title: 'Error', message: `No se pueden eliminar ${invalidCategories.length} categorías porque tienen productos asociados.` });
+      Alert.alert('Error', `No se pueden eliminar ${invalidCategories.length} categorías porque tienen productos asociados.`);
       return;
     }
 
-    showAlert({
-      type: 'confirm',
-      title: 'Eliminar categorías',
-      message: `¿Estás seguro de eliminar ${selectedItems.length} categoría(s)?`,
-      confirmText: 'Eliminar',
-      onConfirm: async () => {
-        setIsDeletingBatch(true);
-        try {
-          await Promise.all(selectedItems.map(id => categoriasService.delete(id)));
-          setSelectedItems([]);
-          loadCategorias();
-          showAlert({ type: 'success', title: 'Éxito', message: 'Categorías eliminadas.' });
-        } catch (error: any) {
-          showAlert({ type: 'error', title: 'Error', message: 'No se pudieron eliminar todas las categorías.' });
-        } finally {
-          setIsDeletingBatch(false);
+    Alert.alert(
+      "Eliminar categorías",
+      `¿Estás seguro de eliminar ${selectedItems.length} categoría(s)?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Eliminar", 
+          style: "destructive",
+          onPress: async () => {
+            setIsDeletingBatch(true);
+            try {
+              await Promise.all(selectedItems.map(id => categoriasService.delete(id)));
+              setSelectedItems([]);
+              loadCategorias();
+              showAlert({ type: 'success', title: 'Éxito', message: 'Categorías eliminadas.' });
+            } catch (error: any) {
+              showAlert({ type: 'error', title: 'Error', message: 'No se pudieron eliminar todas las categorías.' });
+            } finally {
+              setIsDeletingBatch(false);
+            }
+          }
         }
-      },
-      onCancel: () => {},
-    });
+      ]
+    );
   };
 
   const handleSave = async () => {

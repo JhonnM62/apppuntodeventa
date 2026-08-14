@@ -587,26 +587,31 @@ export default function AdminNominaScreen({ navigation }: any) {
   };
 
   const handleBatchDeleteHistoryTurnos = () => {
-    showAlert({
-      type: 'confirm',
-      title: 'Eliminar Turnos Seleccionados',
-      message: `¿Estás seguro de que quieres eliminar permanentemente ${selectedHistoryTurnos.length} turno(s)?`,
-      confirmText: 'Eliminar',
-      onConfirm: async () => {
-        try {
-          setIsDeletingBatchHistory(true);
-          await Promise.all(selectedHistoryTurnos.map(id => deleteTurno(id)));
-          showAlert({ type: 'success', title: 'Éxito', message: 'Turnos eliminados' });
-          setSelectedHistoryTurnos([]);
-          if (historyEmpleado) openHistory(historyEmpleado);
-          loadData();
-        } catch (error) {
-          showAlert({ type: 'error', title: 'Error', message: 'No se pudieron eliminar todos los turnos' });
-        } finally {
-          setIsDeletingBatchHistory(false);
+    Alert.alert(
+      'Eliminar Turnos Seleccionados',
+      `¿Estás seguro de que quieres eliminar permanentemente ${selectedHistoryTurnos.length} turno(s)?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Eliminar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsDeletingBatchHistory(true);
+              await Promise.all(selectedHistoryTurnos.map(id => deleteTurno(id)));
+              showAlert({ type: 'success', title: 'Éxito', message: 'Turnos eliminados' });
+              setSelectedHistoryTurnos([]);
+              if (historyEmpleado) openHistory(historyEmpleado);
+              loadData();
+            } catch (error) {
+              showAlert({ type: 'error', title: 'Error', message: 'No se pudieron eliminar todos los turnos' });
+            } finally {
+              setIsDeletingBatchHistory(false);
+            }
+          }
         }
-      }
-    });
+      ]
+    );
   };
 
   const handleEditTurno = (turno: any) => {
