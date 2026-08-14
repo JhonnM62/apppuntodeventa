@@ -21,6 +21,8 @@ const CategoriasScreen = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingCategoria, setEditingCategoria] = useState<CategoriaItem | null>(null);
   const [saving, setSaving] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [isDeletingBatch, setIsDeletingBatch] = useState(false);
 
   const [formData, setFormData] = useState<CreateCategoriaDto>({
     nombre: '',
@@ -52,6 +54,43 @@ const CategoriasScreen = () => {
   const onRefresh = () => {
     setRefreshing(true);
     loadCategorias();
+    setSelectedItems([]);
+  };
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleBatchDelete = () => {
+    // Only allow deletion if none of the selected categories have products
+    const categoriesToDelete = categorias.filter(c => selectedItems.includes(c.IDcategoria));
+    const invalidCategories = categoriesToDelete.filter(c => c.productos && c.productos.length > 0);
+    
+    if (invalidCategories.length > 0) {
+      showAlert({ type: 'error', title: 'Error', message: `No se pueden eliminar ${invalidCategories.length} categorías porque tienen productos asociados.` });
+      return;
+    }
+
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar categorías',
+      message: `¿Estás seguro de eliminar ${selectedItems.length} categoría(s)?`,
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        setIsDeletingBatch(true);
+        try {
+          await Promise.all(selectedItems.map(id => categoriasService.delete(id)));
+          setSelectedItems([]);
+          loadCategorias();
+          showAlert({ type: 'success', title: 'Éxito', message: 'Categorías eliminadas.' });
+        } catch (error: any) {
+          showAlert({ type: 'error', title: 'Error', message: 'No se pudieron eliminar todas las categorías.' });
+        } finally {
+          setIsDeletingBatch(false);
+        }
+      },
+      onCancel: () => {},
+    });
   };
 
   const handleSave = async () => {
@@ -117,10 +156,28 @@ const CategoriasScreen = () => {
 
   const renderCategoria = ({ item }: { item: CategoriaItem }) => {
     const productoCount = item.productos?.length || 0;
+    const isSelected = selectedItems.includes(item.IDcategoria);
 
     return (
-      <View style={styles.categoriaItem}>
+      <TouchableOpacity 
+        activeOpacity={0.7}
+        onPress={() => {
+          if (selectedItems.length > 0) {
+            handleToggleSelect(item.IDcategoria);
+          } else {
+            // Future navigation if needed, or open edit modal
+            if (canEdit) openEditModal(item);
+          }
+        }}
+        onLongPress={() => handleToggleSelect(item.IDcategoria)}
+        style={[styles.categoriaItem, isSelected && { borderColor: '#3b82f6', borderWidth: 2 }]}
+      >
         <View style={styles.categoriaRow}>
+          {selectedItems.length > 0 && (
+            <TouchableOpacity onPress={() => handleToggleSelect(item.IDcategoria)} style={{ marginRight: 12 }}>
+              <Ionicons name={isSelected ? "checkbox" : "square-outline"} size={24} color={isSelected ? "#3b82f6" : "#d1d5db"} />
+            </TouchableOpacity>
+          )}
           <View style={styles.categoryIcon}>
             <MaterialCommunityIcons name="folder" size={22} color="#f59e0b" />
           </View>
@@ -153,7 +210,7 @@ const CategoriasScreen = () => {
             </View>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -170,12 +227,35 @@ const CategoriasScreen = () => {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <RNText style={styles.headerTitle}>Categorías</RNText>
-        {canCreate && (
-          <TouchableOpacity style={styles.addBtn} onPress={openCreateModal}>
-            <Ionicons name="add" size={24} color="#fff" />
-          </TouchableOpacity>
-        )}
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {selectedItems.length > 0 ? (
+            <>
+              <TouchableOpacity onPress={() => setSelectedItems([])} style={{ marginRight: 12 }}>
+                <Ionicons name="close" size={24} color="#111827" />
+              </TouchableOpacity>
+              <RNText style={styles.headerTitle}>{selectedItems.length} seleccionadas</RNText>
+            </>
+          ) : (
+            <RNText style={styles.headerTitle}>Categorías</RNText>
+          )}
+        </View>
+        
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {selectedItems.length > 0 && canDelete && (
+            <TouchableOpacity 
+              style={[styles.addBtn, { backgroundColor: '#ef4444', marginRight: 8 }]} 
+              onPress={handleBatchDelete}
+              disabled={isDeletingBatch}
+            >
+              {isDeletingBatch ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="trash" size={20} color="#fff" />}
+            </TouchableOpacity>
+          )}
+          {canCreate && selectedItems.length === 0 && (
+            <TouchableOpacity style={styles.addBtn} onPress={openCreateModal}>
+              <Ionicons name="add" size={24} color="#fff" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <FlashList

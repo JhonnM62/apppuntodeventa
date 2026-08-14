@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity, RefreshControl, Image, Platform, KeyboardAvoidingView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, RefreshControl, Image, Platform, KeyboardAvoidingView, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { FlashList as OriginalFlashList } from '@shopify/flash-list';
@@ -16,6 +16,8 @@ export default function CategoriasInsumosScreen({ navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const { canCreate, canEdit, canDelete } = usePermissions('inventario'); // Assuming inventory permissions
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [isDeletingBatch, setIsDeletingBatch] = useState(false);
 
   const fetchCategorias = useCallback(async () => {
     try {
@@ -39,7 +41,40 @@ export default function CategoriasInsumosScreen({ navigation }: any) {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchCategorias();
+    setSelectedItems([]);
   }, [fetchCategorias]);
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleBatchDelete = () => {
+    Alert.alert(
+      "Eliminar categorías",
+      `¿Estás seguro de eliminar ${selectedItems.length} categoría(s)?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Eliminar", 
+          style: "destructive",
+          onPress: async () => {
+            setIsDeletingBatch(true);
+            try {
+              await Promise.all(selectedItems.map(id => categoriasInsumosService.remove(id)));
+              setSelectedItems([]);
+              fetchCategorias();
+              Toast.show({ type: 'success', text1: 'Éxito', text2: 'Categorías eliminadas.' });
+            } catch (error) {
+              console.error("Error deleting categories:", error);
+              Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudieron eliminar todas las categorías.' });
+            } finally {
+              setIsDeletingBatch(false);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   const filteredData = useMemo(() => {
     if (!search) return categorias;
@@ -48,13 +83,26 @@ export default function CategoriasInsumosScreen({ navigation }: any) {
   }, [categorias, search]);
 
   const renderItem = useCallback(({ item }: { item: CategoriaInsumoItem }) => {
+    const isSelected = selectedItems.includes(item.IDcategoriainsumos);
     return (
       <TouchableOpacity 
-        style={styles.card}
+        style={[styles.card, isSelected && { borderColor: '#3b82f6', borderWidth: 2 }]}
         activeOpacity={0.7}
-        onPress={() => canEdit ? navigation.navigate('CategoriasInsumosForm', { id: item.IDcategoriainsumos }) : null}
+        onPress={() => {
+          if (selectedItems.length > 0) {
+            handleToggleSelect(item.IDcategoriainsumos);
+          } else if (canEdit) {
+            navigation.navigate('CategoriasInsumosForm', { id: item.IDcategoriainsumos });
+          }
+        }}
+        onLongPress={() => handleToggleSelect(item.IDcategoriainsumos)}
       >
         <View style={styles.cardContent}>
+          {selectedItems.length > 0 && (
+            <TouchableOpacity onPress={() => handleToggleSelect(item.IDcategoriainsumos)} style={{ marginRight: 12 }}>
+              <Ionicons name={isSelected ? "checkbox" : "square-outline"} size={24} color={isSelected ? "#3b82f6" : "#d1d5db"} />
+            </TouchableOpacity>
+          )}
           {item.imagen ? (
             <Image source={{ uri: item.imagen }} style={styles.image} />
           ) : (
@@ -71,17 +119,37 @@ export default function CategoriasInsumosScreen({ navigation }: any) {
         </View>
       </TouchableOpacity>
     );
-  }, [canEdit, navigation]);
+  }, [canEdit, navigation, selectedItems]);
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} accessibilityLabel="Volver">
-          <Ionicons name="arrow-back" size={24} color="#111827" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Categorías de Insumos</Text>
-        <View style={{ width: 44 }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => {
+            if (selectedItems.length > 0) {
+              setSelectedItems([]);
+            } else {
+              navigation.goBack();
+            }
+          }} accessibilityLabel="Volver">
+            <Ionicons name={selectedItems.length > 0 ? "close" : "arrow-back"} size={24} color="#111827" />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, { marginLeft: 12 }]}>
+            {selectedItems.length > 0 ? `${selectedItems.length} seleccionadas` : 'Categorías de Insumos'}
+          </Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {selectedItems.length > 0 && canDelete && (
+            <TouchableOpacity 
+              style={[styles.backBtn, { backgroundColor: '#ef4444' }]} 
+              onPress={handleBatchDelete}
+              disabled={isDeletingBatch}
+            >
+              {isDeletingBatch ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="trash" size={20} color="#fff" />}
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Search Bar */}

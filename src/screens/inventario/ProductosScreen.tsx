@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, TextInput, RefreshControl, Image, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, TextInput, RefreshControl, Image, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,7 +8,7 @@ const FlashList = OriginalFlashList as any;
 import { Text } from '../../components/ui/text';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
-import { getProducts } from '../../services/products';
+import { getProducts, deleteProduct } from '../../services/products';
 import { formatCurrency } from '../../utils/formatters';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
@@ -28,6 +28,8 @@ const ProductosScreen = ({ navigation }: Props) => {
   const [refreshing, setRefreshing] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [selectedCategoria, setSelectedCategoria] = useState<string | null>(null);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [isDeletingBatch, setIsDeletingBatch] = useState(false);
 
   const handleScroll = useScrollDirection();
 
@@ -54,6 +56,38 @@ const ProductosScreen = ({ navigation }: Props) => {
   const onRefresh = () => {
     setRefreshing(true);
     fetchProductos();
+    setSelectedItems([]);
+  };
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
+  };
+
+  const handleBatchDelete = () => {
+    Alert.alert(
+      "Eliminar productos",
+      `¿Estás seguro de eliminar ${selectedItems.length} producto(s) seleccionado(s)?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Eliminar", 
+          style: "destructive",
+          onPress: async () => {
+            setIsDeletingBatch(true);
+            try {
+              await Promise.all(selectedItems.map(id => deleteProduct(id)));
+              setSelectedItems([]);
+              fetchProductos();
+            } catch (error) {
+              console.error("Error deleting products in batch:", error);
+              Alert.alert("Error", "No se pudieron eliminar todos los productos seleccionados.");
+            } finally {
+              setIsDeletingBatch(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   const categorias = useMemo(() => {
@@ -83,13 +117,27 @@ const ProductosScreen = ({ navigation }: Props) => {
     return result;
   }, [productos, searchText, selectedCategoria]);
 
-  const renderItem = ({ item }: { item: any }) => (
+  const renderItem = ({ item }: { item: any }) => {
+    const isSelected = selectedItems.includes(item.IDproductos);
+    return (
     <TouchableOpacity 
       activeOpacity={0.7}
-      onPress={() => navigation.navigate('ProductoDetail', { id: item.IDproductos })}
+      onPress={() => {
+        if (selectedItems.length > 0) {
+          handleToggleSelect(item.IDproductos);
+        } else {
+          navigation.navigate('ProductoDetail', { id: item.IDproductos });
+        }
+      }}
+      onLongPress={() => handleToggleSelect(item.IDproductos)}
     >
-      <Card style={styles.card}>
+      <Card style={[styles.card, isSelected && { borderColor: '#3b82f6', borderWidth: 2 }]}>
         <View style={styles.cardHeader}>
+          {selectedItems.length > 0 && (
+            <TouchableOpacity onPress={() => handleToggleSelect(item.IDproductos)} style={{ marginRight: 12 }}>
+              <Ionicons name={isSelected ? "checkbox" : "square-outline"} size={24} color={isSelected ? "#3b82f6" : "#d1d5db"} />
+            </TouchableOpacity>
+          )}
           {item.imagenUrl ? (
             <Image source={{ uri: item.imagenUrl }} style={styles.productImage} />
           ) : (
@@ -119,23 +167,41 @@ const ProductosScreen = ({ navigation }: Props) => {
       </Card>
     </TouchableOpacity>
   );
+  };
 
   return (
     <View style={styles.container}>
       <StatusBar style="dark" backgroundColor="transparent" translucent />
       <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#111827" />
-        </TouchableOpacity>
-        <RNText style={styles.title}>Productos</RNText>
-        {canCreate ? (
-          <TouchableOpacity onPress={() => navigation.navigate('ProductoDetail', { id: 'new' })} style={styles.addButton}>
-            <Ionicons name="add" size={24} color="#fff" />
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TouchableOpacity onPress={() => {
+            if (selectedItems.length > 0) {
+              setSelectedItems([]);
+            } else {
+              navigation.goBack();
+            }
+          }} style={styles.backButton}>
+            <Ionicons name={selectedItems.length > 0 ? "close" : "arrow-back"} size={24} color="#111827" />
           </TouchableOpacity>
-        ) : (
-          <View style={{ width: 40 }} />
-        )}
+          <RNText style={styles.title}>
+            {selectedItems.length > 0 ? `${selectedItems.length} seleccionados` : 'Productos'}
+          </RNText>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          {selectedItems.length > 0 && canCreate ? (
+            <TouchableOpacity onPress={handleBatchDelete} style={[styles.addButton, { backgroundColor: '#ef4444', marginRight: 8 }]} disabled={isDeletingBatch}>
+              {isDeletingBatch ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="trash" size={20} color="#fff" />}
+            </TouchableOpacity>
+          ) : null}
+          {canCreate && selectedItems.length === 0 ? (
+            <TouchableOpacity onPress={() => navigation.navigate('ProductoDetail', { id: 'new' })} style={styles.addButton}>
+              <Ionicons name="add" size={24} color="#fff" />
+            </TouchableOpacity>
+          ) : (
+            <View style={{ width: 0 }} />
+          )}
+        </View>
       </View>
 
       <View style={styles.searchContainer}>

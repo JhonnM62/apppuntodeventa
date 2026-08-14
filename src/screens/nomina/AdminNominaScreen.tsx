@@ -154,6 +154,7 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [showBatchEditModal, setShowBatchEditModal] = useState(false);
   const [batchEditForm, setBatchEditForm] = useState<any>({});
   const [batchSaving, setBatchSaving] = useState(false);
+  const [isDeletingBatchHistory, setIsDeletingBatchHistory] = useState(false);
 
   // Edit Turno State
   const [editingTurno, setEditingTurno] = useState<any>(null);
@@ -580,6 +581,29 @@ export default function AdminNominaScreen({ navigation }: any) {
           loadData(); 
         } catch (error) {
           showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar el turno' });
+        }
+      }
+    });
+  };
+
+  const handleBatchDeleteHistoryTurnos = () => {
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar Turnos Seleccionados',
+      message: `¿Estás seguro de que quieres eliminar permanentemente ${selectedHistoryTurnos.length} turno(s)?`,
+      confirmText: 'Eliminar',
+      onConfirm: async () => {
+        try {
+          setIsDeletingBatchHistory(true);
+          await Promise.all(selectedHistoryTurnos.map(id => deleteTurno(id)));
+          showAlert({ type: 'success', title: 'Éxito', message: 'Turnos eliminados' });
+          setSelectedHistoryTurnos([]);
+          if (historyEmpleado) openHistory(historyEmpleado);
+          loadData();
+        } catch (error) {
+          showAlert({ type: 'error', title: 'Error', message: 'No se pudieron eliminar todos los turnos' });
+        } finally {
+          setIsDeletingBatchHistory(false);
         }
       }
     });
@@ -1285,7 +1309,7 @@ export default function AdminNominaScreen({ navigation }: any) {
             ) : (
               <>
                 {historyTurnos.length > 0 && (
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12, paddingHorizontal: 4 }}>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12, paddingHorizontal: 4 }}>
                     <TouchableOpacity 
                       onPress={() => {
                         if (selectedHistoryTurnos.length === historyTurnos.length) {
@@ -1306,18 +1330,35 @@ export default function AdminNominaScreen({ navigation }: any) {
                     </TouchableOpacity>
 
                     {selectedHistoryTurnos.length > 0 && (
-                      <TouchableOpacity 
-                        onPress={() => {
-                          setBatchEditForm({});
-                          setShowBatchEditModal(true);
-                        }}
-                        style={{ backgroundColor: '#3b82f6', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, flexDirection: 'row', alignItems: 'center' }}
-                      >
-                        <Ionicons name="create-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
-                        <Text style={{ color: '#ffffff', fontWeight: 'bold' }}>
-                          Editar Seleccionados ({selectedHistoryTurnos.length})
-                        </Text>
-                      </TouchableOpacity>
+                      <>
+                        <TouchableOpacity 
+                          onPress={() => {
+                            setBatchEditForm({});
+                            setShowBatchEditModal(true);
+                          }}
+                          style={{ backgroundColor: '#3b82f6', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, flexDirection: 'row', alignItems: 'center' }}
+                        >
+                          <Ionicons name="create-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                          <Text style={{ color: '#ffffff', fontWeight: 'bold' }}>
+                            Editar Seleccionados ({selectedHistoryTurnos.length})
+                          </Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity 
+                          onPress={handleBatchDeleteHistoryTurnos}
+                          disabled={isDeletingBatchHistory}
+                          style={{ backgroundColor: '#ef4444', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, flexDirection: 'row', alignItems: 'center' }}
+                        >
+                          {isDeletingBatchHistory ? (
+                            <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 6 }} />
+                          ) : (
+                            <Ionicons name="trash-outline" size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                          )}
+                          <Text style={{ color: '#ffffff', fontWeight: 'bold' }}>
+                            Eliminar
+                          </Text>
+                        </TouchableOpacity>
+                      </>
                     )}
                   </View>
                 )}
@@ -1819,7 +1860,7 @@ const styles = StyleSheet.create({
   actionBtnText: { color: '#3b82f6', fontWeight: '600', marginRight: 4, fontSize: 13 },
   
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { width: '90%', backgroundColor: '#fff', borderRadius: 16, padding: 24, elevation: 5 },
+  modalContent: { width: '90%', maxHeight: '90%', backgroundColor: '#fff', borderRadius: 16, padding: 24, elevation: 5 },
   modalTitle: { fontSize: 20, fontWeight: '700', color: '#111827' },
   modalSubtitle: { fontSize: 14, color: '#6b7280', marginBottom: 16 },
   

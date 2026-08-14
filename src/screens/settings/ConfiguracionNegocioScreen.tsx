@@ -63,6 +63,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   // Estados para Factus
   const [factusConfig, setFactusConfig] = useState({
     emitirFacturaAutomatica: false,
+    preguntarFacturaElectronica: false,
     factusEmail: '',
     factusPassword: '',
     factusClientId: '',
@@ -124,6 +125,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         
         setFactusConfig({
           emitirFacturaAutomatica: dataNegocio.emitirFacturaAutomatica ?? false,
+          preguntarFacturaElectronica: dataNegocio.preguntarFacturaElectronica ?? false,
           factusEmail: dataNegocio.factusEmail || '',
           factusPassword: dataNegocio.factusPassword || '',
           factusClientId: dataNegocio.factusClientId || '',
@@ -254,14 +256,18 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(insets.top, 20) }]}>
+      <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#374151" />
+          <Ionicons name="arrow-back" size={24} color="#111827" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Configuración del Sistema</Text>
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={{ padding: 20 }}>
+      <ScrollView 
+        style={styles.content} 
+        contentContainerStyle={{ padding: 16, paddingBottom: 160 }}
+        showsVerticalScrollIndicator={false}
+      >
         
         {/* NEGOCIO */}
         <View style={styles.card}>
@@ -462,6 +468,18 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             <Text style={[styles.infoTextIA, { color: '#1e3a8a' }]}>
               Si activas esta opción, se emitirá una factura electrónica automáticamente a nombre de "Consumidor Final" cuando se cobre un pedido (sino tiene cliente asociado).
             </Text>
+          </View>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 10 }}>
+              <Text style={styles.label}>Preguntar por Factura Electrónica al Cobrar</Text>
+            </View>
+            <Switch
+              value={factusConfig.preguntarFacturaElectronica}
+              onValueChange={(val) => setFactusConfig({...factusConfig, preguntarFacturaElectronica: val})}
+              trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
+              thumbColor={factusConfig.preguntarFacturaElectronica ? '#2563eb' : '#f3f4f6'}
+            />
           </View>
           
           <Text style={styles.label}>Factus Email</Text>

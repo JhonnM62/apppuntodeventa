@@ -422,7 +422,7 @@ const handleDelete = () => {
                     <RNText style={styles.recetaItemName}>{nombre}</RNText>
                     <View style={styles.recetaItemSub}>
                       <RNText style={styles.recetaItemStock}>Stock: {stockDisponible} {unidad}</RNText>
-                      <RNText style={styles.recetaItemPrice}>{formatCurrency(precioUnidad * ri.cantidad)}</RNText>
+                      <RNText style={styles.recetaItemPrice}>{formatCurrency(Math.round(precioUnidad * ri.cantidad))}</RNText>
                     </View>
                   </View>
                   <View style={styles.recetaItemControls}>
@@ -582,9 +582,9 @@ const styles = StyleSheet.create({
   costoReceta: { fontSize: 14, fontWeight: 'bold', color: '#059669' },
   helperText: { fontSize: 13, color: '#6b7280', marginBottom: 16, lineHeight: 18 },
   recetaItem: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: '#f9fafb', borderRadius: 12, marginBottom: 8, borderWidth: 1, borderColor: '#f3f4f6' },
-  recetaItemInfo: { flex: 1 },
+  recetaItemInfo: { flex: 1, flexShrink: 1, marginRight: 8 },
   recetaItemName: { fontSize: 14, fontWeight: '600', color: '#1f2937', marginBottom: 4 },
-  recetaItemSub: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  recetaItemSub: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 },
   recetaItemStock: { fontSize: 12, color: '#6b7280' },
   recetaItemPrice: { fontSize: 12, fontWeight: '600', color: '#059669' },
   recetaItemControls: { flexDirection: 'row', alignItems: 'center', gap: 8 },
