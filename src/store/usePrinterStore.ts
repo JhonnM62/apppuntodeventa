@@ -77,8 +77,8 @@ const usePrinterStore = create<PrinterState>()(
       },
       printTicket: async (ticketData: any) => {
         const state = get();
-        if (Platform.OS !== 'web' && (!state.isConnected || !state.currentPrinter)) {
-          Toast.show({ type: 'warning', text1: 'Impresión Fallida', text2: 'No hay impresora conectada', position: 'top' });
+        if (Platform.OS !== 'web' && !state.currentPrinter) {
+          Toast.show({ type: 'warning', text1: 'Impresión Fallida', text2: 'No hay impresora configurada', position: 'top' });
           return;
         }
 
@@ -90,7 +90,12 @@ const usePrinterStore = create<PrinterState>()(
         let errorCount = 0;
         if (printComanda) {
           const successComanda = await executePrint(ticketData, state.paperSize, state.currentPrinter?.inner_mac_address || '', 'comanda');
-          if (!successComanda) errorCount++;
+          if (!successComanda) {
+            errorCount++;
+            set({ isConnected: false });
+          } else {
+            set({ isConnected: true });
+          }
         }
 
         if (printFactura) {
@@ -98,26 +103,33 @@ const usePrinterStore = create<PrinterState>()(
             await new Promise(resolve => setTimeout(resolve, 1500));
           }
           const successFactura = await executePrint(ticketData, state.paperSize, state.currentPrinter?.inner_mac_address || '', 'factura');
-          if (!successFactura) errorCount++;
+          if (!successFactura) {
+            errorCount++;
+            set({ isConnected: false });
+          } else {
+            set({ isConnected: true });
+          }
         }
 
         if (errorCount > 0) {
-          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo imprimir correctamente', position: 'top' });
+          Toast.show({ type: 'error', text1: 'Error', text2: 'Fallo de conexión o impresión', position: 'top' });
         }
       },
       printManual: async (ticketData: any, type: 'comanda' | 'factura') => {
         const state = get();
-        if (Platform.OS !== 'web' && (!state.isConnected || !state.currentPrinter)) {
-          Toast.show({ type: 'warning', text1: 'Impresión Fallida', text2: 'No hay impresora conectada', position: 'top' });
+        if (Platform.OS !== 'web' && !state.currentPrinter) {
+          Toast.show({ type: 'warning', text1: 'Impresión Fallida', text2: 'No hay impresora configurada', position: 'top' });
           return false;
         }
 
         try {
           const success = await executePrint(ticketData, state.paperSize, state.currentPrinter?.inner_mac_address || '', type);
           if (!success) {
-            Toast.show({ type: 'error', text1: 'Error', text2: `No se pudo imprimir la ${type}`, position: 'top' });
+            set({ isConnected: false });
+            Toast.show({ type: 'error', text1: 'Error', text2: `Fallo de conexión o impresión de ${type}`, position: 'top' });
             return false;
           }
+          set({ isConnected: true });
           return true;
         } catch (error) {
           Toast.show({ type: 'error', text1: 'Error', text2: `Error al imprimir la ${type}`, position: 'top' });

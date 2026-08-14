@@ -246,6 +246,13 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
       const payload = `${title}${subtitle}${separator}\n${content}${separator}\n${footer}\n\n\n`;
 
       if (BLEPrinter) {
+        try {
+          await BLEPrinter.connectPrinter(currentPrinter.inner_mac_address);
+          setConnected(true);
+        } catch (e) {
+          setConnected(false);
+          throw new Error('La impresora está apagada o fuera de rango.');
+        }
         await BLEPrinter.printText(payload);
       } else {
         showAlert({ type: 'info', title: 'Simulación de Impresión', message: `Imprimiendo en formato ${paperSize}mm...\n\n${payload}` });
@@ -357,7 +364,7 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
                     key={`${device.inner_mac_address}-${index}`}
                     style={[styles.deviceItem, isThisConnected && styles.deviceItemActive]}
                     onPress={() => connectPrinter(device)}
-                    disabled={isThisConnected || isConnecting}
+                    disabled={isConnecting}
                   >
                     <View style={styles.deviceIcon}>
                       <Ionicons name="print" size={24} color={isThisConnected ? '#3b82f6' : '#6b7280'} />
