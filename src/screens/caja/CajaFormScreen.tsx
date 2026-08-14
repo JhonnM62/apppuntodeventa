@@ -270,6 +270,9 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [subQtyModalVisible, setSubQtyModalVisible] = useState(false);
   const [addQtyIndex, setAddQtyIndex] = useState<number | null>(null);
   const [addQtyMode, setAddQtyMode] = useState<'libre' | 'paquete'>('libre');
+  const [addQtyPackagesToOpen, setAddQtyPackagesToOpen] = useState('1');
+  const [addQtyFreeAction, setAddQtyFreeAction] = useState<'trasladar' | 'nuevo' | 'merma'>('trasladar');
+  const [addQtyTheoretical, setAddQtyTheoretical] = useState('');
   const [addQtyAmount, setAddQtyAmount] = useState('');
   const [syncGlobalStock, setSyncGlobalStock] = useState(false);
   const [subQtyAmount, setSubQtyAmount] = useState('');
@@ -1743,16 +1746,22 @@ setSaving(false);
                                 placeholder="0"
                               />
                               <View className="flex-row mt-1 justify-center space-x-1">
-                                {!isReadOnly && isAdmin && (
+                                {!isReadOnly && isAdmin && modoOperacion === 'RESTAURANTE' && (
                                   <TouchableOpacity 
                                     className="bg-green-500 rounded w-6 h-6 items-center justify-center mr-1"
                                     onPress={() => {
                                       const insumoId = getValues(`insumos.${index}.nombreInsumo`);
                                       const insumoData = allInsumos.find((i: any) => i.IDalimentos === insumoId);
                                       const hasPaquetes = insumoData && Number(insumoData.paquetesEnBodega) > 0;
+                                      const hasPaqueteConfig = insumoData && Number(insumoData.cantidadPorPaquete) > 0;
+                                      
                                       setAddQtyIndex(index);
                                       setAddQtyAmount('');
+                                      setAddQtyPackagesToOpen('1');
+                                      setAddQtyFreeAction('trasladar');
+                                      setAddQtyTheoretical('');
                                       setAddQtyMode(hasPaquetes ? 'paquete' : 'libre');
+                                      setSyncGlobalStock(!!hasPaqueteConfig);
                                       setAddQtyModalVisible(true);
                                     }}
                                   >
@@ -2725,13 +2734,65 @@ setSaving(false);
                     </Text>
                     
                     {addQtyMode === 'paquete' && (
-                      <View className="flex-row justify-between mb-4">
-                        <Text className="text-xs text-blue-600 font-semibold">
-                          Teórico por paquete: {insumoData?.cantidadPorPaquete || 'N/A'}
-                        </Text>
-                        <Text className="text-xs text-blue-600 font-semibold">
-                          Paquetes en bodega: {insumoData?.paquetesEnBodega || 0}
-                        </Text>
+                      <View className="mb-4">
+                        <View className="flex-row justify-between mb-4">
+                          <Text className="text-xs text-blue-600 font-semibold">
+                            Teórico por paquete: {insumoData?.cantidadPorPaquete || 'N/A'}
+                          </Text>
+                          <Text className="text-xs text-blue-600 font-semibold">
+                            Paquetes en bodega: {insumoData?.paquetesEnBodega || 0}
+                          </Text>
+                        </View>
+                        <Text className="text-gray-700 font-bold mb-2">Paquetes a abrir</Text>
+                        <TextInput
+                          className="bg-gray-50 border border-gray-300 rounded-lg p-3 text-lg text-center font-bold text-gray-900 mb-4"
+                          keyboardType="numeric"
+                          value={addQtyPackagesToOpen}
+                          onChangeText={setAddQtyPackagesToOpen}
+                          placeholder="Ej. 1"
+                        />
+                        <Text className="text-gray-700 font-bold mb-2">Cantidad total real extraída</Text>
+                      </View>
+                    )}
+
+                    {addQtyMode === 'libre' && (
+                      <View className="mb-4">
+                        <Text className="text-gray-700 font-bold mb-2">Acción a realizar</Text>
+                        <View className="bg-gray-100 rounded-lg p-1 mb-4">
+                          <TouchableOpacity
+                            className={`p-2 rounded-md items-center mb-1 ${addQtyFreeAction === 'trasladar' ? 'bg-white shadow-sm border border-gray-200' : ''}`}
+                            onPress={() => setAddQtyFreeAction('trasladar')}
+                          >
+                            <Text className={`font-semibold ${addQtyFreeAction === 'trasladar' ? 'text-blue-600' : 'text-gray-500'}`}>Trasladar desde Bodega (Solo a caja)</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            className={`p-2 rounded-md items-center mb-1 ${addQtyFreeAction === 'nuevo' ? 'bg-white shadow-sm border border-gray-200' : ''}`}
+                            onPress={() => setAddQtyFreeAction('nuevo')}
+                          >
+                            <Text className={`font-semibold ${addQtyFreeAction === 'nuevo' ? 'text-blue-600' : 'text-gray-500'}`}>Ingreso Nuevo (Suma a caja y bodega)</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            className={`p-2 rounded-md items-center ${addQtyFreeAction === 'merma' ? 'bg-white shadow-sm border border-gray-200' : ''}`}
+                            onPress={() => setAddQtyFreeAction('merma')}
+                          >
+                            <Text className={`font-semibold ${addQtyFreeAction === 'merma' ? 'text-blue-600' : 'text-gray-500'}`}>Reportar Diferencia/Merma</Text>
+                          </TouchableOpacity>
+                        </View>
+
+                        {addQtyFreeAction === 'merma' && (
+                          <View className="mb-4">
+                            <Text className="text-gray-700 font-bold mb-2">Cantidad que esperabas tener (Teórico)</Text>
+                            <TextInput
+                              className="bg-red-50 border border-red-300 rounded-lg p-3 text-lg text-center font-bold text-gray-900"
+                              keyboardType="numeric"
+                              value={addQtyTheoretical}
+                              onChangeText={setAddQtyTheoretical}
+                              placeholder="Ej. 40"
+                            />
+                            <Text className="text-xs text-red-600 mt-1">El sistema calculará la diferencia y cuadrará la bodega automáticamente.</Text>
+                          </View>
+                        )}
+                        <Text className="text-gray-700 font-bold mb-2">Cantidad real a ingresar a la caja</Text>
                       </View>
                     )}
                     
@@ -2740,24 +2801,9 @@ setSaving(false);
                       keyboardType="numeric"
                       value={addQtyAmount}
                       onChangeText={setAddQtyAmount}
-                      placeholder="Ej. 32"
+                      placeholder={addQtyMode === 'paquete' ? "Ej. 38" : "Ej. 5"}
                       autoFocus
                     />
-
-                    {addQtyMode === 'paquete' && (
-                      <View className="flex-row items-center justify-between bg-white p-3 rounded-lg border border-gray-200 mb-4">
-                        <View className="flex-1 mr-3">
-                          <Text className="text-gray-800 font-bold">Cuadrar con Stock Global</Text>
-                          <Text className="text-gray-500 text-xs">Si se desactiva, solo se sumará a esta caja y no descontará paquetes ni modificará el stock principal del inventario.</Text>
-                        </View>
-                        <Switch
-                          value={syncGlobalStock}
-                          onValueChange={setSyncGlobalStock}
-                          trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
-                          thumbColor={syncGlobalStock ? '#2563eb' : '#f3f4f6'}
-                        />
-                      </View>
-                    )}
                     
                     <View className="flex-row justify-end mt-2 space-x-3 gap-3">
                       <TouchableOpacity 
@@ -2782,13 +2828,14 @@ setSaving(false);
                                   insumoId: insumoId,
                                   cajaId: cajaId,
                                   cantidadReal: amountToAdd,
-                                  syncGlobalStock: syncGlobalStock
+                                  cantidadDePaquetes: Number(addQtyPackagesToOpen) || 1,
+                                  syncGlobalStock: true // Para abrir paquete siempre afectamos stock global si el admin lo configuró
                                 });
                                 
                                 const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
                                 setValue(`insumos.${addQtyIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
                                 setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
-                                showAlert({ title: 'Éxito', message: 'Paquete abierto y stock sumado a la caja.', type: 'success' });
+                                showAlert({ title: 'Éxito', message: 'Paquetes abiertos y stock sumado a la caja.', type: 'success' });
                                 setAddQtyModalVisible(false);
                               } catch (error: any) {
                                 const errorData = error.response?.data;
@@ -2806,7 +2853,9 @@ setSaving(false);
                                 await api.post('/movimientos-insumos/entrada-libre', {
                                   insumoId: insumoId,
                                   cajaId: cajaId,
-                                  cantidadAgregada: amountToAdd
+                                  cantidadAgregada: amountToAdd,
+                                  cantidadTeorica: addQtyFreeAction === 'merma' ? (Number(addQtyTheoretical) || 0) : 0,
+                                  syncGlobalStock: addQtyFreeAction !== 'trasladar'
                                 });
 
                                 const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
