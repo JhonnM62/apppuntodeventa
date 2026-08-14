@@ -1371,6 +1371,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         </View>
       </View>
     );
+  };
   const renderCategoryChip = (cat: string, index: number) => (
     <TouchableOpacity
       key={`${cat}-${index}`}
