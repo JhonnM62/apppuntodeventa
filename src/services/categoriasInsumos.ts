@@ -4,6 +4,9 @@ export interface CategoriaInsumoItem {
   IDcategoriainsumos: string;
   nombre: string;
   imagen?: string;
+  _count?: {
+    insumos: number;
+  };
 }
 
 export const categoriasInsumosService = {

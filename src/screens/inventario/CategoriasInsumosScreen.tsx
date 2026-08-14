@@ -112,6 +112,11 @@ export default function CategoriasInsumosScreen({ navigation }: any) {
           )}
           <View style={styles.textContainer}>
             <Text style={styles.title}>{item.nombre}</Text>
+            <Text style={styles.subtitle}>
+              {item._count?.insumos !== undefined 
+                ? `${item._count.insumos} insumo${item._count.insumos !== 1 ? 's' : ''}`
+                : 'Sin insumos'}
+            </Text>
           </View>
           {canEdit && (
             <Ionicons name="chevron-forward" size={20} color="#9CA3AF" style={styles.chevron} />
@@ -276,14 +281,9 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 16,
   },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  chevron: {
-    marginLeft: 8,
-  },
+  title: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 2 },
+  subtitle: { fontSize: 13, color: '#6b7280' },
+  chevron: { marginLeft: 8 },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
