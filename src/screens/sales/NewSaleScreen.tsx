@@ -1371,8 +1371,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         </View>
       </View>
     );
-  };
-
   const renderCategoryChip = (cat: string, index: number) => (
     <TouchableOpacity
       key={`${cat}-${index}`}
@@ -1387,10 +1385,10 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   return (
     <>
-      <StatusBar style="dark" backgroundColor="#fff" />
-      <SafeAreaView style={styles.container} edges={['top']}>
+      <StatusBar style="light" backgroundColor={primaryColor} />
+      <SafeAreaView style={[styles.container, { backgroundColor: primaryColor }]} edges={['top']}>
         <KeyboardAvoidingView 
-          style={{ flex: 1 }} 
+          style={{ flex: 1, backgroundColor: '#F8FAFC' }} 
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           enabled={Platform.OS === 'ios'}
         >
