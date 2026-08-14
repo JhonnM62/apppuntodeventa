@@ -1184,7 +1184,10 @@ showAlert({
                 {selectedVenta.medioDePago && (
                   <View style={styles.detailRow}>
                     <RNText style={styles.detailLabel}>Medio de Pago:</RNText>
-                    <RNText style={styles.detailValue}>{selectedVenta.medioDePago}</RNText>
+                    <RNText style={styles.detailValue}>
+                      {selectedVenta.medioDePago}
+                      {selectedVenta.banco && selectedVenta.medioDePago !== 'EFECTIVO Y OTROS' ? ` (${selectedVenta.banco})` : ''}
+                    </RNText>
                   </View>
                 )}
                 {selectedVenta.medioDePago === 'EFECTIVO Y OTROS' && (

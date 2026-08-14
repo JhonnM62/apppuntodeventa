@@ -1188,7 +1188,10 @@ export default function HistorialVentasScreen({ navigation }: any) {
 
                   <View className="flex-row justify-between mb-2">
                     <Text className="text-gray-500 font-medium">Método de Pago:</Text>
-                    <Text className="text-gray-800 font-bold">{selectedVenta.medioDePago}</Text>
+                    <Text className="text-gray-800 font-bold">
+                      {selectedVenta.medioDePago}
+                      {selectedVenta.banco && selectedVenta.medioDePago !== 'EFECTIVO Y OTROS' ? ` (${selectedVenta.banco})` : ''}
+                    </Text>
                   </View>
 
                   {selectedVenta.medioDePago === 'EFECTIVO Y OTROS' && (
