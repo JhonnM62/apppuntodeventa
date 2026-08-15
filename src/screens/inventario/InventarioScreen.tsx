@@ -360,10 +360,10 @@ const InventarioScreen = ({ navigation }: any) => {
   useSocketEvent(SocketEvent.REFRESH_INVENTARIO, () => {
     fetchInventarios();
     if (selectedInventario) {
-      fetchOrdenes(selectedInventario.IDinventario);
+      fetchOrdenes(selectedInventario.IDinventario, true);
     }
     if (activeTab === 'registros') {
-      fetchTodasLasOrdenes(1, false);
+      fetchTodasLasOrdenes(1, false, true);
     }
   });
 
@@ -392,12 +392,12 @@ const InventarioScreen = ({ navigation }: any) => {
     }
   }, []);
 
-  const fetchTodasLasOrdenes = useCallback(async (page = 1, shouldAppend = false) => {
+  const fetchTodasLasOrdenes = useCallback(async (page = 1, shouldAppend = false, silent = false) => {
     try {
-      setLoadingMoreOrdenes(true);
+      if (!silent) setLoadingMoreOrdenes(true);
       
       // Mostrar skeleton inmediatamente en nuevas búsquedas para dar feedback instantáneo al usuario
-      if (page === 1 && !shouldAppend) {
+      if (page === 1 && !shouldAppend && !silent) {
         setTodasLasOrdenes([]);
       }
       
