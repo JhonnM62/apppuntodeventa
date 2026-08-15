@@ -272,6 +272,7 @@ export default function AdminNominaScreen({ navigation }: any) {
           fechaHasta: maxDate as string,
           extraTurnosIds: selectedExtraTurnos,
           firmaAdmin: signatureBase64,
+          guardarComoGasto: guardarComoGastoRef.current,
         });
 
         showAlert({ type: 'success', title: 'Éxito', message: res?.mensaje || 'Liquidación generada con éxito' });
@@ -771,6 +772,7 @@ export default function AdminNominaScreen({ navigation }: any) {
   };
 
   const empleadoALiquidar = useRef<any>(null);
+  const guardarComoGastoRef = useRef<boolean>(false);
 
   const handleLiquidar = () => {
     const hasTurnos = resumen?.turnos && resumen.turnos.length > 0;
@@ -787,11 +789,28 @@ export default function AdminNominaScreen({ navigation }: any) {
     showAlert({
       type: 'confirm',
       title: 'Liquidar Empleado',
-      message: `¿Estás seguro de liquidar a ${selectedEmpleado.nombre} por un total de $${Number(resumen.totalNeto).toLocaleString('es-CO')}?\n\nPresiona "Liquidar" para continuar y firmar el documento.`,
+      message: `¿Estás seguro de liquidar a ${selectedEmpleado.nombre} por un total de $${Number(resumen.totalNeto).toLocaleString('es-CO')}?`,
       confirmText: 'Liquidar',
       onConfirm: () => {
-        empleadoALiquidar.current = selectedEmpleado;
-        setShowSignatureAdmin(true);
+        setTimeout(() => {
+          showAlert({
+            type: 'confirm',
+            title: 'Registro de Gasto',
+            message: '¿Deseas registrar automáticamente esta liquidación en la tabla de Gastos del negocio?',
+            confirmText: 'Sí',
+            cancelText: 'No',
+            onConfirm: () => {
+              guardarComoGastoRef.current = true;
+              empleadoALiquidar.current = selectedEmpleado;
+              setShowSignatureAdmin(true);
+            },
+            onCancel: () => {
+              guardarComoGastoRef.current = false;
+              empleadoALiquidar.current = selectedEmpleado;
+              setShowSignatureAdmin(true);
+            }
+          });
+        }, 300);
       }
     });
   };
