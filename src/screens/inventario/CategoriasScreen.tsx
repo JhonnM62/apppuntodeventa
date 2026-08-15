@@ -62,19 +62,10 @@ const CategoriasScreen = () => {
   };
 
   const handleBatchDelete = () => {
-    // Only allow deletion if none of the selected categories have products
-    const categoriesToDelete = categorias.filter(c => selectedItems.map(String).includes(String(c.IDcategoria)));
-    const invalidCategories = categoriesToDelete.filter(c => c.productos && c.productos.length > 0);
-    
-    if (invalidCategories.length > 0) {
-      showAlert({ type: 'error', title: 'Error', message: `No se pueden eliminar ${invalidCategories.length} categorías porque tienen productos asociados.` });
-      return;
-    }
-
     showAlert({
       type: 'confirm',
       title: 'Eliminar categorías',
-      message: `¿Estás seguro de eliminar ${selectedItems.length} categoría(s)?`,
+      message: `¿Estás seguro de eliminar ${selectedItems.length} categoría(s)?\n\n¡ATENCIÓN! Todos los productos asociados a estas categorías también serán eliminados automáticamente.`,
       confirmText: 'Eliminar',
       onConfirm: async () => {
         setIsDeletingBatch(true);
@@ -120,15 +111,10 @@ const CategoriasScreen = () => {
   };
 
   const handleDelete = (cat: CategoriaItem) => {
-    if (cat.productos && cat.productos.length > 0) {
-      showAlert({ type: 'error', title: 'Error', message: `No se puede eliminar. Tiene ${cat.productos.length} productos asociados.` });
-      return;
-    }
-
     showAlert({
       type: 'confirm',
       title: 'Confirmar',
-      message: `¿Eliminar categoría "${cat.nombre}"?`,
+      message: `¿Eliminar categoría "${cat.nombre}"?\n\n¡ATENCIÓN! Todos los productos asociados a esta categoría también serán eliminados.`,
       confirmText: 'Eliminar',
       onConfirm: async () => {
         try {

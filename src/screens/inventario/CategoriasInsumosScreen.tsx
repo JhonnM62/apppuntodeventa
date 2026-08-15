@@ -54,7 +54,7 @@ export default function CategoriasInsumosScreen({ navigation }: any) {
     showAlert({
       type: 'confirm',
       title: 'Eliminar categorías',
-      message: `¿Estás seguro de eliminar ${selectedItems.length} categoría(s)?`,
+      message: `¿Estás seguro de eliminar ${selectedItems.length} categoría(s)?\n\n¡ATENCIÓN! Todos los insumos asociados a estas categorías también serán eliminados automáticamente.`,
       confirmText: 'Eliminar',
       onConfirm: async () => {
         setIsDeletingBatch(true);
