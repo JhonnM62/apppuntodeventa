@@ -111,6 +111,16 @@ type SectionData = {
   data: VentaItem[];
 };
 
+export const getVentaTotal = (venta: VentaItem | null): number => {
+  if (!venta) return 0;
+  const t = typeof venta.totalInput === 'number' ? venta.totalInput : (parseFloat(venta.totalInput as any) || 0);
+  if (t > 0) return t;
+  if (venta.ordenVentas && Array.isArray(venta.ordenVentas)) {
+    return venta.ordenVentas.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
+  }
+  return 0;
+};
+
 const PedidosScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { showAlert } = useCustomAlert();
@@ -128,6 +138,8 @@ const PedidosScreen = () => {
   const [cobrarVenta, setCobrarVenta] = useState<VentaItem | null>(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
+  const [remoteSearchResults, setRemoteSearchResults] = useState<VentaItem[] | null>(null);
+  const [isSearchingRemote, setIsSearchingRemote] = useState(false);
 
   // Manual Print Preview States
   const { manualPreviewEnabled, printManual } = usePrinterStore();
@@ -243,6 +255,7 @@ const PedidosScreen = () => {
       joinRoom(Room.VENTAS);
     }
   }, [isConnected, joinRoom]);
+
 
   const productCategorias = useProductStore((state) => state.categorias);
 
@@ -399,6 +412,45 @@ const PedidosScreen = () => {
     if (filters.cliente) count++;
     return count;
   }, [filters]);
+
+  useEffect(() => {
+    if (activeFiltersCount === 0) {
+      setRemoteSearchResults(null);
+      setIsSearchingRemote(false);
+      return;
+    }
+
+    const delayDebounceFn = setTimeout(async () => {
+      setIsSearchingRemote(true);
+      try {
+        const query: any = { limit: 150 };
+        if (filters.searchText) query.search = filters.searchText;
+        if (filters.estados && filters.estados.length > 0) query.estado = filters.estados.join(',');
+        if (filters.mediosDePago && filters.mediosDePago.length > 0) query.medioDePago = filters.mediosDePago.join(',');
+        if (filters.fechaDesde) query.fechaDesde = filters.fechaDesde;
+        if (filters.fechaHasta) query.fechaHasta = filters.fechaHasta;
+        if (filters.vendedor) query.usuario = filters.vendedor;
+        if (filters.minTotal) query.totalMin = filters.minTotal;
+        if (filters.maxTotal) query.totalMax = filters.maxTotal;
+        if (filters.categoriaProducto) query.categoriaProducto = filters.categoriaProducto;
+        if (filters.cliente) query.search = query.search ? `${query.search} ${filters.cliente}` : filters.cliente;
+        if (filters.pedidoNumero) query.search = query.search ? `${query.search} ${filters.pedidoNumero}` : filters.pedidoNumero;
+
+        const data = await getSales(query);
+        const ventasData = data?.data || data;
+        if (Array.isArray(ventasData)) {
+          setRemoteSearchResults(ventasData);
+        }
+      } catch (e) {
+        console.error('Error fetching remote search', e);
+      } finally {
+        setIsSearchingRemote(false);
+      }
+    }, 600);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [filters, activeFiltersCount]);
+
 
   const applyFilters = useCallback((ventas: VentaItem[]) => {
     let filtered = Array.isArray(ventas) ? [...ventas] : [];
@@ -589,11 +641,10 @@ const PedidosScreen = () => {
   }, []);
 
   const filteredVentas = useMemo(() => {
-    // Si cachedVentas no es array por algun motivo, no rompas
-    const arraySeguro = Array.isArray(cachedVentas) ? cachedVentas : [];
-    const filtered = applyFilters(arraySeguro);
+    const dataSource = (activeFiltersCount > 0 && remoteSearchResults !== null) ? remoteSearchResults : (Array.isArray(cachedVentas) ? cachedVentas : []);
+    const filtered = applyFilters(dataSource);
     return filtered;
-  }, [cachedVentas, applyFilters]);
+  }, [cachedVentas, remoteSearchResults, activeFiltersCount, applyFilters]);
 
   const groupedVentas = useMemo(() => {
     return groupByDate(filteredVentas);
@@ -2014,15 +2065,6 @@ showAlert({
     }
   };
 
-  const getVentaTotal = (venta: VentaItem | null): number => {
-    if (!venta) return 0;
-    const t = typeof venta.totalInput === 'number' ? venta.totalInput : (parseFloat(venta.totalInput as any) || 0);
-    if (t > 0) return t;
-    if (venta.ordenVentas && Array.isArray(venta.ordenVentas)) {
-      return venta.ordenVentas.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
-    }
-    return 0;
-  };
 
   return (
     <View style={styles.container}>
@@ -2101,6 +2143,7 @@ showAlert({
             value={filters.searchText}
             onChangeText={(text) => setFilters(prev => ({ ...prev, searchText: text }))}
           />
+          {isSearchingRemote && <ActivityIndicator size="small" color="#6366f1" style={{ marginLeft: 8 }} />}
         </View>
         <TouchableOpacity
           style={[styles.filterBtn, activeFiltersCount > 0 && styles.filterBtnActive]}
