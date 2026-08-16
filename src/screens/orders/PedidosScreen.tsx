@@ -159,7 +159,7 @@ const PedidosScreen = () => {
       orderId: cleanOrderId,
       fecha: formattedFecha,
       cliente: venta.cliente || undefined,
-      total: Number(venta.totalInput || venta.total || venta.Total || 0),
+      total: Number(venta.totalInput || venta.total || venta.Total || (venta.ordenVentas?.reduce((s: number, p: any) => s + (Number(p.precioTotal) || 0), 0)) || 0),
       efectivoRecibido: venta.efectivoRecibido ? Number(venta.efectivoRecibido) : undefined,
       devueltas: venta.devueltas ? Number(venta.devueltas) : undefined,
       metodoPago: venta.medioDePago,
@@ -428,7 +428,7 @@ const PedidosScreen = () => {
 
         if (isNum) {
           const numMatch = 
-            (v.totalInput === parsedNum) ||
+            (getVentaTotal(v) === parsedNum) ||
             (v.numeroTelefono === parsedNum) ||
             (v.ordenVentas?.some(prod => prod.precioTotal === parsedNum || prod.precio === parsedNum));
           return textMatch || numMatch;
@@ -480,14 +480,14 @@ const PedidosScreen = () => {
     if (filters.minTotal) {
       const min = parseFloat(filters.minTotal);
       if (!isNaN(min)) {
-        filtered = filtered.filter(v => (v.totalInput || 0) >= min);
+        filtered = filtered.filter(v => getVentaTotal(v) >= min);
       }
     }
 
     if (filters.maxTotal) {
       const max = parseFloat(filters.maxTotal);
       if (!isNaN(max)) {
-        filtered = filtered.filter(v => (v.totalInput || 0) <= max);
+        filtered = filtered.filter(v => getVentaTotal(v) <= max);
       }
     }
 
@@ -509,8 +509,8 @@ const PedidosScreen = () => {
 
         // Num matches give highest priority
         if (isNum) {
-          if (a.totalInput === parsedNum) scoreA += 100;
-          if (b.totalInput === parsedNum) scoreB += 100;
+          if (getVentaTotal(a) === parsedNum) scoreA += 100;
+          if (getVentaTotal(b) === parsedNum) scoreB += 100;
           if (a.ordenVentas?.some(p => p.precioTotal === parsedNum || p.precio === parsedNum)) scoreA += 50;
           if (b.ordenVentas?.some(p => p.precioTotal === parsedNum || p.precio === parsedNum)) scoreB += 50;
         }
@@ -937,7 +937,7 @@ showAlert({
         <View style={styles.cardFooter}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <RNText style={styles.totalLabel}>TOTAL</RNText>
-            <RNText style={styles.totalAmount}>{formatMoney(item.totalInput)}</RNText>
+            <RNText style={styles.totalAmount}>{formatMoney(getVentaTotal(item))}</RNText>
           </View>
           
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -985,7 +985,7 @@ showAlert({
   const flatListData = useMemo(() => {
     const result: (VentaItem | { isHeader: boolean; title: string; date: Date; count: number; total?: number })[] = [];
     groupedVentas.forEach(section => {
-      const totalAmount = section.data.reduce((sum, item) => sum + (Number(item.totalInput) || 0), 0);
+      const totalAmount = section.data.reduce((sum, item) => sum + getVentaTotal(item), 0);
       result.push({ isHeader: true, title: section.title, date: section.date, count: section.data.length, total: totalAmount });
       result.push(...section.data);
     });
@@ -1310,9 +1310,7 @@ showAlert({
                   <RNText style={styles.totalSectionAmount}>
                     {formatMoney(
                       // FIX: si totalInput es 0 o nulo, calcularlo desde los productos
-                      (selectedVenta.totalInput && selectedVenta.totalInput > 0)
-                        ? selectedVenta.totalInput
-                        : productos.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0)
+                      getVentaTotal(selectedVenta)
                     )}
                   </RNText>
                 </View>
@@ -2016,10 +2014,13 @@ showAlert({
     }
   };
 
-  const getCobrarTotal = (venta: VentaItem | null): number => {
+  const getVentaTotal = (venta: VentaItem | null): number => {
     if (!venta) return 0;
-    if (typeof venta.totalInput === 'number') return venta.totalInput;
-    if (typeof venta.totalInput === 'string') return parseFloat(venta.totalInput) || 0;
+    const t = typeof venta.totalInput === 'number' ? venta.totalInput : (parseFloat(venta.totalInput as any) || 0);
+    if (t > 0) return t;
+    if (venta.ordenVentas && Array.isArray(venta.ordenVentas)) {
+      return venta.ordenVentas.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
+    }
     return 0;
   };
 
@@ -2286,7 +2287,7 @@ showAlert({
         }}
         onSave={handleSaveCobrar}
         onCobrar={handleCobrarConfirm}
-        total={getCobrarTotal(cobrarVenta)}
+        total={getVentaTotal(cobrarVenta)}
         editingPedidoId={cobrarVenta?.pedido || cobrarVenta?.IDventas}
       />
       
