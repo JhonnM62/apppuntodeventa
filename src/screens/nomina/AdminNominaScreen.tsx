@@ -54,21 +54,25 @@ const DescansoStatusAdmin = ({ turno }: { turno: any }) => {
 
   if (!turno) return null;
 
-  if (turno.descansoRegistrado && turno.finDescanso) {
+  if (turno.inicioDescanso && turno.finDescanso) {
     const inicio = new Date(turno.inicioDescanso);
     const fin = new Date(turno.finDescanso);
     const durReal = Math.floor((fin.getTime() - inicio.getTime()) / 1000);
+    const allowedMin = turno.usuario?.cargo?.duracionDescansoMinutos || 0;
+    const allowedSeconds = allowedMin * 60;
+    const isOvertime = allowedSeconds > 0 && durReal > allowedSeconds;
+    const extraTime = durReal - allowedSeconds;
 
     return (
-      <View style={{ marginTop: 8, backgroundColor: '#f0fdf4', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: '#bbf7d0' }}>
+      <View style={{ marginTop: 8, backgroundColor: isOvertime ? '#fee2e2' : '#f0fdf4', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: isOvertime ? '#fecaca' : '#bbf7d0' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-          <Ionicons name="checkmark-circle" size={14} color="#15803d" />
-          <Text style={{ color: '#15803d', fontSize: 12, marginLeft: 4, fontWeight: 'bold' }}>
-            Descanso completado
+          <Ionicons name={isOvertime ? "warning" : "checkmark-circle"} size={14} color={isOvertime ? "#dc2626" : "#15803d"} />
+          <Text style={{ color: isOvertime ? "#dc2626" : "#15803d", fontSize: 12, marginLeft: 4, fontWeight: 'bold' }}>
+            Descanso completado {isOvertime && `(+${formatMinSec(extraTime)})`}
           </Text>
         </View>
-        <Text style={{ fontSize: 11, color: '#166534' }}>
-          {formatTime12h(inicio)} → {formatTime12h(fin)} • {formatMinSec(durReal)}
+        <Text style={{ fontSize: 11, color: isOvertime ? '#991b1b' : '#166534' }}>
+          {formatTime12h(inicio)} → {formatTime12h(fin)} • Total: {formatMinSec(durReal)}
         </Text>
       </View>
     );
