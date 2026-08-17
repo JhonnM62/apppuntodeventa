@@ -1717,7 +1717,9 @@ setSaving(false);
                           {(() => {
                             const insumoRef = allInsumos.find((i: any) => i.IDalimentos === item.nombreInsumo || i.nombre === item.nombreInsumoReal);
                             if (insumoRef) {
-                              const stockRaw = insumoRef.disponible ?? insumoRef.Disponible ?? 0;
+                              const isClosed = resumenData?.caja?.cierre === 'cerrada' || isReadOnly;
+                              const itemWithDisp = item as any;
+                              const stockRaw = (isClosed && itemWithDisp.disponible != null) ? itemWithDisp.disponible : (insumoRef.disponible ?? insumoRef.Disponible ?? 0);
                               const stockNum = Number(stockRaw);
                               const stockStr = stockNum % 1 === 0 ? stockNum.toString() : stockNum.toFixed(2);
                               return (
