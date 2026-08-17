@@ -275,6 +275,12 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [addQtyTheoretical, setAddQtyTheoretical] = useState('');
   const [addQtyAmount, setAddQtyAmount] = useState('');
   const [syncGlobalStock, setSyncGlobalStock] = useState(false);
+  
+  // NEW STATES FOR GENERAL MODE DIRECT SUM
+  const [directSumModalVisible, setDirectSumModalVisible] = useState(false);
+  const [directSumIndex, setDirectSumIndex] = useState<number | null>(null);
+  const [directSumAmount, setDirectSumAmount] = useState('');
+
   const [subQtyAmount, setSubQtyAmount] = useState('');
   const [subQtyReason, setSubQtyReason] = useState('');
   const [isSubmittingAdjustment, setIsSubmittingAdjustment] = useState(false);
@@ -1576,7 +1582,7 @@ setSaving(false);
                   <Text className="text-blue-600 font-semibold ml-1 text-xs">Copiar</Text>
                 </TouchableOpacity>
               )}
-              {!isReadOnly && (
+              {!isReadOnly && modoOperacion === 'RESTAURANTE' && (
                 <>
                   <TouchableOpacity onPress={handleArquearInsumos} className="px-2 py-1.5 rounded flex-row items-center mr-2 bg-orange-500">
                     <Ionicons name="sync" size={14} color="#fff" />
@@ -1746,23 +1752,29 @@ setSaving(false);
                                 placeholder="0"
                               />
                               <View className="flex-row mt-1 justify-center space-x-1">
-                                {!isReadOnly && isAdmin && modoOperacion === 'RESTAURANTE' && (
+                                {!isReadOnly && isAdmin && (
                                   <TouchableOpacity 
                                     className="bg-green-500 rounded w-6 h-6 items-center justify-center mr-1"
                                     onPress={() => {
-                                      const insumoId = getValues(`insumos.${index}.nombreInsumo`);
-                                      const insumoData = allInsumos.find((i: any) => i.IDalimentos === insumoId);
-                                      const hasPaquetes = insumoData && Number(insumoData.paquetesEnBodega) > 0;
-                                      const hasPaqueteConfig = insumoData && Number(insumoData.cantidadPorPaquete) > 0;
-                                      
-                                      setAddQtyIndex(index);
-                                      setAddQtyAmount('');
-                                      setAddQtyPackagesToOpen('1');
-                                      setAddQtyFreeAction('trasladar');
-                                      setAddQtyTheoretical('');
-                                      setAddQtyMode(hasPaquetes ? 'paquete' : 'libre');
-                                      setSyncGlobalStock(!!hasPaqueteConfig);
-                                      setAddQtyModalVisible(true);
+                                      if (modoOperacion === 'GENERAL') {
+                                        setDirectSumIndex(index);
+                                        setDirectSumAmount('');
+                                        setDirectSumModalVisible(true);
+                                      } else {
+                                        const insumoId = getValues(`insumos.${index}.nombreInsumo`);
+                                        const insumoData = allInsumos.find((i: any) => i.IDalimentos === insumoId);
+                                        const hasPaquetes = insumoData && Number(insumoData.paquetesEnBodega) > 0;
+                                        const hasPaqueteConfig = insumoData && Number(insumoData.cantidadPorPaquete) > 0;
+                                        
+                                        setAddQtyIndex(index);
+                                        setAddQtyAmount('');
+                                        setAddQtyPackagesToOpen('1');
+                                        setAddQtyFreeAction('trasladar');
+                                        setAddQtyTheoretical('');
+                                        setAddQtyMode(hasPaquetes ? 'paquete' : 'libre');
+                                        setSyncGlobalStock(!!hasPaqueteConfig);
+                                        setAddQtyModalVisible(true);
+                                      }
                                     }}
                                   >
                                     <Ionicons name="add" size={16} color="white" />
@@ -2962,6 +2974,57 @@ setSaving(false);
                   ) : (
                     <Text className="text-white font-bold">Descontar</Text>
                   )}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Direct Sum Modal (General Mode) */}
+        <Modal
+          visible={directSumModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setDirectSumModalVisible(false)}
+        >
+          <View className="flex-1 bg-black/50 justify-center items-center px-4">
+            <View className="bg-white rounded-2xl p-5 w-full max-w-sm">
+              <Text className="text-lg font-bold text-gray-800 mb-2">Sumar a Cantidad Apertura</Text>
+              <Text className="text-sm text-gray-500 mb-4">
+                Esta cantidad se sumará directamente al valor de apertura de este insumo en la caja actual y se guardará al presionar el botón Guardar principal. No afecta al stock global de bodega.
+              </Text>
+              
+              <Text className="text-xs font-semibold text-gray-600 mb-1 ml-1 uppercase">Cantidad a sumar</Text>
+              <TextInput
+                className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-lg font-bold text-gray-900 mb-5"
+                keyboardType="numeric"
+                value={directSumAmount}
+                onChangeText={setDirectSumAmount}
+                placeholder="Ej. 10"
+                placeholderTextColor="#9ca3af"
+                autoFocus
+              />
+
+              <View className="flex-row space-x-3">
+                <TouchableOpacity 
+                  className="flex-1 py-3 rounded-xl bg-gray-100 items-center border border-gray-200"
+                  onPress={() => setDirectSumModalVisible(false)}
+                >
+                  <Text className="text-gray-700 font-bold">Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  className="flex-1 py-3 rounded-xl bg-green-500 items-center"
+                  onPress={() => {
+                    if (directSumIndex !== null && directSumAmount && !isNaN(Number(directSumAmount))) {
+                      const amountToAdd = Number(directSumAmount);
+                      const currentVal = Number(getValues(`insumos.${directSumIndex}.cantApertura`)) || 0;
+                      setValue(`insumos.${directSumIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
+                      setModifiedInsumoIndexes(prev => new Set(prev).add(directSumIndex));
+                      setDirectSumModalVisible(false);
+                    }
+                  }}
+                >
+                  <Text className="text-white font-bold">Añadir</Text>
                 </TouchableOpacity>
               </View>
             </View>
