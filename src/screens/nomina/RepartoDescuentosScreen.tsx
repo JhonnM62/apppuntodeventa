@@ -532,7 +532,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
           <View style={[styles.badgeConceptoSmall, isBono && { backgroundColor: '#d1fae5' }]}>
             <Text style={[styles.badgeTextSmall, isBono && { color: '#059669' }]}>{item.concepto.replace(/_/g, ' ')}</Text>
           </View>
-          <Text style={styles.cardSubtitleSmall}>{new Date(item.fecha).toLocaleDateString()}</Text>
+          <Text style={styles.cardSubtitleSmall}>{new Date(item.fecha).toLocaleString('es-CO', { timeZone: 'America/Bogota' })}</Text>
         </View>
         <View style={styles.cardBodySmall}>
           <Text style={styles.cardDescSmall}>{item.descripcion}</Text>

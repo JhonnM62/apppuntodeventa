@@ -168,6 +168,7 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [showLlegadasModal, setShowLlegadasModal] = useState(false);
   const [showTurnosAnteriores, setShowTurnosAnteriores] = useState(false);
   const [selectedExtraTurnos, setSelectedExtraTurnos] = useState<string[]>([]);
+  const [ignoredTurnos, setIgnoredTurnos] = useState<string[]>([]);
   const [selectedLlegadas, setSelectedLlegadas] = useState<string[]>([]);
   const [aplicandoLlegadas, setAplicandoLlegadas] = useState(false);
 
@@ -271,6 +272,7 @@ export default function AdminNominaScreen({ navigation }: any) {
           fechaDesde: minDate as string,
           fechaHasta: maxDate as string,
           extraTurnosIds: selectedExtraTurnos,
+          ignoredTurnosIds: ignoredTurnos,
           firmaAdmin: signatureBase64,
           guardarComoGasto: guardarComoGastoRef.current,
         });
@@ -543,6 +545,7 @@ export default function AdminNominaScreen({ navigation }: any) {
       setResumen(res.data);
       const validIds = (res.data?.turnosAnteriores || []).map((t: any) => t.IDturno);
       setSelectedExtraTurnos(savedIds.filter((id: string) => validIds.includes(id)));
+      setIgnoredTurnos([]);
     } catch (error) {
       console.error(error);
       showAlert({ type: 'error', title: 'Error', message: 'No se pudo cargar el resumen del empleado' });
@@ -1125,25 +1128,38 @@ export default function AdminNominaScreen({ navigation }: any) {
                         <Text style={[styles.summaryLabel, { fontWeight: '700' }]}>Total Neto a Pagar:</Text>
                         <Text style={[styles.summaryValue, { color: '#10b981', fontSize: 18 }]}>${Number(resumen.totalNeto + selectedExtraTurnos.reduce((sum: number, id: string) => {
                           const t = resumen.turnosAnteriores?.find((x: any) => x.IDturno === id);
-                          return sum + (t ? Number(t.valorTurno) : 0);
-                        }, 0)).toLocaleString('es-CO')}</Text>
+                          return sum + (t && !ignoredTurnos.includes(id) ? Number(t.valorTurno) : 0);
+                        }, 0) - (resumen.turnos || []).reduce((sum: number, t: any) => sum + (ignoredTurnos.includes(t.IDturno) ? Number(t.valorTurno) : 0), 0)).toLocaleString('es-CO')}</Text>
                       </View>
                     </View>
 
-                    <Text style={{ fontWeight: '700', marginVertical: 8 }}>Desglose de Turnos ({(resumen.turnos?.length || 0) + selectedExtraTurnos.length})</Text>
-                    {[...(resumen.turnos || []), ...(resumen.turnosAnteriores || []).filter((t: any) => selectedExtraTurnos.includes(t.IDturno))].map((t: any) => (
-                      <View key={t.IDturno} style={styles.itemRow}>
-                        <Text style={{ flex: 1, fontSize: 13 }}>
+                    <Text style={{ fontWeight: '700', marginVertical: 8 }}>Desglose de Turnos ({(resumen.turnos?.length || 0) + selectedExtraTurnos.length - ignoredTurnos.length})</Text>
+                    {[...(resumen.turnos || []), ...(resumen.turnosAnteriores || []).filter((t: any) => selectedExtraTurnos.includes(t.IDturno))].map((t: any) => {
+                      const isIgnored = ignoredTurnos.includes(t.IDturno);
+                      return (
+                      <TouchableOpacity 
+                        key={t.IDturno} 
+                        style={[styles.itemRow, isIgnored && { backgroundColor: '#f3f4f6', opacity: 0.6 }]}
+                        onPress={() => {
+                          if (isIgnored) {
+                            setIgnoredTurnos(prev => prev.filter(id => id !== t.IDturno));
+                          } else {
+                            setIgnoredTurnos(prev => [...prev, t.IDturno]);
+                          }
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={{ flex: 1, fontSize: 13, textDecorationLine: isIgnored ? 'line-through' : 'none' }}>
                           {new Date(t.fecha).toLocaleDateString('es-CO', { timeZone: 'UTC', weekday: 'short', day: '2-digit', month: 'short' })}
                         </Text>
-                        <Text style={{ flex: 1, fontSize: 13, textAlign: 'center' }}>
+                        <Text style={{ flex: 1, fontSize: 13, textAlign: 'center', textDecorationLine: isIgnored ? 'line-through' : 'none' }}>
                           {t.horaEntrada ? new Date(t.horaEntrada).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true }) : '--:--'}
                         </Text>
-                        <Text style={{ flex: 1, fontSize: 13, textAlign: 'right', color: '#10b981', fontWeight: '600' }}>
+                        <Text style={{ flex: 1, fontSize: 13, textAlign: 'right', color: isIgnored ? '#9ca3af' : '#10b981', fontWeight: '600', textDecorationLine: isIgnored ? 'line-through' : 'none' }}>
                           ${Number(t.valorTurno).toLocaleString('es-CO')}
                         </Text>
-                      </View>
-                    ))}
+                      </TouchableOpacity>
+                    )})}
 
                     <Text style={{ fontWeight: '700', marginTop: 16, marginBottom: 8 }}>Descuentos y Bonos ({(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).length})</Text>
                     {(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).map((d: any) => {
