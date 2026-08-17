@@ -39,7 +39,13 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+$DownloadedApk = Get-ChildItem -Path $LocalApkFolder -Filter "*.apk" | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+
 Write-Host "=============================================" -ForegroundColor Green
 Write-Host "¡EXITO! Tu APK esta listo en:" -ForegroundColor Green
-Write-Host "$LocalApkFolder\$ApkName" -ForegroundColor Green
+if ($DownloadedApk) {
+    Write-Host "$LocalApkFolder\$($DownloadedApk.Name)" -ForegroundColor Green
+} else {
+    Write-Host "$LocalApkFolder\" -ForegroundColor Green
+}
 Write-Host "=============================================" -ForegroundColor Green

@@ -162,6 +162,14 @@ LATEST_APK=$(ls -t *.apk 2>/dev/null | head -n 1 || echo "")
 
 echo "================================================="
 if [ -n "$LATEST_APK" ]; then
+  # Extraer nombre y version desde app.json usando Node
+  APP_NAME=$(node -e "console.log(require('./app.json').expo.name.replace(/\s+/g, ''))")
+  APP_VERSION=$(node -e "console.log(require('./app.json').expo.version)")
+  
+  NEW_APK_NAME="${APP_NAME}_v${APP_VERSION}_${PROFILE}.apk"
+  mv "$LATEST_APK" "$NEW_APK_NAME"
+  LATEST_APK="$NEW_APK_NAME"
+
   echo "✅ COMPILACIÓN FINALIZADA: $LATEST_APK"
 else
   echo "⚠️  Build terminó pero no se encontró APK generado."
