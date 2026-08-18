@@ -107,10 +107,18 @@ export const useSalesStore = create<SalesStore>()(
     {
       name: 'sales-cache',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({
-        ventas: state.ventas,
-        lastFetched: state.lastFetched,
-      }),
+      partialize: (state) => {
+        const ventasArray = Array.isArray(state.ventas) ? state.ventas : [];
+        // Para evitar QuotaExceededError (5MB limit en web localStorage), 
+        // persistimos todos los pendientes y solo los 50 pagados/entregados más recientes.
+        const pending = ventasArray.filter(v => v.estado && v.estado !== 'PAGADO' && v.estado !== 'ENTREGADO');
+        const completed = ventasArray.filter(v => v.estado === 'PAGADO' || v.estado === 'ENTREGADO').slice(0, 50);
+        
+        return {
+          ventas: [...pending, ...completed],
+          lastFetched: state.lastFetched,
+        };
+      },
     }
   )
 );

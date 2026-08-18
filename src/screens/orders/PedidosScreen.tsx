@@ -2080,9 +2080,14 @@ showAlert({
               <TouchableOpacity
                 style={[styles.newSaleBtn, { backgroundColor: '#3b82f6', marginRight: 10 }]}
                 onPress={onRefresh}
+                disabled={refreshing}
               >
-                <Ionicons name="refresh" size={20} color="#fff" />
-                <RNText style={styles.newSaleBtnText}>Recargar</RNText>
+                {refreshing ? (
+                  <ActivityIndicator size="small" color="#fff" style={{ marginRight: 5 }} />
+                ) : (
+                  <Ionicons name="refresh" size={20} color="#fff" />
+                )}
+                <RNText style={styles.newSaleBtnText}>{refreshing ? 'Recargando...' : 'Recargar'}</RNText>
               </TouchableOpacity>
             )}
             {canCreateVenta && (
