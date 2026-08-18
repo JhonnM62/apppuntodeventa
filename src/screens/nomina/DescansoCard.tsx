@@ -139,14 +139,20 @@ export default function DescansoCard({
   // ── STATE C: Completed ──────────────────────────────────
   if (inicio && fin) {
     const durReal = Math.floor((fin.getTime() - inicio.getTime()) / 1000);
+    const allowedSeconds = duracionMinutos * 60;
+    const isOvertimeCompleted = allowedSeconds > 0 && durReal > allowedSeconds;
+    const extraTime = durReal - allowedSeconds;
+
     return (
-      <View style={[styles.card, styles.cardCompleted]}>
+      <View style={[styles.card, isOvertimeCompleted ? { backgroundColor: '#fee2e2', borderColor: '#fecaca', borderWidth: 1.5 } : styles.cardCompleted]}>
         <View style={styles.headerRow}>
-          <Ionicons name="checkmark-circle" size={22} color="#059669" />
-          <Text style={[styles.cardTitle, { color: '#059669' }]}>  Descanso Completado ✅</Text>
+          <Ionicons name={isOvertimeCompleted ? "warning" : "checkmark-circle"} size={22} color={isOvertimeCompleted ? "#dc2626" : "#059669"} />
+          <Text style={[styles.cardTitle, { color: isOvertimeCompleted ? '#dc2626' : '#059669' }]}>
+            {isOvertimeCompleted ? `  Descanso Completado (+${formatMinSec(extraTime)})` : "  Descanso Completado ✅"}
+          </Text>
         </View>
-        <Text style={styles.completedText}>
-          {formatTime12h(inicio)}  →  {formatTime12h(fin)}  •  {formatMinSec(durReal)}
+        <Text style={[styles.completedText, isOvertimeCompleted && { color: '#991b1b' }]}>
+          {formatTime12h(inicio)}  →  {formatTime12h(fin)}  •  Total: {formatMinSec(durReal)}
         </Text>
       </View>
     );
@@ -175,7 +181,7 @@ export default function DescansoCard({
         <View style={[styles.timerBox, isOvertime && styles.timerBoxOvertime]}>
           <Ionicons name="timer-outline" size={20} color={isOvertime ? '#ef4444' : '#92400e'} />
           <Text style={[styles.timerText, isOvertime && styles.timerTextOvertime]}>
-            {isOvertime ? '¡Tiempo agotado!' : formatMinSec(secsRemaining!)}
+            {isOvertime ? `¡Agotado! (+${formatMinSec(Math.floor((now.getTime() - inicio.getTime()) / 1000) - duracionMinutos * 60)})` : formatMinSec(secsRemaining!)}
           </Text>
           {!isOvertime && <Text style={styles.timerSub}>restante</Text>}
         </View>
