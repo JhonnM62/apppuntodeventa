@@ -258,7 +258,9 @@ export default function EstadisticasScreen({ navigation }: any) {
               <li><strong>Gastos Personales:</strong> ${formatMoney(data.totales.gastosPersonales)}</li>
               <li><strong>Total Gastos:</strong> ${formatMoney(data.totales.gastosNegocio + data.totales.gastosPersonales)}</li>
               <li><strong>Total Inventario:</strong> ${formatMoney(data.totales.inventarioTotal || 0)}</li>
-              <li><strong>Utilidad del Negocio:</strong> ${formatMoney(data.totales.utilidadNegocio)}</li>
+              <li><strong>Transferencias (Ventas):</strong> ${formatMoney(data.totales.totalTransferencias || 0)}</li>
+              <li><strong>Transf. Contadas (Caja):</strong> ${formatMoney(data.totales.totalTransferenciasContadas || 0)}</li>
+              <li><strong>Plata Guardada:</strong> ${formatMoney(data.totales.totalPlataGuardada || 0)}</li>
               <li><strong style="color: #10b981;">Utilidad Neta:</strong> ${formatMoney(data.totales.utilidadNeta)}</li>
             </ul>
 
@@ -510,9 +512,23 @@ export default function EstadisticasScreen({ navigation }: any) {
               {renderCard('Gastos Negocio', data.totales.gastosNegocio, 'briefcase', ['#f59e0b', '#d97706'])}
               {renderCard('Gastos Personal', data.totales.gastosPersonales, 'person', ['#ef4444', '#dc2626'])}
             </View>
-            <View className="flex-row mb-6">
+            <View className="flex-row mb-2">
               {renderCard('Total Gastos', (data.totales.gastosNegocio + data.totales.gastosPersonales), 'wallet', ['#8b5cf6', '#7c3aed'])}
               {renderCard('Total Inventario', data.totales.inventarioTotal || 0, 'cube', ['#64748b', '#4b5563'])}
+            </View>
+
+            {/* Tarjetas de Dinero en Transferencias y Plata Guardada */}
+            <View className="flex-row mb-2">
+              {renderCard('Transferencias (Ventas)', data.totales.totalTransferencias || 0, 'swap-horizontal', ['#0ea5e9', '#0284c7'])}
+              {renderCard('Transf. Contadas (Caja)', data.totales.totalTransferenciasContadas || 0, 'checkmark-done', ['#06b6d4', '#0891b2'])}
+            </View>
+            <View className="flex-row mb-2">
+              {renderCard('Plata Guardada', data.totales.totalPlataGuardada || 0, 'lock-closed', ['#a855f7', '#9333ea'])}
+              {renderCard('Diferencia Transf.', (data.totales.totalTransferencias || 0) - (data.totales.totalTransferenciasContadas || 0), 'alert-circle', 
+                ((data.totales.totalTransferencias || 0) - (data.totales.totalTransferenciasContadas || 0)) === 0 
+                  ? ['#10b981', '#059669'] 
+                  : ['#ef4444', '#dc2626']
+              )}
             </View>
 
             {/* Gráfico Principal Interactivo */}

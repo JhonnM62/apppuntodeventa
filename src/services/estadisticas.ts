@@ -8,6 +8,9 @@ export interface EstadisticasGenerales {
     utilidadNegocio: number;
     utilidadNeta: number;
     inventarioTotal: number;
+    totalTransferencias: number;
+    totalPlataGuardada: number;
+    totalTransferenciasContadas: number;
   };
   graficos: {
     diario: { label: string; value: number }[];
