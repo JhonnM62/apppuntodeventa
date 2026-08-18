@@ -2075,18 +2075,29 @@ showAlert({
             <RNText style={styles.headerTitle}>Pedidos</RNText>
             <RNText style={styles.headerSubtitle}>{filteredVentas.length} registro{filteredVentas.length !== 1 ? 's' : ''}</RNText>
           </View>
-          {canCreateVenta && (
-            <TouchableOpacity
-              style={styles.newSaleBtn}
-              onPress={() => {
-                useCartStore.getState().clearCart();
-                navigation.navigate('Sales', { screen: 'NewSale' } as any);
-              }}
-            >
-              <Ionicons name="add" size={20} color="#fff" />
-              <RNText style={styles.newSaleBtnText}>Nueva Venta</RNText>
-            </TouchableOpacity>
-          )}
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            {Platform.OS === 'web' && (
+              <TouchableOpacity
+                style={[styles.newSaleBtn, { backgroundColor: '#3b82f6', marginRight: 10 }]}
+                onPress={onRefresh}
+              >
+                <Ionicons name="refresh" size={20} color="#fff" />
+                <RNText style={styles.newSaleBtnText}>Recargar</RNText>
+              </TouchableOpacity>
+            )}
+            {canCreateVenta && (
+              <TouchableOpacity
+                style={styles.newSaleBtn}
+                onPress={() => {
+                  useCartStore.getState().clearCart();
+                  navigation.navigate('Sales', { screen: 'NewSale' } as any);
+                }}
+              >
+                <Ionicons name="add" size={20} color="#fff" />
+                <RNText style={styles.newSaleBtnText}>Nueva Venta</RNText>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </SafeAreaView>
 
