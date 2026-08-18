@@ -351,13 +351,13 @@ const handleDelete = () => {
                     {categoriasList.map((cat: any) => (
                       <TouchableOpacity
                         key={cat.IDcategoria}
-                        style={[styles.pickerChip, formData.categoria === cat.nombre && styles.pickerChipActive]}
+                        style={[styles.pickerChip, formData.categoria === cat.IDcategoria && styles.pickerChipActive]}
                         onPress={() => {
-                          handleChange('categoria', cat.nombre);
+                          handleChange('categoria', cat.IDcategoria);
                           handleChange('categoriaNombre', cat.nombre);
                         }}
                       >
-                        <RNText style={[styles.pickerChipText, formData.categoria === cat.nombre && styles.pickerChipTextActive]}>
+                        <RNText style={[styles.pickerChipText, formData.categoria === cat.IDcategoria && styles.pickerChipTextActive]}>
                           {cat.nombre}
                         </RNText>
                       </TouchableOpacity>
