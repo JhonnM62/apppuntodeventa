@@ -1489,11 +1489,6 @@ const InventarioScreen = ({ navigation }: any) => {
 
       return (
         <View style={{ marginBottom: 8 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-start', marginBottom: 2, paddingHorizontal: 4 }}>
-            <RNText style={{ fontSize: 11, color: '#6b7280', fontWeight: 'bold' }}>
-              {renderDateInfo((item as any).createdAt || item.fechaYHora)}
-            </RNText>
-          </View>
           <View
             style={{
               padding: 12,
@@ -1509,9 +1504,14 @@ const InventarioScreen = ({ navigation }: any) => {
                 <Ionicons name="close-circle" size={24} color="#6b7280" />
               </TouchableOpacity>
             )}
-            <RNText style={{ fontSize: 13, fontWeight: '700', color: '#111827', flex: 1 }} numberOfLines={2}>
-              {getInsumoName(item.nombreDelAlimento)}
-            </RNText>
+            <View style={{ flex: 1 }}>
+              <RNText style={{ fontSize: 13, fontWeight: '700', color: '#111827' }} numberOfLines={2}>
+                {getInsumoName(item.nombreDelAlimento)}
+              </RNText>
+              <RNText style={{ fontSize: 10, color: '#9ca3af', fontWeight: '500', marginTop: 1 }}>
+                {renderDateInfo((item as any).createdAt || item.fechaYHora)}
+              </RNText>
+            </View>
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 4 }}>
             {isEntrada && (
@@ -1598,11 +1598,6 @@ const InventarioScreen = ({ navigation }: any) => {
 
     return (
       <View style={{ marginBottom: 8 }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'flex-start', marginBottom: 2, paddingHorizontal: 4 }}>
-          <RNText style={{ fontSize: 11, color: '#6b7280', fontWeight: 'bold' }}>
-            {renderDateInfo((item as any).createdAt || item.fechaYHora)}
-          </RNText>
-        </View>
         <View
           style={{
             flexDirection: 'row',
@@ -1696,6 +1691,9 @@ const InventarioScreen = ({ navigation }: any) => {
                 </View>
               )}
             </View>
+            <RNText style={{ fontSize: 10, color: '#9ca3af', fontWeight: '500', marginTop: 1, marginBottom: 2 }}>
+              {renderDateInfo((item as any).createdAt || item.fechaYHora)}
+            </RNText>
 
             <RNText style={{ fontSize: 11, color: '#6b7280', fontWeight: 'bold', marginTop: 2 }}>
                 Stock previo: {item.cantInsumos !== undefined
