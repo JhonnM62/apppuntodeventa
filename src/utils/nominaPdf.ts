@@ -15,13 +15,12 @@ export const generarLiquidacionHTML = (data: {
 }) => {
   const { empleadoNombre, empleadoCargo, cargo, minutosGracia = 5, fechaInicio, fechaFin, turnos, descuentos, totalBruto, totalDescuentos, totalNeto, firmaAdmin, firmaEmpleado } = data;
 
-  const formatDate = (d: string | Date) => new Date(d).toLocaleDateString('es-CO', { timeZone: 'UTC' });
+  const formatDate = (d: string | Date) => new Date(d).toLocaleDateString('es-CO', { timeZone: 'America/Bogota' });
   const formatMoney = (n: number) => `$${Number(n).toLocaleString('es-CO')}`;
 
   const formatTime = (d: string | Date) => {
     if (!d) return '---';
-    // horaEntrada/horaSalida are stored as UTC wall-clock time on the server
-    return new Date(d).toLocaleTimeString('es-CO', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+    return new Date(d).toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' });
   };
 
   // Sort turnos: most recent first (descending by fecha)
@@ -31,9 +30,9 @@ export const generarLiquidacionHTML = (data: {
     if (!t.inicioDescanso) return '<span style="color:#9ca3af">Sin registro</span>';
     const ini = new Date(t.inicioDescanso);
     const fin = t.finDescanso ? new Date(t.finDescanso) : null;
-    const iniStr = ini.toLocaleTimeString('es-CO', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+    const iniStr = ini.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' });
     if (!fin) return `${iniStr} → en curso`;
-    const finStr = fin.toLocaleTimeString('es-CO', { timeZone: 'UTC', hour: '2-digit', minute: '2-digit' });
+    const finStr = fin.toLocaleTimeString('es-CO', { timeZone: 'America/Bogota', hour: '2-digit', minute: '2-digit' });
     const durMin = Math.round((fin.getTime() - ini.getTime()) / 60000);
     const durStr = durMin >= 60 ? `${Math.floor(durMin/60)}h ${durMin%60 > 0 ? durMin%60+'min' : ''}`.trim() : `${durMin}min`;
     return `${iniStr} – ${finStr} <span style="color:#6b7280">(${durStr})</span>`;
