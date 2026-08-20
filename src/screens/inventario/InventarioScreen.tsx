@@ -60,6 +60,33 @@ const LoteSuggestion = ({
   );
 };
 
+const renderDateInfo = (dateString?: string) => {
+  if (!dateString) return 'Sin fecha';
+  try {
+    const d = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      timeZone: 'America/Bogota',
+      weekday: 'long',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    };
+    const formatted = new Intl.DateTimeFormat('es-CO', options).format(d);
+    return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+  } catch (e) {
+    const d = new Date(dateString);
+    const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const h = d.getHours();
+    const m = d.getMinutes();
+    const ampm = h >= 12 ? 'p.m.' : 'a.m.';
+    const h12 = h % 12 || 12;
+    return `${dias[d.getDay()]}, ${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}/${d.getFullYear()}, ${h12.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} ${ampm}`;
+  }
+};
+
 type TabType = 'entrada' | 'salida' | 'registros';
 
 const InventarioScreen = ({ navigation }: any) => {
@@ -1388,7 +1415,7 @@ const InventarioScreen = ({ navigation }: any) => {
                     {item.nombre}
                   </RNText>
                   <RNText style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
-                    {item.fechaYHora ? new Date(item.fechaYHora).toLocaleDateString('es-CO') : 'Sin fecha'}
+                    {renderDateInfo((item as any).createdAt || item.fechaYHora)}
                   </RNText>
                 </View>
               </View>
@@ -1461,16 +1488,21 @@ const InventarioScreen = ({ navigation }: any) => {
       })();
 
       return (
-        <View
-          style={{
-            padding: 12,
-            marginBottom: 8,
-            borderRadius: 12,
-            backgroundColor: '#fff',
-            borderWidth: 2,
-            borderColor: isBulkEditing ? '#8b5cf6' : '#3b82f6',
-          }}
-        >
+        <View style={{ marginBottom: 8 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-start', marginBottom: 2, paddingHorizontal: 4 }}>
+            <RNText style={{ fontSize: 11, color: '#6b7280', fontWeight: 'bold' }}>
+              {renderDateInfo((item as any).createdAt || item.fechaYHora)}
+            </RNText>
+          </View>
+          <View
+            style={{
+              padding: 12,
+              borderRadius: 12,
+              backgroundColor: '#fff',
+              borderWidth: 2,
+              borderColor: isBulkEditing ? '#8b5cf6' : '#3b82f6',
+            }}
+          >
           <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
             {!isBulkEditing && (
               <TouchableOpacity onPress={handleCancelInlineEdit} style={{ marginRight: 12 }}>
@@ -1558,25 +1590,31 @@ const InventarioScreen = ({ navigation }: any) => {
             )}
           </View>
         </View>
-      );
-    }
+      </View>
+    );
+  }
 
     const showActionButtons = !selectionMode && ((isEntrada && canDeleteEntradas) || (!isEntrada && canDeleteSalidas));
 
     return (
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          padding: 12,
-          paddingRight: showActionButtons ? 70 : 12,
-          marginBottom: 8,
-          borderRadius: 12,
-          backgroundColor: isEntrada ? (isComprado ? '#f0fdf4' : isSelected ? '#eff6ff' : '#fff') : '#fff',
-          borderWidth: isEntrada && isSelected ? 2 : 1,
-          borderColor: isEntrada ? (isSelected ? '#3b82f6' : isComprado ? '#bbf7d0' : '#e5e7eb') : '#e5e7eb',
-        }}
-      >
+      <View style={{ marginBottom: 8 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-start', marginBottom: 2, paddingHorizontal: 4 }}>
+          <RNText style={{ fontSize: 11, color: '#6b7280', fontWeight: 'bold' }}>
+            {renderDateInfo((item as any).createdAt || item.fechaYHora)}
+          </RNText>
+        </View>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 12,
+            paddingRight: showActionButtons ? 70 : 12,
+            borderRadius: 12,
+            backgroundColor: isEntrada ? (isComprado ? '#f0fdf4' : isSelected ? '#eff6ff' : '#fff') : '#fff',
+            borderWidth: isEntrada && isSelected ? 2 : 1,
+            borderColor: isEntrada ? (isSelected ? '#3b82f6' : isComprado ? '#bbf7d0' : '#e5e7eb') : '#e5e7eb',
+          }}
+        >
         {isEntrada && selectionMode && canEditEntradas && (
           <TouchableOpacity 
             style={{
@@ -1726,6 +1764,7 @@ const InventarioScreen = ({ navigation }: any) => {
             </TouchableOpacity>
           </View>
         )}
+      </View>
       </View>
     );
   };
