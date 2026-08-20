@@ -84,7 +84,8 @@ const DescansoStatusAdmin = ({ turno }: { turno: any }) => {
     const regresoEstimado = new Date(inicio.getTime() + durationMinutos * 60 * 1000);
     const elapsedSecs = Math.floor((now.getTime() - inicio.getTime()) / 1000);
     const secsRemaining = Math.max(0, durationMinutos * 60 - elapsedSecs);
-    const isOvertime = secsRemaining === 0;
+    const isOvertime = elapsedSecs >= durationMinutos * 60;
+    const extraTime = elapsedSecs - (durationMinutos * 60);
     
     const bgColor = isOvertime ? '#fee2e2' : '#fef3c7';
     const borderColor = isOvertime ? '#fecaca' : '#fde68a';
@@ -113,7 +114,7 @@ const DescansoStatusAdmin = ({ turno }: { turno: any }) => {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.5)', padding: 4, borderRadius: 6 }}>
           <Ionicons name="timer-outline" size={14} color={textColor} style={{ marginRight: 4 }} />
           <Text style={{ color: textColor, fontSize: 12, fontWeight: 'bold' }}>
-            {isOvertime ? '¡Tiempo agotado!' : `${formatMinSec(secsRemaining)} restante`}
+            {isOvertime ? `¡Tiempo agotado! (+${formatMinSec(extraTime)})` : `${formatMinSec(secsRemaining)} restante`}
           </Text>
         </View>
       </View>
@@ -1450,8 +1451,8 @@ export default function AdminNominaScreen({ navigation }: any) {
                               <DescansoStatusAdmin turno={turno} />
                             </View>
                             
-                            <View style={styles.historyFooter}>
-                              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <View style={[styles.historyFooter, { flexWrap: 'wrap', gap: 8 }]}>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, flexWrap: 'wrap' }}>
                                 <Text style={styles.historyFooterText}>
                                   {turno.ceno ? '🍔 Cenó' : '❌ No cenó'}
                                 </Text>
@@ -1459,7 +1460,7 @@ export default function AdminNominaScreen({ navigation }: any) {
                                   Turno: ${Number(turno.valorTurno || 0).toLocaleString('es-CO')}
                                 </Text>
                               </View>
-                              <View style={{ flexDirection: 'row' }}>
+                              <View style={{ flexDirection: 'row', alignSelf: 'flex-end' }}>
                                 <TouchableOpacity style={styles.iconBtn} onPress={() => handleEditTurno(turno)}>
                                   <Ionicons name="pencil" size={18} color="#3b82f6" />
                                 </TouchableOpacity>

@@ -287,10 +287,18 @@ export default function MisTurnosScreen({ navigation }: any) {
                     </View>
                     
                     {turno.estado === 'COMPLETADO' && (() => {
+                      const CONCEPTOS_BONO = ['BONO', 'PREMIO', 'HORAS_EXTRAS'];
+
                       const descuentosCaja = turno.descuentos 
                         ? turno.descuentos
-                            .filter((d: any) => d.concepto !== 'CENA' && d.concepto !== 'LLEGADA_TARDE')
+                            .filter((d: any) => d.concepto !== 'CENA' && d.concepto !== 'LLEGADA_TARDE' && !CONCEPTOS_BONO.includes(d.concepto))
                             .reduce((sum: number, d: any) => sum + Number(d.valor), 0) 
+                        : 0;
+                        
+                      const bonosCaja = turno.descuentos
+                        ? turno.descuentos
+                            .filter((d: any) => CONCEPTOS_BONO.includes(d.concepto))
+                            .reduce((sum: number, d: any) => sum + Number(d.valor), 0)
                         : 0;
                       
                       const descuentosCenaBD = turno.descuentos
@@ -312,7 +320,7 @@ export default function MisTurnosScreen({ navigation }: any) {
                         : 0;
 
                       const costoCena = descuentosCenaBD > 0 ? descuentosCenaBD : (turno.ceno ? Number(turno.usuario?.cargo?.descuentoCena || 0) : 0);
-                      const neto = Number(turno.valorTurno || 0) - descuentosCaja - costoCena - descuentosLlegadaTarde;
+                      const neto = Number(turno.valorTurno || 0) - descuentosCaja - costoCena - descuentosLlegadaTarde + bonosCaja;
                       
                       return (
                         <View style={styles.financialContainer}>
@@ -324,6 +332,12 @@ export default function MisTurnosScreen({ navigation }: any) {
                             <View style={styles.financialRow}>
                               <Text style={styles.discountLabel}>Dtos:</Text>
                               <Text style={styles.discountValue}>-${descuentosCaja.toLocaleString('es-CO')}</Text>
+                            </View>
+                          )}
+                          {bonosCaja > 0 && (
+                            <View style={styles.financialRow}>
+                              <Text style={[styles.discountLabel, { color: '#10b981' }]}>Bono / Suma:</Text>
+                              <Text style={[styles.discountValue, { color: '#10b981' }]}>+${bonosCaja.toLocaleString('es-CO')}</Text>
                             </View>
                           )}
                           {turno.ceno && costoCena > 0 && (
