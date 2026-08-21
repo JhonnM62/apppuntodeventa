@@ -54,6 +54,17 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const setCachedMesas = useMesaStore((state) => state.setMesas);
   const shouldRefetchMesas = useMesaStore((state) => state.shouldRefetch);
 
+  const [searchInsumosText, setSearchInsumosText] = useState('');
+  const [selectedInsumos, setSelectedInsumos] = useState<any[]>([]);
+  const [discountOptionsModalVisible, setDiscountOptionsModalVisible] = useState(false);
+
+  const getFullImageUrl = (url?: string) => {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('file:') || url.startsWith('content:') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+    const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+    return url.startsWith('/uploads') ? `${baseUrl}${url}` : url;
+  };
+
   const [mesas, setMesas] = useState<Mesa[]>([]);
   const [comentariosDb, setComentariosDb] = useState<Comentario[]>([]);
   const [loading, setLoading] = useState(useProductStore.getState().productos.length === 0);
@@ -1281,10 +1292,10 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       <TouchableOpacity style={styles.productCard} onPress={() => addToCart(item)} activeOpacity={0.7}>
         <View style={styles.imageContainer}>
           {item.imagenUrl || item.image ? (
-            <Image source={{ uri: item.imagenUrl || item.image }} style={styles.productImage} resizeMode="cover" />
+            <Image source={{ uri: getFullImageUrl(item.imagenUrl || item.image) }} style={styles.productImage} resizeMode="cover" />
           ) : (
             <View style={styles.placeholderImage}>
-              <MaterialCommunityIcons name="food-fork-drink" size={24} color="#9ca3af" />
+              <Ionicons name="fast-food-outline" size={24} color="#9ca3af" />
             </View>
           )}
         </View>
