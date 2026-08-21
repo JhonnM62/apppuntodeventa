@@ -1583,16 +1583,16 @@ setSaving(false);
                 </TouchableOpacity>
               )}
               {!isReadOnly && modoOperacion === 'RESTAURANTE' && (
-                <>
-                  <TouchableOpacity onPress={handleArquearInsumos} className="px-2 py-1.5 rounded flex-row items-center mr-2 bg-orange-500">
-                    <Ionicons name="sync" size={14} color="#fff" />
-                    <Text className="text-white font-semibold ml-1 text-xs">Arquear</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => setModalInsumosVisible(true)} className="px-2 py-1.5 rounded flex-row items-center" style={{ backgroundColor: primaryColor || '#16a34a' }}>
-                    <Ionicons name="add" size={14} color="#fff" />
-                    <Text className="text-white font-semibold ml-1 text-xs">Agregar</Text>
-                  </TouchableOpacity>
-                </>
+                <TouchableOpacity onPress={handleArquearInsumos} className="px-2 py-1.5 rounded flex-row items-center mr-2 bg-orange-500">
+                  <Ionicons name="sync" size={14} color="#fff" />
+                  <Text className="text-white font-semibold ml-1 text-xs">Arquear</Text>
+                </TouchableOpacity>
+              )}
+              {!isReadOnly && (
+                <TouchableOpacity onPress={() => setModalInsumosVisible(true)} className="px-2 py-1.5 rounded flex-row items-center" style={{ backgroundColor: primaryColor || '#16a34a' }}>
+                  <Ionicons name="add" size={14} color="#fff" />
+                  <Text className="text-white font-semibold ml-1 text-xs">Agregar</Text>
+                </TouchableOpacity>
               )}
             </View>
           </View>
