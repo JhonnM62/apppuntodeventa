@@ -117,8 +117,17 @@ const ProductosScreen = ({ navigation }: Props) => {
     return result;
   }, [productos, searchText, selectedCategoria]);
 
+  const getFullImageUrl = (url?: string) => {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('file:') || url.startsWith('content:') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+    const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+    return url.startsWith('/uploads') ? `${baseUrl}${url}` : url;
+  };
+
   const renderItem = ({ item }: { item: any }) => {
     const isSelected = selectedItems.includes(item.IDproductos);
+    const imageUrl = getFullImageUrl(item.imagenUrl || item.image);
+
     return (
     <TouchableOpacity 
       activeOpacity={0.7}
@@ -138,8 +147,8 @@ const ProductosScreen = ({ navigation }: Props) => {
               <Ionicons name={isSelected ? "checkbox" : "square-outline"} size={24} color={isSelected ? "#3b82f6" : "#d1d5db"} />
             </TouchableOpacity>
           )}
-          {item.imagenUrl ? (
-            <Image source={{ uri: item.imagenUrl }} style={styles.productImage} />
+          {imageUrl ? (
+            <Image source={{ uri: imageUrl }} style={styles.productImage} />
           ) : (
             <View style={styles.placeholderImage}>
               <Ionicons name="fast-food-outline" size={24} color="#9ca3af" />

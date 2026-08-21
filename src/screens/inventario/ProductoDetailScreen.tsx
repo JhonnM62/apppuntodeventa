@@ -61,6 +61,13 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
   const [localImageUri, setLocalImageUri] = useState<string | null>(null);
   const [showImagePicker, setShowImagePicker] = useState(false);
 
+  const getFullImageUrl = (url?: string) => {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('file:') || url.startsWith('content:') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+    const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+    return url.startsWith('/uploads') ? `${baseUrl}${url}` : url;
+  };
+
   const [searchInsumoText, setSearchInsumoText] = useState('');
   const [selectedInsumoCategory, setSelectedInsumoCategory] = useState<string | null>(null);
 
@@ -400,9 +407,9 @@ const handleDelete = () => {
                   overflow: 'hidden'
                 }}
               >
-                {localImageUri || formData.imagenUrl ? (
+                {localImageUri || formData.imagenUrl || formData.image ? (
                   <Image 
-                    source={{ uri: localImageUri || formData.imagenUrl }} 
+                    source={{ uri: localImageUri || getFullImageUrl(formData.imagenUrl || formData.image) }} 
                     style={{ width: '100%', height: '100%' }}
                     resizeMode="cover"
                   />
