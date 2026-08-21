@@ -1117,6 +1117,14 @@ showAlert({
   };
 
   const [realtimeDuration, setRealtimeDuration] = useState<string | null>(null);
+  const [repartidores, setRepartidores] = useState<any[]>([]);
+
+  const getFullImageUrl = (url?: string) => {
+    if (!url) return '';
+    if (url.startsWith('http') || url.startsWith('file:') || url.startsWith('content:') || url.startsWith('data:') || url.startsWith('blob:')) return url;
+    const baseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1';
+    return url.startsWith('/uploads') ? `${baseUrl}${url}` : url;
+  };
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -1300,8 +1308,8 @@ showAlert({
                     <View key={prod.IDorderventas || prod.producto?.IDproductos || idx} style={{ marginBottom: 12 }}>
                       <View style={styles.productItem}>
                         <View style={styles.productImageContainer}>
-                          {prod.imagenUrl || prod.producto?.imagenUrl ? (
-                            <Image source={{ uri: prod.imagenUrl || prod.producto?.imagenUrl }} style={styles.productImage} />
+                          {prod.imagenUrl || prod.producto?.imagenUrl || prod.producto?.image ? (
+                            <Image source={{ uri: getFullImageUrl(prod.imagenUrl || prod.producto?.imagenUrl || prod.producto?.image) }} style={styles.productImage} />
                           ) : (
                             <View style={[styles.productImage, styles.productImagePlaceholder]}>
                               <MaterialCommunityIcons name="image-off" size={20} color="#d1d5db" />
