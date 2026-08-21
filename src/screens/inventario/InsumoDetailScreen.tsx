@@ -306,7 +306,7 @@ const InsumoDetailScreen = ({ navigation, route }: Props) => {
     setSaving(true);
     try {
       let finalImageUrl = formData.imageUrl;
-      if (localImageUri && (localImageUri.startsWith('file://') || localImageUri.startsWith('content://'))) {
+      if (localImageUri && (localImageUri.startsWith('file://') || localImageUri.startsWith('content://') || localImageUri.startsWith('blob:') || localImageUri.startsWith('data:'))) {
         try {
           const uploadedUrl = await insumosService.uploadImage(localImageUri);
           if (uploadedUrl) {

@@ -1,4 +1,5 @@
 import api from './api';
+import { Platform } from 'react-native';
 
 export type InsumoItem = {
   IDalimentos: string;
@@ -160,16 +161,23 @@ export const insumosService = {
   },
 
   async uploadImage(imageUri: string): Promise<string> {
-    const filename = imageUri.split('/').pop() || 'image.jpg';
-    const match = /\.(\w+)$/.exec(filename);
-    const type = match ? `image/${match[1]}` : `image/jpeg`;
-
     const formData = new FormData();
-    formData.append('file', {
-      uri: imageUri,
-      name: filename,
-      type,
-    } as any);
+
+    if (Platform.OS === 'web') {
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      formData.append('file', blob, 'image.jpg');
+    } else {
+      const filename = imageUri.split('/').pop() || 'image.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+      formData.append('file', {
+        uri: imageUri,
+        name: filename,
+        type,
+      } as any);
+    }
 
     const response = await api.post('/insumos/upload-image', formData, {
       headers: {

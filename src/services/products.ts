@@ -55,3 +55,38 @@ export const deleteProduct = async (id: string) => {
     throw error;
   }
 };
+
+import { Platform } from 'react-native';
+
+export const uploadImage = async (imageUri: string): Promise<string> => {
+  try {
+    const formData = new FormData();
+
+    if (Platform.OS === 'web') {
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      formData.append('file', blob, 'image.jpg');
+    } else {
+      const filename = imageUri.split('/').pop() || 'image.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image/jpeg`;
+
+      formData.append('file', {
+        uri: imageUri,
+        name: filename,
+        type,
+      } as any);
+    }
+
+    const response = await api.post('/productos/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data?.imageUrl || (response as any).imageUrl || '';
+  } catch (error) {
+    console.error('Error uploading product image:', error);
+    throw error;
+  }
+};

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Text as RNText, Image, ActivityIndicator, Platform, TextInput } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Text as RNText, Image, ActivityIndicator, Platform, TextInput, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Ionicons } from '@expo/vector-icons';
@@ -9,7 +9,8 @@ import { RootStackParamList } from '../../navigation/RootNavigator';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
-import { getProductById, createProduct, updateProduct, deleteProduct } from '../../services/products';
+import { getProductById, createProduct, updateProduct, deleteProduct, uploadImage } from '../../services/products';
+import * as ImagePicker from 'expo-image-picker';
 import { insumosService } from '../../services/insumos';
 import categoriasService from '../../services/categorias';
 import Toast from 'react-native-toast-message';
@@ -56,6 +57,9 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
   const [showInsumoSelector, setShowInsumoSelector] = useState(false);
   const [selectedInsumoId, setSelectedInsumoId] = useState('');
   const [newInsumoCantidad, setNewInsumoCantidad] = useState('1');
+
+  const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+  const [showImagePicker, setShowImagePicker] = useState(false);
 
   const [searchInsumoText, setSearchInsumoText] = useState('');
   const [selectedInsumoCategory, setSelectedInsumoCategory] = useState<string | null>(null);
@@ -159,6 +163,19 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
 
     setSaving(true);
     try {
+      let finalImageUrl = formData.imagenUrl || formData.image || '';
+      if (localImageUri && (localImageUri.startsWith('file://') || localImageUri.startsWith('content://') || localImageUri.startsWith('blob:') || localImageUri.startsWith('data:'))) {
+        try {
+          const uploadedUrl = await uploadImage(localImageUri);
+          if (uploadedUrl) {
+            finalImageUrl = uploadedUrl;
+          }
+        } catch (uploadError) {
+          console.error('[ProductoDetailScreen] Error subiendo imagen:', uploadError);
+          showAlert({ type: 'warning', title: 'Aviso', message: 'Se guardará el producto, pero falló la subida de la imagen.' });
+        }
+      }
+
       const payload = {
         nombre: formData.nombre,
         categoria: formData.categoria,
@@ -167,8 +184,8 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
         cantidad: Number(formData.cantidad) || 0,
         precioUnitario: Number(formData.precioUnitario) || 0,
         precioDeCompra: Number(formData.precioDeCompra) || 0,
-        image: formData.image,
-        imagenUrl: formData.imagenUrl,
+        image: finalImageUrl,
+        imagenUrl: finalImageUrl,
         unidades: formData.unidades,
         descontar: formData.descontar || 'no',
         llevarControlEnCaja: formData.llevarControlEnCaja || 'no',
@@ -368,12 +385,37 @@ const handleDelete = () => {
             </View>
 
             <View style={styles.inputGroup}>
-              <RNText style={styles.label}>URL de Imagen</RNText>
-              <Input
-                value={formData.imagenUrl}
-                onChangeText={(t) => handleChange('imagenUrl', t)}
-                placeholder="https://ejemplo.com/imagen.jpg"
-              />
+              <RNText style={styles.label}>Imagen del Producto</RNText>
+              <TouchableOpacity 
+                onPress={() => setShowImagePicker(true)}
+                style={{
+                  height: 160,
+                  backgroundColor: '#f9fafb',
+                  borderRadius: 16,
+                  borderWidth: 2,
+                  borderColor: '#e5e7eb',
+                  borderStyle: 'dashed',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  overflow: 'hidden'
+                }}
+              >
+                {localImageUri || formData.imagenUrl ? (
+                  <Image 
+                    source={{ uri: localImageUri || formData.imagenUrl }} 
+                    style={{ width: '100%', height: '100%' }}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={{ alignItems: 'center' }}>
+                    <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#e0e7ff', justifyContent: 'center', alignItems: 'center', marginBottom: 8 }}>
+                      <Ionicons name="cloud-upload-outline" size={24} color="#4f46e5" />
+                    </View>
+                    <RNText style={{ fontSize: 14, fontWeight: '600', color: '#374151' }}>Toca para subir una foto</RNText>
+                    <RNText style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>Formatos: JPG, PNG, WEBP</RNText>
+                  </View>
+                )}
+              </TouchableOpacity>
             </View>
 
             <View style={styles.row}>
@@ -550,6 +592,61 @@ const handleDelete = () => {
           </Button>
         )}
       </View>
+
+      {/* MODAL PARA SELECCIONAR IMAGEN */}
+      <Modal visible={showImagePicker} transparent animationType="fade">
+        <TouchableOpacity 
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} 
+          activeOpacity={1} 
+          onPress={() => setShowImagePicker(false)}
+        >
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 }}>
+            <RNText style={{ fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 8 }}>Subir Imagen</RNText>
+            <RNText style={{ fontSize: 14, color: '#6b7280', marginBottom: 20 }}>Elige una opción</RNText>
+            
+            <View style={{ flexDirection: 'row', gap: 16 }}>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#f3f4f6', padding: 16, borderRadius: 16, alignItems: 'center' }}
+                onPress={async () => {
+                  setShowImagePicker(false);
+                  if (!ImagePicker) return;
+                  const permission = await ImagePicker.requestCameraPermissionsAsync();
+                  if (!permission.granted) return;
+                  const result = await ImagePicker.launchCameraAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    allowsEditing: true,
+                    aspect: [1, 1],
+                    quality: 0.5,
+                  });
+                  if (!result.canceled) setLocalImageUri(result.assets[0].uri);
+                }}
+              >
+                <Ionicons name="camera" size={28} color="#10b981" />
+                <RNText style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginTop: 8 }}>CÁMARA</RNText>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={{ flex: 1, backgroundColor: '#f3f4f6', padding: 16, borderRadius: 16, alignItems: 'center' }}
+                onPress={async () => {
+                  setShowImagePicker(false);
+                  if (!ImagePicker) return;
+                  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                  if (!permission.granted) return;
+                  const result = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                    allowsEditing: true,
+                    aspect: [1, 1],
+                    quality: 0.5,
+                  });
+                  if (!result.canceled) setLocalImageUri(result.assets[0].uri);
+                }}
+              >
+                <Ionicons name="images" size={28} color="#3b82f6" />
+                <RNText style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginTop: 8 }}>GALERÍA</RNText>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };

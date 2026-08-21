@@ -67,17 +67,26 @@ export const deleteGasto = async (id: string) => {
   return data;
 };
 
-export const uploadGastoImage = async (imageUri: string): Promise<string> => {
-  const filename = imageUri.split('/').pop() || 'comprobante.jpg';
-  const match = /\.(\w+)$/.exec(filename);
-  const type = match ? (match[1].toLowerCase() === 'pdf' ? 'application/pdf' : `image/${match[1]}`) : `image/jpeg`;
+import { Platform } from 'react-native';
 
+export const uploadGastoImage = async (imageUri: string): Promise<string> => {
   const formData = new FormData();
-  formData.append('file', {
-    uri: imageUri,
-    name: filename,
-    type,
-  } as any);
+
+  if (Platform.OS === 'web') {
+    const response = await fetch(imageUri);
+    const blob = await response.blob();
+    formData.append('file', blob, 'comprobante.jpg');
+  } else {
+    const filename = imageUri.split('/').pop() || 'comprobante.jpg';
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? (match[1].toLowerCase() === 'pdf' ? 'application/pdf' : `image/${match[1]}`) : `image/jpeg`;
+
+    formData.append('file', {
+      uri: imageUri,
+      name: filename,
+      type,
+    } as any);
+  }
 
   const response = await api.post('/gastos/upload-image', formData, {
     headers: {
