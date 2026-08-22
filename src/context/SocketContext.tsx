@@ -36,6 +36,7 @@ import {
   ErrorPayload,
 } from '../types/socket.types';
 import useAuthStore from '../store/useAuthStore';
+import { useProductStore } from '../store/useProductStore';
 import Toast from 'react-native-toast-message';
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:3000';
@@ -151,6 +152,19 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       newSocket.on('joined', (data: JoinedPayload) => {
         if (!isMountedRef.current) return;
         console.log('[SocketContext] Joined room:', data.room);
+      });
+
+      // Global listeners to ensure cache is cleared even when screens are unmounted
+      newSocket.on('refreshProductos', () => {
+        if (!isMountedRef.current) return;
+        console.log('[SocketContext] Global refreshProductos received');
+        useProductStore.getState().clearCache();
+      });
+
+      newSocket.on('refreshInsumos', () => {
+        if (!isMountedRef.current) return;
+        console.log('[SocketContext] Global refreshInsumos received');
+        useProductStore.getState().clearCache();
       });
 
       newSocket.on('userPermissionsUpdated', (data: { userId: string, permisos: any, rol: string }) => {
