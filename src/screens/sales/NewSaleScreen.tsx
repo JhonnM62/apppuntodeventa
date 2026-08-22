@@ -42,6 +42,8 @@ type ProductItem = {
   image?: string;
   categoriaNombre?: string;
   categoria?: string;
+  mostrarDisponibilidad?: boolean;
+  disponibilidadCalculada?: number;
 };
 
 const CATEGORIES_ORDER = ['LO MAS VENDIDO', 'GRANIZADOS', 'BEBIDAS', 'COMIDAS', 'COMBOS', 'OTROS'];
@@ -1288,14 +1290,22 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   const renderProduct = ({ item }: { item: ProductItem }) => {
     const price = item.precioUnitario || item.Precio_Unitario || 0;
+    const isZero = item.disponibilidadCalculada === 0;
+
     return (
       <TouchableOpacity style={styles.productCard} onPress={() => addToCart(item)} activeOpacity={0.7}>
         <View style={styles.imageContainer}>
           {item.imagenUrl || item.image ? (
-            <Image source={{ uri: getFullImageUrl(item.imagenUrl || item.image) }} style={styles.productImage} resizeMode="cover" />
+            <Image source={{ uri: getFullImageUrl(item.imagenUrl || item.image) }} style={[styles.productImage, item.mostrarDisponibilidad && isZero && { opacity: 0.5 }]} resizeMode="cover" />
           ) : (
             <View style={styles.placeholderImage}>
               <Ionicons name="fast-food-outline" size={24} color="#9ca3af" />
+            </View>
+          )}
+
+          {item.mostrarDisponibilidad && item.disponibilidadCalculada !== undefined && (
+            <View style={{ backgroundColor: isZero ? '#ef4444' : '#3b82f6', position: 'absolute', top: 5, right: 5, borderRadius: 12, paddingHorizontal: 6, paddingVertical: 2, minWidth: 24, alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1 }}>
+              <Text style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>{item.disponibilidadCalculada}</Text>
             </View>
           )}
         </View>

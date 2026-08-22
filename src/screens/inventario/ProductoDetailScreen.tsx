@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, ScrollView, StyleSheet, TouchableOpacity, Text as RNText, Image, ActivityIndicator, Platform, TextInput, Modal } from 'react-native';
+import { View, ScrollView, StyleSheet, TouchableOpacity, Text as RNText, Image, ActivityIndicator, Platform, TextInput, Modal, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,6 +50,7 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
     unidades: 'Und',
     descontar: 'no',
     llevarControlEnCaja: 'no',
+    mostrarDisponibilidad: false,
     orden: 0,
     recetaInsumos: []
   });
@@ -196,6 +197,7 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
         unidades: formData.unidades,
         descontar: formData.descontar || 'no',
         llevarControlEnCaja: formData.llevarControlEnCaja || 'no',
+        mostrarDisponibilidad: formData.mostrarDisponibilidad || false,
         orden: Number(formData.orden) || 0,
         recetaInsumos: formData.recetaInsumos.map((ri: any) => ({
           insumo: ri.insumo || ri.insumoRelacion?.IDalimentos,
@@ -337,6 +339,27 @@ const handleDelete = () => {
                 value={formData.nombre}
                 onChangeText={(t) => handleChange('nombre', t)}
                 placeholder="Ej. Hamburguesa Sencilla"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <RNText style={styles.label}>Ocultar Producto (Mostrar: 'si' o 'no')</RNText>
+              <Input
+                value={formData.mostrar}
+                onChangeText={(t) => handleChange('mostrar', t)}
+              />
+            </View>
+
+            <View style={[styles.inputGroup, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }]}>
+              <View style={{ flex: 1 }}>
+                <RNText style={styles.label}>Mostrar Disponibilidad en Caja</RNText>
+                <RNText style={{ fontSize: 12, color: '#6b7280' }}>Calcula y muestra cuántas unidades se pueden vender según el stock de la receta.</RNText>
+              </View>
+              <Switch
+                value={formData.mostrarDisponibilidad}
+                onValueChange={(val) => handleChange('mostrarDisponibilidad', val)}
+                trackColor={{ false: '#d1d5db', true: '#10b981' }}
+                thumbColor={formData.mostrarDisponibilidad ? '#ffffff' : '#f3f4f6'}
               />
             </View>
 
