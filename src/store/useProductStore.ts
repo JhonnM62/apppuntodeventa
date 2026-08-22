@@ -53,7 +53,7 @@ export const useProductStore = create<ProductStore>()(
         return Date.now() - lastFetched > CACHE_DURATION;
       },
 
-      clearCache: () => set({ productos: [], categorias: [], lastFetched: null }),
+      clearCache: () => set({ lastFetched: null }),
     }),
     {
       name: 'product-cache',

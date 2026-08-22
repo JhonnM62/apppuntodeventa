@@ -272,6 +272,16 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   useSocketEvent('ordenRecibida', handleNewOrderFromSocket, []);
   useSocketEvent('ordenActualizada', handleNewOrderFromSocket, []);
 
+  const handleRefreshData = useCallback(() => {
+    console.log('[NewSaleScreen] Refreshing data via socket event');
+    // Clear cache timestamp just in case, though SocketContext also does it
+    useProductStore.getState().clearCache();
+    fetchData();
+  }, [fetchData]);
+
+  useSocketEvent('refreshProductos', handleRefreshData, [handleRefreshData]);
+  useSocketEvent('refreshInsumos', handleRefreshData, [handleRefreshData]);
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchData();
@@ -1312,7 +1322,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             </View>
           )}
 
-          {item.mostrarDisponibilidad && item.disponibilidadCalculada !== undefined && (
+          {item.mostrarDisponibilidad && item.disponibilidadCalculada !== undefined && item.disponibilidadCalculada !== null && (
             <View style={{ backgroundColor: isZero ? '#ef4444' : '#3b82f6', position: 'absolute', top: 5, right: 5, borderRadius: 12, paddingHorizontal: 6, paddingVertical: 2, minWidth: 24, alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1 }}>
               <Text style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>{item.disponibilidadCalculada}</Text>
             </View>

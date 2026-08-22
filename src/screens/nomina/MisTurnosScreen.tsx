@@ -12,6 +12,7 @@ import useAuthStore from '../../store/useAuthStore';
 import SignatureModal from '../../components/ui/SignatureModal';
 import LiquidacionViewerModal from '../../components/ui/LiquidacionViewerModal';
 import { generarLiquidacionHTML } from '../../utils/nominaPdf';
+import DescansoCard from './DescansoCard';
 
 export default function MisTurnosScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
@@ -285,6 +286,22 @@ export default function MisTurnosScreen({ navigation }: any) {
                         )}
                       </View>
                     </View>
+                    
+                    {turno.estado === 'ACTIVO' && (
+                      <View style={{ marginTop: 12 }}>
+                        <DescansoCard
+                          turnoId={turno.IDturno}
+                          horaEntrada={turno.horaEntrada || turno.fecha}
+                          duracionMinutos={turno.usuario?.cargo?.duracionDescanso || 0}
+                          cargo={turno.usuario?.cargo}
+                          inicioDescanso={turno.inicioDescanso}
+                          finDescanso={turno.finDescanso}
+                          onDescansoChange={(updated) => {
+                            setTurnos(prev => prev.map(t => t.IDturno === turno.IDturno ? { ...t, ...updated } : t));
+                          }}
+                        />
+                      </View>
+                    )}
                     
                     {turno.estado === 'COMPLETADO' && (() => {
                       const CONCEPTOS_BONO = ['BONO', 'PREMIO', 'HORAS_EXTRAS'];

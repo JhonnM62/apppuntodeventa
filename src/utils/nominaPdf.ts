@@ -52,14 +52,27 @@ export const generarLiquidacionHTML = (data: {
   // Sort descuentos: most recent first (descending by fecha)
   const descuentosSorted = [...descuentos].sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
 
-  const descuentosRows = descuentosSorted.map(d => `
-    <tr>
-      <td>${formatDate(d.fecha)}</td>
-      <td>${d.concepto}</td>
-      <td>${d.descripcion || '---'}</td>
-      <td style="text-align: right">${formatMoney(d.valor)}</td>
-    </tr>
-  `).join('');
+  const CONCEPTOS_BONO = ['BONO', 'PREMIO', 'HORAS_EXTRAS'];
+  
+  const descuentosRows = descuentosSorted.map(d => {
+    const isBono = CONCEPTOS_BONO.includes(d.concepto);
+    return `
+      <tr>
+        <td>${formatDate(d.fecha)}</td>
+        <td>${d.concepto}</td>
+        <td>${d.descripcion || '---'}</td>
+        <td style="text-align: right; color: ${isBono ? '#059669' : '#ef4444'};">
+          ${isBono ? '+' : '-'} ${formatMoney(d.valor)}
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  const totalBonos = descuentos
+    .filter(d => CONCEPTOS_BONO.includes(d.concepto))
+    .reduce((sum, d) => sum + Number(d.valor), 0);
+    
+  const brutoTurnos = totalBruto - totalBonos;
 
   const formatHourString = (str?: string) => {
     if (!str) return 'Descanso';
@@ -202,22 +215,32 @@ export const generarLiquidacionHTML = (data: {
         </tbody>
       </table>
 
-      <h3 style="color: #374151; margin-bottom: 10px;">Detalle de Descuentos (${descuentos.length})</h3>
+      <h3 style="color: #374151; margin-bottom: 10px;">Detalle de Descuentos y Bonos (${descuentos.length})</h3>
       <table>
         <thead>
           <tr>
             <th>Fecha</th>
             <th>Concepto</th>
             <th>Descripción</th>
-            <th style="text-align: right">Valor Descontado</th>
+            <th style="text-align: right">Valor</th>
           </tr>
         </thead>
         <tbody>
-          ${descuentosRows || '<tr><td colspan="4" style="text-align: center; color: #6b7280;">No hay descuentos aplicados</td></tr>'}
+          ${descuentosRows || '<tr><td colspan="4" style="text-align: center; color: #6b7280;">No hay descuentos o bonos aplicados</td></tr>'}
         </tbody>
       </table>
 
       <div class="totals">
+        <div class="total-row">
+          <span class="info-label">Total Base (Turnos):</span>
+          <span class="info-value">${formatMoney(brutoTurnos)}</span>
+        </div>
+        ${totalBonos > 0 ? `
+        <div class="total-row">
+          <span class="info-label" style="color: #059669;">Total Bonos/Sumas:</span>
+          <span class="info-value" style="color: #059669;">+ ${formatMoney(totalBonos)}</span>
+        </div>
+        ` : ''}
         <div class="total-row">
           <span class="info-label">Total Bruto:</span>
           <span class="info-value">${formatMoney(totalBruto)}</span>

@@ -25,6 +25,7 @@ export interface NotificationSettings {
   notifyGastoDeleted: boolean;
   notifyTurnoOpened: boolean;
   notifyTurnoClosed: boolean;
+  notifyTurnoDescanso: boolean;
 }
 
 export interface NotificationHistoryItem {

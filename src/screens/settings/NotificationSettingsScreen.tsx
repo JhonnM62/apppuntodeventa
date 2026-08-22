@@ -136,6 +136,7 @@ export default function NotificationSettingsScreen() {
           </View>
           {renderSwitch('Apertura de Turno (Check-in)', 'notifyTurnoOpened', true)}
           {renderSwitch('Cierre de Turno (Check-out)', 'notifyTurnoClosed', true)}
+          {renderSwitch('Inicio / Fin / Exceso de Descanso', 'notifyTurnoDescanso', true)}
         </View>
 
         {/* Sección Dinero Guardado */}
