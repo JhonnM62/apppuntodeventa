@@ -263,6 +263,11 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   useSocketEvent('ordenRecibida', handleNewOrderFromSocket, []);
   useSocketEvent('ordenActualizada', handleNewOrderFromSocket, []);
 
+  useSocketEvent('refreshProductos', () => {
+    useProductStore.getState().clearCache();
+    fetchData();
+  }, [fetchData]);
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchData();
