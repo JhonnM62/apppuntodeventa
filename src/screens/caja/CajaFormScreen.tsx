@@ -2873,8 +2873,7 @@ setSaving(false);
                                 });
 
                                 const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
-                                const nextVal = addQtyFreeAction === 'merma' ? amountToAdd : currentVal + amountToAdd;
-                                setValue(`insumos.${addQtyIndex}.cantApertura`, nextVal, { shouldDirty: true });
+                                setValue(`insumos.${addQtyIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
                                 setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
                                 showAlert({ title: 'Éxito', message: 'Entrada registrada y sumada al stock global.', type: 'success' });
                                 setAddQtyModalVisible(false);
