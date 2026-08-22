@@ -268,6 +268,11 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     fetchData();
   }, [fetchData]);
 
+  useSocketEvent('refreshInsumos', () => {
+    useProductStore.getState().clearCache();
+    fetchData();
+  }, [fetchData]);
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchData();
