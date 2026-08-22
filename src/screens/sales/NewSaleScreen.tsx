@@ -8,7 +8,7 @@ import { getProducts } from '../../services/products';
 import { getMesas, Mesa } from '../../services/mesas';
 import { getComentarios, Comentario } from '../../services/comentarios';
 import { getClientes, Cliente } from '../../services/clientes.service';
-import { createSale, addProductosToVenta, SalePayload } from '../../services/sales';
+import { createSale, addProductosToVenta, SalePayload, getSales } from '../../services/sales';
 import { processVoiceOrderWithIA } from '../../services/api';
 import { useSocket, useSocketEmitter, useSocketEvent } from '../../hooks';
 import { useCustomAlert } from '../../context/CustomAlertContext';
@@ -16,6 +16,7 @@ import { Room } from '../../types/socket.types';
 import Toast from 'react-native-toast-message';
 import { useProductStore } from '../../store/useProductStore';
 import { useMesaStore } from '../../store/useMesaStore';
+import { useSalesStore } from '../../store/useSalesStore';
 import usePrinterStore from '../../store/usePrinterStore';
 import { Text } from '../../components/ui/text';
 import { Button } from '../../components/ui/button';
@@ -185,6 +186,14 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       
       comentariosPromiseIndex = promises.length;
       promises.push(getComentarios());
+      
+      // Fetch active sales to know which mesas are occupied
+      promises.push(getSales({ limit: 300 }).then(res => {
+        const data = res?.data || res;
+        if (Array.isArray(data)) {
+          useSalesStore.getState().setVentas(data);
+        }
+      }).catch(err => console.log('Error fetching active sales for mesas', err)));
 
       const results = await Promise.all(promises);
 
@@ -1545,9 +1554,25 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                     <TouchableOpacity
                       style={[styles.mesaOption, { backgroundColor: '#fef3c7', borderColor: '#fde68a', borderWidth: 1 }]}
                       onPress={() => { 
+                        const mesaName = mesaSearchQuery.trim();
+                        const activeVentas = useSalesStore.getState().ventas;
+                        const isOccupied = activeVentas.some(v => 
+                          (v.mesa === mesaName || v.mesa?.toLowerCase() === mesaName.toLowerCase()) && 
+                          (v.estado === 'TOMADO' || v.estado === 'ENTREGADO')
+                        );
+
+                        if (isOccupied && (!editingVenta || (editingVenta.mesa !== mesaName && editingVenta.mesa?.toLowerCase() !== mesaName.toLowerCase()))) {
+                          useCustomAlert().showAlert({
+                            title: 'Mesa Ocupada',
+                            message: `La mesa "${mesaName}" ya tiene un pedido abierto. Por favor, factura o cierra el pedido actual antes de usar esta mesa nuevamente.`,
+                            type: 'warning'
+                          });
+                          return;
+                        }
+
                         setSelectedMesa({
-                          IdMesas: mesaSearchQuery.trim(),
-                          nombre: mesaSearchQuery.trim(),
+                          IdMesas: mesaName,
+                          nombre: mesaName,
                         });
                         setMesaModalVisible(false); 
                       }}
@@ -1563,6 +1588,21 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                       key={mesa.IdMesas}
                       style={[styles.mesaOption, selectedMesa?.IdMesas === mesa.IdMesas && styles.mesaOptionActive]}
                       onPress={() => { 
+                        const activeVentas = useSalesStore.getState().ventas;
+                        const isOccupied = activeVentas.some(v => 
+                          (v.mesa === mesa.IdMesas || v.mesa === mesa.nombre) && 
+                          (v.estado === 'TOMADO' || v.estado === 'ENTREGADO')
+                        );
+
+                        if (isOccupied && (!editingVenta || (editingVenta.mesa !== mesa.IdMesas && editingVenta.mesa !== mesa.nombre))) {
+                          useCustomAlert().showAlert({
+                            title: 'Mesa Ocupada',
+                            message: `La mesa "${mesa.nombre}" tiene un pedido abierto. Por favor, factura o cierra el pedido actual antes de usar esta mesa nuevamente.`,
+                            type: 'warning'
+                          });
+                          return;
+                        }
+
                         setSelectedMesa(mesa);
                         setMesaModalVisible(false); 
                       }}
