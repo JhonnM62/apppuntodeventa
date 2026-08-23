@@ -1572,7 +1572,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                         );
 
                         if (isOccupied && (!editingVenta || (editingVenta.mesa !== mesaName && editingVenta.mesa?.toLowerCase() !== mesaName.toLowerCase()))) {
-                          useCustomAlert().showAlert({
+                          showAlert({
                             title: 'Mesa Ocupada',
                             message: `La mesa "${mesaName}" ya tiene un pedido abierto. Por favor, factura o cierra el pedido actual antes de usar esta mesa nuevamente.`,
                             type: 'warning'
@@ -1605,7 +1605,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                         );
 
                         if (isOccupied && (!editingVenta || (editingVenta.mesa !== mesa.IdMesas && editingVenta.mesa !== mesa.nombre))) {
-                          useCustomAlert().showAlert({
+                          showAlert({
                             title: 'Mesa Ocupada',
                             message: `La mesa "${mesa.nombre}" tiene un pedido abierto. Por favor, factura o cierra el pedido actual antes de usar esta mesa nuevamente.`,
                             type: 'warning'
