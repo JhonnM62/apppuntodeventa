@@ -80,6 +80,7 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
     const isId = (val: string) => {
       if (!val) return false;
       return (
+        val.match(/^[0-9a-fA-F]{8}$/) ||    // Detecta IDs Hex de 8 caracteres
         val.match(/^[0-9a-fA-F-]{12,}$/) || // Detecta UUIDs y IDs Hex largos
         val.match(/^c[a-z0-9]{20,}$/) ||    // Detecta CUIDs (Prisma)
         val.length >= 20 // Regla general: si tiene más de 20 caracteres y no tiene espacios, probablemente sea un ID

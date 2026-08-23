@@ -109,7 +109,7 @@ const parseOrden = (item: any): OrderInventarioItem => ({
   precioActual: item.precioActual ? Number(item.precioActual) : undefined,
   subtotal: item.subtotal ? Number(item.subtotal) : undefined,
   precioAnterior: item.precioAnterior ? Number(item.precioAnterior) : undefined,
-  cantInsumos: item.cantInsumos || item.Cant_insumos,
+  cantInsumos: item.cantInsumos ?? item.Cant_insumos,
   agregarAInsumos: item.agregarAInsumos || item['Agregar a Insumos?'],
   provedor: item.provedor || item.Provedor || '',
   telefonoProvedor: item.telefonoProvedor || item.Telefono_Provedor || '',
