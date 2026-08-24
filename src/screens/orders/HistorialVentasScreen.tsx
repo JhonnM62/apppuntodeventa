@@ -1684,7 +1684,62 @@ export default function HistorialVentasScreen({ navigation }: any) {
                   <Text className="text-gray-500 text-lg mt-4 font-medium">No hay productos vendidos hoy</Text>
                 </View>
               ) : (
-                Object.keys(statsProducts).sort().map((categoria) => {
+                <>
+                  {(() => {
+                    const isBebida = (categoria: string) => {
+                      const cat = categoria.toLowerCase();
+                      return cat.includes('bebida') || cat.includes('gaseosa') || cat.includes('jugo') || cat.includes('cerveza') || cat.includes('licor') || cat.includes('agua') || cat.includes('te');
+                    };
+                    
+                    let totalPlatos = 0;
+                    let totalBebidas = 0;
+                    let qtyPlatos = 0;
+                    let qtyBebidas = 0;
+
+                    Object.keys(statsProducts).forEach(cat => {
+                      const catTotal = Object.values(statsProducts[cat]).reduce((sum, p) => sum + p.total, 0);
+                      const catQty = Object.values(statsProducts[cat]).reduce((sum, p) => sum + p.cantidad, 0);
+                      if (isBebida(cat)) {
+                        totalBebidas += catTotal;
+                        qtyBebidas += catQty;
+                      } else {
+                        totalPlatos += catTotal;
+                        qtyPlatos += catQty;
+                      }
+                    });
+
+                    return (
+                      <View className="flex-row mb-6 mt-2" style={{ gap: 12 }}>
+                        <View className="flex-1 bg-amber-50 rounded-2xl p-4 border-l-4 border-amber-500" style={{ elevation: 2, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.1, shadowRadius: 2 }}>
+                          <View className="flex-row justify-between items-start">
+                            <View className="bg-amber-100 p-2 rounded-xl">
+                              <Ionicons name="restaurant" size={24} color="#d97706" />
+                            </View>
+                            <Text className="text-amber-700 font-bold text-xs uppercase tracking-wider">PLATOS</Text>
+                          </View>
+                          <View className="mt-3">
+                            <Text className="text-3xl font-black text-amber-900">{qtyPlatos} <Text className="text-sm font-bold text-amber-700">uds</Text></Text>
+                            <Text className="text-lg font-bold text-amber-600 mt-1">{formatCurrency(totalPlatos)}</Text>
+                          </View>
+                        </View>
+                        
+                        <View className="flex-1 bg-blue-50 rounded-2xl p-4 border-l-4 border-blue-500" style={{ elevation: 2, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.1, shadowRadius: 2 }}>
+                          <View className="flex-row justify-between items-start">
+                            <View className="bg-blue-100 p-2 rounded-xl">
+                              <Ionicons name="water" size={24} color="#2563eb" />
+                            </View>
+                            <Text className="text-blue-700 font-bold text-xs uppercase tracking-wider">BEBIDAS</Text>
+                          </View>
+                          <View className="mt-3">
+                            <Text className="text-3xl font-black text-blue-900">{qtyBebidas} <Text className="text-sm font-bold text-blue-700">uds</Text></Text>
+                            <Text className="text-lg font-bold text-blue-600 mt-1">{formatCurrency(totalBebidas)}</Text>
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })()}
+                  
+                  {Object.keys(statsProducts).sort().map((categoria) => {
                   const productos = statsProducts[categoria];
                   const totalCategoria = Object.values(productos).reduce((sum, p) => sum + p.total, 0);
                   const totalItemsCategoria = Object.values(productos).reduce((sum, p) => sum + p.cantidad, 0);
@@ -1718,6 +1773,7 @@ export default function HistorialVentasScreen({ navigation }: any) {
                     </View>
                   );
                 })
+                </>
               )}
               <View className="h-10" />
             </ScrollView>
