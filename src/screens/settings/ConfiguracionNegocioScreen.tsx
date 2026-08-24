@@ -176,6 +176,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const handleSave = async () => {
     try {
       setSaving(true);
+      const { preguntarFacturaElectronica, ...factusToSave } = factusConfig;
       await Promise.all([
         updateConfiguracion({ 
           horaCorteDia, modoOperacion, nombreComercial, nit, direccion, telefono,
@@ -183,7 +184,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           longitudNegocio: longitudNegocio ? parseFloat(longitudNegocio) : undefined,
           radioGeocercaM: radioGeocercaM ? parseInt(radioGeocercaM, 10) : 100,
           minutosGraciaLlegadaTarde: minutosGraciaLlegadaTarde ? parseInt(minutosGraciaLlegadaTarde, 10) : 5,
-          ...factusConfig
+          ...factusToSave
         } as any),
         updateConfiguracionIA({
           apiKey: iaConfig.apiKey,
