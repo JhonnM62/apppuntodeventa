@@ -1772,7 +1772,7 @@ export default function HistorialVentasScreen({ navigation }: any) {
                       </View>
                     </View>
                   );
-                })
+                })}
                 </>
               )}
               <View className="h-10" />
