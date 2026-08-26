@@ -1,0 +1,100 @@
+2026-08-25 02:41:35.829 UTC [26] LOG:  checkpoint starting: time
+2026-08-25 02:41:37.247 UTC [26] LOG:  checkpoint complete: wrote 15 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=1.409 s, sync=0.003 s, total=1.419 s; sync files=14, longest=0.002 s, average=0.001 s; distance=59 kB, estimate=87 kB; lsn=0/908B3140, redo lsn=0/908B3108
+2026-08-25 02:51:35.413 UTC [26] LOG:  checkpoint starting: time
+2026-08-25 02:51:36.838 UTC [26] LOG:  checkpoint complete: wrote 15 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=1.417 s, sync=0.003 s, total=1.425 s; sync files=12, longest=0.002 s, average=0.001 s; distance=54 kB, estimate=84 kB; lsn=0/908C0948, redo lsn=0/908C0910
+2026-08-25 03:06:35.965 UTC [26] LOG:  checkpoint starting: time
+2026-08-25 03:06:37.682 UTC [26] LOG:  checkpoint complete: wrote 18 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=1.709 s, sync=0.003 s, total=1.717 s; sync files=14, longest=0.002 s, average=0.001 s; distance=62 kB, estimate=82 kB; lsn=0/908D0338, redo lsn=0/908D0300
+2026-08-25 03:36:36.085 UTC [26] LOG:  checkpoint starting: time
+2026-08-25 03:36:37.704 UTC [26] LOG:  checkpoint complete: wrote 19 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=1.609 s, sync=0.005 s, total=1.620 s; sync files=16, longest=0.002 s, average=0.001 s; distance=67 kB, estimate=80 kB; lsn=0/908E10B0, redo lsn=0/908E1078
+2026-08-25 03:41:36.789 UTC [26] LOG:  checkpoint starting: time
+2026-08-25 03:41:38.409 UTC [26] LOG:  checkpoint complete: wrote 19 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=1.609 s, sync=0.004 s, total=1.620 s; sync files=13, longest=0.003 s, average=0.001 s; distance=72 kB, estimate=79 kB; lsn=0/908F3110, redo lsn=0/908F30D8
+2026-08-25 03:46:36.487 UTC [26] LOG:  checkpoint starting: time
+2026-08-25 03:46:36.901 UTC [26] LOG:  checkpoint complete: wrote 5 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.406 s, sync=0.002 s, total=0.414 s; sync files=5, longest=0.002 s, average=0.001 s; distance=19 kB, estimate=73 kB; lsn=0/908F80E8, redo lsn=0/908F80B0
+2026-08-25 04:11:37.320 UTC [26] LOG:  checkpoint starting: time
+2026-08-25 04:11:40.854 UTC [26] LOG:  checkpoint complete: wrote 36 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=3.526 s, sync=0.003 s, total=3.535 s; sync files=16, longest=0.002 s, average=0.001 s; distance=182 kB, estimate=182 kB; lsn=0/909259A0, redo lsn=0/90925968
+2026-08-25 04:16:37.869 UTC [26] LOG:  checkpoint starting: time
+2026-08-25 04:16:41.393 UTC [26] LOG:  checkpoint complete: wrote 36 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=3.515 s, sync=0.004 s, total=3.525 s; sync files=9, longest=0.003 s, average=0.001 s; distance=206 kB, estimate=206 kB; lsn=0/909591D8, redo lsn=0/909591A0
+2026-08-25 04:21:37.436 UTC [26] LOG:  checkpoint starting: time
+2026-08-25 04:21:42.963 UTC [26] LOG:  checkpoint complete: wrote 56 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=5.520 s, sync=0.003 s, total=5.528 s; sync files=16, longest=0.002 s, average=0.001 s; distance=212 kB, estimate=212 kB; lsn=0/9098E360, redo lsn=0/9098E328
+2026-08-25 04:36:38.125 UTC [26] LOG:  checkpoint starting: time
+2026-08-25 04:36:38.235 UTC [26] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.102 s, sync=0.003 s, total=0.111 s; sync files=2, longest=0.002 s, average=0.002 s; distance=6 kB, estimate=191 kB; lsn=0/9098FD80, redo lsn=0/9098FD48
+2026-08-25 13:36:45.151 UTC [26] LOG:  checkpoint starting: time
+2026-08-25 13:36:45.263 UTC [26] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.103 s, sync=0.003 s, total=0.112 s; sync files=2, longest=0.002 s, average=0.002 s; distance=6 kB, estimate=173 kB; lsn=0/90991828, redo lsn=0/909917F0
+2026-08-25 14:42:24.611 UTC [400193] LOG:  incomplete startup packet
+2026-08-25 14:43:35.119 UTC [400200] LOG:  invalid length of startup packet
+2026-08-25 14:45:22.784 UTC [400208] LOG:  invalid length of startup packet
+2026-08-25 14:47:24.247 UTC [400218] LOG:  invalid length of startup packet
+2026-08-25 14:49:37.560 UTC [400228] LOG:  invalid length of startup packet
+2026-08-26 08:10:15.408 UTC [404624] LOG:  invalid length of startup packet
+2026-08-26 13:16:29.183 UTC [405917] LOG:  invalid length of startup packet
+2026-08-26 13:37:25.678 UTC [406006] LOG:  invalid length of startup packet
+2026-08-26 13:37:43.356 UTC [406007] LOG:  incomplete startup packet
+2026-08-26 13:39:28.016 UTC [406016] LOG:  invalid length of startup packet
+2026-08-26 13:41:19.400 UTC [406025] LOG:  invalid length of startup packet
+2026-08-26 13:43:09.891 UTC [406034] LOG:  invalid length of startup packet
+2026-08-26 16:00:30.232 UTC [406611] LOG:  invalid length of startup packet
+2026-08-26 16:00:30.246 UTC [406612] LOG:  invalid length of startup packet
+2026-08-26 16:00:30.671 UTC [406613] LOG:  invalid length of startup packet
+2026-08-26 16:00:30.674 UTC [406614] LOG:  invalid length of startup packet
+2026-08-26 16:00:30.676 UTC [406615] LOG:  invalid length of startup packet
+2026-08-26 16:00:30.678 UTC [406616] LOG:  invalid length of startup packet
+2026-08-26 16:00:30.682 UTC [406617] LOG:  invalid length of startup packet
+2026-08-26 16:00:30.686 UTC [406618] LOG:  invalid length of startup packet
+2026-08-26 16:00:30.688 UTC [406620] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.093 UTC [406621] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.112 UTC [406622] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.112 UTC [406623] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.118 UTC [406624] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.119 UTC [406625] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.124 UTC [406626] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.133 UTC [406627] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.519 UTC [406628] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.531 UTC [406629] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.536 UTC [406630] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.546 UTC [406631] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.549 UTC [406632] FATAL:  unsupported frontend protocol 65363.19778: server supports 3.0 to 3.0
+2026-08-26 16:00:31.559 UTC [406633] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.944 UTC [406635] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.967 UTC [406636] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.969 UTC [406637] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.972 UTC [406638] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.973 UTC [406639] LOG:  invalid length of startup packet
+2026-08-26 16:00:31.985 UTC [406640] LOG:  invalid length of startup packet
+2026-08-26 16:00:33.699 UTC [406619] LOG:  incomplete startup packet
+2026-08-26 18:40:29.380 UTC [407313] LOG:  invalid length of startup packet
+2026-08-26 18:40:30.125 UTC [407314] LOG:  invalid length of startup packet
+2026-08-26 18:40:36.005 UTC [407315] LOG:  invalid length of startup packet
+2026-08-26 18:40:38.159 UTC [407316] LOG:  invalid length of startup packet
+2026-08-26 18:40:38.499 UTC [407317] LOG:  invalid length of startup packet
+2026-08-26 18:40:55.888 UTC [407319] LOG:  invalid length of startup packet
+2026-08-26 18:40:56.314 UTC [407320] LOG:  invalid length of startup packet
+2026-08-26 18:40:56.699 UTC [407321] LOG:  invalid length of startup packet
+2026-08-26 18:40:57.083 UTC [407322] LOG:  invalid length of startup packet
+2026-08-26 18:40:57.446 UTC [407323] LOG:  invalid length of startup packet
+2026-08-26 18:41:05.030 UTC [407326] LOG:  invalid length of startup packet
+2026-08-26 18:41:05.423 UTC [407327] LOG:  invalid length of startup packet
+2026-08-26 18:41:11.607 UTC [407328] LOG:  invalid length of startup packet
+2026-08-26 18:53:08.616 UTC [407379] LOG:  invalid length of startup packet
+2026-08-26 18:53:23.698 UTC [407381] LOG:  invalid length of startup packet
+2026-08-26 18:53:23.758 UTC [407382] LOG:  invalid length of startup packet
+2026-08-26 18:53:38.811 UTC [407384] LOG:  invalid length of startup packet
+2026-08-26 18:53:56.872 UTC [407386] LOG:  incomplete startup packet
+2026-08-26 18:53:56.906 UTC [407387] LOG:  invalid length of startup packet
+2026-08-26 18:54:11.977 UTC [407389] LOG:  invalid length of startup packet
+2026-08-26 18:54:27.044 UTC [407392] LOG:  invalid length of startup packet
+2026-08-26 18:54:42.116 UTC [407394] LOG:  invalid length of startup packet
+2026-08-26 18:54:57.185 UTC [407396] LOG:  invalid length of startup packet
+2026-08-26 18:55:18.222 UTC [407399] LOG:  invalid length of startup packet
+2026-08-26 18:55:33.283 UTC [407401] LOG:  invalid length of startup packet
+2026-08-26 18:55:48.346 UTC [407403] FATAL:  no PostgreSQL user name specified in startup packet
+2026-08-26 19:32:09.807 UTC [26] LOG:  checkpoint starting: time
+2026-08-26 19:32:09.924 UTC [26] LOG:  checkpoint complete: wrote 2 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.107 s, sync=0.004 s, total=0.118 s; sync files=2, longest=0.002 s, average=0.002 s; distance=6 kB, estimate=156 kB; lsn=0/90993368, redo lsn=0/90993330
+2026-08-26 19:34:25.796 UTC [407570] LOG:  invalid length of startup packet
+2026-08-26 19:37:10.021 UTC [26] LOG:  checkpoint starting: time
+2026-08-26 19:37:11.534 UTC [26] LOG:  checkpoint complete: wrote 16 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=1.508 s, sync=0.002 s, total=1.513 s; sync files=8, longest=0.002 s, average=0.001 s; distance=67 kB, estimate=147 kB; lsn=0/909A4300, redo lsn=0/909A42C8
+2026-08-26 20:02:11.019 UTC [26] LOG:  checkpoint starting: time
+2026-08-26 20:02:11.940 UTC [26] LOG:  checkpoint complete: wrote 10 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.909 s, sync=0.004 s, total=0.921 s; sync files=8, longest=0.003 s, average=0.001 s; distance=31 kB, estimate=136 kB; lsn=0/909AC0D8, redo lsn=0/909AC0A0
+2026-08-26 20:07:12.016 UTC [26] LOG:  checkpoint starting: time
+2026-08-26 20:07:12.826 UTC [26] LOG:  checkpoint complete: wrote 9 buffers (0.0%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.803 s, sync=0.003 s, total=0.811 s; sync files=7, longest=0.003 s, average=0.001 s; distance=33 kB, estimate=125 kB; lsn=0/909B45B0, redo lsn=0/909B4578
+2026-08-26 20:20:56.878 UTC [407777] LOG:  invalid length of startup packet
+2026-08-26 20:20:57.091 UTC [407778] LOG:  invalid length of startup packet

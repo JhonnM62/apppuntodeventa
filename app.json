@@ -2,7 +2,7 @@
   "expo": {
     "name": "Q Hubo Mor POS",
     "slug": "qhubomor-pos-app",
-    "version": "1.0.117",
+    "version": "1.0.118",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -36,7 +36,7 @@
         "android.permission.RECORD_AUDIO"
       ],
       "package": "com.anonymous.qhubomorposapp",
-      "versionCode": 118
+      "versionCode": 119
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -56,7 +56,8 @@
         {
           "microphonePermission": "Permite usar el micrófono para interactuar con la IA."
         }
-      ]
+      ],
+      "./withAsyncStorageSize.js"
     ],
     "extra": {
       "eas": {
