@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, KeyboardAvoidingView, Platform, Modal, Text as RNText, Keyboard, SafeAreaView, Alert, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import { useAgentStore } from '../../../store/useAgentStore';
 import ActionConfirmCard from './ActionConfirmCard';
 import api from '../../../services/api';
@@ -56,6 +57,22 @@ export default function AgentChatModal() {
     }
   };
 
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf'],
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setSelectedImage(result.assets[0].uri);
+      }
+    } catch (error) {
+      console.warn('Error picking document:', error);
+      Alert.alert('Error', 'No se pudo seleccionar el documento.');
+    }
+  };
+
   const toggleListening = async () => {
     try {
       if (!expoSpeech || !expoSpeech.ExpoSpeechRecognitionModule) {
@@ -104,9 +121,12 @@ export default function AgentChatModal() {
         formData.append('threadId', threadId);
         if (userMsg) formData.append('message', userMsg);
         
-        const filename = imgUri.split('/').pop() || 'image.jpg';
+        const filename = imgUri.split('/').pop() || 'file';
         const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : `image/jpeg`;
+        let type = match ? `image/${match[1]}` : `image/jpeg`;
+        if (filename.toLowerCase().endsWith('.pdf')) {
+           type = 'application/pdf';
+        }
 
         formData.append('image', {
           uri: imgUri,
@@ -219,7 +239,16 @@ export default function AgentChatModal() {
             <ScrollView style={styles.chatArea} contentContainerStyle={{ flexGrow: 1, paddingBottom: 32, padding: 16 }}>
               {messages.map((m, i) => (
                 <View key={i} style={[styles.messageBubble, m.sender === 'user' ? styles.userBubble : styles.agentBubble]}>
-                  {m.imageUrl && <Image source={{ uri: m.imageUrl }} style={{ width: 200, height: 200, borderRadius: 8, marginBottom: m.text ? 8 : 0 }} resizeMode="cover" />}
+                  {m.imageUrl && (
+                    m.imageUrl.toLowerCase().endsWith('.pdf') ? (
+                      <View style={{ width: 200, height: 100, borderRadius: 8, marginBottom: m.text ? 8 : 0, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' }}>
+                        <Ionicons name="document-text" size={40} color="#ef4444" />
+                        <RNText style={{ marginTop: 8, color: '#4b5563', fontSize: 12 }}>Documento PDF</RNText>
+                      </View>
+                    ) : (
+                      <Image source={{ uri: m.imageUrl }} style={{ width: 200, height: 200, borderRadius: 8, marginBottom: m.text ? 8 : 0 }} resizeMode="cover" />
+                    )
+                  )}
                   {m.text ? <RNText selectable={true} style={[styles.messageText, m.sender === 'user' ? styles.userText : styles.agentText]}>{cleanMarkdown(m.text)}</RNText> : null}
                   {m.interruptData && (
                     <ActionConfirmCard interruptData={m.interruptData} messageId={m.id} />
@@ -235,7 +264,13 @@ export default function AgentChatModal() {
 
             {selectedImage && (
               <View style={styles.imagePreviewContainer}>
-                <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+                {selectedImage.toLowerCase().endsWith('.pdf') ? (
+                  <View style={[styles.imagePreview, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#e5e7eb' }]}>
+                    <Ionicons name="document-text" size={40} color="#ef4444" />
+                  </View>
+                ) : (
+                  <Image source={{ uri: selectedImage }} style={styles.imagePreview} />
+                )}
                 <TouchableOpacity onPress={() => setSelectedImage(null)} style={styles.removeImageBtn}>
                   <Ionicons name="close-circle" size={24} color="#ef4444" />
                 </TouchableOpacity>
@@ -243,6 +278,9 @@ export default function AgentChatModal() {
             )}
 
             <View style={styles.inputArea}>
+              <TouchableOpacity onPress={pickDocument} style={[styles.micBtn, { marginRight: 8 }]}>
+                 <Ionicons name="document-text" size={20} color="#4b5563" />
+              </TouchableOpacity>
               <TouchableOpacity onPress={pickImage} style={[styles.micBtn, { marginRight: 8 }]}>
                  <Ionicons name="image" size={20} color="#4b5563" />
               </TouchableOpacity>
