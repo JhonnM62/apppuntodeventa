@@ -569,6 +569,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     transferencia?: number;
     estado: string;
   }) => {
+    if (isSubmitting) return; // FIX: Prevent double submission
     setIsSubmitting(true);
     try {
       const { getFinalTotalPrice, getDiscountAmount, discountPercent } = useCartStore.getState();
@@ -800,6 +801,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   };
 
   const handleSavePedido = async (data: { estado: string; medioDePago?: string | null }) => {
+    if (isSubmitting) return; // FIX: Prevent double submission
     setIsSubmitting(true);
     try {
       const { getFinalTotalPrice, getDiscountAmount, discountPercent } = useCartStore.getState();

@@ -232,6 +232,7 @@ export default function AdminSaleFormModal({ visible, onClose, onSuccess, saleDa
   };
 
   const handleSave = async () => {
+    if (loading) return; // FIX: Prevent double submission
     if (cart.length === 0) {
       Toast.show({ type: 'error', text1: 'Error', text2: 'Agrega al menos un producto' });
       return;
