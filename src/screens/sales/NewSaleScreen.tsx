@@ -311,10 +311,15 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         p.nombre?.toLowerCase().includes(query)
       );
     } else if (activeCategory === 'LO MAS VENDIDO') {
-      // Show all visible products sorted by orden, take first 10
-      filtered = [...filtered]
-        .sort((a, b) => (a.orden ?? 999) - (b.orden ?? 999))
-        .slice(0, 10);
+      const explicitProducts = filtered.filter(p => (p.categoriaNombre || p.categoria) === 'LO MAS VENDIDO');
+      if (explicitProducts.length > 0) {
+        filtered = explicitProducts;
+      } else {
+        // Fallback: Show all visible products sorted by orden, take first 10
+        filtered = [...filtered]
+          .sort((a: any, b: any) => (a.orden ?? 999) - (b.orden ?? 999))
+          .slice(0, 10);
+      }
     } else if (activeCategory) {
       filtered = filtered.filter(p =>
         (p.categoriaNombre || p.categoria) === activeCategory
