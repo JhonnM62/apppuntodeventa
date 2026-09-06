@@ -572,9 +572,27 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     if (isSubmitting) return; // FIX: Prevent double submission
     setIsSubmitting(true);
     try {
-      const { getFinalTotalPrice, getDiscountAmount, discountPercent } = useCartStore.getState();
-      const finalTotal = getFinalTotalPrice();
-      const descuento = getDiscountAmount();
+      const { discountPercent } = useCartStore.getState();
+      const recalcularTotal = cart.reduce((sum, item) => {
+        let p = Number(item.precioUnitario || item.Precio_Unitario);
+        if (isNaN(p)) p = 0;
+        let c = Number(item.quantity);
+        if (isNaN(c)) c = 1;
+        let modSum = 0;
+        if (item.modifiers && Array.isArray(item.modifiers)) {
+          modSum = item.modifiers.reduce((acc, m) => {
+            let mp = Number(m.price);
+            if (isNaN(mp)) mp = 0;
+            let mq = Number(m.quantity);
+            if (isNaN(mq)) mq = 1;
+            return acc + (mp * mq);
+          }, 0);
+        }
+        return sum + (p * c) + modSum;
+      }, 0);
+      const exactDiscount = recalcularTotal * (discountPercent || 0);
+      const descuento = Math.floor(exactDiscount / 1000) * 1000;
+      const finalTotal = recalcularTotal - descuento;
       const mesaValue = selectedMesa?.IdMesas || 'V.R';
 
       if (isEditing && editingSaleId) {
@@ -804,9 +822,27 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     if (isSubmitting) return; // FIX: Prevent double submission
     setIsSubmitting(true);
     try {
-      const { getFinalTotalPrice, getDiscountAmount, discountPercent } = useCartStore.getState();
-      const finalTotal = getFinalTotalPrice();
-      const descuento = getDiscountAmount();
+      const { discountPercent } = useCartStore.getState();
+      const recalcularTotal = cart.reduce((sum, item) => {
+        let p = Number(item.precioUnitario || item.Precio_Unitario);
+        if (isNaN(p)) p = 0;
+        let c = Number(item.quantity);
+        if (isNaN(c)) c = 1;
+        let modSum = 0;
+        if (item.modifiers && Array.isArray(item.modifiers)) {
+          modSum = item.modifiers.reduce((acc, m) => {
+            let mp = Number(m.price);
+            if (isNaN(mp)) mp = 0;
+            let mq = Number(m.quantity);
+            if (isNaN(mq)) mq = 1;
+            return acc + (mp * mq);
+          }, 0);
+        }
+        return sum + (p * c) + modSum;
+      }, 0);
+      const exactDiscount = recalcularTotal * (discountPercent || 0);
+      const descuento = Math.floor(exactDiscount / 1000) * 1000;
+      const finalTotal = recalcularTotal - descuento;
 
       if (isEditing && editingSaleId) {
         const payload: SalePayload = {

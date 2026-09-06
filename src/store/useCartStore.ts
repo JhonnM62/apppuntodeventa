@@ -218,9 +218,24 @@ const useCartStore = create<CartStore>((set, get) => ({
   },
   getTotalPrice: () => {
     return get().cart.reduce((total, item) => {
-      const unitPrice = Number(item.precioUnitario || item.Precio_Unitario || 0);
-      const modifiersTotal = (item.modifiers || []).reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0);
-      return total + (unitPrice * item.quantity) + modifiersTotal;
+      let unitPrice = Number(item.precioUnitario || item.Precio_Unitario);
+      if (isNaN(unitPrice)) unitPrice = 0;
+      
+      let modifiersTotal = 0;
+      if (Array.isArray(item.modifiers)) {
+        modifiersTotal = item.modifiers.reduce((sum, mod) => {
+          let modPrice = Number(mod.price);
+          if (isNaN(modPrice)) modPrice = 0;
+          let modQty = Number(mod.quantity);
+          if (isNaN(modQty)) modQty = 1;
+          return sum + (modPrice * modQty);
+        }, 0);
+      }
+      
+      let qty = Number(item.quantity);
+      if (isNaN(qty)) qty = 1;
+
+      return total + (unitPrice * qty) + modifiersTotal;
     }, 0);
   },
 }));
