@@ -405,9 +405,15 @@ export const executePrint = async (
       
       if (Platform.OS === 'web') {
         const htmlPayload = getHtmlTicketPayload(ticketData, paperSize, type);
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-          printWindow.document.write(`
+        
+        // Usar un iframe oculto para evitar ventanas emergentes y retrasos
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        document.body.appendChild(iframe);
+        
+        const iframeDoc = iframe.contentWindow?.document || iframe.contentDocument;
+        if (iframeDoc) {
+          iframeDoc.write(`
             <html>
               <head>
                 <style>
@@ -427,11 +433,20 @@ export const executePrint = async (
               <body>${htmlPayload}</body>
             </html>
           `);
-          printWindow.document.close();
-          printWindow.focus();
-          setTimeout(() => { printWindow.print(); }, 500);
+          iframeDoc.close();
+          
+          // Imprimir inmediatamente (el DOM ya está construido)
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+          
+          // Limpiar el iframe del DOM después de que se cierre el diálogo de impresión
+          setTimeout(() => {
+            if (document.body.contains(iframe)) {
+              document.body.removeChild(iframe);
+            }
+          }, 5000);
         } else {
-          alert('El navegador bloqueó la ventana de impresión. Por favor, permite las ventanas emergentes (pop-ups) para este sitio.');
+          console.error('No se pudo acceder al documento del iframe para imprimir.');
         }
       }
       return true; // Simulado

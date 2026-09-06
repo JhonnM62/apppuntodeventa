@@ -687,7 +687,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                  };
                  printStore.printTicket(ticketData);
                }
-            }, 500);
+            }, 50);
 
             navigation.goBack();
           } catch (error: any) {
@@ -796,7 +796,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                };
                printStore.printTicket(ticketData);
              }
-          }, 500);
+          }, 50);
 
         })
         .catch((error: any) => {
