@@ -469,28 +469,84 @@ export default function GastosFormModal({ visible, onClose, gastoToEdit }: Props
                 <View className="flex-row mb-6">
                   <View className="flex-1 mr-2">
                     <Text className="text-sm font-bold text-gray-600 mb-1 ml-1">Fecha</Text>
-                    <TouchableOpacity
-                      className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 items-center flex-row"
-                      onPress={() => setShowDatePicker(true)}
-                    >
-                      <Ionicons name="calendar-outline" size={20} color="#6b7280" />
-                      <Text className="ml-2 text-base text-gray-800 font-bold">
-                        {fecha.toLocaleDateString('es-CO')}
-                      </Text>
-                    </TouchableOpacity>
+                    {Platform.OS === 'web' ? (
+                      React.createElement('input', {
+                        type: 'date',
+                        value: `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, '0')}-${String(fecha.getDate()).padStart(2, '0')}`,
+                        onChange: (e: any) => {
+                          if (e.target.value) {
+                            const selectedDate = new Date(e.target.value + 'T12:00:00');
+                            const newDate = new Date(fecha);
+                            newDate.setFullYear(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                            setFecha(newDate);
+                          }
+                        },
+                        style: {
+                          backgroundColor: '#f9fafb',
+                          borderColor: '#e5e7eb',
+                          borderWidth: 1,
+                          borderRadius: 12,
+                          paddingHorizontal: 16,
+                          paddingVertical: 12,
+                          fontSize: 16,
+                          color: '#1f2937',
+                          fontWeight: 'bold',
+                          width: '100%',
+                          outline: 'none',
+                        }
+                      })
+                    ) : (
+                      <TouchableOpacity
+                        className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 items-center flex-row"
+                        onPress={() => setShowDatePicker(true)}
+                      >
+                        <Ionicons name="calendar-outline" size={20} color="#6b7280" />
+                        <Text className="ml-2 text-base text-gray-800 font-bold">
+                          {fecha.toLocaleDateString('es-CO')}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
 
                   <View className="flex-1">
                     <Text className="text-sm font-bold text-gray-600 mb-1 ml-1">Hora</Text>
-                    <TouchableOpacity
-                      className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 items-center flex-row"
-                      onPress={() => setShowTimePicker(true)}
-                    >
-                      <Ionicons name="time-outline" size={20} color="#6b7280" />
-                      <Text className="ml-2 text-base text-gray-800 font-bold">
-                        {fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
-                      </Text>
-                    </TouchableOpacity>
+                    {Platform.OS === 'web' ? (
+                      React.createElement('input', {
+                        type: 'time',
+                        value: `${String(fecha.getHours()).padStart(2, '0')}:${String(fecha.getMinutes()).padStart(2, '0')}`,
+                        onChange: (e: any) => {
+                          if (e.target.value) {
+                            const [hours, minutes] = e.target.value.split(':').map(Number);
+                            const newDate = new Date(fecha);
+                            newDate.setHours(hours, minutes);
+                            setFecha(newDate);
+                          }
+                        },
+                        style: {
+                          backgroundColor: '#f9fafb',
+                          borderColor: '#e5e7eb',
+                          borderWidth: 1,
+                          borderRadius: 12,
+                          paddingHorizontal: 16,
+                          paddingVertical: 12,
+                          fontSize: 16,
+                          color: '#1f2937',
+                          fontWeight: 'bold',
+                          width: '100%',
+                          outline: 'none',
+                        }
+                      })
+                    ) : (
+                      <TouchableOpacity
+                        className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 items-center flex-row"
+                        onPress={() => setShowTimePicker(true)}
+                      >
+                        <Ionicons name="time-outline" size={20} color="#6b7280" />
+                        <Text className="ml-2 text-base text-gray-800 font-bold">
+                          {fecha.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
 
