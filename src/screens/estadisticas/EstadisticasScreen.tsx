@@ -295,25 +295,88 @@ export default function EstadisticasScreen({ navigation }: any) {
     }
   };
 
-  const renderDateFilters = () => (
-    <View className="flex-row items-center bg-white rounded-3xl p-4 mb-4 shadow-sm border border-gray-100">
-      <TouchableOpacity className="flex-1 items-center border-r border-gray-100" onPress={() => setShowStartPicker(true)}>
-        <View className="flex-row items-center mb-1">
-          <Ionicons name="calendar-outline" size={14} color="#9ca3af" style={{marginRight: 4}} />
-          <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Desde</Text>
+  const renderDateFilters = () => {
+    if (Platform.OS === 'web') {
+      return (
+        <View className="flex-row items-center bg-white rounded-3xl p-4 mb-4 shadow-sm border border-gray-100 justify-between">
+          <View className="flex-1 mr-2">
+            <View className="flex-row items-center mb-1 justify-center">
+              <Ionicons name="calendar-outline" size={14} color="#9ca3af" style={{marginRight: 4}} />
+              <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Desde</Text>
+            </View>
+            <input
+              type="date"
+              value={format(startDate, 'yyyy-MM-dd')}
+              onChange={(e) => {
+                if (e.target.value) {
+                  const parts = e.target.value.split('-');
+                  setStartDate(new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '8px',
+                borderRadius: '8px',
+                border: '1px solid #e5e7eb',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#1f2937',
+                textAlign: 'center',
+                outline: 'none',
+              }}
+            />
+          </View>
+          <View className="flex-1 ml-2">
+            <View className="flex-row items-center mb-1 justify-center">
+              <Ionicons name="calendar-outline" size={14} color="#9ca3af" style={{marginRight: 4}} />
+              <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Hasta</Text>
+            </View>
+            <input
+              type="date"
+              value={format(endDate, 'yyyy-MM-dd')}
+              onChange={(e) => {
+                if (e.target.value) {
+                  const parts = e.target.value.split('-');
+                  setEndDate(new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '8px',
+                borderRadius: '8px',
+                border: '1px solid #e5e7eb',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                color: '#1f2937',
+                textAlign: 'center',
+                outline: 'none',
+              }}
+            />
+          </View>
         </View>
-        <Text className="text-sm font-black text-gray-800">{format(startDate, 'dd MMM yyyy', { locale: es })}</Text>
-      </TouchableOpacity>
-      
-      <TouchableOpacity className="flex-1 items-center" onPress={() => setShowEndPicker(true)}>
-        <View className="flex-row items-center mb-1">
-          <Ionicons name="calendar-outline" size={14} color="#9ca3af" style={{marginRight: 4}} />
-          <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Hasta</Text>
-        </View>
-        <Text className="text-sm font-black text-gray-800">{format(endDate, 'dd MMM yyyy', { locale: es })}</Text>
-      </TouchableOpacity>
-    </View>
-  );
+      );
+    }
+
+    return (
+      <View className="flex-row items-center bg-white rounded-3xl p-4 mb-4 shadow-sm border border-gray-100">
+        <TouchableOpacity className="flex-1 items-center border-r border-gray-100" onPress={() => setShowStartPicker(true)}>
+          <View className="flex-row items-center mb-1">
+            <Ionicons name="calendar-outline" size={14} color="#9ca3af" style={{marginRight: 4}} />
+            <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Desde</Text>
+          </View>
+          <Text className="text-sm font-black text-gray-800">{format(startDate, 'dd MMM yyyy', { locale: es })}</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity className="flex-1 items-center" onPress={() => setShowEndPicker(true)}>
+          <View className="flex-row items-center mb-1">
+            <Ionicons name="calendar-outline" size={14} color="#9ca3af" style={{marginRight: 4}} />
+            <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Hasta</Text>
+          </View>
+          <Text className="text-sm font-black text-gray-800">{format(endDate, 'dd MMM yyyy', { locale: es })}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={['top']}>
@@ -453,7 +516,7 @@ export default function EstadisticasScreen({ navigation }: any) {
           </View>
         )}
 
-        {showStartPicker && (
+        {Platform.OS !== 'web' && showStartPicker && (
           <DateTimePicker
             value={startDate}
             mode="date"
@@ -464,7 +527,7 @@ export default function EstadisticasScreen({ navigation }: any) {
             }}
           />
         )}
-        {showEndPicker && (
+        {Platform.OS !== 'web' && showEndPicker && (
           <DateTimePicker
             value={endDate}
             mode="date"
