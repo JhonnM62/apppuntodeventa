@@ -304,16 +304,16 @@ export default function EstadisticasScreen({ navigation }: any) {
               <Ionicons name="calendar-outline" size={14} color="#9ca3af" style={{marginRight: 4}} />
               <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Desde</Text>
             </View>
-            <input
-              type="date"
-              value={format(startDate, 'yyyy-MM-dd')}
-              onChange={(e) => {
+            {React.createElement('input', {
+              type: 'date',
+              value: format(startDate, 'yyyy-MM-dd'),
+              onChange: (e: any) => {
                 if (e.target.value) {
                   const parts = e.target.value.split('-');
                   setStartDate(new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
                 }
-              }}
-              style={{
+              },
+              style: {
                 width: '100%',
                 padding: '8px',
                 borderRadius: '8px',
@@ -323,24 +323,24 @@ export default function EstadisticasScreen({ navigation }: any) {
                 color: '#1f2937',
                 textAlign: 'center',
                 outline: 'none',
-              }}
-            />
+              }
+            })}
           </View>
           <View className="flex-1 ml-2">
             <View className="flex-row items-center mb-1 justify-center">
               <Ionicons name="calendar-outline" size={14} color="#9ca3af" style={{marginRight: 4}} />
               <Text className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Hasta</Text>
             </View>
-            <input
-              type="date"
-              value={format(endDate, 'yyyy-MM-dd')}
-              onChange={(e) => {
+            {React.createElement('input', {
+              type: 'date',
+              value: format(endDate, 'yyyy-MM-dd'),
+              onChange: (e: any) => {
                 if (e.target.value) {
                   const parts = e.target.value.split('-');
                   setEndDate(new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
                 }
-              }}
-              style={{
+              },
+              style: {
                 width: '100%',
                 padding: '8px',
                 borderRadius: '8px',
@@ -350,8 +350,8 @@ export default function EstadisticasScreen({ navigation }: any) {
                 color: '#1f2937',
                 textAlign: 'center',
                 outline: 'none',
-              }}
-            />
+              }
+            })}
           </View>
         </View>
       );

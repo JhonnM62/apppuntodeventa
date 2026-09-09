@@ -30,6 +30,17 @@ export default function AuditoriaInsumosView({ startDate, endDate, nombreNegocio
 
   const mainColor = primaryColor || '#10b981';
 
+  // Helper to prevent timezone shifting (UTC midnight becoming previous day in local time)
+  const safeParseDate = (dateStr: string) => {
+    if (!dateStr) return new Date();
+    try {
+      const parts = dateStr.split('T')[0].split('-');
+      return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    } catch (e) {
+      return new Date(dateStr);
+    }
+  };
+
   if (isLoading) {
     return (
       <View className="flex-1 justify-center items-center py-20">
@@ -72,7 +83,7 @@ export default function AuditoriaInsumosView({ startDate, endDate, nombreNegocio
           const detailRows = r.detalles.map((d: any) => `
             <tr>
               <td colspan="3" style="padding: 4px 8px; border-bottom: 1px dotted #e5e7eb; padding-left: 20px; font-size: 10px; color: #6b7280;">
-                ${format(new Date(d.fecha), 'dd MMM yyyy', { locale: es })}
+                ${format(safeParseDate(d.fecha), 'dd MMM yyyy', { locale: es })}
               </td>
               <td style="padding: 4px 8px; border-bottom: 1px dotted #e5e7eb; text-align: center; font-size: 10px; color: #be123c; font-weight: bold;">
                 ${d.tipo === 'FALTANTE' ? '-' + d.diferencia : ''}
@@ -236,7 +247,7 @@ export default function AuditoriaInsumosView({ startDate, endDate, nombreNegocio
                   {row.detalles.map((d: any, i: number) => (
                     <View key={i} className="flex-row justify-between mb-1">
                       <Text className="text-[10px] text-gray-600">
-                        {format(new Date(d.fecha), 'dd MMM yyyy', { locale: es })}
+                        {format(safeParseDate(d.fecha), 'dd MMM yyyy', { locale: es })}
                       </Text>
                       {d.tipo === 'FALTANTE' ? (
                         <Text className="text-[10px] font-bold text-red-600">-{d.diferencia}</Text>
