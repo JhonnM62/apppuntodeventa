@@ -173,7 +173,7 @@ export default function AuditoriaInsumosView({ startDate, endDate, nombreNegocio
 
   return (
     <View className="flex-1 bg-gray-50">
-      <ScrollView className="flex-1 px-4 pt-4" showsVerticalScrollIndicator={false}>
+      <View className="flex-1 px-4 pt-4">
         
         {/* RANKING */}
         {ranking && ranking.length > 0 && (

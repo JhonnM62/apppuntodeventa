@@ -446,7 +446,7 @@ export default function EstadisticasScreen({ navigation }: any) {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3b82f6']} />}
       >
         {/* Filtros Rapidos */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4 flex-grow-0">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4 flex-grow-0" contentContainerStyle={{ alignItems: 'center' }}>
           <TouchableOpacity onPress={() => setPredefinedRange('HOY')} className="bg-white border border-gray-200 px-5 py-2 rounded-full mr-2 shadow-sm">
             <Text className="text-sm font-bold text-gray-700">Hoy</Text>
           </TouchableOpacity>
@@ -477,7 +477,7 @@ export default function EstadisticasScreen({ navigation }: any) {
         {showFiltrosAvanzados && (
           <View className="bg-white rounded-3xl p-4 mb-6 shadow-sm border border-gray-100">
             <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Categoría de Producto</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4 flex-grow-0">
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4 flex-grow-0" contentContainerStyle={{ alignItems: 'center' }}>
               <TouchableOpacity 
                 onPress={() => setSelectedCategoria(undefined)}
                 className={`px-4 py-2 rounded-full mr-2 ${!selectedCategoria ? 'bg-blue-600' : 'bg-gray-100'}`}
@@ -495,8 +495,8 @@ export default function EstadisticasScreen({ navigation }: any) {
               ))}
             </ScrollView>
 
-            <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Vendedor</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-grow-0">
+            <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 mt-2">Vendedor</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-grow-0" contentContainerStyle={{ alignItems: 'center' }}>
               <TouchableOpacity 
                 onPress={() => setSelectedVendedor(undefined)}
                 className={`px-4 py-2 rounded-full mr-2 ${!selectedVendedor ? 'bg-purple-600' : 'bg-gray-100'}`}
