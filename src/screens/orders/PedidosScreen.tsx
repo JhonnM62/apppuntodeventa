@@ -2310,7 +2310,7 @@ showAlert({
       ) : (
         <FlashList
           data={flatListData}
-          extraData={flatListData}
+          extraData={[selectedToDelete, isSelectionMode]}
           renderItem={renderListItem}
           keyExtractor={keyExtractor}
           getItemType={(item) => 'isHeader' in item ? 'header' : 'item'}
