@@ -1402,7 +1402,7 @@ showAlert({
                           <RNText style={styles.productName} numberOfLines={1}>{prod.nombreProducto || prod.nombre}</RNText>
                           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
                             <RNText style={styles.productMeta}>{prod.cantidad}x {formatMoney(prod.precio)}</RNText>
-                            <PreparationTimer createdAt={prod.createdAt || (selectedVenta.createdAt ? selectedVenta.createdAt.toString() : undefined)} preparadoAt={prod.preparadoAt} estado={prod.estado} />
+                            <PreparationTimer createdAt={prod.createdAt || (selectedVenta.fechaYHora || selectedVenta.fecha)?.toString()} preparadoAt={prod.preparadoAt} estado={prod.estado} />
                           </View>
                           
                           {/* Notas/Modificadores con cantidades y precios */}
@@ -1448,18 +1448,23 @@ showAlert({
                               marginTop: 6,
                               flexDirection: 'row',
                               alignItems: 'center',
-                              backgroundColor: prod.estado === 'LISTO' ? '#d1fae5' : '#f3f4f6',
-                              paddingHorizontal: 8,
-                              paddingVertical: 4,
-                              borderRadius: 6,
+                              backgroundColor: prod.estado === 'LISTO' ? '#10b981' : '#ffffff',
+                              paddingHorizontal: 12,
+                              paddingVertical: 6,
+                              borderRadius: 20,
                               borderWidth: 1,
-                              borderColor: prod.estado === 'LISTO' ? '#34d399' : '#d1d5db',
+                              borderColor: prod.estado === 'LISTO' ? '#10b981' : '#d1d5db',
+                              shadowColor: '#000',
+                              shadowOffset: { width: 0, height: 1 },
+                              shadowOpacity: 0.1,
+                              shadowRadius: 2,
+                              elevation: 2,
                             }}
                             onPress={() => toggleProductReady(selectedVenta, prod)}
                           >
-                            <Ionicons name={prod.estado === 'LISTO' ? "checkmark-circle" : "ellipse-outline"} size={16} color={prod.estado === 'LISTO' ? "#10b981" : "#9ca3af"} />
-                            <RNText style={{ fontSize: 10, color: prod.estado === 'LISTO' ? '#065f46' : '#4b5563', fontWeight: 'bold', marginLeft: 4 }}>
-                              {prod.estado === 'LISTO' ? 'LISTO' : 'MARCAR'}
+                            <Ionicons name={prod.estado === 'LISTO' ? "checkmark-circle" : "time-outline"} size={16} color={prod.estado === 'LISTO' ? "#ffffff" : "#6b7280"} />
+                            <RNText style={{ fontSize: 11, color: prod.estado === 'LISTO' ? '#ffffff' : '#4b5563', fontWeight: 'bold', marginLeft: 6 }}>
+                              {prod.estado === 'LISTO' ? 'LISTO' : 'PREPARANDO'}
                             </RNText>
                           </TouchableOpacity>
                         </View>
