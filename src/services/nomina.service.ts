@@ -42,13 +42,51 @@ export const getTurnoActivo = async () => {
   return data; // { success: true, data: Turno | null }
 };
 
-export const iniciarDescanso = async (turnoId: string) => {
-  const { data } = await api.post(`/nomina/turnos/${turnoId}/descanso/iniciar`);
+export const iniciarDescanso = async (turnoId: string, params: { latitud?: number, longitud?: number, fotoUri?: string }) => {
+  const formData = new FormData();
+  if (params.latitud !== undefined) formData.append('latitud', String(params.latitud));
+  if (params.longitud !== undefined) formData.append('longitud', String(params.longitud));
+  
+  if (params.fotoUri) {
+    const filename = params.fotoUri.split('/').pop() || 'descanso_in.jpg';
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : 'image/jpeg';
+    
+    if (Platform.OS === 'web') {
+      const blob = await uriToBlob(params.fotoUri, type);
+      formData.append('foto', blob, filename);
+    } else {
+      formData.append('foto', { uri: params.fotoUri, name: filename, type } as any);
+    }
+  }
+
+  const { data } = await api.post(`/nomina/turnos/${turnoId}/descanso/iniciar`, formData, {
+    headers: Platform.OS === 'web' ? undefined : { 'Content-Type': 'multipart/form-data' },
+  });
   return data;
 };
 
-export const terminarDescanso = async (turnoId: string) => {
-  const { data } = await api.post(`/nomina/turnos/${turnoId}/descanso/terminar`);
+export const terminarDescanso = async (turnoId: string, params: { latitud?: number, longitud?: number, fotoUri?: string }) => {
+  const formData = new FormData();
+  if (params.latitud !== undefined) formData.append('latitud', String(params.latitud));
+  if (params.longitud !== undefined) formData.append('longitud', String(params.longitud));
+  
+  if (params.fotoUri) {
+    const filename = params.fotoUri.split('/').pop() || 'descanso_out.jpg';
+    const match = /\.(\w+)$/.exec(filename);
+    const type = match ? `image/${match[1]}` : 'image/jpeg';
+    
+    if (Platform.OS === 'web') {
+      const blob = await uriToBlob(params.fotoUri, type);
+      formData.append('foto', blob, filename);
+    } else {
+      formData.append('foto', { uri: params.fotoUri, name: filename, type } as any);
+    }
+  }
+
+  const { data } = await api.post(`/nomina/turnos/${turnoId}/descanso/terminar`, formData, {
+    headers: Platform.OS === 'web' ? undefined : { 'Content-Type': 'multipart/form-data' },
+  });
   return data;
 };
 

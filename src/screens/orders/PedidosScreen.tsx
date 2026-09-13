@@ -124,14 +124,63 @@ export const getVentaTotal = (venta: VentaItem | null): number => {
   return 0;
 };
 
+const computeActiveMs = (registroDeTiempo: any[], endTime: number) => {
+  if (!registroDeTiempo || registroDeTiempo.length === 0) return 0;
+  
+  let totalMs = 0;
+  let activeStart: number | null = null;
+  const activeStates = ['TOMADO', 'PREPARANDO', 'LISTO_PARA_ENTREGA', 'LISTO'];
+
+  for (let i = 0; i < registroDeTiempo.length; i++) {
+    const entry = registroDeTiempo[i];
+    const time = new Date(entry.fecha_hora).getTime();
+    
+    if (activeStates.includes(entry.estado)) {
+      if (activeStart === null) {
+        activeStart = time;
+      }
+    } else {
+      if (activeStart !== null) {
+        totalMs += Math.max(0, time - activeStart);
+        activeStart = null;
+      }
+    }
+  }
+  
+  if (activeStart !== null) {
+    totalMs += Math.max(0, endTime - activeStart);
+  }
+  
+  return totalMs;
+};
+
+const formatDurationStr = (diff: number, formatAsStopwatch: boolean = false) => {
+  if (formatAsStopwatch) {
+    const diffInSeconds = Math.floor(diff / 1000);
+    const m = Math.floor(diffInSeconds / 60).toString().padStart(2, '0');
+    const s = (diffInSeconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+  const m = Math.floor((diff / 1000 / 60) % 60);
+  const s = Math.floor((diff / 1000) % 60);
+
+  let durStr = '';
+  if (d > 0) durStr += `${d}d `;
+  if (h > 0) durStr += `${h}h `;
+  if (m > 0) durStr += `${m}m `;
+  durStr += `${s}s`;
+  return durStr;
+};
+
 const PreparationTimer = ({ 
-  clientStartTime, 
-  serverStartTime, 
+  registroDeTiempo, 
   preparadoAt, 
   estado 
 }: { 
-  clientStartTime?: string, 
-  serverStartTime?: string, 
+  registroDeTiempo?: any[], 
   preparadoAt?: string, 
   estado?: string 
 }) => {
@@ -141,32 +190,26 @@ const PreparationTimer = ({
     let interval: NodeJS.Timeout;
 
     const calculateTime = () => {
-      let diffInSeconds = 0;
-
-      if (estado === 'LISTO' && preparadoAt && serverStartTime) {
-        // Usa Server - Server para evitar saltos por desincronización de reloj
-        const start = new Date(serverStartTime).getTime();
-        const end = new Date(preparadoAt).getTime();
-        diffInSeconds = Math.floor((end - start) / 1000);
-      } else if (clientStartTime || serverStartTime) {
-        // Usa Client - Client para el contador en vivo
-        const start = new Date(clientStartTime || serverStartTime!).getTime();
-        const end = Date.now();
-        diffInSeconds = Math.floor((end - start) / 1000);
-      } else {
+      if (!registroDeTiempo || registroDeTiempo.length === 0) {
         setElapsed('');
         return;
       }
+
+      let diff = 0;
+
+      if (estado === 'LISTO' && preparadoAt) {
+        const end = new Date(preparadoAt).getTime();
+        diff = computeActiveMs(registroDeTiempo, end);
+      } else {
+        diff = computeActiveMs(registroDeTiempo, Date.now());
+      }
       
-      if (diffInSeconds < 0) {
+      if (diff < 0) {
         setElapsed('00:00');
         return;
       }
 
-      const m = Math.floor(diffInSeconds / 60).toString().padStart(2, '0');
-      const s = (diffInSeconds % 60).toString().padStart(2, '0');
-      
-      setElapsed(`${m}:${s}`);
+      setElapsed(formatDurationStr(diff, true));
     };
 
     calculateTime();
@@ -178,9 +221,9 @@ const PreparationTimer = ({
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [clientStartTime, serverStartTime, preparadoAt, estado]);
+  }, [registroDeTiempo, preparadoAt, estado]);
 
-  if (!clientStartTime && !serverStartTime) return null;
+  if (!registroDeTiempo || registroDeTiempo.length === 0) return null;
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
@@ -1270,46 +1313,18 @@ showAlert({
     if (selectedVenta && selectedVenta.estado !== 'PAGADO' && selectedVenta.estado !== 'ENTREGADO') {
       const updateTimer = () => {
         if (!selectedVenta.registroDeTiempo || selectedVenta.registroDeTiempo.length === 0) return;
-        const firstEntry = selectedVenta.registroDeTiempo[0];
-        const start = new Date(firstEntry.fecha_hora).getTime();
-        const now = Date.now();
-        const diff = Math.max(0, now - start);
-
-        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
-        const m = Math.floor((diff / 1000 / 60) % 60);
-        const s = Math.floor((diff / 1000) % 60);
-
-        let durStr = '';
-        if (d > 0) durStr += `${d}d `;
-        if (h > 0) durStr += `${h}h `;
-        if (m > 0) durStr += `${m}m `;
-        durStr += `${s}s`;
-        setRealtimeDuration(durStr);
+        const diff = computeActiveMs(selectedVenta.registroDeTiempo, Date.now());
+        setRealtimeDuration(formatDurationStr(diff));
       };
       
       updateTimer();
       interval = setInterval(updateTimer, 1000);
     } else if (selectedVenta && (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO')) {
-      // Calculate total fixed duration if available
       if (selectedVenta.registroDeTiempo && selectedVenta.registroDeTiempo.length > 0) {
-        const firstEntry = selectedVenta.registroDeTiempo[0];
         const lastEntry = selectedVenta.registroDeTiempo[selectedVenta.registroDeTiempo.length - 1];
-        const start = new Date(firstEntry.fecha_hora).getTime();
         const end = new Date(lastEntry.fecha_hora).getTime();
-        const diff = Math.max(0, end - start);
-
-        const d = Math.floor(diff / (1000 * 60 * 60 * 24));
-        const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
-        const m = Math.floor((diff / 1000 / 60) % 60);
-        const s = Math.floor((diff / 1000) % 60);
-
-        let durStr = '';
-        if (d > 0) durStr += `${d}d `;
-        if (h > 0) durStr += `${h}h `;
-        if (m > 0) durStr += `${m}m `;
-        durStr += `${s}s`;
-        setRealtimeDuration(durStr);
+        const diff = computeActiveMs(selectedVenta.registroDeTiempo, end);
+        setRealtimeDuration(formatDurationStr(diff));
       } else {
         setRealtimeDuration(null);
       }
@@ -1460,8 +1475,7 @@ showAlert({
                           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
                             <RNText style={styles.productMeta}>{prod.cantidad}x {formatMoney(prod.precio)}</RNText>
                             <PreparationTimer 
-                              clientStartTime={selectedVenta.registroDeTiempo?.[0]?.fecha_hora}
-                              serverStartTime={prod.createdAt || (selectedVenta.fechaYHora || selectedVenta.fecha)?.toString()}
+                              registroDeTiempo={selectedVenta.registroDeTiempo}
                               preparadoAt={prod.preparadoAt} 
                               estado={prod.estado} 
                             />
@@ -2161,8 +2175,18 @@ showAlert({
       // Optimizacion: Actualizar UI y emitir en background
       setTimeout(() => {
         updateVentaEstado(selectedVenta.IDventas, newEstado).catch(e => console.error(e));
-        const updatedVenta = { ...selectedVenta, estado: newEstado };
-        updateVenta(selectedVenta.IDventas, { estado: newEstado });
+        
+        let updatedOrdenVentas = selectedVenta.ordenVentas;
+        if (['ENTREGADO', 'LISTO_PARA_ENTREGA', 'PAGADO'].includes(newEstado)) {
+          updatedOrdenVentas = updatedOrdenVentas?.map(ov => ({
+            ...ov,
+            estado: 'LISTO',
+            cantidadPreparada: ov.cantidad || 1
+          }));
+        }
+
+        const updatedVenta = { ...selectedVenta, estado: newEstado, ordenVentas: updatedOrdenVentas };
+        updateVenta(selectedVenta.IDventas, { estado: newEstado, ordenVentas: updatedOrdenVentas });
         emitOrdenActualizada({
           ventaId: selectedVenta.IDventas,
           IDventas: selectedVenta.IDventas,

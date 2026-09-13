@@ -5,6 +5,20 @@ import { Text } from '../../components/ui/text';
 import { iniciarDescanso, terminarDescanso } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 
+let ImagePicker: any;
+try {
+  ImagePicker = require('expo-image-picker');
+} catch (e) {
+  console.warn('expo-image-picker no está disponible de forma nativa aún');
+}
+
+let Location: any;
+try {
+  Location = require('expo-location');
+} catch (e) {
+  console.warn('expo-location no está disponible de forma nativa aún');
+}
+
 interface DescansoCardProps {
   turnoId: string;
   horaEntrada: string;
@@ -112,10 +126,60 @@ export default function DescansoCard({
 
   const isOvertime = secsRemaining === 0 && inicio && !fin;
 
+  const takePhoto = async () => {
+    if (!ImagePicker) {
+      showAlert({ type: 'error', title: 'Módulo no disponible', message: 'La cámara requiere una recompilación de la app para funcionar.' });
+      return null;
+    }
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      showAlert({ type: 'error', title: 'Permiso Denegado', message: 'Se necesita acceso a la cámara para el registro facial' });
+      return null;
+    }
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.5,
+        cameraType: ImagePicker.CameraType.front,
+      });
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        return result.assets[0].uri;
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return null;
+  };
+
+  const getLocation = async () => {
+    if (!Location) {
+      showAlert({ type: 'error', title: 'Módulo no disponible', message: 'El GPS requiere una recompilación de la app para funcionar.' });
+      return null;
+    }
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      showAlert({ type: 'error', title: 'Permiso Denegado', message: 'Se necesita ubicación para el registro' });
+      return null;
+    }
+    try {
+      let loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      return { latitud: loc.coords.latitude, longitud: loc.coords.longitude };
+    } catch (e) {
+      showAlert({ type: 'error', title: 'Error GPS', message: 'No se pudo obtener la ubicación actual. Verifica que el GPS esté activo.' });
+    }
+    return null;
+  };
+
   const handleIniciar = async () => {
     setSaving(true);
     try {
-      const res = await iniciarDescanso(turnoId);
+      const loc = await getLocation();
+      if (!loc) { setSaving(false); return; }
+      const photoUri = await takePhoto();
+      if (!photoUri) { setSaving(false); return; }
+
+      const res = await iniciarDescanso(turnoId, { latitud: loc.latitud, longitud: loc.longitud, fotoUri: photoUri });
       const newInicio = new Date(res.data.inicioDescanso);
       setInicio(newInicio);
       onDescansoChange({ inicioDescanso: res.data.inicioDescanso, finDescanso: null });
@@ -127,7 +191,12 @@ export default function DescansoCard({
   const handleTerminar = async () => {
     setSaving(true);
     try {
-      const res = await terminarDescanso(turnoId);
+      const loc = await getLocation();
+      if (!loc) { setSaving(false); return; }
+      const photoUri = await takePhoto();
+      if (!photoUri) { setSaving(false); return; }
+
+      const res = await terminarDescanso(turnoId, { latitud: loc.latitud, longitud: loc.longitud, fotoUri: photoUri });
       const newFin = new Date(res.data.finDescanso);
       setFin(newFin);
       onDescansoChange({ inicioDescanso: res.data.inicioDescanso, finDescanso: res.data.finDescanso });

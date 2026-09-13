@@ -624,6 +624,8 @@ export default function AdminNominaScreen({ navigation }: any) {
       estado: turno.estado,
       horaEntrada: new Date(turno.horaEntrada).toISOString(),
       horaSalida: turno.horaSalida ? new Date(turno.horaSalida).toISOString() : '',
+      inicioDescanso: turno.inicioDescanso ? new Date(turno.inicioDescanso).toISOString() : '',
+      finDescanso: turno.finDescanso ? new Date(turno.finDescanso).toISOString() : '',
       ceno: !!turno.ceno,
       valorTurno: turno.valorTurno?.toString() || '0'
     });
@@ -642,6 +644,12 @@ export default function AdminNominaScreen({ navigation }: any) {
           : undefined,
         horaSalida: editForm.horaSalida
           ? new Date(editForm.horaSalida).toISOString()
+          : undefined,
+        inicioDescanso: editForm.inicioDescanso
+          ? new Date(editForm.inicioDescanso).toISOString()
+          : undefined,
+        finDescanso: editForm.finDescanso
+          ? new Date(editForm.finDescanso).toISOString()
           : undefined,
       };
       Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
@@ -903,7 +911,7 @@ export default function AdminNominaScreen({ navigation }: any) {
     }
   };
 
-  const openPicker = (field: 'horaEntrada'|'horaSalida') => {
+  const openPicker = (field: 'horaEntrada'|'horaSalida'|'inicioDescanso'|'finDescanso') => {
     setPickerConfig({ show: true, mode: 'date', field });
   };
 
@@ -1703,6 +1711,52 @@ export default function AdminNominaScreen({ navigation }: any) {
                   <TouchableOpacity style={styles.datePickerBtn} onPress={() => openPicker('horaSalida')}>
                     <Ionicons name="calendar-outline" size={18} color="#4b5563" style={{ marginRight: 8 }} />
                     <Text style={styles.datePickerText}>{formatPrettyDate(editForm.horaSalida)}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Inicio Descanso (Opcional)</Text>
+                {Platform.OS === 'web' ? (
+                  React.createElement('input', {
+                    type: 'datetime-local',
+                    value: editForm.inicioDescanso ? new Date(new Date(editForm.inicioDescanso).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '',
+                    onChange: (e: any) => {
+                      if (e.target.value) {
+                        setEditForm({...editForm, inicioDescanso: new Date(e.target.value).toISOString()});
+                      } else {
+                        setEditForm({...editForm, inicioDescanso: ''});
+                      }
+                    },
+                    style: { padding: '12px', backgroundColor: '#f9fafb', borderWidth: '1px', borderColor: '#e5e7eb', borderRadius: '8px', fontSize: '16px', width: '100%', fontFamily: 'inherit' }
+                  })
+                ) : (
+                  <TouchableOpacity style={styles.datePickerBtn} onPress={() => openPicker('inicioDescanso')}>
+                    <Ionicons name="calendar-outline" size={18} color="#4b5563" style={{ marginRight: 8 }} />
+                    <Text style={styles.datePickerText}>{formatPrettyDate(editForm.inicioDescanso)}</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Fin Descanso (Opcional)</Text>
+                {Platform.OS === 'web' ? (
+                  React.createElement('input', {
+                    type: 'datetime-local',
+                    value: editForm.finDescanso ? new Date(new Date(editForm.finDescanso).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : '',
+                    onChange: (e: any) => {
+                      if (e.target.value) {
+                        setEditForm({...editForm, finDescanso: new Date(e.target.value).toISOString()});
+                      } else {
+                        setEditForm({...editForm, finDescanso: ''});
+                      }
+                    },
+                    style: { padding: '12px', backgroundColor: '#f9fafb', borderWidth: '1px', borderColor: '#e5e7eb', borderRadius: '8px', fontSize: '16px', width: '100%', fontFamily: 'inherit' }
+                  })
+                ) : (
+                  <TouchableOpacity style={styles.datePickerBtn} onPress={() => openPicker('finDescanso')}>
+                    <Ionicons name="calendar-outline" size={18} color="#4b5563" style={{ marginRight: 8 }} />
+                    <Text style={styles.datePickerText}>{formatPrettyDate(editForm.finDescanso)}</Text>
                   </TouchableOpacity>
                 )}
               </View>

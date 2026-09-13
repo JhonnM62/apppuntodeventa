@@ -38,6 +38,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const [latitudNegocio, setLatitudNegocio] = useState('');
   const [longitudNegocio, setLongitudNegocio] = useState('');
   const [radioGeocercaM, setRadioGeocercaM] = useState('100');
+  const [radioGeocercaDescansoM, setRadioGeocercaDescansoM] = useState('50');
   const [minutosGraciaLlegadaTarde, setMinutosGraciaLlegadaTarde] = useState('5');
   
   // Estados para IA
@@ -121,6 +122,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         if (dataNegocio.latitudNegocio !== null && dataNegocio.latitudNegocio !== undefined) setLatitudNegocio(String(dataNegocio.latitudNegocio));
         if (dataNegocio.longitudNegocio !== null && dataNegocio.longitudNegocio !== undefined) setLongitudNegocio(String(dataNegocio.longitudNegocio));
         if (dataNegocio.radioGeocercaM !== null && dataNegocio.radioGeocercaM !== undefined) setRadioGeocercaM(String(dataNegocio.radioGeocercaM));
+        if (dataNegocio.radioGeocercaDescansoM !== null && dataNegocio.radioGeocercaDescansoM !== undefined) setRadioGeocercaDescansoM(String(dataNegocio.radioGeocercaDescansoM));
         if (dataNegocio.minutosGraciaLlegadaTarde !== null && dataNegocio.minutosGraciaLlegadaTarde !== undefined) setMinutosGraciaLlegadaTarde(String(dataNegocio.minutosGraciaLlegadaTarde));
         
         setFactusConfig({
@@ -183,6 +185,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           latitudNegocio: latitudNegocio ? parseFloat(latitudNegocio) : undefined,
           longitudNegocio: longitudNegocio ? parseFloat(longitudNegocio) : undefined,
           radioGeocercaM: radioGeocercaM ? parseInt(radioGeocercaM, 10) : 100,
+          radioGeocercaDescansoM: radioGeocercaDescansoM ? parseInt(radioGeocercaDescansoM, 10) : 50,
           minutosGraciaLlegadaTarde: minutosGraciaLlegadaTarde ? parseInt(minutosGraciaLlegadaTarde, 10) : 5,
           ...factusToSave
         } as any),
@@ -415,6 +418,15 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             value={radioGeocercaM}
             onChangeText={(text) => setRadioGeocercaM(text.replace(/[^0-9]/g, ''))}
             placeholder="Ej. 100"
+            keyboardType="numeric"
+          />
+
+          <Text style={[styles.label, { marginTop: 12 }]}>Radio de tolerancia de descanso (Metros)</Text>
+          <TextInput
+            style={styles.input}
+            value={radioGeocercaDescansoM}
+            onChangeText={(text) => setRadioGeocercaDescansoM(text.replace(/[^0-9]/g, ''))}
+            placeholder="Ej. 50"
             keyboardType="numeric"
           />
 

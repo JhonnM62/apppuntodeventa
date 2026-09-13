@@ -650,9 +650,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               productos: payload.productos 
             });
 
-            if (editingSaleId) {
-              navigation.navigate('Main', { screen: 'Pedidos', params: { tab: paymentData.estado || 'PAGADO' } });
-            }
             setTimeout(() => {
               Toast.show({
                 type: 'success',
@@ -947,7 +944,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             setSelectedMesa(null);
 
             if (editingSaleId) {
-              navigation.navigate('Main', { screen: 'Pedidos', params: { tab: data.estado } });
+              navigation.navigate('Main', { screen: 'Pedidos', params: { tab: 'TOMADO' } });
             }
             setTimeout(() => {
               Toast.show({
