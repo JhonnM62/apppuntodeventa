@@ -73,6 +73,7 @@ type OrderVenta = {
   precio?: number;
   precioTotal?: number;
   estado?: string;
+  cantidadPreparada?: number;
   preparadoAt?: string;
   createdAt?: string;
   comentarios?: string;
