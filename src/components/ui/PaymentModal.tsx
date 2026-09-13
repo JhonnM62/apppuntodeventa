@@ -94,6 +94,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const { height: windowHeight } = useWindowDimensions();
   const [method, setMethod] = useState<PaymentMethod | null>(null);
   const [selectedEstado, setSelectedEstado] = useState<OrderStatus>('EN_EL_CARRITO');
+  const [EfectivoYOtrosState, setEfectivoYOtrosState] = useState(false);
+  const [localLoading, setLocalLoading] = useState(false);
+
+  const finalIsLoading = isLoading || localLoading;
   const [efectivoInput, setEfectivoInput] = useState('');
   const [transferenciaInput, setTransferenciaInput] = useState('');
   const [selectedBank, setSelectedBank] = useState<string | null>(null);
@@ -266,31 +270,37 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   const handleSaveOnly = async () => {
-    try {
-      // Optimizacion UI: Ocultamos el modal inmediatamente antes de procesar el guardado
-      // Esto elimina la percepción visual de "carga" (loader) para la cajera
-      const estadoActual = selectedEstado;
-      const pedidoIdActual = editingPedidoId;
-      
-      const result = await onSave({ estado: estadoActual, pedidoId: pedidoIdActual, medioDePago: method });
-      const finalOrderId = (result && 'pedidoId' in result) ? result.pedidoId : pedidoIdActual;
-      
-      // Intentar impresión automática en segundo plano
-      if (finalOrderId && finalOrderId !== 'PROCESANDO...' && !finalOrderId.startsWith('PROCESANDO')) {
-        setTimeout(() => {
-          attemptAutoPrint(estadoActual, finalOrderId).catch(err => {
-            console.log('Error en auto-print:', err);
-          });
-        }, 0);
+    if (finalIsLoading) return;
+    setLocalLoading(true);
+    
+    // Yield main thread to allow loader to render before heavy parent logic
+    setTimeout(async () => {
+      try {
+        const estadoActual = selectedEstado;
+        const pedidoIdActual = editingPedidoId;
+        
+        const result = await onSave({ estado: estadoActual, pedidoId: pedidoIdActual, medioDePago: method });
+        const finalOrderId = (result && 'pedidoId' in result) ? result.pedidoId : pedidoIdActual;
+        
+        // Intentar impresión automática en segundo plano
+        if (finalOrderId && finalOrderId !== 'PROCESANDO...' && !finalOrderId.startsWith('PROCESANDO')) {
+          setTimeout(() => {
+            attemptAutoPrint(estadoActual, finalOrderId).catch(err => {
+              console.log('Error en auto-print:', err);
+            });
+          }, 0);
+        }
+      } catch (error) {
+        console.error('Error saving:', error);
+        Toast.show({ type: 'error', text1: 'Error', text2: 'Hubo un problema al guardar la orden', position: 'top' });
+      } finally {
+        setLocalLoading(false);
       }
-
-    } catch (error) {
-      console.error('Error saving:', error);
-      Toast.show({ type: 'error', text1: 'Error', text2: 'Hubo un problema al guardar la orden', position: 'top' });
-    }
+    }, 50);
   };
 
   const handleConfirmCobrar = async () => {
+    if (finalIsLoading) return;
     if (!method) {
       Toast.show({ type: 'error', text1: 'Error', text2: 'Selecciona un metodo de pago', position: 'top' });
       return;
@@ -298,8 +308,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
     if (!onCobrar) return;
 
-    // Ejecutar lógica de interfaz de usuario de inmediato
-    onCobrarLogic();
+    setLocalLoading(true);
+    setTimeout(() => {
+      // Ejecutar lógica de interfaz de usuario de inmediato
+      onCobrarLogic().finally(() => setLocalLoading(false));
+    }, 50);
   };
 
   const onCobrarLogic = async () => {
@@ -855,7 +868,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <TouchableOpacity
               onPress={handleClose}
               style={styles.cancelButton}
-              disabled={isLoading}
+              disabled={finalIsLoading}
               accessibilityRole="button"
             >
               <Ionicons name="close-circle-outline" size={20} color="#6b7280" />
@@ -865,24 +878,24 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               <TouchableOpacity
                 onPress={handleSaveOnly}
                 style={styles.saveButton}
-                disabled={isLoading}
+                disabled={finalIsLoading}
                 accessibilityRole="button"
               >
-                {isLoading ? (
+                {finalIsLoading ? (
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <Ionicons name="save-outline" size={20} color="#fff" />
                 )}
-                <RNText style={styles.saveButtonText}>{isLoading ? 'Guardando...' : 'GUARDAR'}</RNText>
+                <RNText style={styles.saveButtonText}>{finalIsLoading ? 'Guardando...' : 'GUARDAR'}</RNText>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
                 onPress={handleConfirmCobrar}
                 style={styles.confirmButton}
-                disabled={!method || isLoading}
+                disabled={!method || finalIsLoading}
                 accessibilityRole="button"
               >
-                {isLoading ? (
+                {finalIsLoading ? (
                   <>
                     <ActivityIndicator color="#fff" size="small" />
                     <RNText style={styles.confirmButtonText}>Procesando...</RNText>
