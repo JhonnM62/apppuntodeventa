@@ -8,7 +8,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { getSales, updateVentaEstado, updateVentaPago, deleteSale, deleteSalesBulk, getVentaById } from '../../services/sales';
+import { getSales, updateVentaEstado, updateVentaPago, deleteSale, deleteSalesBulk, getVentaById, updateOrderItemState } from '../../services/sales';
 import { emitirFacturaDian, eliminarFacturaDian } from '../../services/facturacion';
 import { useSocket, useSocketEvent, useSocketEmitter } from '../../hooks';
 import { Room, SocketEvent } from '../../types/socket.types';
@@ -73,6 +73,8 @@ type OrderVenta = {
   precio?: number;
   precioTotal?: number;
   estado?: string;
+  preparadoAt?: string;
+  createdAt?: string;
   comentarios?: string;
   salsa?: string;
   helado?: string;
@@ -120,6 +122,57 @@ export const getVentaTotal = (venta: VentaItem | null): number => {
   }
   return 0;
 };
+
+const PreparationTimer = ({ createdAt, preparadoAt, estado }: { createdAt?: string, preparadoAt?: string, estado?: string }) => {
+  const [elapsed, setElapsed] = useState('');
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    const calculateTime = () => {
+      if (!createdAt) {
+        setElapsed('');
+        return;
+      }
+      
+      const start = new Date(createdAt).getTime();
+      const end = preparadoAt ? new Date(preparadoAt).getTime() : Date.now();
+      
+      const diffInSeconds = Math.floor((end - start) / 1000);
+      if (diffInSeconds < 0) {
+        setElapsed('00:00');
+        return;
+      }
+
+      const m = Math.floor(diffInSeconds / 60).toString().padStart(2, '0');
+      const s = (diffInSeconds % 60).toString().padStart(2, '0');
+      
+      setElapsed(`${m}:${s}`);
+    };
+
+    calculateTime();
+
+    if (estado !== 'LISTO') {
+      interval = setInterval(calculateTime, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [createdAt, preparadoAt, estado]);
+
+  if (!createdAt) return null;
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
+      <Ionicons name={estado === 'LISTO' ? "checkmark-done-circle" : "time-outline"} size={14} color={estado === 'LISTO' ? "#10b981" : "#f59e0b"} style={{ marginRight: 4 }} />
+      <RNText style={{ fontSize: 12, color: estado === 'LISTO' ? "#10b981" : "#f59e0b", fontWeight: '600' }}>
+        {elapsed}
+      </RNText>
+    </View>
+  );
+};
+
 
 const PedidosScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -230,6 +283,30 @@ const PedidosScreen = () => {
       await printManual(ticketData, type);
     }
   };
+
+  const toggleProductReady = async (venta: VentaItem, orderVenta: OrderVenta) => {
+    if (!orderVenta.IDorderventas) return;
+    const newEstado = orderVenta.estado === 'LISTO' ? 'PREPARANDO' : 'LISTO';
+    
+    // Optimistic update
+    if (selectedVenta && selectedVenta.IDventas === venta.IDventas) {
+      const updatedOrdenVentas = selectedVenta.ordenVentas?.map((ov) => {
+        if (ov.IDorderventas === orderVenta.IDorderventas) {
+          return { ...ov, estado: newEstado, preparadoAt: newEstado === 'LISTO' ? new Date().toISOString() : undefined };
+        }
+        return ov;
+      });
+      setSelectedVenta({ ...selectedVenta, ordenVentas: updatedOrdenVentas });
+    }
+
+    try {
+      await updateOrderItemState(venta.IDventas, orderVenta.IDorderventas, newEstado);
+    } catch (e) {
+      console.error('Error toggling product state:', e);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo actualizar el estado del plato' });
+    }
+  };
+
 
   const [filters, setFilters] = useState<FilterState>({
     searchText: '',
@@ -1323,7 +1400,10 @@ showAlert({
                         </View>
                         <View style={styles.productDetails}>
                           <RNText style={styles.productName} numberOfLines={1}>{prod.nombreProducto || prod.nombre}</RNText>
-                          <RNText style={styles.productMeta}>{prod.cantidad}x {formatMoney(prod.precio)}</RNText>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                            <RNText style={styles.productMeta}>{prod.cantidad}x {formatMoney(prod.precio)}</RNText>
+                            <PreparationTimer createdAt={prod.createdAt || (selectedVenta.createdAt ? selectedVenta.createdAt.toString() : undefined)} preparadoAt={prod.preparadoAt} estado={prod.estado} />
+                          </View>
                           
                           {/* Notas/Modificadores con cantidades y precios */}
                           {notas.length > 0 && (
@@ -1361,7 +1441,28 @@ showAlert({
                             </View>
                           )}
                         </View>
-                        <RNText style={styles.productTotal}>{formatMoney(prod.precioTotal)}</RNText>
+                        <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                          <RNText style={styles.productTotal}>{formatMoney(prod.precioTotal)}</RNText>
+                          <TouchableOpacity
+                            style={{
+                              marginTop: 6,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              backgroundColor: prod.estado === 'LISTO' ? '#d1fae5' : '#f3f4f6',
+                              paddingHorizontal: 8,
+                              paddingVertical: 4,
+                              borderRadius: 6,
+                              borderWidth: 1,
+                              borderColor: prod.estado === 'LISTO' ? '#34d399' : '#d1d5db',
+                            }}
+                            onPress={() => toggleProductReady(selectedVenta, prod)}
+                          >
+                            <Ionicons name={prod.estado === 'LISTO' ? "checkmark-circle" : "ellipse-outline"} size={16} color={prod.estado === 'LISTO' ? "#10b981" : "#9ca3af"} />
+                            <RNText style={{ fontSize: 10, color: prod.estado === 'LISTO' ? '#065f46' : '#4b5563', fontWeight: 'bold', marginLeft: 4 }}>
+                              {prod.estado === 'LISTO' ? 'LISTO' : 'MARCAR'}
+                            </RNText>
+                          </TouchableOpacity>
+                        </View>
                       </View>
                     </View>
                   );

@@ -147,3 +147,7 @@ export const hardDeleteSalesBulk = async (ids: string[]) => {
 export const emptyTrashSales = async () => {
   return await api.delete(`/ventas/trash/empty`);
 };
+
+export const updateOrderItemState = async (ventaId: string, orderVentaId: string, estado: string) => {
+  return await api.patch(`/ventas/${ventaId}/producto/${orderVentaId}/estado`, { estado });
+};

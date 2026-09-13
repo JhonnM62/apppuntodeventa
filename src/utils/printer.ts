@@ -28,6 +28,7 @@ export interface TicketData {
   fecha: string;
   cliente?: string;
   productos: TicketProduct[];
+  productosAnteriores?: TicketProduct[];
   total: number;
   efectivoRecibido?: number;
   devueltas?: number;
@@ -361,9 +362,64 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
     }
 
     if (index < data.productos.length - 1) {
-      payload += separator + '\n';
+      payload += '\n';
     }
   });
+
+  if (data.productosAnteriores && data.productosAnteriores.length > 0) {
+    payload += '\n' + separator + '\n';
+    payload += ESC_CMD.ALIGN_CT;
+    payload += ESC_CMD.TXT_BOLD_ON;
+    payload += 'ANTERIORES / ENTREGADOS\n';
+    payload += ESC_CMD.TXT_BOLD_OFF;
+    payload += ESC_CMD.ALIGN_LT;
+    payload += separator + '\n';
+    payload += alignLeft(
+      padRight('CANT.', qtyW) + 
+      padRight('PRODUCTO', nameW)
+    , width) + '\n';
+    payload += separator + '\n';
+
+    data.productosAnteriores.forEach((p, index) => {
+      const cleanName = cleanText(p.nombre);
+      const nameLines = wordWrap(cleanName, nameW - 1);
+      
+      const qtyStr = padRight(p.cantidad.toString(), qtyW);
+      const emptyQty = padRight('', qtyW);
+      
+      if (nameLines.length === 0) return;
+
+      if (nameLines.length === 1) {
+        payload += alignLeft(`${qtyStr}${nameLines[0]}`, width) + '\n';
+      } else {
+        payload += alignLeft(`${qtyStr}${nameLines[0]}`, width) + '\n';
+        for (let i = 1; i < nameLines.length; i++) {
+          payload += alignLeft(`${emptyQty}${nameLines[i]}`, width) + '\n';
+        }
+      }
+
+      if (p.modifiers && p.modifiers.length > 0) {
+        p.modifiers.forEach(mod => {
+          const modQty = mod.quantity || 1;
+          const modName = cleanText(`  * ${modQty}x ${mod.name}`);
+          const modNameLines = wordWrap(modName, nameW - 1);
+          
+          if (modNameLines.length === 1) {
+            payload += alignLeft(`${emptyQty}${modNameLines[0]}`, width) + '\n';
+          } else {
+            payload += alignLeft(`${emptyQty}${modNameLines[0]}`, width) + '\n';
+            for (let i = 1; i < modNameLines.length; i++) {
+              payload += alignLeft(`${emptyQty}${modNameLines[i]}`, width) + '\n';
+            }
+          }
+        });
+      }
+
+      if (index < data.productosAnteriores!.length - 1) {
+        payload += '\n';
+      }
+    });
+  }
 
   payload += separator + '\n';
   if (data.observaciones) {

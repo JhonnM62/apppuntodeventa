@@ -672,19 +672,58 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                    cleanOrderId = cleanOrderId.substring(7);
                  }
 
-                 const allProducts = payload.productos.map(item => ({
-                   cantidad: item.cantidad,
-                   nombre: item.nombre,
-                   precioUnitario: item.precio,
-                   subtotal: item.precioTotal,
-                   modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
-                 }));
+                 let nuevosProductos: any[] = [];
+                 let productosAnteriores: any[] = [];
+                 
+                 if (isEditing && editingVenta) {
+                    const originalQtyMap: Record<string, number> = {};
+                    editingVenta.ordenVentas?.forEach((ov: any) => {
+                      const id = ov.producto?.IDproductos || ov.productoId || ov.IDorderventas;
+                      originalQtyMap[id] = (originalQtyMap[id] || 0) + (ov.cantidad || 1);
+                    });
+
+                    payload.productos.forEach(item => {
+                      const id = item.productoId;
+                      const originalQty = originalQtyMap[id as string] || 0;
+                      const newQty = item.cantidad - originalQty;
+
+                      if (newQty > 0) {
+                        nuevosProductos.push({
+                          cantidad: newQty,
+                          nombre: item.nombre,
+                          precioUnitario: item.precio,
+                          subtotal: item.precio * newQty,
+                          modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
+                        });
+                      }
+
+                      if (originalQty > 0) {
+                        const prevQty = Math.min(originalQty, item.cantidad);
+                        productosAnteriores.push({
+                          cantidad: prevQty,
+                          nombre: item.nombre,
+                          precioUnitario: item.precio,
+                          subtotal: item.precio * prevQty,
+                          modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
+                        });
+                      }
+                    });
+                 } else {
+                    nuevosProductos = payload.productos.map(item => ({
+                      cantidad: item.cantidad,
+                      nombre: item.nombre,
+                      precioUnitario: item.precio,
+                      subtotal: item.precioTotal,
+                      modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
+                    }));
+                 }
 
                  const ticketData = {
                    orderId: cleanOrderId,
                    fecha: new Date().toLocaleString('es-CO'),
                    total: payload.venta.totalInput,
-                   productos: allProducts,
+                   productos: nuevosProductos,
+                   productosAnteriores: productosAnteriores,
                    estado: payload.venta.estado,
                    metodoPago: finalMethod,
                    efectivoRecibido: payload.venta.efectivoRecibido,
