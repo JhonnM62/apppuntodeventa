@@ -255,7 +255,8 @@ const PedidosScreen = () => {
         nombre: prod.nombre || 'Producto',
         precioUnitario: Number(prod.precio || 0),
         subtotal: Number(prod.precioTotal || ((prod.precio || 0) * (prod.cantidad || 1))),
-        modifiers: getModifiers(prod.comentarios)
+        modifiers: getModifiers(prod.comentarios),
+        cantidadPreparada: Number(prod.cantidadPreparada || 0)
       }))
     };
   };
