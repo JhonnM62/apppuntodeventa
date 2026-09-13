@@ -286,7 +286,12 @@ const PedidosScreen = () => {
         };
         loadSale();
       }
-    }, [route.params?.ventaId, navigation])
+
+      if (route.params?.tab) {
+        setActiveTab(route.params.tab);
+        navigation.setParams({ tab: undefined });
+      }
+    }, [route.params?.ventaId, route.params?.tab, navigation])
   );
   const updateVenta = useSalesStore((state) => state.updateVenta);
   const removeVenta = useSalesStore((state) => state.removeVenta);

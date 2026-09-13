@@ -110,7 +110,7 @@ export type RootStackParamList = {
 
 export type BottomTabParamList = {
   Inicio: undefined;
-  Pedidos: { ventaId?: string } | undefined;
+  Pedidos: { ventaId?: string; tab?: string } | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

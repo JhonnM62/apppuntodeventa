@@ -650,7 +650,9 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               productos: payload.productos 
             });
 
-            navigation.goBack();
+            if (editingSaleId) {
+              navigation.navigate('Main', { screen: 'Pedidos', params: { tab: paymentData.estado || 'PAGADO' } });
+            }
             setTimeout(() => {
               Toast.show({
                 type: 'success',
@@ -691,8 +693,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                  printStore.printTicket(ticketData);
                }
             }, 50);
-
-            navigation.goBack();
           } catch (error: any) {
             console.error('Error al actualizar venta:', error?.message || error);
             Toast.show({
@@ -761,7 +761,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           };
           emitNuevaOrden(ordenData);
           
-          navigation.goBack();
           setTimeout(() => {
             Toast.show({
               type: 'success',
@@ -905,7 +904,9 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               productos: payload.productos
             });
 
-            navigation.goBack();
+            if (editingSaleId) {
+              navigation.navigate('Main', { screen: 'Pedidos', params: { tab: data.estado } });
+            }
             setTimeout(() => {
               Toast.show({
                 type: 'success',
