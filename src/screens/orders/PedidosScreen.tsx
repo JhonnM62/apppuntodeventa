@@ -123,22 +123,40 @@ export const getVentaTotal = (venta: VentaItem | null): number => {
   return 0;
 };
 
-const PreparationTimer = ({ createdAt, preparadoAt, estado }: { createdAt?: string, preparadoAt?: string, estado?: string }) => {
+const PreparationTimer = ({ 
+  clientStartTime, 
+  serverStartTime, 
+  preparadoAt, 
+  estado 
+}: { 
+  clientStartTime?: string, 
+  serverStartTime?: string, 
+  preparadoAt?: string, 
+  estado?: string 
+}) => {
   const [elapsed, setElapsed] = useState('');
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
     const calculateTime = () => {
-      if (!createdAt) {
+      let diffInSeconds = 0;
+
+      if (estado === 'LISTO' && preparadoAt && serverStartTime) {
+        // Usa Server - Server para evitar saltos por desincronización de reloj
+        const start = new Date(serverStartTime).getTime();
+        const end = new Date(preparadoAt).getTime();
+        diffInSeconds = Math.floor((end - start) / 1000);
+      } else if (clientStartTime || serverStartTime) {
+        // Usa Client - Client para el contador en vivo
+        const start = new Date(clientStartTime || serverStartTime!).getTime();
+        const end = Date.now();
+        diffInSeconds = Math.floor((end - start) / 1000);
+      } else {
         setElapsed('');
         return;
       }
       
-      const start = new Date(createdAt).getTime();
-      const end = preparadoAt ? new Date(preparadoAt).getTime() : Date.now();
-      
-      const diffInSeconds = Math.floor((end - start) / 1000);
       if (diffInSeconds < 0) {
         setElapsed('00:00');
         return;
@@ -159,9 +177,9 @@ const PreparationTimer = ({ createdAt, preparadoAt, estado }: { createdAt?: stri
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [createdAt, preparadoAt, estado]);
+  }, [clientStartTime, serverStartTime, preparadoAt, estado]);
 
-  if (!createdAt) return null;
+  if (!clientStartTime && !serverStartTime) return null;
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
@@ -284,15 +302,49 @@ const PedidosScreen = () => {
     }
   };
 
-  const toggleProductReady = async (venta: VentaItem, orderVenta: OrderVenta) => {
+  const toggleProductReady = async (venta: VentaItem, orderVenta: OrderVenta, action?: 'increment' | 'decrement') => {
     if (!orderVenta.IDorderventas) return;
-    const newEstado = orderVenta.estado === 'LISTO' ? 'PREPARANDO' : 'LISTO';
     
-    // Optimistic update
+    let newEstado = orderVenta.estado === 'LISTO' ? 'PREPARANDO' : 'LISTO';
+    let newCantidadPreparada = orderVenta.cantidadPreparada || 0;
+    const maxCantidad = orderVenta.cantidad || 1;
+
+    if (action === 'increment') {
+      newCantidadPreparada = Math.min(newCantidadPreparada + 1, maxCantidad);
+      newEstado = newCantidadPreparada >= maxCantidad ? 'LISTO' : 'PREPARANDO';
+    } else if (action === 'decrement') {
+      newCantidadPreparada = Math.max(newCantidadPreparada - 1, 0);
+      newEstado = 'PREPARANDO'; // Si decrece, por definición no están todos listos
+    } else {
+      // Toggle tradicional para cantidad = 1
+      newCantidadPreparada = newEstado === 'LISTO' ? maxCantidad : 0;
+    }
+
+    // Optimistic UI Update with skew-compensated simulated time
     if (selectedVenta && selectedVenta.IDventas === venta.IDventas) {
+      const clientStartStr = selectedVenta.registroDeTiempo?.[0]?.fecha_hora;
+      const serverStartStr = orderVenta.createdAt || selectedVenta.fechaYHora || selectedVenta.fecha;
+      
+      let simulatedPreparadoAt: string | undefined = undefined;
+      
+      if (newEstado === 'LISTO' && serverStartStr) {
+        // Calculate true elapsed time based on client clock
+        const clientStartTime = new Date(clientStartStr || serverStartStr).getTime();
+        const trueElapsed = Math.max(0, Date.now() - clientStartTime);
+        
+        // Add true elapsed time to the server start time to simulate the backend's "preparadoAt"
+        const serverStartTime = new Date(serverStartStr).getTime();
+        simulatedPreparadoAt = new Date(serverStartTime + trueElapsed).toISOString();
+      }
+
       const updatedOrdenVentas = selectedVenta.ordenVentas?.map((ov) => {
         if (ov.IDorderventas === orderVenta.IDorderventas) {
-          return { ...ov, estado: newEstado, preparadoAt: newEstado === 'LISTO' ? new Date().toISOString() : undefined };
+          return { 
+            ...ov, 
+            estado: newEstado, 
+            cantidadPreparada: newCantidadPreparada,
+            preparadoAt: simulatedPreparadoAt 
+          };
         }
         return ov;
       });
@@ -300,7 +352,7 @@ const PedidosScreen = () => {
     }
 
     try {
-      await updateOrderItemState(venta.IDventas, orderVenta.IDorderventas, newEstado);
+      await updateOrderItemState(venta.IDventas, orderVenta.IDorderventas, newEstado, newCantidadPreparada);
     } catch (e) {
       console.error('Error toggling product state:', e);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo actualizar el estado del plato' });
@@ -1402,7 +1454,12 @@ showAlert({
                           <RNText style={styles.productName} numberOfLines={1}>{prod.nombreProducto || prod.nombre}</RNText>
                           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
                             <RNText style={styles.productMeta}>{prod.cantidad}x {formatMoney(prod.precio)}</RNText>
-                            <PreparationTimer createdAt={prod.createdAt || (selectedVenta.fechaYHora || selectedVenta.fecha)?.toString()} preparadoAt={prod.preparadoAt} estado={prod.estado} />
+                            <PreparationTimer 
+                              clientStartTime={selectedVenta.registroDeTiempo?.[0]?.fecha_hora}
+                              serverStartTime={prod.createdAt || (selectedVenta.fechaYHora || selectedVenta.fecha)?.toString()}
+                              preparadoAt={prod.preparadoAt} 
+                              estado={prod.estado} 
+                            />
                           </View>
                           
                           {/* Notas/Modificadores con cantidades y precios */}
@@ -1443,30 +1500,72 @@ showAlert({
                         </View>
                         <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
                           <RNText style={styles.productTotal}>{formatMoney(prod.precioTotal)}</RNText>
-                          <TouchableOpacity
-                            style={{
-                              marginTop: 6,
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              backgroundColor: prod.estado === 'LISTO' ? '#10b981' : '#ffffff',
-                              paddingHorizontal: 12,
-                              paddingVertical: 6,
-                              borderRadius: 20,
-                              borderWidth: 1,
-                              borderColor: prod.estado === 'LISTO' ? '#10b981' : '#d1d5db',
-                              shadowColor: '#000',
-                              shadowOffset: { width: 0, height: 1 },
-                              shadowOpacity: 0.1,
-                              shadowRadius: 2,
-                              elevation: 2,
-                            }}
-                            onPress={() => toggleProductReady(selectedVenta, prod)}
-                          >
-                            <Ionicons name={prod.estado === 'LISTO' ? "checkmark-circle" : "time-outline"} size={16} color={prod.estado === 'LISTO' ? "#ffffff" : "#6b7280"} />
-                            <RNText style={{ fontSize: 11, color: prod.estado === 'LISTO' ? '#ffffff' : '#4b5563', fontWeight: 'bold', marginLeft: 6 }}>
-                              {prod.estado === 'LISTO' ? 'LISTO' : 'PREPARANDO'}
-                            </RNText>
-                          </TouchableOpacity>
+                          {prod.cantidad && prod.cantidad > 1 ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+                              <TouchableOpacity
+                                style={{
+                                  backgroundColor: '#f3f4f6',
+                                  padding: 4,
+                                  borderRadius: 8,
+                                  borderWidth: 1,
+                                  borderColor: '#d1d5db'
+                                }}
+                                onPress={() => toggleProductReady(selectedVenta, prod, 'decrement')}
+                              >
+                                <Ionicons name="remove" size={16} color="#6b7280" />
+                              </TouchableOpacity>
+                              <View style={{
+                                backgroundColor: prod.estado === 'LISTO' ? '#10b981' : '#ffffff',
+                                paddingHorizontal: 12,
+                                paddingVertical: 4,
+                                borderRadius: 12,
+                                marginHorizontal: 6,
+                                borderWidth: 1,
+                                borderColor: prod.estado === 'LISTO' ? '#10b981' : '#d1d5db',
+                              }}>
+                                <RNText style={{ fontSize: 11, fontWeight: 'bold', color: prod.estado === 'LISTO' ? '#ffffff' : '#4b5563' }}>
+                                  {prod.cantidadPreparada || 0}/{prod.cantidad} {prod.estado === 'LISTO' ? 'LISTOS' : 'LISTOS'}
+                                </RNText>
+                              </View>
+                              <TouchableOpacity
+                                style={{
+                                  backgroundColor: '#f3f4f6',
+                                  padding: 4,
+                                  borderRadius: 8,
+                                  borderWidth: 1,
+                                  borderColor: '#d1d5db'
+                                }}
+                                onPress={() => toggleProductReady(selectedVenta, prod, 'increment')}
+                              >
+                                <Ionicons name="add" size={16} color="#6b7280" />
+                              </TouchableOpacity>
+                            </View>
+                          ) : (
+                            <TouchableOpacity
+                              style={{
+                                marginTop: 6,
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                backgroundColor: prod.estado === 'LISTO' ? '#10b981' : '#ffffff',
+                                paddingHorizontal: 12,
+                                paddingVertical: 6,
+                                borderRadius: 20,
+                                borderWidth: 1,
+                                borderColor: prod.estado === 'LISTO' ? '#10b981' : '#d1d5db',
+                                shadowColor: '#000',
+                                shadowOffset: { width: 0, height: 1 },
+                                shadowOpacity: 0.1,
+                                shadowRadius: 2,
+                                elevation: 2,
+                              }}
+                              onPress={() => toggleProductReady(selectedVenta, prod)}
+                            >
+                              <Ionicons name={prod.estado === 'LISTO' ? "checkmark-circle" : "time-outline"} size={16} color={prod.estado === 'LISTO' ? "#ffffff" : "#6b7280"} />
+                              <RNText style={{ fontSize: 11, color: prod.estado === 'LISTO' ? '#ffffff' : '#4b5563', fontWeight: 'bold', marginLeft: 6 }}>
+                                {prod.estado === 'LISTO' ? 'LISTO' : 'PREPARANDO'}
+                              </RNText>
+                            </TouchableOpacity>
+                          )}
                         </View>
                       </View>
                     </View>

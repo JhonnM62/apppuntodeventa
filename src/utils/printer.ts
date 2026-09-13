@@ -21,6 +21,7 @@ export interface TicketProduct {
   precioUnitario: number;
   subtotal: number;
   modifiers?: TicketProductModifier[];
+  cantidadPreparada?: number;
 }
 
 export interface TicketData {
@@ -359,6 +360,19 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
           }
         }
       });
+    }
+
+    if (p.cantidadPreparada && p.cantidadPreparada > 0) {
+      const infoStr = cleanText(`  * ${p.cantidadPreparada} ya preparadas`);
+      const infoLines = wordWrap(infoStr, nameW - 1);
+      if (infoLines.length === 1) {
+        payload += alignLeft(`${emptyQty}${infoLines[0]}`, width) + '\n';
+      } else {
+        payload += alignLeft(`${emptyQty}${infoLines[0]}`, width) + '\n';
+        for (let i = 1; i < infoLines.length; i++) {
+          payload += alignLeft(`${emptyQty}${infoLines[i]}`, width) + '\n';
+        }
+      }
     }
 
     if (index < data.productos.length - 1) {

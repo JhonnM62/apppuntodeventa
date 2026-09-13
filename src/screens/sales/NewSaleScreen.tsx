@@ -677,9 +677,11 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                  
                  if (isEditing && editingVenta) {
                     const originalQtyMap: Record<string, number> = {};
+                    const preparadaQtyMap: Record<string, number> = {};
                     editingVenta.ordenVentas?.forEach((ov: any) => {
                       const id = ov.producto?.IDproductos || ov.productoId || ov.IDorderventas;
                       originalQtyMap[id] = (originalQtyMap[id] || 0) + (ov.cantidad || 1);
+                      preparadaQtyMap[id] = (preparadaQtyMap[id] || 0) + (ov.cantidadPreparada || 0);
                     });
 
                     payload.productos.forEach(item => {
@@ -705,6 +707,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                           precioUnitario: item.precio,
                           subtotal: item.precio * prevQty,
                           modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
+                          cantidadPreparada: preparadaQtyMap[id as string] || 0,
                         });
                       }
                     });
@@ -922,10 +925,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           })),
         };
 
-        setPaymentModalVisible(false);
-        clearCart();
-        setSelectedMesa(null);
-
         import('../../services/sales').then(async ({ updateVentaCompleta }) => {
           try {
             const response = await updateVentaCompleta(editingSaleId, payload);
@@ -942,6 +941,10 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               },
               productos: payload.productos
             });
+
+            setPaymentModalVisible(false);
+            clearCart();
+            setSelectedMesa(null);
 
             if (editingSaleId) {
               navigation.navigate('Main', { screen: 'Pedidos', params: { tab: data.estado } });
@@ -998,15 +1001,15 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         })),
       };
 
-      setPaymentModalVisible(false);
-      clearCart();
-      setSelectedMesa(null);
-
       import('../../services/sales').then(({ createSale }) => {
         createSale(payload)
           .then((response: any) => {
             const ventaCreada = response?.data || response;
             const pedidoGenerado = ventaCreada?.pedido || `pedido-${Date.now()}`;
+            
+            setPaymentModalVisible(false);
+            clearCart();
+            setSelectedMesa(null);
             
             setTimeout(() => {
               const ordenData = {
