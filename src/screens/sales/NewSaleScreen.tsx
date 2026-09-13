@@ -650,13 +650,16 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               productos: payload.productos 
             });
 
-            Toast.show({
-              type: 'success',
-              text1: 'Cobro Exitoso',
-              text2: `Pedido actualizado y cobrado correctamente`,
-              position: 'top',
-              visibilityTime: 3000,
-            });
+            navigation.goBack();
+            setTimeout(() => {
+              Toast.show({
+                type: 'success',
+                text1: 'Cobro Exitoso',
+                text2: `Pedido actualizado y cobrado correctamente`,
+                position: 'top',
+                visibilityTime: 3000,
+              });
+            }, 350);
 
             setTimeout(() => {
                const finalMethod = payload.venta.medioDePago;
@@ -758,13 +761,16 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           };
           emitNuevaOrden(ordenData);
           
-          Toast.show({
-            type: 'success',
-            text1: 'Cobro Exitoso',
-            text2: `Pedido ${pedidoGenerado} registrado correctamente`,
-            position: 'top',
-            visibilityTime: 3000,
-          });
+          navigation.goBack();
+          setTimeout(() => {
+            Toast.show({
+              type: 'success',
+              text1: 'Cobro Exitoso',
+              text2: `Pedido ${pedidoGenerado} registrado correctamente`,
+              position: 'top',
+              visibilityTime: 3000,
+            });
+          }, 350);
 
           // Disparar la impresión AHORA que ya tenemos el ID real del backend
           // Usamos un pequeño timeout para no trabar el render de la notificación
@@ -899,13 +905,15 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               productos: payload.productos
             });
 
-            Toast.show({
-              type: 'success',
-              text1: 'Pedido Actualizado',
-              text2: `Estado actualizado a ${data.estado}`,
-              position: 'top',
-            });
             navigation.goBack();
+            setTimeout(() => {
+              Toast.show({
+                type: 'success',
+                text1: 'Pedido Actualizado',
+                text2: `Estado actualizado a ${data.estado}`,
+                position: 'top',
+              });
+            }, 350);
           } catch (error) {
             console.error('Error al guardar pedido:', error);
             Toast.show({
@@ -996,12 +1004,14 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               }
             }, 0);
 
-            Toast.show({
-              type: 'success',
-              text1: 'Orden Guardada',
-              text2: `Pedido ${pedidoGenerado} guardado en estado ${data.estado}`,
-              position: 'top',
-            });
+            setTimeout(() => {
+              Toast.show({
+                type: 'success',
+                text1: 'Orden Guardada',
+                text2: `Pedido ${pedidoGenerado} guardado en estado ${data.estado}`,
+                position: 'top',
+              });
+            }, 350);
           })
           .catch((error: any) => {
             console.error('Error al guardar pedido:', error?.message || error);
