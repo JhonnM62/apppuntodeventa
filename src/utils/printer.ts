@@ -363,7 +363,15 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
     }
 
     if (p.cantidadPreparada && p.cantidadPreparada > 0) {
-      const infoStr = cleanText(`  * ${p.cantidadPreparada} ya preparadas`);
+      const faltan = p.cantidad - p.cantidadPreparada;
+      let infoText = '';
+      if (faltan > 0) {
+        infoText = `  * ${p.cantidadPreparada} PREPARADAS, FALTA(N) ${faltan}`;
+      } else {
+        infoText = `  * TODAS PREPARADAS (${p.cantidadPreparada})`;
+      }
+      
+      const infoStr = cleanText(infoText);
       const infoLines = wordWrap(infoStr, nameW - 1);
       if (infoLines.length === 1) {
         payload += alignLeft(`${emptyQty}${infoLines[0]}`, width) + '\n';
