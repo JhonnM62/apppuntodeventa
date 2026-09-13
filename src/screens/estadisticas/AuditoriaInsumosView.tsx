@@ -262,7 +262,7 @@ export default function AuditoriaInsumosView({ startDate, endDate, nombreNegocio
           ))}
         </View>
 
-      </ScrollView>
+      </View>
       
       {/* EXPORT BUTTON */}
       <View className="p-4 bg-white border-t border-gray-200">
