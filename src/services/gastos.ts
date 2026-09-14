@@ -13,7 +13,7 @@ export interface Gasto {
 }
 
 export const getGastos = async (params?: { page?: number; limit?: number; tipo?: string; fechaDesde?: string; fechaHasta?: string }) => {
-  const { data } = await api.get('/gastos', { params });
+  const { data } = await api.get('/gastos', { params: { limit: 5000, ...(params || {}) } });
   return data; // { data: Gasto[], meta: any }
 };
 

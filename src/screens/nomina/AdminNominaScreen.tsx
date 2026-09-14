@@ -1075,12 +1075,12 @@ export default function AdminNominaScreen({ navigation }: any) {
                       <DescansoStatusAdmin turno={turnoActivo} onViewPhoto={setPhotoViewerUrl} />
                       <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
                         {turnoActivo.fotoEntrada && (
-                          <TouchableOpacity onPress={() => setPhotoViewerUrl(turnoActivo.fotoEntrada)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                            <TouchableOpacity onPress={() => setPhotoViewerUrl(turnoActivo.fotoEntrada)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
                             <Text style={{ fontSize: 10, color: '#475569' }}>📸 Entrada</Text>
                           </TouchableOpacity>
                         )}
                         {turnoActivo.fotoSalida && (
-                          <TouchableOpacity onPress={() => setPhotoViewerUrl(turnoActivo.fotoSalida)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                            <TouchableOpacity onPress={() => setPhotoViewerUrl(turnoActivo.fotoSalida)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
                             <Text style={{ fontSize: 10, color: '#475569' }}>📸 Salida</Text>
                           </TouchableOpacity>
                         )}
@@ -1885,6 +1885,24 @@ export default function AdminNominaScreen({ navigation }: any) {
           }}
           onSave={handleSaveSignature}
         />
+      )}
+
+      {/* PHOTO VIEWER MODAL */}
+      {!!photoViewerUrl && (
+        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', zIndex: 999999, elevation: 99 }}>
+          <TouchableOpacity 
+            style={{ position: 'absolute', top: 40, right: 20, padding: 25, zIndex: 100000, flexDirection: 'row', alignItems: 'center' }} 
+            onPress={() => setPhotoViewerUrl(null)}
+          >
+            <Ionicons name="close" size={40} color="#fff" />
+            <Text style={{ color: '#fff', fontSize: 16, marginLeft: 4 }}>Cerrar</Text>
+          </TouchableOpacity>
+          <Image 
+            source={{ uri: photoViewerUrl.startsWith('http') ? photoViewerUrl : `${(api.defaults.baseURL || '').replace(/\/api\/v1\/?$/, '')}${photoViewerUrl}` }} 
+            style={{ width: '100%', height: '100%', resizeMode: 'contain' }} 
+            onError={(e) => Alert.alert('Error cargando imagen', 'La imagen no se pudo cargar desde el servidor.')}
+          />
+        </View>
       )}
 
       {/* Modal Descuento Extra */}
