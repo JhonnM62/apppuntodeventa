@@ -12,8 +12,6 @@ import { RootStackParamList } from '../../navigation/RootNavigator';
 import NotificationCenterModal from '../../components/ui/NotificationCenterModal';
 import useCartStore from '../../store/useCartStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
-import { FlashList as OriginalFlashList } from '@shopify/flash-list';
-const FlashList = OriginalFlashList as any;
 
 const CARD_MARGIN = 10;
 
@@ -301,12 +299,12 @@ const HomeScreen = ({ navigation }: Props) => {
       />
 
       <View style={{ flex: 1, width: '100%', paddingTop: 12 }}>
-        <FlashList
+        <FlatList
             data={MENU_ITEMS.filter(checkPermission)}
             renderItem={({ item }: { item: MenuItem }) => <MenuCard item={item} onPress={handlePress} />}
             keyExtractor={(item: MenuItem) => item.id}
           numColumns={2}
-          estimatedItemSize={220}
+          
           contentContainerStyle={{ paddingBottom: Platform.OS === 'ios' ? 100 : 80, paddingHorizontal: 10 }}
           showsVerticalScrollIndicator={false}
         />
