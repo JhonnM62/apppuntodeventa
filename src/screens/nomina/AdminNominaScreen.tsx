@@ -1898,7 +1898,7 @@ export default function AdminNominaScreen({ navigation }: any) {
             <Text style={{ color: '#fff', fontSize: 16, marginLeft: 4 }}>Cerrar</Text>
           </TouchableOpacity>
           <Image 
-            source={{ uri: photoViewerUrl.startsWith('http') ? photoViewerUrl : `${(api.defaults.baseURL || '').replace(/\/api\/v1\/?$/, '')}${photoViewerUrl}` }} 
+            source={{ uri: photoViewerUrl.startsWith('http') ? photoViewerUrl : `${(api.defaults.baseURL || '').replace(/\/$/, '')}${photoViewerUrl.startsWith('/') ? photoViewerUrl : '/' + photoViewerUrl}` }} 
             style={{ width: '100%', height: '100%', resizeMode: 'contain' }} 
             onError={(e) => Alert.alert('Error cargando imagen', 'La imagen no se pudo cargar desde el servidor.')}
           />
