@@ -203,7 +203,9 @@ export default function DescansoCard({
       setInicio(newInicio);
       onDescansoChange({ inicioDescanso: res.data.inicioDescanso, finDescanso: null });
     } catch (e: any) {
-      showAlert({ type: 'error', title: 'Error', message: e?.response?.data?.message || 'No se pudo iniciar el descanso' });
+      const msg = e?.response?.data?.message;
+      const errorMsg = Array.isArray(msg) ? msg[0] : (msg || 'No se pudo iniciar el descanso');
+      showAlert({ type: 'error', title: 'Error', message: errorMsg });
     } finally { setActionState('idle'); }
   };
 
@@ -226,7 +228,9 @@ export default function DescansoCard({
       setFin(newFin);
       onDescansoChange({ inicioDescanso: res.data.inicioDescanso, finDescanso: res.data.finDescanso });
     } catch (e: any) {
-      showAlert({ type: 'error', title: 'Error', message: e?.response?.data?.message || 'No se pudo terminar el descanso' });
+      const msg = e?.response?.data?.message;
+      const errorMsg = Array.isArray(msg) ? msg[0] : (msg || 'No se pudo terminar el descanso');
+      showAlert({ type: 'error', title: 'Error', message: errorMsg });
     } finally { setActionState('idle'); }
   };
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, TextInput, Switch, Platform, Alert } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, TextInput, Switch, Platform, Alert, Image } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Text } from '../../components/ui/text';
 import { Card } from '../../components/ui/card';
@@ -42,7 +42,7 @@ const formatTime12h = (date: Date): string => {
   return date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: true });
 };
 
-const DescansoStatusAdmin = ({ turno }: { turno: any }) => {
+const DescansoStatusAdmin = ({ turno, onViewPhoto }: { turno: any, onViewPhoto?: (url: string) => void }) => {
   const [now, setNow] = useState(new Date());
 
   useEffect(() => {
@@ -65,11 +65,25 @@ const DescansoStatusAdmin = ({ turno }: { turno: any }) => {
 
     return (
       <View style={{ marginTop: 8, backgroundColor: isOvertime ? '#fee2e2' : '#f0fdf4', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: isOvertime ? '#fecaca' : '#bbf7d0' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-          <Ionicons name={isOvertime ? "warning" : "checkmark-circle"} size={14} color={isOvertime ? "#dc2626" : "#15803d"} />
-          <Text style={{ color: isOvertime ? "#dc2626" : "#15803d", fontSize: 12, marginLeft: 4, fontWeight: 'bold' }}>
-            Descanso completado {isOvertime && `(+${formatMinSec(extraTime)})`}
-          </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name={isOvertime ? "warning" : "checkmark-circle"} size={14} color={isOvertime ? "#dc2626" : "#15803d"} />
+            <Text style={{ color: isOvertime ? "#dc2626" : "#15803d", fontSize: 12, marginLeft: 4, fontWeight: 'bold' }}>
+              Descanso completado {isOvertime && `(+${formatMinSec(extraTime)})`}
+            </Text>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {turno.fotoInicioDescanso && (
+              <TouchableOpacity onPress={() => onViewPhoto?.(turno.fotoInicioDescanso)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                <Text style={{ fontSize: 10, color: '#475569' }}>📸 Inicio</Text>
+              </TouchableOpacity>
+            )}
+            {turno.fotoFinDescanso && (
+              <TouchableOpacity onPress={() => onViewPhoto?.(turno.fotoFinDescanso)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                <Text style={{ fontSize: 10, color: '#475569' }}>📸 Fin</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
         <Text style={{ fontSize: 11, color: isOvertime ? '#991b1b' : '#166534' }}>
           {formatTime12h(inicio)} → {formatTime12h(fin)} • Total: {formatMinSec(durReal)}
@@ -93,11 +107,18 @@ const DescansoStatusAdmin = ({ turno }: { turno: any }) => {
     
     return (
       <View style={{ marginTop: 8, backgroundColor: bgColor, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: borderColor }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-          <Ionicons name="cafe" size={14} color={textColor} />
-          <Text style={{ color: textColor, fontSize: 12, marginLeft: 4, fontWeight: 'bold' }}>
-            EN DESCANSO
-          </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="cafe" size={14} color={textColor} />
+            <Text style={{ color: textColor, fontSize: 12, marginLeft: 4, fontWeight: 'bold' }}>
+              EN DESCANSO
+            </Text>
+          </View>
+          {turno.fotoInicioDescanso && (
+            <TouchableOpacity onPress={() => onViewPhoto?.(turno.fotoInicioDescanso)} style={{ backgroundColor: 'rgba(0,0,0,0.1)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+              <Text style={{ fontSize: 10, color: textColor }}>📸 Inicio</Text>
+            </TouchableOpacity>
+          )}
         </View>
         
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -193,6 +214,7 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [extraDescripcion, setExtraDescripcion] = useState('');
   const [extraValor, setExtraValor] = useState('');
   const [guardandoDescuentoExtra, setGuardandoDescuentoExtra] = useState(false);
+  const [photoViewerUrl, setPhotoViewerUrl] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -1050,7 +1072,19 @@ export default function AdminNominaScreen({ navigation }: any) {
 
                   {turnoActivo && (
                     <View style={{ marginTop: 8 }}>
-                      <DescansoStatusAdmin turno={turnoActivo} />
+                      <DescansoStatusAdmin turno={turnoActivo} onViewPhoto={setPhotoViewerUrl} />
+                      <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+                        {turnoActivo.fotoEntrada && (
+                          <TouchableOpacity onPress={() => setPhotoViewerUrl(turnoActivo.fotoEntrada)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                            <Text style={{ fontSize: 10, color: '#475569' }}>📸 Entrada</Text>
+                          </TouchableOpacity>
+                        )}
+                        {turnoActivo.fotoSalida && (
+                          <TouchableOpacity onPress={() => setPhotoViewerUrl(turnoActivo.fotoSalida)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                            <Text style={{ fontSize: 10, color: '#475569' }}>📸 Salida</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
                     </View>
                   )}
                 </View>
@@ -1456,7 +1490,19 @@ export default function AdminNominaScreen({ navigation }: any) {
                             </View>
 
                             <View style={{ marginTop: 8, alignItems: 'stretch' }}>
-                              <DescansoStatusAdmin turno={turno} />
+                              <DescansoStatusAdmin turno={turno} onViewPhoto={setPhotoViewerUrl} />
+                              <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+                                {turno.fotoEntrada && (
+                                  <TouchableOpacity onPress={() => setPhotoViewerUrl(turno.fotoEntrada)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                                    <Text style={{ fontSize: 10, color: '#475569' }}>📸 Entrada</Text>
+                                  </TouchableOpacity>
+                                )}
+                                {turno.fotoSalida && (
+                                  <TouchableOpacity onPress={() => setPhotoViewerUrl(turno.fotoSalida)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                                    <Text style={{ fontSize: 10, color: '#475569' }}>📸 Salida</Text>
+                                  </TouchableOpacity>
+                                )}
+                              </View>
                             </View>
                             
                             <View style={[styles.historyFooter, { flexWrap: 'wrap', gap: 8 }]}>
