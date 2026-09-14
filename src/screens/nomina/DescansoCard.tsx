@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Animated, Easing, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components/ui/text';
 import { iniciarDescanso, terminarDescanso } from '../../services/nomina.service';
@@ -131,10 +131,12 @@ export default function DescansoCard({
       showAlert({ type: 'error', title: 'Módulo no disponible', message: 'La cámara requiere una recompilación de la app para funcionar.' });
       return null;
     }
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      showAlert({ type: 'error', title: 'Permiso Denegado', message: 'Se necesita acceso a la cámara para el registro facial' });
-      return null;
+    if (Platform.OS !== 'web') {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        showAlert({ type: 'error', title: 'Permiso Denegado', message: 'Se necesita acceso a la cámara para el registro facial' });
+        return null;
+      }
     }
     try {
       const result = await ImagePicker.launchCameraAsync({
@@ -185,12 +187,10 @@ export default function DescansoCard({
   const handleIniciar = async () => {
     setActionState('camera');
     try {
-      if (Location) await Location.requestForegroundPermissionsAsync();
-      if (ImagePicker) await ImagePicker.requestCameraPermissionsAsync();
-
+      const photoPromise = takePhoto();
       const locPromise = getLocation();
-      const photoUri = await takePhoto();
       
+      const photoUri = await photoPromise;
       if (!photoUri) { setActionState('idle'); return; }
 
       setActionState('locating');
@@ -210,12 +210,10 @@ export default function DescansoCard({
   const handleTerminar = async () => {
     setActionState('camera');
     try {
-      if (Location) await Location.requestForegroundPermissionsAsync();
-      if (ImagePicker) await ImagePicker.requestCameraPermissionsAsync();
-
+      const photoPromise = takePhoto();
       const locPromise = getLocation();
-      const photoUri = await takePhoto();
       
+      const photoUri = await photoPromise;
       if (!photoUri) { setActionState('idle'); return; }
 
       setActionState('locating');
