@@ -43,7 +43,7 @@ const MENU_ITEMS: MenuItem[] = [
 ];
 
 const MenuCard = ({ item, onPress }: { item: MenuItem; onPress: (item: MenuItem) => void }) => (
-  <View style={{ width: '100%', padding: CARD_MARGIN }}>
+  <View style={{ flex: 1, maxWidth: '50%', padding: CARD_MARGIN }}>
     <TouchableOpacity
       className="bg-card rounded-[20px] p-[14px] justify-between border shadow-sm"
       style={{ height: 200, borderColor: '#e5e7eb', backgroundColor: '#ffffff' }}
@@ -217,7 +217,15 @@ const HomeScreen = ({ navigation }: Props) => {
 
   const checkPermission = (item: MenuItem) => {
     // Regla general para administradores
-    if (user?.rol === 'Admin app' || user?.rol === 'Admin negocio') return true;
+    const rol = (user?.rol || '').toLowerCase();
+    if (
+      rol === 'admin app' || 
+      rol === 'admin negocio' || 
+      rol === 'administrador' || 
+      rol === 'super admin' || 
+      rol === 'admin'
+    ) return true;
+
     if (item.adminOnly) return false;
     if (!item.permissionKey) return true;
 
@@ -226,8 +234,10 @@ const HomeScreen = ({ navigation }: Props) => {
       const subPermsEntradas = user?.permisos?.['entradas_inventario'];
       const subPermsSalidas = user?.permisos?.['salidas_inventario'];
       const subPermsRegistros = user?.permisos?.['registros_inventario'];
+      const mainPerm = user?.permisos?.['inventario'];
       
       return (
+        (mainPerm && (mainPerm.read === true || String(mainPerm.read) === 'true')) ||
         (subPermsEntradas && (subPermsEntradas.read === true || String(subPermsEntradas.read) === 'true')) ||
         (subPermsSalidas && (subPermsSalidas.read === true || String(subPermsSalidas.read) === 'true')) ||
         (subPermsRegistros && (subPermsRegistros.read === true || String(subPermsRegistros.read) === 'true'))
@@ -239,8 +249,10 @@ const HomeScreen = ({ navigation }: Props) => {
       const subPermsImpresora = user?.permisos?.['config_impresora'];
       const subPermsUsuarios = user?.permisos?.['config_usuarios'];
       const subPermsComentarios = user?.permisos?.['config_comentarios'];
+      const mainPerm = user?.permisos?.['configuracion'];
       
       return (
+        (mainPerm && (mainPerm.read === true || String(mainPerm.read) === 'true')) ||
         (subPermsImpresora && (subPermsImpresora.read === true || String(subPermsImpresora.read) === 'true')) ||
         (subPermsUsuarios && (subPermsUsuarios.read === true || String(subPermsUsuarios.read) === 'true')) ||
         (subPermsComentarios && (subPermsComentarios.read === true || String(subPermsComentarios.read) === 'true'))
