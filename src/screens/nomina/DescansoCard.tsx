@@ -69,7 +69,7 @@ export default function DescansoCard({
   onDescansoChange,
 }: DescansoCardProps) {
   const { showAlert } = useCustomAlert();
-  const [saving, setSaving] = useState(false);
+  const [actionState, setActionState] = useState<'idle' | 'camera' | 'locating' | 'uploading'>('idle');
   const [inicio, setInicio] = useState<Date | null>(inicioIni ? new Date(inicioIni) : null);
   const [fin, setFin]       = useState<Date | null>(finIni    ? new Date(finIni)    : null);
   const [now, setNow]       = useState(new Date());
@@ -147,7 +147,7 @@ export default function DescansoCard({
         return result.assets[0].uri;
       }
     } catch (e) {
-      console.error(e);
+      showAlert({ type: 'error', title: 'Error Cámara', message: 'Hubo un error al abrir la cámara.' });
     }
     return null;
   };
@@ -183,7 +183,7 @@ export default function DescansoCard({
   };
 
   const handleIniciar = async () => {
-    setSaving(true);
+    setActionState('camera');
     try {
       if (Location) await Location.requestForegroundPermissionsAsync();
       if (ImagePicker) await ImagePicker.requestCameraPermissionsAsync();
@@ -191,22 +191,24 @@ export default function DescansoCard({
       const locPromise = getLocation();
       const photoUri = await takePhoto();
       
-      if (!photoUri) { setSaving(false); return; }
+      if (!photoUri) { setActionState('idle'); return; }
 
+      setActionState('locating');
       const loc = await locPromise;
-      if (!loc) { setSaving(false); return; }
+      if (!loc) { setActionState('idle'); return; }
 
+      setActionState('uploading');
       const res = await iniciarDescanso(turnoId, { latitud: loc.latitud, longitud: loc.longitud, fotoUri: photoUri });
       const newInicio = new Date(res.data.inicioDescanso);
       setInicio(newInicio);
       onDescansoChange({ inicioDescanso: res.data.inicioDescanso, finDescanso: null });
     } catch (e: any) {
       showAlert({ type: 'error', title: 'Error', message: e?.response?.data?.message || 'No se pudo iniciar el descanso' });
-    } finally { setSaving(false); }
+    } finally { setActionState('idle'); }
   };
 
   const handleTerminar = async () => {
-    setSaving(true);
+    setActionState('camera');
     try {
       if (Location) await Location.requestForegroundPermissionsAsync();
       if (ImagePicker) await ImagePicker.requestCameraPermissionsAsync();
@@ -214,18 +216,20 @@ export default function DescansoCard({
       const locPromise = getLocation();
       const photoUri = await takePhoto();
       
-      if (!photoUri) { setSaving(false); return; }
+      if (!photoUri) { setActionState('idle'); return; }
 
+      setActionState('locating');
       const loc = await locPromise;
-      if (!loc) { setSaving(false); return; }
+      if (!loc) { setActionState('idle'); return; }
 
+      setActionState('uploading');
       const res = await terminarDescanso(turnoId, { latitud: loc.latitud, longitud: loc.longitud, fotoUri: photoUri });
       const newFin = new Date(res.data.finDescanso);
       setFin(newFin);
       onDescansoChange({ inicioDescanso: res.data.inicioDescanso, finDescanso: res.data.finDescanso });
     } catch (e: any) {
       showAlert({ type: 'error', title: 'Error', message: e?.response?.data?.message || 'No se pudo terminar el descanso' });
-    } finally { setSaving(false); }
+    } finally { setActionState('idle'); }
   };
 
   // ── STATE C: Completed ──────────────────────────────────
@@ -279,12 +283,20 @@ export default function DescansoCard({
         </View>
 
         <TouchableOpacity
-          style={[styles.btn, styles.btnOrange, saving && styles.btnDisabled]}
+          style={[styles.btn, styles.btnOrange, actionState !== 'idle' && styles.btnDisabled]}
           onPress={handleTerminar}
-          disabled={saving}
+          disabled={actionState !== 'idle'}
         >
-          <Ionicons name="stop-circle-outline" size={18} color="#fff" />
-          <Text style={styles.btnText}>{saving ? 'Guardando…' : 'Terminar Descanso'}</Text>
+          <Ionicons 
+            name={actionState === 'camera' ? 'camera-outline' : actionState === 'locating' ? 'location-outline' : actionState === 'uploading' ? 'sync-outline' : 'stop-circle-outline'} 
+            size={18} 
+            color="#fff" 
+          />
+          <Text style={styles.btnText}>
+            {actionState === 'camera' ? 'Abriendo cámara...' :
+             actionState === 'locating' ? 'Obteniendo ubicación...' :
+             actionState === 'uploading' ? 'Guardando...' : 'Terminar Descanso'}
+          </Text>
         </TouchableOpacity>
       </Animated.View>
     );
@@ -345,12 +357,20 @@ export default function DescansoCard({
       </View>
 
       <TouchableOpacity
-        style={[styles.btn, styles.btnGreen, saving && styles.btnDisabled]}
+        style={[styles.btn, styles.btnGreen, actionState !== 'idle' && styles.btnDisabled]}
         onPress={handleIniciar}
-        disabled={saving}
+        disabled={actionState !== 'idle'}
       >
-        <Ionicons name="cafe-outline" size={18} color="#fff" />
-        <Text style={styles.btnText}>{saving ? 'Guardando…' : 'Iniciar Descanso'}</Text>
+        <Ionicons 
+          name={actionState === 'camera' ? 'camera-outline' : actionState === 'locating' ? 'location-outline' : actionState === 'uploading' ? 'sync-outline' : 'cafe-outline'} 
+          size={18} 
+          color="#fff" 
+        />
+        <Text style={styles.btnText}>
+          {actionState === 'camera' ? 'Abriendo cámara...' :
+           actionState === 'locating' ? 'Obteniendo ubicación...' :
+           actionState === 'uploading' ? 'Guardando...' : 'Iniciar Descanso'}
+        </Text>
       </TouchableOpacity>
     </View>
   );
