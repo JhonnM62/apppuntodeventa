@@ -384,7 +384,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
     }
 
     if (index < data.productos.length - 1) {
-      payload += '\n';
+      payload += separator + '\n';
     }
   });
 
@@ -438,7 +438,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
       }
 
       if (index < data.productosAnteriores!.length - 1) {
-        payload += '\n';
+        payload += separator + '\n';
       }
     });
   }
