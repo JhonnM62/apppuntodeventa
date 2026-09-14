@@ -163,21 +163,38 @@ export default function DescansoCard({
       return null;
     }
     try {
-      let loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      let loc = await Location.getLastKnownPositionAsync({ maxAge: 60000 });
+      if (!loc) {
+        loc = await Promise.race([
+          Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 8000))
+        ]);
+      }
       return { latitud: loc.coords.latitude, longitud: loc.coords.longitude };
     } catch (e) {
-      showAlert({ type: 'error', title: 'Error GPS', message: 'No se pudo obtener la ubicación actual. Verifica que el GPS esté activo.' });
+      try {
+        let loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Lowest });
+        return { latitud: loc.coords.latitude, longitud: loc.coords.longitude };
+      } catch (e2) {
+        showAlert({ type: 'error', title: 'Error GPS', message: 'No se pudo obtener la ubicación actual. Verifica que el GPS esté activo.' });
+        return null;
+      }
     }
-    return null;
   };
 
   const handleIniciar = async () => {
     setSaving(true);
     try {
-      const loc = await getLocation();
-      if (!loc) { setSaving(false); return; }
+      if (Location) await Location.requestForegroundPermissionsAsync();
+      if (ImagePicker) await ImagePicker.requestCameraPermissionsAsync();
+
+      const locPromise = getLocation();
       const photoUri = await takePhoto();
+      
       if (!photoUri) { setSaving(false); return; }
+
+      const loc = await locPromise;
+      if (!loc) { setSaving(false); return; }
 
       const res = await iniciarDescanso(turnoId, { latitud: loc.latitud, longitud: loc.longitud, fotoUri: photoUri });
       const newInicio = new Date(res.data.inicioDescanso);
@@ -191,10 +208,16 @@ export default function DescansoCard({
   const handleTerminar = async () => {
     setSaving(true);
     try {
-      const loc = await getLocation();
-      if (!loc) { setSaving(false); return; }
+      if (Location) await Location.requestForegroundPermissionsAsync();
+      if (ImagePicker) await ImagePicker.requestCameraPermissionsAsync();
+
+      const locPromise = getLocation();
       const photoUri = await takePhoto();
+      
       if (!photoUri) { setSaving(false); return; }
+
+      const loc = await locPromise;
+      if (!loc) { setSaving(false); return; }
 
       const res = await terminarDescanso(turnoId, { latitud: loc.latitud, longitud: loc.longitud, fotoUri: photoUri });
       const newFin = new Date(res.data.finDescanso);

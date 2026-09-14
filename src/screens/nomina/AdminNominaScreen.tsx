@@ -167,7 +167,7 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [savingTurno, setSavingTurno] = useState(false);
   
   // Date Picker State
-  const [pickerConfig, setPickerConfig] = useState<{show: boolean, mode: 'date'|'time', field: 'horaEntrada'|'horaSalida'}>({show: false, mode: 'date', field: 'horaEntrada'});
+  const [pickerConfig, setPickerConfig] = useState<{show: boolean, mode: 'date'|'time', field: 'horaEntrada'|'horaSalida'|'inicioDescanso'|'finDescanso'}>({show: false, mode: 'date', field: 'horaEntrada'});
 
   // Llegadas Tarde State
   const [showLlegadasModal, setShowLlegadasModal] = useState(false);
