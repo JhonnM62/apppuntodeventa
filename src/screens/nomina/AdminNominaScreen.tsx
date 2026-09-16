@@ -211,6 +211,15 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [firmaAdmin, setFirmaAdmin] = useState<string>('');
   const [liquidacionParaFirmaAdmin, setLiquidacionParaFirmaAdmin] = useState<string | null>(null);
 
+  
+  // Descuentos Edit/Delete
+  const [selectedDescuentos, setSelectedDescuentos] = useState<string[]>([]);
+  const [editingDescuento, setEditingDescuento] = useState<any>(null);
+  const [showEditDescuentoModal, setShowEditDescuentoModal] = useState(false);
+  const [editDescuentoForm, setEditDescuentoForm] = useState<any>({});
+  const [savingDescuento, setSavingDescuento] = useState(false);
+  const [deletingDescuentos, setDeletingDescuentos] = useState(false);
+
   // Extra Discount
   const [showDescuentoExtraModal, setShowDescuentoExtraModal] = useState(false);
   const [descuentoExtraLiqId, setDescuentoExtraLiqId] = useState<string | null>(null);
@@ -857,6 +866,89 @@ export default function AdminNominaScreen({ navigation }: any) {
     });
   };
 
+
+  const handleToggleDescuento = (id: string) => {
+    setSelectedDescuentos(prev => 
+      prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleEditDescuento = (descuento: any) => {
+    setEditingDescuento(descuento);
+    setEditDescuentoForm({
+      concepto: descuento.concepto,
+      descripcion: descuento.descripcion || '',
+      valor: String(descuento.valor)
+    });
+    setShowEditDescuentoModal(true);
+  };
+
+  const handleSaveEditDescuento = async () => {
+    if (!editDescuentoForm.concepto || !editDescuentoForm.valor) {
+      return showAlert({ type: 'error', title: 'Error', message: 'Concepto y valor son requeridos' });
+    }
+    try {
+      setSavingDescuento(true);
+      await api.patch(`/nomina/descuento/${editingDescuento.IDdescuento}`, {
+        concepto: editDescuentoForm.concepto,
+        descripcion: editDescuentoForm.descripcion,
+        valor: Number(editDescuentoForm.valor)
+      });
+      setShowEditDescuentoModal(false);
+      setEditingDescuento(null);
+      await handleRecalcular();
+      showAlert({ type: 'success', title: 'Éxito', message: 'Actualizado correctamente' });
+    } catch (error: any) {
+      console.error(error);
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo editar el registro' });
+    } finally {
+      setSavingDescuento(false);
+    }
+  };
+
+  const handleDeleteDescuento = (id: string) => {
+    Alert.alert('Confirmar', '¿Seguro que deseas eliminar este registro permanentemente?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Eliminar', style: 'destructive', onPress: async () => {
+          try {
+            setDeletingDescuentos(true);
+            await api.delete(`/nomina/descuento/${id}`);
+            setSelectedDescuentos(prev => prev.filter(x => x !== id));
+            await handleRecalcular();
+            showAlert({ type: 'success', title: 'Éxito', message: 'Eliminado correctamente' });
+          } catch (error) {
+            console.error(error);
+            showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar el registro' });
+          } finally {
+            setDeletingDescuentos(false);
+          }
+        } 
+      }
+    ]);
+  };
+
+  const handleBulkDeleteDescuentos = () => {
+    if (selectedDescuentos.length === 0) return;
+    Alert.alert('Confirmar Eliminación', `¿Seguro que deseas eliminar ${selectedDescuentos.length} registros permanentemente?`, [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Eliminar', style: 'destructive', onPress: async () => {
+          try {
+            setDeletingDescuentos(true);
+            await Promise.all(selectedDescuentos.map(id => api.delete(`/nomina/descuento/${id}`)));
+            setSelectedDescuentos([]);
+            await handleRecalcular();
+            showAlert({ type: 'success', title: 'Éxito', message: 'Registros eliminados' });
+          } catch (error) {
+            console.error(error);
+            showAlert({ type: 'error', title: 'Error', message: 'Ocurrió un error al eliminar los registros' });
+          } finally {
+            setDeletingDescuentos(false);
+          }
+        } 
+      }
+    ]);
+  };
+
   const handleRecalcular = async () => {
     try {
       setRecalculando(true);
@@ -1310,12 +1402,25 @@ export default function AdminNominaScreen({ navigation }: any) {
                       </TouchableOpacity>
                     )})}
 
-                    <Text style={{ fontWeight: '700', marginTop: 16, marginBottom: 8 }}>Descuentos y Bonos ({(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).length})</Text>
+                    
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 8 }}>
+                      <Text style={{ fontWeight: '700' }}>Descuentos y Bonos ({(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).length})</Text>
+                      {selectedDescuentos.length > 0 && (
+                        <TouchableOpacity style={{ backgroundColor: '#fee2e2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4, flexDirection: 'row', alignItems: 'center' }} onPress={handleBulkDeleteDescuentos}>
+                          {deletingDescuentos ? <ActivityIndicator size="small" color="#ef4444" /> : <Ionicons name="trash-outline" size={14} color="#ef4444" />}
+                          <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>Eliminar Seleccionados ({selectedDescuentos.length})</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
                     {(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).map((d: any) => {
                       const esBono = CONCEPTOS_BONO.includes(d.concepto);
+                      const isSelected = selectedDescuentos.includes(d.IDdescuento);
                       return (
-                        <View key={d.IDdescuento} style={styles.itemRow}>
-                          <View style={{ flex: 1, paddingRight: 8 }}>
+                        <View key={d.IDdescuento} style={[styles.itemRow, { paddingVertical: 10, backgroundColor: isSelected ? '#f0fdf4' : 'transparent' }]}>
+                          <TouchableOpacity onPress={() => handleToggleDescuento(d.IDdescuento)} style={{ padding: 4, marginRight: 8, justifyContent: 'center' }}>
+                            <Ionicons name={isSelected ? "checkbox" : "square-outline"} size={22} color={isSelected ? "#10b981" : "#d1d5db"} />
+                          </TouchableOpacity>
+                          <View style={{ flex: 1, paddingRight: 8, justifyContent: 'center' }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                               <Text style={{ fontSize: 13, fontWeight: '500', color: esBono ? '#059669' : '#374151' }}>{d.concepto}</Text>
                               {d.fecha && (
@@ -1328,13 +1433,24 @@ export default function AdminNominaScreen({ navigation }: any) {
                               <Text style={{ fontSize: 11, color: '#6b7280', marginTop: 2 }}>{d.descripcion}</Text>
                             )}
                           </View>
-                          <Text style={{ fontSize: 13, color: esBono ? '#10b981' : '#ef4444', fontWeight: '600' }}>
-                            {esBono ? '+' : '-'}${Number(d.valor).toLocaleString('es-CO')}
-                          </Text>
+                          <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                            <Text style={{ fontSize: 13, color: esBono ? '#10b981' : '#ef4444', fontWeight: '600', marginBottom: 4 }}>
+                              {esBono ? '+' : '-'}${Number(d.valor).toLocaleString('es-CO')}
+                            </Text>
+                            <View style={{ flexDirection: 'row' }}>
+                              <TouchableOpacity style={{ padding: 6, backgroundColor: '#f3f4f6', borderRadius: 4 }} onPress={() => handleEditDescuento(d)}>
+                                <Ionicons name="pencil" size={16} color="#6b7280" />
+                              </TouchableOpacity>
+                              <TouchableOpacity style={{ padding: 6, backgroundColor: '#fee2e2', borderRadius: 4, marginLeft: 6 }} onPress={() => handleDeleteDescuento(d.IDdescuento)}>
+                                <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                              </TouchableOpacity>
+                            </View>
+                          </View>
                         </View>
                       );
                     })}
                   </ScrollView>
+
 
                   
                     { (resumen.descuentos || []).some((d: any) => d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE') && (
@@ -2007,7 +2123,53 @@ export default function AdminNominaScreen({ navigation }: any) {
         </View>
       )}
 
-      {/* Modal Descuento Extra */}
+      
+        {/* Modal Editar Descuento */}
+        <Modal visible={showEditDescuentoModal} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Editar Registro</Text>
+              <Text style={styles.modalSubtitle}>Modifica el concepto o valor</Text>
+              
+              <Text style={styles.label}>Concepto</Text>
+              <TextInput
+                style={styles.input}
+                value={editDescuentoForm.concepto}
+                onChangeText={(t) => setEditDescuentoForm({...editDescuentoForm, concepto: t})}
+                placeholder="Ej. ADELANTO"
+              />
+
+              <Text style={styles.label}>Descripción</Text>
+              <TextInput
+                style={[styles.input, { height: 60 }]}
+                value={editDescuentoForm.descripcion}
+                onChangeText={(t) => setEditDescuentoForm({...editDescuentoForm, descripcion: t})}
+                placeholder="Opcional"
+                multiline
+              />
+
+              <Text style={styles.label}>Valor ($)</Text>
+              <TextInput
+                style={styles.input}
+                value={editDescuentoForm.valor}
+                onChangeText={(t) => setEditDescuentoForm({...editDescuentoForm, valor: t.replace(/[^0-9]/g, '')})}
+                keyboardType="numeric"
+                placeholder="0"
+              />
+
+              <View style={styles.modalActions}>
+                <Button style={{ flex: 1, marginRight: 8, backgroundColor: '#f3f4f6' }} onPress={() => setShowEditDescuentoModal(false)}>
+                  <Text style={{ color: '#4b5563', fontWeight: '600' }}>Cancelar</Text>
+                </Button>
+                <Button style={{ flex: 1, backgroundColor: '#3b82f6' }} onPress={handleSaveEditDescuento} loading={savingDescuento}>
+                  <Text style={{ color: '#fff', fontWeight: '600' }}>Guardar</Text>
+                </Button>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Modal Descuento Extra */}
       <Modal visible={showDescuentoExtraModal} transparent animationType="fade">
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 12, padding: 20 }}>
