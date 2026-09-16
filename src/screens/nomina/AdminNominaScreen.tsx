@@ -953,6 +953,7 @@ export default function AdminNominaScreen({ navigation }: any) {
 
   const agrupadasPorEmpleado = useMemo(() => {
     const grouped: Record<string, {
+      empleadoId: string,
       empleado: any,
       totalDiasLaborados: number,
       liquidaciones: any[]
