@@ -962,6 +962,7 @@ export default function AdminNominaScreen({ navigation }: any) {
       const empId = liq.usuarioId;
       if (!grouped[empId]) {
         grouped[empId] = {
+          empleadoId: empId,
           empleado: liq.usuario,
           totalDiasLaborados: 0,
           liquidaciones: []
@@ -1053,7 +1054,7 @@ export default function AdminNominaScreen({ navigation }: any) {
             <Text style={{ textAlign: 'center', marginTop: 40, color: '#6b7280' }}>No hay liquidaciones recientes.</Text>
           ) : (
             agrupadasPorEmpleado.map((grupo) => {
-              const empId = grupo.empleado?.IDusuarios;
+              const empId = grupo.empleadoId;
               const isExpanded = expandedEmployees[empId];
               return (
                 <View key={empId || Math.random().toString()} style={{ marginBottom: 24, paddingHorizontal: 16 }}>
