@@ -163,6 +163,10 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [liquidaciones, setLiquidaciones] = useState<any[]>([]);
   const [loadingLiquidaciones, setLoadingLiquidaciones] = useState(false);
   
+  // Liquidados UI States
+  const [searchQuery, setSearchQuery] = useState('');
+  const [expandedEmployees, setExpandedEmployees] = useState<Record<string, boolean>>({});
+  
   // Modal states for Liquidación / Resumen
   const [selectedEmpleado, setSelectedEmpleado] = useState<any>(null);
   const [resumen, setResumen] = useState<any>(null);
@@ -969,19 +973,28 @@ export default function AdminNominaScreen({ navigation }: any) {
         : (typeof liq.turnosDetalle === 'string' ? JSON.parse(liq.turnosDetalle) : []);
       const duracion = parsedTurnos.length || liq.totalTurnos || 0;
       grouped[empId].totalDiasLaborados += duracion;
+
+      const dates = parsedTurnos.map((t: any) => new Date(t.fecha).getTime()).filter((t: any) => !isNaN(t));
+      const realFechaInicio = dates.length > 0 ? new Date(Math.min(...dates)) : new Date(liq.fechaInicio);
+      const realFechaFin = dates.length > 0 ? new Date(Math.max(...dates)) : new Date(liq.fechaFin);
       
       grouped[empId].liquidaciones.push({
         ...liq,
-        duracionCalculada: duracion
+        duracionCalculada: duracion,
+        realFechaInicio,
+        realFechaFin
       });
     });
 
     Object.values(grouped).forEach(empData => {
-      empData.liquidaciones.sort((a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime());
+      empData.liquidaciones.sort((a, b) => new Date(b.realFechaInicio).getTime() - new Date(a.realFechaInicio).getTime());
     });
 
-    return Object.values(grouped);
-  }, [liquidaciones]);
+    return Object.values(grouped).filter((g: any) => 
+      !searchQuery || 
+      g.empleado?.nombre?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [liquidaciones, searchQuery]);
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -1010,6 +1023,26 @@ export default function AdminNominaScreen({ navigation }: any) {
         </TouchableOpacity>
       </View>
 
+      {filterTab === 'Liquidados' && (
+        <View style={{ paddingHorizontal: 16, marginTop: 12, marginBottom: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3f4f6', borderRadius: 8, paddingHorizontal: 12, height: 44 }}>
+            <Ionicons name="search-outline" size={20} color="#6b7280" style={{ marginRight: 8 }} />
+            <TextInput
+              style={{ flex: 1, fontSize: 15, color: '#111827' }}
+              placeholder="Buscar por empleado..."
+              placeholderTextColor="#9ca3af"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Ionicons name="close-circle" size={20} color="#9ca3af" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      )}
+
       {loading && filterTab !== 'Liquidados' ? (
         <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 40 }} />
       ) : filterTab === 'Liquidados' ? (
@@ -1019,19 +1052,30 @@ export default function AdminNominaScreen({ navigation }: any) {
           ) : agrupadasPorEmpleado.length === 0 ? (
             <Text style={{ textAlign: 'center', marginTop: 40, color: '#6b7280' }}>No hay liquidaciones recientes.</Text>
           ) : (
-            agrupadasPorEmpleado.map((grupo) => (
-              <View key={grupo.empleado?.IDusuarios || Math.random().toString()} style={{ marginBottom: 24 }}>
-                <View style={{ backgroundColor: '#f3f4f6', padding: 12, borderRadius: 8, marginBottom: 12 }}>
-                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#111827' }}>
-                    {grupo.empleado?.nombre || 'Empleado Desconocido'}
-                  </Text>
-                  <Text style={{ fontSize: 14, color: '#4b5563', marginTop: 4 }}>
-                    Total días laborados (histórico): <Text style={{ fontWeight: 'bold', color: '#10b981' }}>{grupo.totalDiasLaborados} turnos</Text>
-                  </Text>
-                </View>
-                {grupo.liquidaciones.map((liq) => {
-                  const quincenaLabel = new Date(liq.fechaFin).getUTCDate() <= 15 ? '1ra Quincena' : '2da Quincena';
-                  const mesLabel = new Date(liq.fechaFin).toLocaleString('es-CO', { timeZone: 'UTC', month: 'long', year: 'numeric' });
+            agrupadasPorEmpleado.map((grupo) => {
+              const empId = grupo.empleado?.IDusuarios;
+              const isExpanded = expandedEmployees[empId];
+              return (
+                <View key={empId || Math.random().toString()} style={{ marginBottom: 24 }}>
+                  <TouchableOpacity 
+                    onPress={() => setExpandedEmployees(prev => ({...prev, [empId]: !prev[empId]}))}
+                    style={{ backgroundColor: '#f3f4f6', padding: 12, borderRadius: 8, marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+                  >
+                    <View>
+                      <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#111827' }}>
+                        {grupo.empleado?.nombre || 'Empleado Desconocido'}
+                      </Text>
+                      <Text style={{ fontSize: 14, color: '#4b5563', marginTop: 4 }}>
+                        Total días laborados (histórico): <Text style={{ fontWeight: 'bold', color: '#10b981' }}>{grupo.totalDiasLaborados} turnos</Text>
+                      </Text>
+                    </View>
+                    <Ionicons name={isExpanded ? "chevron-up" : "chevron-down"} size={24} color="#9ca3af" />
+                  </TouchableOpacity>
+                  {isExpanded && grupo.liquidaciones.map((liq) => {
+                  const rFechaFin = liq.realFechaFin instanceof Date ? liq.realFechaFin : new Date(liq.realFechaFin);
+                  const rFechaInicio = liq.realFechaInicio instanceof Date ? liq.realFechaInicio : new Date(liq.realFechaInicio);
+                  const quincenaLabel = rFechaFin.getUTCDate() <= 15 ? '1ra Quincena' : '2da Quincena';
+                  const mesLabel = rFechaFin.toLocaleString('es-CO', { timeZone: 'UTC', month: 'long', year: 'numeric' });
                   return (
                     <Card key={liq.IDliquidacion} style={{ marginBottom: 12, padding: 16 }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -1040,7 +1084,7 @@ export default function AdminNominaScreen({ navigation }: any) {
                             {quincenaLabel} de {mesLabel}
                           </Text>
                           <Text style={{ fontSize: 13, color: '#4b5563', marginTop: 4 }}>
-                            {new Date(liq.fechaInicio).toLocaleDateString('es-CO', { timeZone: 'UTC' })} al {new Date(liq.fechaFin).toLocaleDateString('es-CO', { timeZone: 'UTC' })}
+                            {rFechaInicio.toLocaleDateString('es-CO', { timeZone: 'UTC' })} al {rFechaFin.toLocaleDateString('es-CO', { timeZone: 'UTC' })}
                             <Text style={{ fontWeight: 'bold', color: '#3b82f6' }}> ({liq.duracionCalculada} turnos)</Text>
                           </Text>
                           <View style={[styles.statusBadge, { marginTop: 6, alignSelf: 'flex-start', backgroundColor: liq.estado === 'FIRMADO' ? '#d1fae5' : '#fef3c7' }]}>
