@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { View, TouchableOpacity, ActivityIndicator, Image, RefreshControl, Platform, TextInput, FlatList, StyleSheet, Modal as RNModal, ScrollView, Text as RNText, KeyboardAvoidingView, Keyboard } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
@@ -48,6 +49,148 @@ type ProductItem = {
 };
 
 const CATEGORIES_ORDER = ['LO MAS VENDIDO', 'GRANIZADOS', 'BEBIDAS', 'COMIDAS', 'COMBOS', 'OTROS'];
+
+
+const Clock = React.memo(() => {
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  return <Clock />;
+});
+
+
+const ProductItemComponent = React.memo(({
+  item,
+  addToCart,
+  getFullImageUrl
+}: {
+  item: ProductItem;
+  addToCart: (item: ProductItem) => void;
+  getFullImageUrl: (url?: string) => string | undefined;
+}) => {
+  const price = item.precioUnitario || item.Precio_Unitario || 0;
+  const isZero = item.disponibilidadCalculada === 0;
+
+  return (
+    <TouchableOpacity style={styles.productCard} onPress={() => addToCart(item)} activeOpacity={0.7}>
+      <View style={styles.imageContainer}>
+        {item.imagenUrl || item.image ? (
+          <Image source={{ uri: getFullImageUrl(item.imagenUrl || item.image) }} style={[styles.productImage, item.mostrarDisponibilidad && isZero && { opacity: 0.5 }]} resizeMode="cover" />
+        ) : (
+          <View style={styles.placeholderImage}>
+            <Ionicons name="fast-food-outline" size={24} color="#9ca3af" />
+          </View>
+        )}
+
+        {item.mostrarDisponibilidad && item.disponibilidadCalculada !== undefined && item.disponibilidadCalculada !== null && (
+          <View style={{ backgroundColor: isZero ? '#ef4444' : '#3b82f6', position: 'absolute', top: 5, right: 5, borderRadius: 12, paddingHorizontal: 6, paddingVertical: 2, minWidth: 24, alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1 }}>
+            <RNText style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>{item.disponibilidadCalculada}</RNText>
+          </View>
+        )}
+      </View>
+      <RNText style={styles.productName} numberOfLines={2}>{item.nombre}</RNText>
+      <RNText style={styles.productPrice}>${parseFloat(price.toString()).toLocaleString()}</RNText>
+    </TouchableOpacity>
+  );
+});
+
+const CartItemComponent = React.memo(({
+  item,
+  addToCart,
+  decrementQuantity,
+  handleRemoveItem,
+  openNumpad,
+  setSelectedCartItemId,
+  setModifiersModalVisible
+}: {
+  item: CartItem;
+  addToCart: (item: ProductItem | CartItem) => void;
+  decrementQuantity: (id: string) => void;
+  handleRemoveItem: (id: string) => void;
+  openNumpad: (item: CartItem) => void;
+  setSelectedCartItemId: (id: string) => void;
+  setModifiersModalVisible: (val: boolean) => void;
+}) => {
+  const unitPrice = Number(item.precioUnitario || item.Precio_Unitario || 0);
+  const modifiersTotal = (item.modifiers || []).reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0);
+  const totalPrice = (unitPrice * item.quantity) + modifiersTotal;
+
+  return (
+    <View style={styles.cartItemRowCompact}>
+      <View style={styles.qtyColumnCompact}>
+        <TouchableOpacity style={styles.qtyBtnCompact} onPress={() => {
+          if (item.quantity === 1) handleRemoveItem(item.IDproductos);
+          else decrementQuantity(item.IDproductos);
+        }}>
+          <Ionicons name={item.quantity === 1 ? "trash" : "remove"} size={18} color={item.quantity === 1 ? "#ef4444" : "#4b5563"} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => addToCart(item)}
+          onLongPress={() => openNumpad(item)}
+          delayLongPress={350}
+          activeOpacity={0.7}
+          style={styles.qtyTextTouchable}
+        >
+          <RNText style={styles.qtyTextCompact}>{item.quantity}</RNText>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.qtyBtnCompact} onPress={() => addToCart(item)}>
+          <Ionicons name="add" size={18} color="#4b5563" />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.infoColumnCompact}>
+        <View style={styles.infoRowTop}>
+          <RNText style={styles.cartItemNameCompact} numberOfLines={1}>{item.nombre}</RNText>
+          <RNText style={styles.cartItemUnitPriceCompact}>${unitPrice.toLocaleString()}</RNText>
+        </View>
+
+        {item.modifiers && item.modifiers.length > 0 && (
+          <View style={styles.appliedModifiersContainerCompact}>
+            {item.modifiers.map((mod, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={styles.appliedModifierChipCompact}
+                onPress={() => {
+                  setSelectedCartItemId(item.IDproductos);
+                  setModifiersModalVisible(true);
+                }}
+                activeOpacity={0.7}
+              >
+                <RNText style={styles.appliedModifierTextCompact}>
+                  {mod.quantity}x {mod.name} {mod.price ? (mod.price > 0 ? `(+${mod.price})` : `(-${Math.abs(mod.price)})`) : ''}
+                </RNText>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        <TouchableOpacity
+          style={styles.addNoteBtnCompact}
+          onPress={() => {
+            setSelectedCartItemId(item.IDproductos);
+            setModifiersModalVisible(true);
+          }}
+        >
+          <Ionicons name="add-circle-outline" size={12} color="#3b82f6" />
+          <RNText style={styles.addNoteTextCompact}>Nota/Adicional</RNText>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.priceColumnCompact}>
+        <RNText style={styles.cartItemTotalCompact}>${totalPrice.toLocaleString()}</RNText>
+        <TouchableOpacity onPress={() => handleRemoveItem(item.IDproductos)} style={styles.deleteBtnCompact}>
+          <Ionicons name="close" size={24} color="#ef4444" />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+});
 
 const NewSaleScreen = ({ navigation, route }: Props) => {
   const { showAlert } = useCustomAlert();
@@ -1400,111 +1543,25 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     );
   };
 
-  const renderProduct = ({ item }: { item: ProductItem }) => {
-    const price = item.precioUnitario || item.Precio_Unitario || 0;
-    const isZero = item.disponibilidadCalculada === 0;
+  const renderProduct = useCallback(({ item }: { item: ProductItem }) => (
+    <ProductItemComponent 
+      item={item}
+      addToCart={addToCart}
+      getFullImageUrl={getFullImageUrl}
+    />
+  ), [addToCart, getFullImageUrl]);
 
-    return (
-      <TouchableOpacity style={styles.productCard} onPress={() => addToCart(item)} activeOpacity={0.7}>
-        <View style={styles.imageContainer}>
-          {item.imagenUrl || item.image ? (
-            <Image source={{ uri: getFullImageUrl(item.imagenUrl || item.image) }} style={[styles.productImage, item.mostrarDisponibilidad && isZero && { opacity: 0.5 }]} resizeMode="cover" />
-          ) : (
-            <View style={styles.placeholderImage}>
-              <Ionicons name="fast-food-outline" size={24} color="#9ca3af" />
-            </View>
-          )}
-
-          {item.mostrarDisponibilidad && item.disponibilidadCalculada !== undefined && item.disponibilidadCalculada !== null && (
-            <View style={{ backgroundColor: isZero ? '#ef4444' : '#3b82f6', position: 'absolute', top: 5, right: 5, borderRadius: 12, paddingHorizontal: 6, paddingVertical: 2, minWidth: 24, alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1 }}>
-              <Text style={{ color: 'white', fontSize: 11, fontWeight: 'bold' }}>{item.disponibilidadCalculada}</Text>
-            </View>
-          )}
-        </View>
-        <Text style={styles.productName} numberOfLines={2}>{item.nombre}</Text>
-        <Text style={styles.productPrice}>${parseFloat(price.toString()).toLocaleString()}</Text>
-      </TouchableOpacity>
-    );
-  };
-
-  const renderCartItem = ({ item }: { item: CartItem }) => {
-    const unitPrice = Number(item.precioUnitario || item.Precio_Unitario || 0);
-    const modifiersTotal = (item.modifiers || []).reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0);
-    const totalPrice = (unitPrice * item.quantity) + modifiersTotal;
-
-    return (
-      <View style={styles.cartItemRowCompact}>
-        {/* Quantity Controls (Left) */}
-        <View style={styles.qtyColumnCompact}>
-          <TouchableOpacity style={styles.qtyBtnCompact} onPress={() => {
-            if (item.quantity === 1) handleRemoveItem(item.IDproductos);
-            else decrementQuantity(item.IDproductos);
-          }}>
-            <Ionicons name={item.quantity === 1 ? "trash" : "remove"} size={18} color={item.quantity === 1 ? "#ef4444" : "#4b5563"} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => addToCart(item)}
-            onLongPress={() => openNumpad(item)}
-            delayLongPress={350}
-            activeOpacity={0.7}
-            style={styles.qtyTextTouchable}
-          >
-            <Text style={styles.qtyTextCompact}>{item.quantity}</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.qtyBtnCompact} onPress={() => addToCart(item)}>
-            <Ionicons name="add" size={18} color="#4b5563" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Info Column (Middle) */}
-        <View style={styles.infoColumnCompact}>
-          <View style={styles.infoRowTop}>
-            <Text style={styles.cartItemNameCompact} numberOfLines={1}>{item.nombre}</Text>
-            <Text style={styles.cartItemUnitPriceCompact}>${unitPrice.toLocaleString()}</Text>
-          </View>
-          
-          {item.modifiers && item.modifiers.length > 0 && (
-            <View style={styles.appliedModifiersContainerCompact}>
-              {item.modifiers.map((mod, idx) => (
-                <TouchableOpacity 
-                  key={idx} 
-                  style={styles.appliedModifierChipCompact}
-                  onPress={() => {
-                    setSelectedCartItemId(item.IDproductos);
-                    setModifiersModalVisible(true);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.appliedModifierTextCompact}>
-                    {mod.quantity}x {mod.name} {mod.price ? (mod.price > 0 ? `(+$${mod.price})` : `(-$${Math.abs(mod.price)})`) : ''}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-
-          <TouchableOpacity 
-            style={styles.addNoteBtnCompact} 
-            onPress={() => {
-              setSelectedCartItemId(item.IDproductos);
-              setModifiersModalVisible(true);
-            }}
-          >
-            <Ionicons name="add-circle-outline" size={12} color="#3b82f6" />
-            <Text style={styles.addNoteTextCompact}>Nota/Adicional</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Price & Delete (Right) */}
-        <View style={styles.priceColumnCompact}>
-          <Text style={styles.cartItemTotalCompact}>${totalPrice.toLocaleString()}</Text>
-          <TouchableOpacity onPress={() => handleRemoveItem(item.IDproductos)} style={styles.deleteBtnCompact}>
-            <Ionicons name="close" size={24} color="#ef4444" />
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
+  const renderCartItem = useCallback(({ item }: { item: CartItem }) => (
+    <CartItemComponent
+      item={item}
+      addToCart={addToCart}
+      decrementQuantity={decrementQuantity}
+      handleRemoveItem={handleRemoveItem}
+      openNumpad={openNumpad}
+      setSelectedCartItemId={setSelectedCartItemId}
+      setModifiersModalVisible={setModifiersModalVisible}
+    />
+  ), [addToCart, decrementQuantity, handleRemoveItem, openNumpad, setSelectedCartItemId, setModifiersModalVisible]);
   const renderCategoryChip = (cat: string, index: number) => (
     <TouchableOpacity
       key={`${cat}-${index}`}
@@ -1576,7 +1633,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           <View style={styles.headerTop}>
             <View style={styles.timeBox}>
               <Ionicons name="time-outline" size={16} color="#4CAF50" />
-              <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
+              <Clock />
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1, paddingLeft: 10 }}>
               <TouchableOpacity style={[styles.mesaButton, { flexShrink: 1 }]} onPress={() => setMesaModalVisible(true)}>
@@ -1735,12 +1792,15 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                   <Text style={styles.clearCartText}>Limpiar</Text>
                 </TouchableOpacity>
               </View>
-              <View>
-                {cart.map((item, index) => (
-                  <React.Fragment key={`${item.IDproductos}-${index}`}>
-                    {renderCartItem({ item })}
-                  </React.Fragment>
-                ))}
+              <View style={{ flex: 1, minHeight: 200 }}>
+                <FlashList
+                  data={cart}
+                  renderItem={renderCartItem}
+                  keyExtractor={(item, index) => `${item.IDproductos}-${index}`}
+                  // @ts-ignore
+                  estimatedItemSize={100}
+                  contentContainerStyle={{ paddingBottom: 20 }}
+                />
               </View>
             </View>
           )}
@@ -1771,12 +1831,16 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               <Text style={styles.emptyText}>Sin productos</Text>
             </View>
           ) : (
-            <View style={styles.productsGrid}>
-              {filteredProducts.map((item, index) => (
-                <View key={`${item.IDproductos}-${index}`} style={styles.productCardWrapper}>
-                  {renderProduct({ item })}
-                </View>
-              ))}
+            <View style={{ flex: 1, minHeight: 400, width: '100%' }}>
+              <FlashList
+                data={filteredProducts}
+                renderItem={renderProduct}
+                keyExtractor={(item, index) => `${item.IDproductos}-${index}`}
+                numColumns={3}
+                // @ts-ignore
+                estimatedItemSize={200}
+                contentContainerStyle={{ paddingBottom: 100 }}
+              />
             </View>
           )}
         </View>

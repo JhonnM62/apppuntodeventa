@@ -236,6 +236,50 @@ const PreparationTimer = ({
 };
 
 
+
+const RealtimeDurationTimer = React.memo(({ selectedVenta }: { selectedVenta: any }) => {
+  const [realtimeDuration, setRealtimeDuration] = useState<string | null>(null);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (selectedVenta && selectedVenta.estado !== 'PAGADO' && selectedVenta.estado !== 'ENTREGADO') {
+      const updateTimer = () => {
+        if (!selectedVenta.registroDeTiempo || selectedVenta.registroDeTiempo.length === 0) return;
+        const diff = computeActiveMs(selectedVenta.registroDeTiempo, Date.now());
+        setRealtimeDuration(formatDurationStr(diff));
+      };
+      
+      updateTimer();
+      interval = setInterval(updateTimer, 1000);
+    } else if (selectedVenta && (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO')) {
+      if (selectedVenta.registroDeTiempo && selectedVenta.registroDeTiempo.length > 0) {
+        const lastEntry = selectedVenta.registroDeTiempo[selectedVenta.registroDeTiempo.length - 1];
+        const end = new Date(lastEntry.fecha_hora).getTime();
+        const diff = computeActiveMs(selectedVenta.registroDeTiempo, end);
+        setRealtimeDuration(formatDurationStr(diff));
+      } else {
+        setRealtimeDuration(null);
+      }
+    } else {
+      setRealtimeDuration(null);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [selectedVenta]);
+
+  if (!realtimeDuration) return null;
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3f4f6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16, marginTop: 4 }}>
+      <Ionicons name="time-outline" size={14} color="#4b5563" style={{ marginRight: 4 }} />
+      <RNText style={{ fontSize: 12, color: '#4b5563', fontWeight: 'bold' }}>
+        {realtimeDuration}
+      </RNText>
+    </View>
+  );
+});
+
 const PedidosScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { showAlert } = useCustomAlert();
@@ -1353,14 +1397,7 @@ showAlert({
             <View style={styles.modalHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
                 <RNText style={[styles.modalTitle, { flexShrink: 1 }]} numberOfLines={1} ellipsizeMode="tail">{selectedVenta.pedido}</RNText>
-                {realtimeDuration && (
-                  <View style={[styles.timerBadge, { backgroundColor: (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') ? '#d1fae5' : '#fee2e2', flexShrink: 0, marginLeft: 8 }]}>
-                    <Ionicons name="time-outline" size={14} color={(selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') ? '#10b981' : '#ef4444'} />
-                    <RNText style={[styles.timerText, { color: (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') ? '#10b981' : '#ef4444' }]}>
-                      {realtimeDuration}
-                    </RNText>
-                  </View>
-                )}
+                <RealtimeDurationTimer selectedVenta={selectedVenta} />
               </View>
               <TouchableOpacity onPress={closeModal} style={[styles.closeBtn, { flexShrink: 0 }]}>
                 <Ionicons name="close" size={24} color="#374151" />
