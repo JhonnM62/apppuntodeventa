@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, TextInput, Switch, Platform, Alert, Image } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -947,6 +947,42 @@ export default function AdminNominaScreen({ navigation }: any) {
     });
   };
 
+  const agrupadasPorEmpleado = useMemo(() => {
+    const grouped: Record<string, {
+      empleado: any,
+      totalDiasLaborados: number,
+      liquidaciones: any[]
+    }> = {};
+
+    liquidaciones.forEach(liq => {
+      const empId = liq.usuarioId;
+      if (!grouped[empId]) {
+        grouped[empId] = {
+          empleado: liq.usuario,
+          totalDiasLaborados: 0,
+          liquidaciones: []
+        };
+      }
+      
+      const parsedTurnos = Array.isArray(liq.turnosDetalle) 
+        ? liq.turnosDetalle 
+        : (typeof liq.turnosDetalle === 'string' ? JSON.parse(liq.turnosDetalle) : []);
+      const duracion = parsedTurnos.length || liq.totalTurnos || 0;
+      grouped[empId].totalDiasLaborados += duracion;
+      
+      grouped[empId].liquidaciones.push({
+        ...liq,
+        duracionCalculada: duracion
+      });
+    });
+
+    Object.values(grouped).forEach(empData => {
+      empData.liquidaciones.sort((a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime());
+    });
+
+    return Object.values(grouped);
+  }, [liquidaciones]);
+
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <View style={styles.header}>
@@ -980,53 +1016,72 @@ export default function AdminNominaScreen({ navigation }: any) {
         <ScrollView style={styles.content}>
           {loadingLiquidaciones ? (
              <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 40 }} />
-          ) : liquidaciones.length === 0 ? (
+          ) : agrupadasPorEmpleado.length === 0 ? (
             <Text style={{ textAlign: 'center', marginTop: 40, color: '#6b7280' }}>No hay liquidaciones recientes.</Text>
           ) : (
-            liquidaciones.map((liq) => (
-              <Card key={liq.IDliquidacion} style={{ marginBottom: 12, padding: 16 }}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 16, fontWeight: '700' }}>{liq.usuario?.nombre}</Text>
-                    <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>
-                      {new Date(liq.fechaInicio).toLocaleDateString('es-CO')} - {new Date(liq.fechaFin).toLocaleDateString('es-CO')}
-                    </Text>
-                    <View style={[styles.statusBadge, { marginTop: 6, alignSelf: 'flex-start', backgroundColor: liq.estado === 'FIRMADO' ? '#d1fae5' : '#fef3c7' }]}>
-                      <Ionicons name={liq.estado === 'FIRMADO' ? 'checkmark-circle' : 'time-outline'} size={12} color={liq.estado === 'FIRMADO' ? '#059669' : '#d97706'} />
-                      <Text style={[styles.statusText, { color: liq.estado === 'FIRMADO' ? '#059669' : '#d97706', fontSize: 11, marginLeft: 4 }]}>
-                        {liq.estado.replace('_', ' ')}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={{ fontSize: 18, fontWeight: '800', color: '#10b981' }}>
-                      ${Number(liq.totalNeto).toLocaleString('es-CO')}
-                    </Text>
-                  </View>
+            agrupadasPorEmpleado.map((grupo) => (
+              <View key={grupo.empleado?.IDusuarios || Math.random().toString()} style={{ marginBottom: 24 }}>
+                <View style={{ backgroundColor: '#f3f4f6', padding: 12, borderRadius: 8, marginBottom: 12 }}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#111827' }}>
+                    {grupo.empleado?.nombre || 'Empleado Desconocido'}
+                  </Text>
+                  <Text style={{ fontSize: 14, color: '#4b5563', marginTop: 4 }}>
+                    Total días laborados (histórico): <Text style={{ fontWeight: 'bold', color: '#10b981' }}>{grupo.totalDiasLaborados} turnos</Text>
+                  </Text>
                 </View>
-                <View style={{ flexDirection: 'row', marginTop: 12, flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 }}>
-                  <Button variant="outline" size="sm" style={{ flex: 1, borderColor: '#3b82f6', marginBottom: 4 }} onPress={() => handleVerPDF(liq)}>
-                    <Ionicons name="document-text-outline" size={16} color="#3b82f6" style={{ marginRight: 4 }} />
-                    <Text style={{ color: '#3b82f6', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>Ver PDF</Text>
-                  </Button>
-                  {liq.estado === 'ESPERANDO_FIRMA' && (
-                    <Button variant="default" size="sm" style={{ flex: 1, backgroundColor: '#f59e0b', marginBottom: 4 }} onPress={() => handleReenviarNotificacion(liq.IDliquidacion)}>
-                      <Ionicons name="paper-plane-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
-                      <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>Reenviar</Text>
-                    </Button>
-                  )}
-                  <View style={{ width: '100%' }}>
-                    <Button variant="default" size="sm" style={{ width: '100%', backgroundColor: liq.firmaAdmin ? '#3b82f6' : '#10b981', marginBottom: 8 }} onPress={() => { setLiquidacionParaFirmaAdmin(liq.IDliquidacion); setShowSignatureAdmin(true); }}>
-                      <Ionicons name="create-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
-                      <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>{liq.firmaAdmin ? 'Cambiar Firma' : 'Firmar'}</Text>
-                    </Button>
-                    <Button size="sm" style={{ width: '100%', backgroundColor: '#ef4444' }} onPress={() => handleDeshacerLiquidacion(liq.IDliquidacion)} disabled={deshaciendo}>
-                      <Ionicons name="trash-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
-                      <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>Deshacer Liquidación</Text>
-                    </Button>
-                  </View>
-                </View>
-              </Card>
+                {grupo.liquidaciones.map((liq) => {
+                  const quincenaLabel = new Date(liq.fechaFin).getUTCDate() <= 15 ? '1ra Quincena' : '2da Quincena';
+                  const mesLabel = new Date(liq.fechaFin).toLocaleString('es-CO', { timeZone: 'UTC', month: 'long', year: 'numeric' });
+                  return (
+                    <Card key={liq.IDliquidacion} style={{ marginBottom: 12, padding: 16 }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 15, fontWeight: '700', textTransform: 'capitalize' }}>
+                            {quincenaLabel} de {mesLabel}
+                          </Text>
+                          <Text style={{ fontSize: 13, color: '#4b5563', marginTop: 4 }}>
+                            {new Date(liq.fechaInicio).toLocaleDateString('es-CO', { timeZone: 'UTC' })} al {new Date(liq.fechaFin).toLocaleDateString('es-CO', { timeZone: 'UTC' })}
+                            <Text style={{ fontWeight: 'bold', color: '#3b82f6' }}> ({liq.duracionCalculada} turnos)</Text>
+                          </Text>
+                          <View style={[styles.statusBadge, { marginTop: 6, alignSelf: 'flex-start', backgroundColor: liq.estado === 'FIRMADO' ? '#d1fae5' : '#fef3c7' }]}>
+                            <Ionicons name={liq.estado === 'FIRMADO' ? 'checkmark-circle' : 'time-outline'} size={12} color={liq.estado === 'FIRMADO' ? '#059669' : '#d97706'} />
+                            <Text style={[styles.statusText, { color: liq.estado === 'FIRMADO' ? '#059669' : '#d97706', fontSize: 11, marginLeft: 4 }]}>
+                              {liq.estado.replace('_', ' ')}
+                            </Text>
+                          </View>
+                        </View>
+                        <View style={{ alignItems: 'flex-end' }}>
+                          <Text style={{ fontSize: 18, fontWeight: '800', color: '#10b981' }}>
+                            ${Number(liq.totalNeto).toLocaleString('es-CO')}
+                          </Text>
+                        </View>
+                      </View>
+                      <View style={{ flexDirection: 'row', marginTop: 12, flexWrap: 'wrap', justifyContent: 'space-between', gap: 8 }}>
+                        <Button variant="outline" size="sm" style={{ flex: 1, borderColor: '#3b82f6', marginBottom: 4 }} onPress={() => handleVerPDF(liq)}>
+                          <Ionicons name="document-text-outline" size={16} color="#3b82f6" style={{ marginRight: 4 }} />
+                          <Text style={{ color: '#3b82f6', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>Ver PDF</Text>
+                        </Button>
+                        {liq.estado === 'ESPERANDO_FIRMA' && (
+                          <Button variant="default" size="sm" style={{ flex: 1, backgroundColor: '#f59e0b', marginBottom: 4 }} onPress={() => handleReenviarNotificacion(liq.IDliquidacion)}>
+                            <Ionicons name="paper-plane-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+                            <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>Reenviar</Text>
+                          </Button>
+                        )}
+                        <View style={{ width: '100%' }}>
+                          <Button variant="default" size="sm" style={{ width: '100%', backgroundColor: liq.firmaAdmin ? '#3b82f6' : '#10b981', marginBottom: 8 }} onPress={() => { setLiquidacionParaFirmaAdmin(liq.IDliquidacion); setShowSignatureAdmin(true); }}>
+                            <Ionicons name="create-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+                            <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>{liq.firmaAdmin ? 'Cambiar Firma' : 'Firmar'}</Text>
+                          </Button>
+                          <Button size="sm" style={{ width: '100%', backgroundColor: '#ef4444' }} onPress={() => handleDeshacerLiquidacion(liq.IDliquidacion)} disabled={deshaciendo}>
+                            <Ionicons name="trash-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
+                            <Text style={{ color: '#fff', fontSize: 13, flexShrink: 1 }} numberOfLines={1}>Deshacer Liquidación</Text>
+                          </Button>
+                        </View>
+                      </View>
+                    </Card>
+                  );
+                })}
+              </View>
             ))
           )}
           <View style={{ height: 120 }} />

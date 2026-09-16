@@ -99,7 +99,14 @@ export const generarLiquidacionHTML = (data: {
       totalMinutosSalida += 24 * 60;
     }
     
-    const diff = totalMinutosSalida - totalMinutosEntrada;
+    let diff = totalMinutosSalida - totalMinutosEntrada;
+
+    // Descontar la hora de descanso si est configurada en el cargo
+    if (cargo && cargo.duracionDescansoMinutos && !isNaN(Number(cargo.duracionDescansoMinutos))) {
+      diff -= Number(cargo.duracionDescansoMinutos);
+      if (diff < 0) diff = 0; // Evitar duraciones negativas por si acaso
+    }
+
     const hours = Math.floor(diff / 60);
     const minutes = diff % 60;
     

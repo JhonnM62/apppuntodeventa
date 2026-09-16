@@ -42,7 +42,7 @@ const MENU_ITEMS: MenuItem[] = [
   { id: '11', title: 'CLIENTES', label: 'Clientes', icon: 'people', iconType: 'ionicons', route: 'Clientes', color: '#14B8A6', permissionKey: 'clientes', permissionAction: 'read' },
 ];
 
-const MenuCard = ({ item, onPress }: { item: MenuItem; onPress: (item: MenuItem) => void }) => (
+const MenuCard = React.memo(({ item, onPress }: { item: MenuItem; onPress: (item: MenuItem) => void }) => (
   <View style={{ flex: 1, maxWidth: '50%', padding: CARD_MARGIN }}>
     <TouchableOpacity
       className="bg-card rounded-[20px] p-[14px] justify-between border shadow-sm"
@@ -81,7 +81,7 @@ const MenuCard = ({ item, onPress }: { item: MenuItem; onPress: (item: MenuItem)
       </View>
     </TouchableOpacity>
   </View>
-);
+));
 
 const AvatarMenu = ({ user, onLogout, navigation }: { user: any; onLogout: () => void; navigation: any }) => {
   const [menuVisible, setMenuVisible] = useState(false);
@@ -217,13 +217,12 @@ const HomeScreen = ({ navigation }: Props) => {
 
   const checkPermission = (item: MenuItem) => {
     // Regla general para administradores
-    const rol = (user?.rol || '').toLowerCase();
+    const rol = (user?.rol || '').toLowerCase().trim();
     if (
-      rol === 'admin app' || 
-      rol === 'admin negocio' || 
-      rol === 'administrador' || 
-      rol === 'super admin' || 
-      rol === 'admin'
+      rol.includes('admin') || 
+      rol.includes('super') ||
+      rol === 'dueño' || 
+      rol === 'propietario'
     ) return true;
 
     if (item.adminOnly) return false;
@@ -269,7 +268,7 @@ const HomeScreen = ({ navigation }: Props) => {
     return perm.read === true || String(perm.read) === 'true';
   };
 
-  const handlePress = (item: MenuItem) => {
+  const handlePress = React.useCallback((item: MenuItem) => {
     if (item.route === 'NewSale') {
       useCartStore.getState().clearCart();
       navigation.navigate('Sales');
@@ -278,7 +277,7 @@ const HomeScreen = ({ navigation }: Props) => {
     } else {
       navigation.navigate(item.route as any);
     }
-  };
+  }, [navigation]);
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
@@ -312,13 +311,14 @@ const HomeScreen = ({ navigation }: Props) => {
 
       <View style={{ flex: 1, width: '100%', paddingTop: 12 }}>
         <FlatList
-            data={MENU_ITEMS.filter(checkPermission)}
-            renderItem={({ item }: { item: MenuItem }) => <MenuCard item={item} onPress={handlePress} />}
-            keyExtractor={(item: MenuItem) => item.id}
+          data={MENU_ITEMS.filter(checkPermission)}
+          renderItem={({ item }) => <MenuCard item={item} onPress={handlePress} />}
+          keyExtractor={(item) => item.id}
           numColumns={2}
-          
-          contentContainerStyle={{ paddingBottom: Platform.OS === 'ios' ? 100 : 80, paddingHorizontal: 10 }}
+          columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: 10 }}
+          contentContainerStyle={{ paddingBottom: Platform.OS === 'ios' ? 100 : 80 }}
           showsVerticalScrollIndicator={false}
+          removeClippedSubviews={false}
         />
       </View>
     </View>
