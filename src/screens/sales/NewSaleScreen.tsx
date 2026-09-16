@@ -59,11 +59,10 @@ const Clock = React.memo(() => {
   }, []);
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
+    const dayName = date.toLocaleDateString('es-CO', { weekday: 'short' });
+    const dateStr = date.toLocaleDateString('es-CO', { day: '2-digit', month: 'short' });
+    const timeStr = date.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return `${dayName} ${dateStr} ${timeStr}`;
   };
 
   return <RNText style={styles.timeText}>{formatTime(currentTime)}</RNText>;
