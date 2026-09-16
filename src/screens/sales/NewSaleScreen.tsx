@@ -50,8 +50,13 @@ type ProductItem = {
 
 const CATEGORIES_ORDER = ['LO MAS VENDIDO', 'GRANIZADOS', 'BEBIDAS', 'COMIDAS', 'COMBOS', 'OTROS'];
 
-
 const Clock = React.memo(() => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
@@ -61,9 +66,8 @@ const Clock = React.memo(() => {
     });
   };
 
-  return <Clock />;
+  return <RNText style={styles.timeText}>{formatTime(currentTime)}</RNText>;
 });
-
 
 const ProductItemComponent = React.memo(({
   item,
