@@ -71,6 +71,9 @@ type UsuarioItem = {
   cargoId?: string;
   permisos?: Record<string, ModuloPermissions>;
   createdAt?: string;
+  notificationSetting?: {
+    notifyTurnoDescanso?: boolean;
+  };
 };
 
 type ModuloPermissions = {
@@ -90,6 +93,7 @@ type EditFormData = {
   isActive: boolean;
   cargoId?: string;
   modulos: Record<string, ModuloPermissions>;
+  notifyTurnoDescanso: boolean;
 };
 
 const UsersScreen = ({ navigation }: any) => {
@@ -125,6 +129,7 @@ const UsersScreen = ({ navigation }: any) => {
     isActive: true,
     cargoId: '',
     modulos: {},
+    notifyTurnoDescanso: true,
   });
 
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -294,6 +299,15 @@ const UsersScreen = ({ navigation }: any) => {
             cargoId: editFormData.cargoId || undefined,
             permisos: editFormData.modulos,
           });
+          
+          if (selectedUser?.IDusuarios) {
+            try {
+              const { updateNotificationSettings } = require('../../services/notifications');
+              await updateNotificationSettings(selectedUser.IDusuarios, { notifyTurnoDescanso: editFormData.notifyTurnoDescanso });
+            } catch (err) {
+              console.warn('Could not update notification settings', err);
+            }
+          }
 
           showAlert({ type: 'success', title: 'Éxito', message: 'Usuario actualizado correctamente' });
           setShowEditModal(false);
@@ -375,6 +389,7 @@ const UsersScreen = ({ navigation }: any) => {
       isActive: userItem.isActive !== false,
       cargoId: userItem.cargoId || '',
       modulos: userItem.permisos || {},
+      notifyTurnoDescanso: userItem.notificationSetting?.notifyTurnoDescanso !== false,
     });
     setEditFormErrors({});
     setShowEditModal(true);
@@ -444,6 +459,7 @@ const UsersScreen = ({ navigation }: any) => {
       isActive: true,
       cargoId: '',
       modulos: {},
+      notifyTurnoDescanso: true,
     });
     setEditFormErrors({});
     setShowEditCargoDropdown(false);
@@ -1022,6 +1038,23 @@ const UsersScreen = ({ navigation }: any) => {
                   onValueChange={(value) => setEditFormData(prev => ({ ...prev, isActive: value }))}
                   trackColor={{ false: '#d1d5db', true: '#86efac' }}
                   thumbColor={editFormData.isActive ? '#22c55e' : '#9ca3af'}
+                />
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.switchRow}>
+                <View style={styles.switchLabel}>
+                  <RNText style={styles.inputLabel}>Notificaciones WhatsApp (Descansos)</RNText>
+                  <RNText style={styles.switchDescription}>
+                    {editFormData.notifyTurnoDescanso ? 'Recibirá alertas de descanso' : 'No recibirá alertas de descanso'}
+                  </RNText>
+                </View>
+                <Switch
+                  value={editFormData.notifyTurnoDescanso}
+                  onValueChange={(value) => setEditFormData(prev => ({ ...prev, notifyTurnoDescanso: value }))}
+                  trackColor={{ false: '#d1d5db', true: '#86efac' }}
+                  thumbColor={editFormData.notifyTurnoDescanso ? '#16a34a' : '#9ca3af'}
                 />
               </View>
             </View>

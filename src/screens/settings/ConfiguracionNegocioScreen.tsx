@@ -59,6 +59,9 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     token: '',
     receiver: '',
     isGroup: false,
+    descansoAlertEnabled: false,
+    descansoAnticipacionMinutos: '10',
+    descansoFrecuenciaMinutos: '5',
   });
 
   // Estados para Factus
@@ -165,6 +168,9 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           token: dataWhatsapp.token || '',
           receiver: dataWhatsapp.receiver || '',
           isGroup: dataWhatsapp.isGroup ?? false,
+          descansoAlertEnabled: dataWhatsapp.descansoAlertEnabled ?? false,
+          descansoAnticipacionMinutos: dataWhatsapp.descansoAnticipacionMinutos !== undefined ? String(dataWhatsapp.descansoAnticipacionMinutos) : '10',
+          descansoFrecuenciaMinutos: dataWhatsapp.descansoFrecuenciaMinutos !== undefined ? String(dataWhatsapp.descansoFrecuenciaMinutos) : '5',
         });
       }
     } catch (error) {
@@ -204,6 +210,9 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           token: whatsappConfig.token,
           receiver: whatsappConfig.receiver,
           isGroup: whatsappConfig.isGroup,
+          descansoAlertEnabled: whatsappConfig.descansoAlertEnabled,
+          descansoAnticipacionMinutos: parseInt(whatsappConfig.descansoAnticipacionMinutos) || 10,
+          descansoFrecuenciaMinutos: parseInt(whatsappConfig.descansoFrecuenciaMinutos) || 5,
         })
       ]);
       Toast.show({ type: 'success', text1: 'Éxito', text2: 'Configuración guardada correctamente' });
@@ -738,10 +747,45 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             style={styles.input}
             value={whatsappConfig.token}
             onChangeText={(text) => setWhatsappConfig({...whatsappConfig, token: text})}
-            placeholder="eyJhbGciOiJIUzI1NiIs..."
-            secureTextEntry={true}
+            placeholder="v2.local...."
             autoCapitalize="none"
           />
+
+          <View style={{ marginTop: 24, padding: 16, backgroundColor: '#f9fafb', borderRadius: 8, borderWidth: 1, borderColor: '#e5e7eb' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <Text style={[styles.label, { marginTop: 0, fontWeight: 'bold' }]}>Alertas de Descanso por WhatsApp</Text>
+              <Switch
+                value={whatsappConfig.descansoAlertEnabled}
+                onValueChange={(val) => setWhatsappConfig({...whatsappConfig, descansoAlertEnabled: val})}
+                trackColor={{ false: '#d1d5db', true: '#bbf7d0' }}
+                thumbColor={whatsappConfig.descansoAlertEnabled ? '#16a34a' : '#f3f4f6'}
+              />
+            </View>
+            <Text style={{ fontSize: 13, color: '#6b7280', marginBottom: 16 }}>Activa esta opción para notificar a los empleados cuando su tiempo de descanso esté por terminar y cuando finalice.</Text>
+            
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, marginRight: 8 }}>
+                <Text style={styles.label}>Tiempo Anticipación (min)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={String(whatsappConfig.descansoAnticipacionMinutos)}
+                  onChangeText={(text) => setWhatsappConfig({...whatsappConfig, descansoAnticipacionMinutos: text.replace(/[^0-9]/g, '')})}
+                  keyboardType="numeric"
+                  placeholder="10"
+                />
+              </View>
+              <View style={{ flex: 1, marginLeft: 8 }}>
+                <Text style={styles.label}>Frecuencia (min)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={String(whatsappConfig.descansoFrecuenciaMinutos)}
+                  onChangeText={(text) => setWhatsappConfig({...whatsappConfig, descansoFrecuenciaMinutos: text.replace(/[^0-9]/g, '')})}
+                  keyboardType="numeric"
+                  placeholder="5"
+                />
+              </View>
+            </View>
+          </View>
         </View>
 
       </ScrollView>
