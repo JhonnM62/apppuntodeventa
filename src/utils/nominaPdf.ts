@@ -15,7 +15,7 @@ export const generarLiquidacionHTML = (data: {
 }) => {
   const { empleadoNombre, empleadoCargo, cargo, minutosGracia = 5, fechaInicio, fechaFin, turnos, descuentos, totalBruto, totalDescuentos, totalNeto, firmaAdmin, firmaEmpleado } = data;
 
-  const formatDate = (d: string | Date) => new Date(d).toLocaleDateString('es-CO', { timeZone: 'America/Bogota' });
+  const formatDate = (d: string | Date) => new Date(d).toLocaleDateString('es-CO', { timeZone: 'UTC' });
   const formatMoney = (n: number) => `$${Number(n).toLocaleString('es-CO')}`;
 
   const formatTime = (d: string | Date) => {
