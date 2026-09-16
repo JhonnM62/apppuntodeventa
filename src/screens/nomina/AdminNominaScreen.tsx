@@ -1024,8 +1024,8 @@ export default function AdminNominaScreen({ navigation }: any) {
       </View>
 
       {filterTab === 'Liquidados' && (
-        <View style={{ paddingHorizontal: 16, marginTop: 12, marginBottom: 4 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3f4f6', borderRadius: 8, paddingHorizontal: 12, height: 44 }}>
+        <View style={{ paddingHorizontal: 16, marginTop: 12, marginBottom: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#ffffff', borderRadius: 8, paddingHorizontal: 12, height: 44, borderWidth: 1, borderColor: '#e5e7eb', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2 }}>
             <Ionicons name="search-outline" size={20} color="#6b7280" style={{ marginRight: 8 }} />
             <TextInput
               style={{ flex: 1, fontSize: 15, color: '#111827' }}
@@ -1056,10 +1056,10 @@ export default function AdminNominaScreen({ navigation }: any) {
               const empId = grupo.empleado?.IDusuarios;
               const isExpanded = expandedEmployees[empId];
               return (
-                <View key={empId || Math.random().toString()} style={{ marginBottom: 24 }}>
+                <View key={empId || Math.random().toString()} style={{ marginBottom: 24, paddingHorizontal: 16 }}>
                   <TouchableOpacity 
                     onPress={() => setExpandedEmployees(prev => ({...prev, [empId]: !prev[empId]}))}
-                    style={{ backgroundColor: '#f3f4f6', padding: 12, borderRadius: 8, marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}
+                    style={{ backgroundColor: '#ffffff', padding: 16, borderRadius: 8, marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: '#e5e7eb', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2 }}
                   >
                     <View>
                       <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#111827' }}>
