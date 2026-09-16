@@ -219,6 +219,8 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [editDescuentoForm, setEditDescuentoForm] = useState<any>({});
   const [savingDescuento, setSavingDescuento] = useState(false);
   const [deletingDescuentos, setDeletingDescuentos] = useState(false);
+  const [confirmDeleteDescuento, setConfirmDeleteDescuento] = useState<{ id?: string, bulk?: boolean } | null>(null);
+
 
   // Extra Discount
   const [showDescuentoExtraModal, setShowDescuentoExtraModal] = useState(false);
@@ -906,50 +908,38 @@ export default function AdminNominaScreen({ navigation }: any) {
     }
   };
 
+  
   const handleDeleteDescuento = (id: string) => {
-    Alert.alert('Confirmar', '¿Seguro que deseas eliminar este registro permanentemente?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => {
-          try {
-            setDeletingDescuentos(true);
-            await api.delete(`/nomina/descuento/${id}`);
-            setSelectedDescuentos(prev => prev.filter(x => x !== id));
-            await handleRecalcular();
-            showAlert({ type: 'success', title: 'Éxito', message: 'Eliminado correctamente' });
-          } catch (error) {
-            console.error(error);
-            showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar el registro' });
-          } finally {
-            setDeletingDescuentos(false);
-          }
-        } 
-      }
-    ]);
+    setConfirmDeleteDescuento({ id });
   };
 
   const handleBulkDeleteDescuentos = () => {
     if (selectedDescuentos.length === 0) return;
-    Alert.alert('Confirmar Eliminación', `¿Seguro que deseas eliminar ${selectedDescuentos.length} registros permanentemente?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => {
-          try {
-            setDeletingDescuentos(true);
-            await Promise.all(selectedDescuentos.map(id => api.delete(`/nomina/descuento/${id}`)));
-            setSelectedDescuentos([]);
-            await handleRecalcular();
-            showAlert({ type: 'success', title: 'Éxito', message: 'Registros eliminados' });
-          } catch (error) {
-            console.error(error);
-            showAlert({ type: 'error', title: 'Error', message: 'Ocurrió un error al eliminar los registros' });
-          } finally {
-            setDeletingDescuentos(false);
-          }
-        } 
-      }
-    ]);
+    setConfirmDeleteDescuento({ bulk: true });
   };
 
-  const handleRecalcular = async () => {
+  const ejecutarEliminacionDescuento = async () => {
+    try {
+      setDeletingDescuentos(true);
+      if (confirmDeleteDescuento?.bulk) {
+        await Promise.all(selectedDescuentos.map(id => api.delete(`/nomina/descuento/${id}`)));
+        setSelectedDescuentos([]);
+        showAlert({ type: 'success', title: 'Éxito', message: 'Registros eliminados' });
+      } else if (confirmDeleteDescuento?.id) {
+        await api.delete(`/nomina/descuento/${confirmDeleteDescuento.id}`);
+        setSelectedDescuentos(prev => prev.filter(x => x !== confirmDeleteDescuento?.id));
+        showAlert({ type: 'success', title: 'Éxito', message: 'Eliminado correctamente' });
+      }
+      setConfirmDeleteDescuento(null);
+      await handleRecalcular();
+    } catch (error) {
+      console.error(error);
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar el/los registro(s)' });
+    } finally {
+      setDeletingDescuentos(false);
+    }
+  };
+const handleRecalcular = async () => {
     try {
       setRecalculando(true);
       const res = await api.post(`/nomina/recalcular/${selectedEmpleado.IDusuarios}`);
@@ -1406,10 +1396,16 @@ export default function AdminNominaScreen({ navigation }: any) {
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 8 }}>
                       <Text style={{ fontWeight: '700' }}>Descuentos y Bonos ({(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).length})</Text>
                       {selectedDescuentos.length > 0 && (
-                        <TouchableOpacity style={{ backgroundColor: '#fee2e2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4, flexDirection: 'row', alignItems: 'center' }} onPress={handleBulkDeleteDescuentos}>
-                          {deletingDescuentos ? <ActivityIndicator size="small" color="#ef4444" /> : <Ionicons name="trash-outline" size={14} color="#ef4444" />}
-                          <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>Eliminar Seleccionados ({selectedDescuentos.length})</Text>
-                        </TouchableOpacity>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <TouchableOpacity style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, marginRight: 8, flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3f4f6' }} onPress={() => setSelectedDescuentos([])}>
+                            <Ionicons name="close-circle-outline" size={14} color="#4b5563" />
+                            <Text style={{ color: '#4b5563', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>Deseleccionar</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={{ backgroundColor: '#fee2e2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 4, flexDirection: 'row', alignItems: 'center' }} onPress={handleBulkDeleteDescuentos}>
+                            {deletingDescuentos ? <ActivityIndicator size="small" color="#ef4444" /> : <Ionicons name="trash-outline" size={14} color="#ef4444" />}
+                            <Text style={{ color: '#ef4444', fontSize: 12, fontWeight: '600', marginLeft: 4 }}>Eliminar ({selectedDescuentos.length})</Text>
+                          </TouchableOpacity>
+                        </View>
                       )}
                     </View>
                     {(resumen.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')).map((d: any) => {
@@ -2124,6 +2120,29 @@ export default function AdminNominaScreen({ navigation }: any) {
       )}
 
       
+        
+        {/* Modal Confirmar Eliminacion Descuento */}
+        <Modal visible={!!confirmDeleteDescuento} animationType="fade" transparent>
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={[styles.modalTitle, { textAlign: 'center' }]}>Confirmar Eliminación</Text>
+              <Text style={[styles.modalSubtitle, { textAlign: 'center', marginTop: 8 }]}>
+                {confirmDeleteDescuento?.bulk 
+                  ? `¿Seguro que deseas eliminar ${selectedDescuentos.length} registros permanentemente?` 
+                  : '¿Seguro que deseas eliminar este registro permanentemente?'}
+              </Text>
+              <View style={styles.modalActions}>
+                <Button style={{ flex: 1, marginRight: 8, backgroundColor: '#f3f4f6' }} onPress={() => setConfirmDeleteDescuento(null)} disabled={deletingDescuentos}>
+                  <Text style={{ color: '#4b5563', fontWeight: '600' }}>Cancelar</Text>
+                </Button>
+                <Button style={{ flex: 1, backgroundColor: '#ef4444' }} onPress={ejecutarEliminacionDescuento} loading={deletingDescuentos}>
+                  <Text style={{ color: '#fff', fontWeight: '600' }}>Eliminar</Text>
+                </Button>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
         {/* Modal Editar Descuento */}
         <Modal visible={showEditDescuentoModal} transparent animationType="fade">
           <View style={styles.modalOverlay}>
