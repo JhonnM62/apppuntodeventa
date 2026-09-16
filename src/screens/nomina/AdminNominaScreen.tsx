@@ -1126,7 +1126,8 @@ export default function AdminNominaScreen({ navigation }: any) {
                   );
                 })}
               </View>
-            ))
+            );
+            })
           )}
           <View style={{ height: 120 }} />
         </ScrollView>
