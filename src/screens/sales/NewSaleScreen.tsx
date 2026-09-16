@@ -1795,15 +1795,14 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                   <Text style={styles.clearCartText}>Limpiar</Text>
                 </TouchableOpacity>
               </View>
-              <View style={{ flex: 1, minHeight: 200 }}>
-                <FlashList
-                  data={cart}
-                  renderItem={renderCartItem}
-                  keyExtractor={(item, index) => `${item.IDproductos}-${index}`}
-                  // @ts-ignore
-                  estimatedItemSize={100}
-                  contentContainerStyle={{ paddingBottom: 20 }}
-                />
+              <View style={{ maxHeight: 300 }}>
+                <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
+                  {cart.map((item, index) => (
+                    <View key={`${item.IDproductos}-${index}`}>
+                      {renderCartItem({ item })}
+                    </View>
+                  ))}
+                </ScrollView>
               </View>
             </View>
           )}
