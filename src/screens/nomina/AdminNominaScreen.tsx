@@ -247,7 +247,8 @@ export default function AdminNominaScreen({ navigation }: any) {
     try {
       setLoadingLiquidaciones(true);
       const res = await getLiquidaciones({ limit: 50, _t: Date.now() } as any);
-      setLiquidaciones(res.data || []);
+      const arr = Array.isArray(res?.data?.data) ? res.data.data : (Array.isArray(res?.data) ? res.data : []);
+      setLiquidaciones(arr);
     } catch (error) {
       console.error('Error cargando liquidaciones:', error);
     } finally {
@@ -838,6 +839,15 @@ export default function AdminNominaScreen({ navigation }: any) {
       return showAlert({ type: 'error', title: 'Aviso', message: 'No hay turnos ni descuentos pendientes por liquidar' });
     }
 
+    const extraBruto = selectedExtraTurnos.reduce((sum: number, id: string) => {
+      const t = resumen?.turnosAnteriores?.find((x: any) => x.IDturno === id);
+      return sum + (t && !ignoredTurnos.includes(id) ? Number(t.valorTurno) : 0);
+    }, 0);
+    const ignoredBruto = (resumen?.turnos || []).reduce((sum: number, t: any) => 
+      sum + (ignoredTurnos.includes(t.IDturno) ? Number(t.valorTurno) : 0)
+    , 0);
+    const finalNeto = (resumen?.totalNeto || 0) + extraBruto - ignoredBruto;
+
     const { minDate, maxDate } = getLiquidacionDates();
     setMinDateLiquidacion(minDate as string);
     setMaxDateLiquidacion(maxDate as string);
@@ -845,7 +855,7 @@ export default function AdminNominaScreen({ navigation }: any) {
     showAlert({
       type: 'confirm',
       title: 'Liquidar Empleado',
-      message: `¿Estás seguro de liquidar a ${selectedEmpleado.nombre} por un total de $${Number(resumen.totalNeto).toLocaleString('es-CO')}?`,
+      message: `¿Estás seguro de liquidar a ${selectedEmpleado.nombre} por un total de $${Number(finalNeto).toLocaleString('es-CO')}?`,
       confirmText: 'Liquidar',
       onConfirm: () => {
         setTimeout(() => {
