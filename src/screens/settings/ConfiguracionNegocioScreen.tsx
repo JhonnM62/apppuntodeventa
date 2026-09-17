@@ -290,8 +290,16 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
       Toast.show({ type: 'success', text1: 'Éxito', text2: 'Prueba de WhatsApp enviada' });
       setShowTestModal(false);
     } catch (err: any) {
-      console.warn(err);
-      Toast.show({ type: 'error', text1: 'Error', text2: err.response?.data?.message || 'Error al enviar prueba' });
+      console.warn('Error from testWhatsapp:', err);
+      let errorMsg = 'Error al enviar prueba';
+      if (err.response?.data?.message) {
+        errorMsg = Array.isArray(err.response.data.message) 
+          ? err.response.data.message.join(', ') 
+          : err.response.data.message;
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      Toast.show({ type: 'error', text1: 'Error', text2: errorMsg, visibilityTime: 5000 });
     } finally {
       setTestingWhatsapp(false);
     }
