@@ -69,11 +69,14 @@ const useCartStore = create<CartStore>((set, get) => ({
       const existing = state.cart.find((item) => item.IDproductos === product.IDproductos);
       
       // Stock validation
-      const availableStock = product.disponibilidadCalculada !== undefined 
-        ? Number(product.disponibilidadCalculada) 
-        : product.Stock !== undefined 
-          ? Number(product.Stock) 
-          : Infinity;
+      const isAvailabilityEnabled = product.mostrarDisponibilidad === true || product.mostrarDisponibilidad === 1 || product.mostrarDisponibilidad === 'true' || product.mostrarDisponibilidad === 'si';
+      const availableStock = isAvailabilityEnabled
+        ? (product.disponibilidadCalculada !== undefined 
+          ? Number(product.disponibilidadCalculada) 
+          : product.Stock !== undefined 
+            ? Number(product.Stock) 
+            : Infinity)
+        : Infinity;
           
       const currentQty = existing ? existing.quantity : 0;
       
@@ -129,11 +132,14 @@ const useCartStore = create<CartStore>((set, get) => ({
     set((state) => {
       const existing = state.cart.find((item) => item.IDproductos === productId);
       if (existing) {
-        const availableStock = existing.disponibilidadCalculada !== undefined 
-          ? Number(existing.disponibilidadCalculada) 
-          : existing.Stock !== undefined 
-            ? Number(existing.Stock) 
-            : Infinity;
+        const isAvailabilityEnabled = existing.mostrarDisponibilidad === true || existing.mostrarDisponibilidad === 1 || existing.mostrarDisponibilidad === 'true' || existing.mostrarDisponibilidad === 'si';
+        const availableStock = isAvailabilityEnabled
+          ? (existing.disponibilidadCalculada !== undefined 
+            ? Number(existing.disponibilidadCalculada) 
+            : existing.Stock !== undefined 
+              ? Number(existing.Stock) 
+              : Infinity)
+          : Infinity;
             
         if (quantity > availableStock) {
           Toast.show({ type: 'error', text1: 'Stock insuficiente', text2: `Solo hay ${availableStock} unidades disponibles.` });
