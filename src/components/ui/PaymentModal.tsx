@@ -290,6 +290,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             });
           }, 0);
         }
+        
       } catch (error) {
         console.error('Error saving:', error);
         Toast.show({ type: 'error', text1: 'Error', text2: 'Hubo un problema al guardar la orden', position: 'top' });
