@@ -69,7 +69,12 @@ const useCartStore = create<CartStore>((set, get) => ({
       const existing = state.cart.find((item) => item.IDproductos === product.IDproductos);
       
       // Stock validation
-      const availableStock = product.Stock !== undefined ? Number(product.Stock) : Infinity;
+      const availableStock = product.disponibilidadCalculada !== undefined 
+        ? Number(product.disponibilidadCalculada) 
+        : product.Stock !== undefined 
+          ? Number(product.Stock) 
+          : Infinity;
+          
       const currentQty = existing ? existing.quantity : 0;
       
       if (currentQty >= availableStock) {
@@ -120,11 +125,28 @@ const useCartStore = create<CartStore>((set, get) => ({
       set((state) => ({ cart: state.cart.filter((item) => item.IDproductos !== productId) }));
       return;
     }
-    set((state) => ({
-      cart: state.cart.map((item) =>
-        item.IDproductos === productId ? { ...item, quantity } : item
-      ),
-    }));
+    
+    set((state) => {
+      const existing = state.cart.find((item) => item.IDproductos === productId);
+      if (existing) {
+        const availableStock = existing.disponibilidadCalculada !== undefined 
+          ? Number(existing.disponibilidadCalculada) 
+          : existing.Stock !== undefined 
+            ? Number(existing.Stock) 
+            : Infinity;
+            
+        if (quantity > availableStock) {
+          Toast.show({ type: 'error', text1: 'Stock insuficiente', text2: `Solo hay ${availableStock} unidades disponibles.` });
+          return state; // Do not update
+        }
+      }
+
+      return {
+        cart: state.cart.map((item) =>
+          item.IDproductos === productId ? { ...item, quantity } : item
+        ),
+      };
+    });
   },
   addModifier: (productId: string, modifier: CartItemModifier) => {
     set((state) => ({

@@ -65,22 +65,24 @@ const DescansoStatusAdmin = ({ turno, onViewPhoto }: { turno: any, onViewPhoto?:
 
     return (
       <View style={{ marginTop: 8, backgroundColor: isOvertime ? '#fee2e2' : '#f0fdf4', padding: 8, borderRadius: 8, borderWidth: 1, borderColor: isOvertime ? '#fecaca' : '#bbf7d0' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, gap: 4 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1 }}>
             <Ionicons name={isOvertime ? "warning" : "checkmark-circle"} size={14} color={isOvertime ? "#dc2626" : "#15803d"} />
-            <Text style={{ color: isOvertime ? "#dc2626" : "#15803d", fontSize: 12, marginLeft: 4, fontWeight: 'bold' }}>
+            <Text style={{ color: isOvertime ? "#dc2626" : "#15803d", fontSize: 12, marginLeft: 4, fontWeight: 'bold', flexShrink: 1 }} numberOfLines={2}>
               Descanso completado {isOvertime && `(+${formatMinSec(extraTime)})`}
             </Text>
           </View>
-          <View style={{ flexDirection: 'row', gap: 6 }}>
+          <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
             {turno.fotoInicioDescanso && (
-              <TouchableOpacity onPress={() => onViewPhoto?.(turno.fotoInicioDescanso)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                <Text style={{ fontSize: 10, color: '#475569' }}>📸 Inicio</Text>
+              <TouchableOpacity onPress={() => onViewPhoto?.(turno.fotoInicioDescanso)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 4, flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="camera-outline" size={12} color="#475569" style={{ marginRight: 4 }} />
+                <Text style={{ fontSize: 10, color: '#475569', fontWeight: '500' }}>Inicio</Text>
               </TouchableOpacity>
             )}
             {turno.fotoFinDescanso && (
-              <TouchableOpacity onPress={() => onViewPhoto?.(turno.fotoFinDescanso)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                <Text style={{ fontSize: 10, color: '#475569' }}>📸 Fin</Text>
+              <TouchableOpacity onPress={() => onViewPhoto?.(turno.fotoFinDescanso)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 4, flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="camera-outline" size={12} color="#475569" style={{ marginRight: 4 }} />
+                <Text style={{ fontSize: 10, color: '#475569', fontWeight: '500' }}>Fin</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -107,7 +109,7 @@ const DescansoStatusAdmin = ({ turno, onViewPhoto }: { turno: any, onViewPhoto?:
     
     return (
       <View style={{ marginTop: 8, backgroundColor: bgColor, padding: 8, borderRadius: 8, borderWidth: 1, borderColor: borderColor }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, flexWrap: 'wrap', gap: 4 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Ionicons name="cafe" size={14} color={textColor} />
             <Text style={{ color: textColor, fontSize: 12, marginLeft: 4, fontWeight: 'bold' }}>
@@ -115,8 +117,9 @@ const DescansoStatusAdmin = ({ turno, onViewPhoto }: { turno: any, onViewPhoto?:
             </Text>
           </View>
           {turno.fotoInicioDescanso && (
-            <TouchableOpacity onPress={() => onViewPhoto?.(turno.fotoInicioDescanso)} style={{ backgroundColor: 'rgba(0,0,0,0.1)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-              <Text style={{ fontSize: 10, color: textColor }}>📸 Inicio</Text>
+            <TouchableOpacity onPress={() => onViewPhoto?.(turno.fotoInicioDescanso)} style={{ backgroundColor: 'rgba(0,0,0,0.1)', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 4, flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="camera-outline" size={12} color={textColor} style={{ marginRight: 4 }} />
+              <Text style={{ fontSize: 10, color: textColor, fontWeight: '500' }}>Inicio</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -1705,15 +1708,17 @@ const handleRecalcular = async () => {
 
                             <View style={{ marginTop: 8, alignItems: 'stretch' }}>
                               <DescansoStatusAdmin turno={turno} onViewPhoto={setPhotoViewerUrl} />
-                              <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+                              <View style={{ flexDirection: 'row', gap: 6, marginTop: 4, flexWrap: 'wrap' }}>
                                 {turno.fotoEntrada && (
-                                  <TouchableOpacity onPress={() => setPhotoViewerUrl(turno.fotoEntrada)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                                    <Text style={{ fontSize: 10, color: '#475569' }}>📸 Entrada</Text>
+                                  <TouchableOpacity onPress={() => setPhotoViewerUrl(turno.fotoEntrada)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 4, flexDirection: 'row', alignItems: 'center' }}>
+                                    <Ionicons name="camera-outline" size={12} color="#475569" style={{ marginRight: 4 }} />
+                                    <Text style={{ fontSize: 10, color: '#475569', fontWeight: '500' }}>Entrada</Text>
                                   </TouchableOpacity>
                                 )}
                                 {turno.fotoSalida && (
-                                  <TouchableOpacity onPress={() => setPhotoViewerUrl(turno.fotoSalida)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                                    <Text style={{ fontSize: 10, color: '#475569' }}>📸 Salida</Text>
+                                  <TouchableOpacity onPress={() => setPhotoViewerUrl(turno.fotoSalida)} style={{ backgroundColor: '#e2e8f0', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 4, flexDirection: 'row', alignItems: 'center' }}>
+                                    <Ionicons name="camera-outline" size={12} color="#475569" style={{ marginRight: 4 }} />
+                                    <Text style={{ fontSize: 10, color: '#475569', fontWeight: '500' }}>Salida</Text>
                                   </TouchableOpacity>
                                 )}
                               </View>
