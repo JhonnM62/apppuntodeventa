@@ -2355,8 +2355,8 @@ showAlert({
 
   return (
     <View style={styles.container}>
-      <StatusBar style="dark" backgroundColor="transparent" translucent />
-      <SafeAreaView style={{ backgroundColor: '#fff' }} edges={['top']}>
+      <StatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
+      <SafeAreaView style={{ backgroundColor: '#ffffff' }} edges={['top']}>
         <View style={styles.header}>
           <View>
             <RNText style={styles.headerTitle}>Pedidos</RNText>

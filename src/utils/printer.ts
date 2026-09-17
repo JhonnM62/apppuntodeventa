@@ -2,6 +2,7 @@ import { Platform } from 'react-native';
 import { getConfiguracion } from '../services/configuracion';
 
 let BLEPrinter: any = null;
+let currentConnectedMac: string | null = null;
 try {
   const PrinterModule = require('react-native-thermal-receipt-printer-image-qr');
   BLEPrinter = PrinterModule.BLEPrinter;
@@ -384,7 +385,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
     }
 
     if (index < data.productos.length - 1) {
-      payload += separator + '\n';
+      payload += '\n' + separator + '\n';
     }
   });
 
@@ -530,31 +531,47 @@ export const executePrint = async (
       return true; // Simulado
     }
 
-    // Verificar si la impresora sigue disponible intentando conectar de nuevo
-    // Esto previene el crash nativo (NullPointerException) si la impresora fue apagada
-    try {
+    // Intentar imprimir sin reconectar si es la misma impresora
+    let connected = false;
+    if (currentConnectedMac === macAddress) {
       try {
-        await BLEPrinter.init();
-        await new Promise(resolve => setTimeout(resolve, 200));
-      } catch (initErr) {
-        console.log('Fallo al inicializar Bluetooth (¿apagado?):', initErr);
-        throw initErr; // Forzamos el fallo para que lo atrape el bloque principal y el usuario vea el error
+        const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
+        await BLEPrinter.printText(payload);
+        return true;
+      } catch (quickPrintErr) {
+        console.log('Fallo al imprimir directamente, se intentará reconectar...', quickPrintErr);
+        currentConnectedMac = null;
       }
-      await BLEPrinter.connectPrinter(macAddress);
-    } catch (connectionError) {
-      console.log('La impresora está apagada o desconectada:', connectionError);
-      throw new Error(typeof connectionError === 'string' ? connectionError : 'La impresora está apagada o fuera de rango');
     }
 
-    const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
-    await BLEPrinter.printText(payload);
-    return true;
+    if (!connected) {
+      try {
+        try {
+          await BLEPrinter.init();
+          await new Promise(resolve => setTimeout(resolve, 200));
+        } catch (initErr) {
+          console.log('Fallo al inicializar Bluetooth (¿apagado?):', initErr);
+          throw initErr;
+        }
+        await BLEPrinter.connectPrinter(macAddress);
+        currentConnectedMac = macAddress;
+      } catch (connectionError) {
+        currentConnectedMac = null;
+        console.log('La impresora está apagada o desconectada:', connectionError);
+        throw new Error(typeof connectionError === 'string' ? connectionError : 'La impresora está apagada o fuera de rango');
+      }
+
+      const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
+      await BLEPrinter.printText(payload);
+      return true;
+    }
   } catch (error: any) {
+    currentConnectedMac = null;
     console.error('Error al imprimir ticket:', error);
-    // Extraer el mensaje real si la librería tira un string
     const errorMessage = typeof error === 'string' ? error : (error?.message || JSON.stringify(error) || 'Error desconocido');
     throw new Error(errorMessage);
   }
+  return false;
 };
 
 export const getCleanTicketPayload = (ticketData: TicketData, paperSize: 58 | 80, type: 'comanda' | 'factura'): string => {
