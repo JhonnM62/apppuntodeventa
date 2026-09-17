@@ -66,7 +66,8 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
 
   const [showTestModal, setShowTestModal] = useState(false);
   const [empleadosEnDescanso, setEmpleadosEnDescanso] = useState<{ id: string; nombre: string }[]>([]);
-  const [selectedEmpleadoId, setSelectedEmpleadoId] = useState('');
+  const [selectedEmpleadoId, setSelectedEmpleadoId] = useState<string | null>(null);
+  const [testApiError, setTestApiError] = useState<string | null>(null);
   const [testingWhatsapp, setTestingWhatsapp] = useState(false);
 
   // Estados para Factus
@@ -263,20 +264,21 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     }
   };
 
-  const fetchEmpleadosEnDescanso = async () => {
+  const fetchEmpleadosParaPrueba = async () => {
     try {
       setTestingWhatsapp(true);
-      const res = await api.get('/configuracion/whatsapp/empleados-en-descanso');
+      const res = await api.get('/configuracion/whatsapp/empleados-para-prueba');
       setEmpleadosEnDescanso(res.data);
       if (res.data && res.data.length > 0) {
         setSelectedEmpleadoId(res.data[0].id);
+        setTestApiError(null);
         setShowTestModal(true);
       } else {
-        Toast.show({ type: 'info', text1: 'Info', text2: 'No hay empleados en descanso actualmente' });
+        Toast.show({ type: 'info', text1: 'Info', text2: 'No hay empleados con teléfono configurado' });
       }
     } catch (err) {
       console.warn(err);
-      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudieron cargar los empleados en descanso' });
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudieron cargar los empleados' });
     } finally {
       setTestingWhatsapp(false);
     }
@@ -285,8 +287,9 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const handleTestWhatsapp = async () => {
     if (!selectedEmpleadoId) return;
     try {
+      setTestApiError(null);
       setTestingWhatsapp(true);
-      await api.post('/configuracion/whatsapp/test-descanso', { usuarioId: selectedEmpleadoId });
+      await api.post('/configuracion/whatsapp/test-conexion', { usuarioId: selectedEmpleadoId });
       Toast.show({ type: 'success', text1: 'Éxito', text2: 'Prueba de WhatsApp enviada' });
       setShowTestModal(false);
     } catch (err: any) {
@@ -305,7 +308,8 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
       } else if (err.message) {
         errorMsg = err.message;
       }
-      Toast.show({ type: 'error', text1: 'Error', text2: errorMsg, visibilityTime: 5000 });
+      setTestApiError(errorMsg);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Hubo un error al enviar (ver detalles)', visibilityTime: 5000 });
     } finally {
       setTestingWhatsapp(false);
     }
@@ -841,7 +845,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
 
             <TouchableOpacity 
               style={{ marginTop: 16, backgroundColor: '#4f46e5', padding: 12, borderRadius: 8, alignItems: 'center', opacity: testingWhatsapp ? 0.7 : 1 }} 
-              onPress={fetchEmpleadosEnDescanso}
+              onPress={fetchEmpleadosParaPrueba}
               disabled={testingWhatsapp}
             >
               {testingWhatsapp ? (
@@ -877,8 +881,8 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
       <Modal visible={showTestModal} transparent={true} animationType="fade" onRequestClose={() => setShowTestModal(false)}>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Probar Alerta de Descanso</Text>
-            <Text style={{ marginBottom: 12, color: '#4b5563', fontSize: 14 }}>Selecciona un empleado que esté actualmente en descanso para enviarle una prueba por WhatsApp usando su tiempo real.</Text>
+            <Text style={styles.modalTitle}>Probar Configuración de WhatsApp</Text>
+            <Text style={{ marginBottom: 12, color: '#4b5563', fontSize: 14 }}>Selecciona cualquier empleado con teléfono configurado para enviarle un mensaje de prueba genérico de conexión.</Text>
             
             <View style={styles.pickerContainer}>
               <Picker
@@ -891,6 +895,15 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
                 ))}
               </Picker>
             </View>
+
+            {testApiError && (
+              <View style={{ marginTop: 15, padding: 10, backgroundColor: '#fef2f2', borderRadius: 8, borderWidth: 1, borderColor: '#fca5a5' }}>
+                <Text style={{ color: '#991b1b', fontWeight: 'bold', marginBottom: 4 }}>Respuesta de la API:</Text>
+                <Text style={{ color: '#7f1d1d', fontSize: 13, fontFamily: 'monospace' }}>
+                  {testApiError}
+                </Text>
+              </View>
+            )}
 
             <View style={styles.modalButtons}>
               <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setShowTestModal(false)} disabled={testingWhatsapp}>
