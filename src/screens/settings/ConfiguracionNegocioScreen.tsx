@@ -292,10 +292,16 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     } catch (err: any) {
       console.warn('Error from testWhatsapp:', err);
       let errorMsg = 'Error al enviar prueba';
-      if (err.response?.data?.message) {
-        errorMsg = Array.isArray(err.response.data.message) 
-          ? err.response.data.message.join(', ') 
-          : err.response.data.message;
+      if (err.response?.data) {
+        if (err.response.data.message) {
+          errorMsg = Array.isArray(err.response.data.message) 
+            ? err.response.data.message.join(', ') 
+            : err.response.data.message;
+        } else {
+          errorMsg = typeof err.response.data === 'string' 
+            ? err.response.data 
+            : JSON.stringify(err.response.data);
+        }
       } else if (err.message) {
         errorMsg = err.message;
       }
