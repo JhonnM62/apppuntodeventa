@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, TextInput, ScrollView, Platform, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, TextInput, ScrollView, Platform, Switch, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
@@ -8,7 +8,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getConfiguracion, updateConfiguracion, getConfiguracionWhatsapp, updateConfiguracionWhatsapp } from '../../services/configuracion';
-import { getConfiguracionIA, updateConfiguracionIA } from '../../services/api';
+import api, { getConfiguracionIA, updateConfiguracionIA } from '../../services/api';
 import { Picker } from '@react-native-picker/picker';
 import divipolaData from '../../data/divipola';
 
@@ -63,6 +63,11 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     descansoAnticipacionMinutos: '10',
     descansoFrecuenciaMinutos: '5',
   });
+
+  const [showTestModal, setShowTestModal] = useState(false);
+  const [empleadosEnDescanso, setEmpleadosEnDescanso] = useState<{ id: string; nombre: string }[]>([]);
+  const [selectedEmpleadoId, setSelectedEmpleadoId] = useState('');
+  const [testingWhatsapp, setTestingWhatsapp] = useState(false);
 
   // Estados para Factus
   const [factusConfig, setFactusConfig] = useState({
@@ -258,6 +263,40 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     }
   };
 
+  const fetchEmpleadosEnDescanso = async () => {
+    try {
+      setTestingWhatsapp(true);
+      const res = await api.get('/configuracion/whatsapp/empleados-en-descanso');
+      setEmpleadosEnDescanso(res.data);
+      if (res.data && res.data.length > 0) {
+        setSelectedEmpleadoId(res.data[0].id);
+        setShowTestModal(true);
+      } else {
+        Toast.show({ type: 'info', text1: 'Info', text2: 'No hay empleados en descanso actualmente' });
+      }
+    } catch (err) {
+      console.warn(err);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudieron cargar los empleados en descanso' });
+    } finally {
+      setTestingWhatsapp(false);
+    }
+  };
+
+  const handleTestWhatsapp = async () => {
+    if (!selectedEmpleadoId) return;
+    try {
+      setTestingWhatsapp(true);
+      await api.post('/configuracion/whatsapp/test-descanso', { usuarioId: selectedEmpleadoId });
+      Toast.show({ type: 'success', text1: 'Éxito', text2: 'Prueba de WhatsApp enviada' });
+      setShowTestModal(false);
+    } catch (err: any) {
+      console.warn(err);
+      Toast.show({ type: 'error', text1: 'Error', text2: err.response?.data?.message || 'Error al enviar prueba' });
+    } finally {
+      setTestingWhatsapp(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -269,7 +308,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color="#111827" />
         </TouchableOpacity>
@@ -785,6 +824,18 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
                 />
               </View>
             </View>
+
+            <TouchableOpacity 
+              style={{ marginTop: 16, backgroundColor: '#4f46e5', padding: 12, borderRadius: 8, alignItems: 'center', opacity: testingWhatsapp ? 0.7 : 1 }} 
+              onPress={fetchEmpleadosEnDescanso}
+              disabled={testingWhatsapp}
+            >
+              {testingWhatsapp ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>Probar Alerta de Descanso</Text>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -807,6 +858,42 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           )}
         </TouchableOpacity>
       </View>
+
+      {/* Modal para Seleccionar Empleado en Descanso */}
+      <Modal visible={showTestModal} transparent={true} animationType="fade" onRequestClose={() => setShowTestModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Probar Alerta de Descanso</Text>
+            <Text style={{ marginBottom: 12, color: '#4b5563', fontSize: 14 }}>Selecciona un empleado que esté actualmente en descanso para enviarle una prueba por WhatsApp usando su tiempo real.</Text>
+            
+            <View style={styles.pickerContainer}>
+              <Picker
+                selectedValue={selectedEmpleadoId}
+                onValueChange={(itemValue) => setSelectedEmpleadoId(itemValue)}
+                style={{ height: 50, width: '100%' }}
+              >
+                {empleadosEnDescanso.map((emp) => (
+                  <Picker.Item key={emp.id} label={emp.nombre} value={emp.id} />
+                ))}
+              </Picker>
+            </View>
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setShowTestModal(false)} disabled={testingWhatsapp}>
+                <Text style={styles.modalCancelBtnText}>Cancelar</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={[styles.modalSubmitBtn, testingWhatsapp && { opacity: 0.7 }]} onPress={handleTestWhatsapp} disabled={testingWhatsapp}>
+                {testingWhatsapp ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <Text style={styles.modalSubmitBtnText}>Enviar Prueba</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -891,14 +978,76 @@ const styles = StyleSheet.create({
   },
   modelBtnText: { fontSize: 13, color: '#4b5563', fontWeight: '500' },
   modelBtnTextActive: { color: '#ffffff' },
-  footer: { padding: 16, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e5e7eb' },
+  footer: {
+    padding: 16,
+    backgroundColor: '#fff',
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
   saveButton: {
     backgroundColor: '#4f46e5',
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 16,
+    justifyContent: 'center',
+    padding: 16,
     borderRadius: 12,
   },
-  saveButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' }
+  saveButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  modalContent: {
+    width: '90%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#111827'
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    marginBottom: 20,
+    overflow: 'hidden'
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  modalCancelBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    marginRight: 12
+  },
+  modalCancelBtnText: {
+    color: '#6b7280',
+    fontWeight: 'bold'
+  },
+  modalSubmitBtn: {
+    backgroundColor: '#4f46e5',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8
+  },
+  modalSubmitBtnText: {
+    color: '#fff',
+    fontWeight: 'bold'
+  }
 });
