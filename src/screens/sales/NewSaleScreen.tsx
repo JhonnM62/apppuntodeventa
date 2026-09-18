@@ -935,31 +935,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       setSelectedMesa(null);
       setSelectedCliente(null);
 
-      // IMPRESIÓN OPTIMISTA CON CÁLCULO LOCAL
       const finalMethod = payload.venta.medioDePago;
-      const printStore = usePrinterStore.getState();
-      if (printStore.shouldPrintComanda(payload.venta.estado) || printStore.shouldPrintFactura(payload.venta.estado)) {
-        const cleanOrderId = useSalesStore.getState().calculateNextPedidoNumber(selectedMesa?.nombre || 'V.R', useAuthStore.getState().user?.nombre || 'Caja');
-
-        const ticketData = {
-          orderId: cleanOrderId,
-          fecha: new Date().toLocaleString('es-CO'),
-          total: payload.venta.totalInput,
-          productos: payload.productos.map(item => ({
-            cantidad: item.cantidad,
-            nombre: item.nombre,
-            precioUnitario: item.precio,
-            subtotal: item.precioTotal,
-            modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
-          })),
-          estado: payload.venta.estado,
-          metodoPago: finalMethod,
-          efectivoRecibido: payload.venta.efectivoRecibido,
-          devueltas: payload.venta.devueltas,
-          vendedor: useAuthStore.getState().user?.nombre || 'Caja'
-        };
-        printStore.printTicket(ticketData);
-      }
 
       // Proceso de backend asíncrono (Promesa huérfana para no bloquear)
       createSale(payload)
@@ -967,6 +943,29 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           const ventaCreada = response?.data || response;
           const pedidoGenerado = ventaCreada?.pedido || payload.venta.pedido;
           
+          // IMPRESIÓN CON EL ID REAL DEL BACKEND
+          const printStore = usePrinterStore.getState();
+          if (printStore.shouldPrintComanda(payload.venta.estado) || printStore.shouldPrintFactura(payload.venta.estado)) {
+            const ticketData = {
+              orderId: pedidoGenerado,
+              fecha: new Date().toLocaleString('es-CO'),
+              total: payload.venta.totalInput,
+              productos: payload.productos.map(item => ({
+                cantidad: item.cantidad,
+                nombre: item.nombre,
+                precioUnitario: item.precio,
+                subtotal: item.precioTotal,
+                modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
+              })),
+              estado: payload.venta.estado,
+              metodoPago: finalMethod,
+              efectivoRecibido: payload.venta.efectivoRecibido,
+              devueltas: payload.venta.devueltas,
+              vendedor: useAuthStore.getState().user?.nombre || 'Caja'
+            };
+            printStore.printTicket(ticketData);
+          }
+
           // Emitir Sockets
           const ordenData = {
             venta: {
@@ -1039,34 +1038,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       const exactDiscount = recalcularTotal * (discountPercent || 0);
       const descuento = Math.floor(exactDiscount / 1000) * 1000;
       const finalTotal = recalcularTotal - descuento;
-
-      // IMPRESIÓN OPTIMISTA CON CÁLCULO LOCAL PARA GUARDAR PEDIDO
-      const printStore = usePrinterStore.getState();
-      if (printStore.shouldPrintComanda(data.estado) || printStore.shouldPrintFactura(data.estado)) {
-        const cleanOrderId = (isEditing && editingSaleId)
-          ? (editingVenta?.pedido || 'Editando...')
-          : useSalesStore.getState().calculateNextPedidoNumber(selectedMesa?.nombre || 'V.R', useAuthStore.getState().user?.nombre || 'Caja');
-
-        const ticketData = {
-          orderId: cleanOrderId,
-          fecha: new Date().toLocaleString('es-CO'),
-          total: finalTotal,
-          productos: cart.map(item => ({
-            cantidad: item.quantity,
-            nombre: item.nombre,
-            precioUnitario: Number(item.precioUnitario || item.Precio_Unitario || 0),
-            subtotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
-            modifiers: item.modifiers,
-          })),
-          estado: data.estado,
-          metodoPago: data.medioDePago || (isEditing ? editingVenta?.medioDePago : 'PENDIENTE'),
-          efectivoRecibido: isEditing ? (editingVenta?.efectivoRecibido || finalTotal) : 0,
-          devueltas: isEditing ? (editingVenta?.devueltas || 0) : 0,
-          vendedor: useAuthStore.getState().user?.nombre || 'Caja'
-        };
-        printStore.printTicket(ticketData);
-      }
-
+      
       if (isEditing && editingSaleId) {
         const payload: SalePayload = {
           venta: {
@@ -1101,6 +1073,31 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           try {
             const response = await updateVentaCompleta(editingSaleId, payload);
             const ventaActualizada = response?.data || response;
+            const pedidoGenerado = ventaActualizada?.pedido || editingVenta?.pedido || 'Editando...';
+            
+            // IMPRESIÓN CON EL ID REAL DEL BACKEND (EDIT)
+            const printStore = usePrinterStore.getState();
+            if (printStore.shouldPrintComanda(data.estado) || printStore.shouldPrintFactura(data.estado)) {
+              const ticketData = {
+                orderId: pedidoGenerado,
+                fecha: new Date().toLocaleString('es-CO'),
+                total: finalTotal,
+                productos: cart.map(item => ({
+                  cantidad: item.quantity,
+                  nombre: item.nombre,
+                  precioUnitario: Number(item.precioUnitario || item.Precio_Unitario || 0),
+                  subtotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
+                  modifiers: item.modifiers,
+                })),
+                estado: data.estado,
+                metodoPago: data.medioDePago || editingVenta?.medioDePago || 'PENDIENTE',
+                efectivoRecibido: editingVenta?.efectivoRecibido || finalTotal,
+                devueltas: editingVenta?.devueltas || 0,
+                vendedor: useAuthStore.getState().user?.nombre || 'Caja'
+              };
+              printStore.printTicket(ticketData);
+            }
+
             emitOrdenActualizada({ 
               ventaId: editingSaleId, 
               IDventas: editingSaleId, 
@@ -1183,7 +1180,28 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             const ventaCreada = response?.data || response;
             const pedidoGenerado = ventaCreada?.pedido || `pedido-${Date.now()}`;
             
-            
+            // IMPRESIÓN CON EL ID REAL DEL BACKEND (CREATE)
+            const printStore = usePrinterStore.getState();
+            if (printStore.shouldPrintComanda(data.estado) || printStore.shouldPrintFactura(data.estado)) {
+              const ticketData = {
+                orderId: pedidoGenerado,
+                fecha: new Date().toLocaleString('es-CO'),
+                total: finalTotal,
+                productos: cart.map(item => ({
+                  cantidad: item.quantity,
+                  nombre: item.nombre,
+                  precioUnitario: Number(item.precioUnitario || item.Precio_Unitario || 0),
+                  subtotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
+                  modifiers: item.modifiers,
+                })),
+                estado: data.estado,
+                metodoPago: data.medioDePago || 'PENDIENTE',
+                efectivoRecibido: 0,
+                devueltas: 0,
+                vendedor: useAuthStore.getState().user?.nombre || 'Caja'
+              };
+              printStore.printTicket(ticketData);
+            }
 
             setPaymentModalVisible(false);
             clearCart();
@@ -1216,6 +1234,14 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             Toast.show({
               type: 'error',
               text1: 'Error',
+              text2: error?.response?.data?.message || 'Hubo un problema al guardar el pedido',
+              position: 'top',
+            });
+          })
+          .finally(() => {
+            setIsSubmitting(false);
+          });
+      }); text1: 'Error',
               text2: error?.response?.data?.message || 'Hubo un problema al guardar el pedido',
               position: 'top',
             });

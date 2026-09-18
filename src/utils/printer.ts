@@ -486,48 +486,67 @@ export const executePrint = async (
       if (Platform.OS === 'web') {
         const htmlPayload = getHtmlTicketPayload(ticketData, paperSize, type);
         
-        // Usar un iframe oculto para evitar ventanas emergentes y retrasos
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
+        // En móviles (Android Chrome), los iframes ocultos bloquean la impresión.
+        // La forma más robusta es inyectar un div en el body, ocultar el resto con CSS @media print,
+        // imprimir la ventana principal y luego limpiar.
         
-        const iframeDoc = iframe.contentWindow?.document || iframe.contentDocument;
-        if (iframeDoc) {
-          iframeDoc.write(`
-            <html>
-              <head>
-                <style>
-                  @page { margin: 0; }
-                  body { 
-                    margin: 0 auto; 
-                    padding: 10px; 
-                    font-family: monospace; 
-                    white-space: pre; 
-                    font-size: 14px;
-                    line-height: 1.2;
-                    width: max-content;
-                    color: black;
-                  }
-                </style>
-              </head>
-              <body>${htmlPayload}</body>
-            </html>
-          `);
-          iframeDoc.close();
-          
-          // Imprimir inmediatamente (el DOM ya está construido)
-          iframe.contentWindow?.focus();
-          iframe.contentWindow?.print();
-          
-          // Limpiar el iframe del DOM después de que se cierre el diálogo de impresión
-          setTimeout(() => {
-            if (document.body.contains(iframe)) {
-              document.body.removeChild(iframe);
+        const printDiv = document.createElement('div');
+        printDiv.id = 'ticket-print-area';
+        printDiv.innerHTML = htmlPayload;
+        
+        const style = document.createElement('style');
+        style.id = 'ticket-print-style';
+        style.innerHTML = `
+          @media screen {
+            #ticket-print-area {
+              position: absolute;
+              left: -9999px;
+              top: -9999px;
             }
-          }, 5000);
-        } else {
-          console.error('No se pudo acceder al documento del iframe para imprimir.');
-        }
+          }
+          @media print {
+            body * {
+              visibility: hidden;
+            }
+            #ticket-print-area, #ticket-print-area * {
+              visibility: visible;
+            }
+            #ticket-print-area {
+              position: absolute;
+              left: 0;
+              top: 0;
+              margin: 0; 
+              padding: 10px; 
+              font-family: monospace; 
+              white-space: pre; 
+              font-size: 14px;
+              line-height: 1.2;
+              width: max-content;
+              color: black;
+            }
+            @page {
+              margin: 0;
+            }
+          }
+        `;
+
+        document.head.appendChild(style);
+        document.body.appendChild(printDiv);
+        
+        // Pequeño delay para asegurar que el DOM haya renderizado el estilo
+        setTimeout(() => {
+          window.print();
+          
+          // Limpieza después de que se cierre el diálogo de impresión
+          setTimeout(() => {
+            if (document.body.contains(printDiv)) {
+              document.body.removeChild(printDiv);
+            }
+            if (document.head.contains(style)) {
+              document.head.removeChild(style);
+            }
+          }, 1000);
+        }, 100);
       }
       return true; // Simulado
     }
