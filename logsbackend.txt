@@ -1,999 +1,555 @@
-      "motivo": "Se ignora 1 unidad de vaso de 12 onz sin licor debido a que la observación reporta un vaso dañado de esta categoría.",
-      "cantidadAIgnorar": 1,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Se remueven 5 unidades de Normal 12 Onz Sin licor para ajustar la diferencia de inventario restante de -5 unidades.",
-      "cantidadARemover": 5,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "ordenId": "cmtozec0m02rdm7iicb9gxkep",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtozec0g02rbm7ii3dsx3wo5"
-    }
-  ],
-  "justificacionGeneral": "Se realiza el cuadre de inventario ignorando 1 unidad de vaso de 12 onz sin licor reportada como dañada en las observaciones, y removiendo las 5 unidades restantes de la diferencia de inventario de la venta cmtozec0g02rbm7ii3dsx3wo5. Esto reduce el faltante de efectivo de $88,000 a $48,000. Dado que las transferencias están perfectamente cuadradas y no hay más justificaciones para el efectivo restante, se concluye un descuadre físico real en caja de $48,000."
+2026-09-18T02:46:36.1234917Z Current runner version: '2.337.0'
+2026-09-18T02:46:36.1263618Z ##[group]Runner Image Provisioner
+2026-09-18T02:46:36.1265420Z Hosted Compute Agent
+2026-09-18T02:46:36.1266592Z Version: 20260828.587
+2026-09-18T02:46:36.1267717Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-09-18T02:46:36.1269074Z Build Date: 2026-08-28T16:44:25Z
+2026-09-18T02:46:36.1270339Z Worker ID: {1b9d2af8-05e4-48af-9c57-82f011cd5ca5}
+2026-09-18T02:46:36.1271616Z Azure Region: northcentralus
+2026-09-18T02:46:36.1272788Z ##[endgroup]
+2026-09-18T02:46:36.1274968Z ##[group]Operating System
+2026-09-18T02:46:36.1276218Z Ubuntu
+2026-09-18T02:46:36.1277262Z 24.04.5
+2026-09-18T02:46:36.1278277Z LTS
+2026-09-18T02:46:36.1279374Z ##[endgroup]
+2026-09-18T02:46:36.1280467Z ##[group]Runner Image
+2026-09-18T02:46:36.1281593Z Image: ubuntu-24.04
+2026-09-18T02:46:36.1282711Z Version: 20260907.300.1
+2026-09-18T02:46:36.1284601Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260907.300/images/ubuntu/Ubuntu2404-Readme.md
+2026-09-18T02:46:36.1286999Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260907.300
+2026-09-18T02:46:36.1288528Z ##[endgroup]
+2026-09-18T02:46:36.1290568Z ##[group]GITHUB_TOKEN Permissions
+2026-09-18T02:46:36.1293072Z Contents: read
+2026-09-18T02:46:36.1294429Z Metadata: read
+2026-09-18T02:46:36.1295773Z Packages: read
+2026-09-18T02:46:36.1296932Z ##[endgroup]
+2026-09-18T02:46:36.1300238Z Secret source: Actions
+2026-09-18T02:46:36.1302014Z Cache mode: write
+2026-09-18T02:46:36.1303310Z Prepare workflow directory
+2026-09-18T02:46:36.1755171Z Prepare all required actions
+2026-09-18T02:46:36.1825045Z Getting action download info
+2026-09-18T02:46:36.4003851Z Download action repository 'appleboy/ssh-action@v1.0.3' (SHA:029f5b4aeeeb58fdfe1410a5d17f967dacf36262)
+2026-09-18T02:46:36.7332131Z Complete job name: deploy
+2026-09-18T02:46:36.7882458Z ##[group]Build container for action use: '/home/runner/work/_actions/appleboy/ssh-action/v1.0.3/Dockerfile'.
+2026-09-18T02:46:36.8013044Z ##[command]/usr/bin/docker build -t f15b0f:0e1aaad23d3d45d6b1ac1a89ab58d5ac -f "/home/runner/work/_actions/appleboy/ssh-action/v1.0.3/Dockerfile" "/home/runner/work/_actions/appleboy/ssh-action/v1.0.3"
+2026-09-18T02:46:38.7320696Z #0 building with "default" instance using docker driver
+2026-09-18T02:46:38.7322090Z 
+2026-09-18T02:46:38.7322880Z #1 [internal] load build definition from Dockerfile
+2026-09-18T02:46:38.7324935Z #1 transferring dockerfile: 149B done
+2026-09-18T02:46:38.7326481Z #1 DONE 0.0s
+2026-09-18T02:46:38.7327205Z 
+2026-09-18T02:46:38.7328168Z #2 [internal] load metadata for ghcr.io/appleboy/drone-ssh:1.7.3
+2026-09-18T02:46:38.9641053Z #2 DONE 0.4s
+2026-09-18T02:46:39.0801567Z 
+2026-09-18T02:46:39.0803159Z #3 [internal] load .dockerignore
+2026-09-18T02:46:39.0804110Z #3 transferring context: 2B done
+2026-09-18T02:46:39.0805666Z #3 DONE 0.0s
+2026-09-18T02:46:39.0806161Z 
+2026-09-18T02:46:39.0806523Z #4 [internal] load build context
+2026-09-18T02:46:39.0807402Z #4 transferring context: 108B done
+2026-09-18T02:46:39.0808224Z #4 DONE 0.0s
+2026-09-18T02:46:39.0808602Z 
+2026-09-18T02:46:39.0809286Z #5 [1/2] FROM ghcr.io/appleboy/drone-ssh:1.7.3@sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158
+2026-09-18T02:46:39.0810448Z #5 resolve ghcr.io/appleboy/drone-ssh:1.7.3@sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158 done
+2026-09-18T02:46:39.0811479Z #5 extracting sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca
+2026-09-18T02:46:39.0812428Z #5 sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 0B / 125B 0.1s
+2026-09-18T02:46:39.0813366Z #5 sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 0B / 2.44MB 0.1s
+2026-09-18T02:46:39.0814303Z #5 sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158 2.38kB / 2.38kB done
+2026-09-18T02:46:39.0815418Z #5 sha256:1a52f94820e830bc9734623deb03bbafa6a248fba19cdc2e5605c70d90d91441 1.24kB / 1.24kB done
+2026-09-18T02:46:39.0816350Z #5 sha256:c4781b8d012b16b6c7468dc9104fad0a63f2a8815b2af8b7176bb544253ea8c7 3.86kB / 3.86kB done
+2026-09-18T02:46:39.0817657Z #5 sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca 3.38MB / 3.38MB 0.1s done
+2026-09-18T02:46:39.0818645Z #5 sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6 284.83kB / 284.83kB 0.1s done
+2026-09-18T02:46:39.0819625Z #5 sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c 1.20kB / 1.20kB 0.1s done
+2026-09-18T02:46:39.1910060Z #5 extracting sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca 0.1s done
+2026-09-18T02:46:39.1912331Z #5 sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 125B / 125B 0.1s done
+2026-09-18T02:46:39.1914219Z #5 sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 2.44MB / 2.44MB 0.1s done
+2026-09-18T02:46:39.1916303Z #5 extracting sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6 0.0s done
+2026-09-18T02:46:40.3265134Z #5 extracting sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c
+2026-09-18T02:46:40.4266660Z #5 extracting sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c done
+2026-09-18T02:46:40.4267954Z #5 extracting sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 done
+2026-09-18T02:46:40.4269167Z #5 extracting sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 0.0s done
+2026-09-18T02:46:40.4269821Z #5 DONE 1.5s
+2026-09-18T02:46:40.4270035Z 
+2026-09-18T02:46:40.4270338Z #6 [2/2] COPY entrypoint.sh /bin/entrypoint.sh
+2026-09-18T02:46:40.5848624Z #6 DONE 0.0s
+2026-09-18T02:46:40.5849166Z 
+2026-09-18T02:46:40.5849344Z #7 exporting to image
+2026-09-18T02:46:40.5849758Z #7 exporting layers
+2026-09-18T02:46:41.0039042Z #7 exporting layers 0.6s done
+2026-09-18T02:46:41.0206870Z #7 writing image sha256:4d2e44e2cad3c7cc688f5cdfc5ff621e26372586a8eeed5697110752005f71e4 done
+2026-09-18T02:46:41.0207780Z #7 naming to docker.io/library/f15b0f:0e1aaad23d3d45d6b1ac1a89ab58d5ac done
+2026-09-18T02:46:41.0208380Z #7 DONE 0.6s
+2026-09-18T02:46:41.0291336Z ##[endgroup]
+2026-09-18T02:46:41.0545599Z ##[group]Run if [[ "$AUTH_SERVER" == *"@"* ]]; then
+2026-09-18T02:46:41.0546240Z [36;1mif [[ "$AUTH_SERVER" == *"@"* ]]; then[0m
+2026-09-18T02:46:41.0546838Z [36;1m  echo "username=$(echo $AUTH_SERVER | cut -d'@' -f1)" >> $GITHUB_OUTPUT[0m
+2026-09-18T02:46:41.0547482Z [36;1m  echo "host=$(echo $AUTH_SERVER | cut -d'@' -f2)" >> $GITHUB_OUTPUT[0m
+2026-09-18T02:46:41.0547987Z [36;1melse[0m
+2026-09-18T02:46:41.0548387Z [36;1m  echo "username=root" >> $GITHUB_OUTPUT[0m
+2026-09-18T02:46:41.0548877Z [36;1m  echo "host=$AUTH_SERVER" >> $GITHUB_OUTPUT[0m
+2026-09-18T02:46:41.0549340Z [36;1mfi[0m
+2026-09-18T02:46:41.0594386Z shell: /usr/bin/bash -e {0}
+2026-09-18T02:46:41.0595233Z env:
+2026-09-18T02:46:41.0596008Z   AUTH_SERVER: ***
+2026-09-18T02:46:41.0596400Z ##[endgroup]
+2026-09-18T02:46:41.1033410Z ##[group]Run appleboy/ssh-action@v1.0.3
+2026-09-18T02:46:41.1033940Z with:
+2026-09-18T02:46:41.1034332Z   host: 100.42.185.2
+2026-09-18T02:46:41.1034917Z   username: root
+2026-09-18T02:46:41.1035425Z   password: ***
+2026-09-18T02:46:41.1035823Z   command_timeout: 30m
+2026-09-18T02:46:41.1056981Z   script: set -e
+
+# 0. Limpiar imagenes viejas del proyecto y caché de construcción
+echo "Limpiando espacio en disco de imagenes viejas..."
+docker image prune -f || true
+docker builder prune -f || true
+
+# 1. Crear directorio del proyecto si no existe
+mkdir -p /root/backend-qhubomor
+cd /root/backend-qhubomor
+
+# 2. Clonar el repositorio o actualizarlo si ya existe
+if [ ! -d ".git" ]; then
+  echo "Clonando repositorio por primera vez..."
+  git clone https://***@github.com/JhonnM62/backend-nest-js-qhubomor.git .
+else
+  echo "Actualizando repositorio existente..."
+  git remote set-url origin https://***@github.com/JhonnM62/backend-nest-js-qhubomor.git
+  git fetch --all
+  git reset --hard origin/main
+  git clean -fd
+fi
+
+# 3. Inyectar las variables de entorno desde los secretos de GitHub
+cat << 'EOF' > .env
+***
+
+EOF
+
+# 4. Construir la nueva imagen de Docker localmente en Contabo (sin cache para asegurar construccion limpia)
+echo "Construyendo imagen Docker..."
+docker build -t qhubomor-backend .
+
+# 5. Detener y eliminar el contenedor anterior si existe
+echo "Deteniendo contenedor anterior..."
+docker stop qhubomor-backend-app || true
+docker rm qhubomor-backend-app || true
+
+# 5.1 Crear directorios de subidas en el host para persistencia
+mkdir -p /root/backend-qhubomor/public/uploads/insumos
+mkdir -p /root/backend-qhubomor/public/uploads/gastos
+mkdir -p /root/backend-qhubomor/public/uploads/asistencia
+mkdir -p /root/backend-qhubomor/public/uploads/productos
+
+# 5.5 Aplicar migraciones/push de Prisma a la base de datos remotamente (sin borrar data)
+echo "Sincronizando esquema de base de datos..."
+docker run --rm --env-file .env qhubomor-backend npx prisma db push --accept-data-loss
+
+# 6. Levantar el nuevo contenedor mapeando el puerto y el volumen de persistencia
+echo "Levantando nuevo contenedor..."
+docker run -d \
+  --name qhubomor-backend-app \
+  -p 8061:3000 \
+  -v /root/backend-qhubomor/public/uploads:/app/public/uploads \
+  --restart unless-stopped \
+  --env-file .env \
+  qhubomor-backend
+
+echo "¡Despliegue completado exitosamente!"
+
+# =========================================================
+# FÁBRICA DE NUEVOS CLIENTES
+# Función reutilizable - la imagen ya fue construida arriba.
+# Para agregar un cliente: copia la última línea y cambia
+# los parámetros (CLIENT_ID, PUERTO, DOMINIO, SECRETO).
+# =========================================================
+deploy_new_client() {
+  CLIENT_ID=$1
+  PORT=$2
+  DOMAIN=$3
+  ENV_CONTENT=$4
+
+  echo "🚀 Desplegando Backend para: $CLIENT_ID en $DOMAIN:$PORT"
+
+  # Crear archivo .env exclusivo para este cliente
+  printf '%s' "$ENV_CONTENT" > /root/backend-qhubomor/.env.$CLIENT_ID
+
+  # Crear directorios de uploads exclusivos para este cliente
+  mkdir -p /root/backend-qhubomor/public/uploads/$CLIENT_ID/insumos
+  mkdir -p /root/backend-qhubomor/public/uploads/$CLIENT_ID/gastos
+  mkdir -p /root/backend-qhubomor/public/uploads/$CLIENT_ID/asistencia
+  mkdir -p /root/backend-qhubomor/public/uploads/$CLIENT_ID/productos
+
+  # Detener y eliminar contenedor anterior de este cliente
+  docker stop backend-$CLIENT_ID || true
+  docker rm backend-$CLIENT_ID || true
+
+  # Sincronizar esquema en la BD de este cliente (sin borrar datos)
+  echo "Sincronizando BD para $CLIENT_ID..."
+  docker run --rm \
+    --env-file /root/backend-qhubomor/.env.$CLIENT_ID \
+    qhubomor-backend \
+    npx prisma db push --accept-data-loss
+
+  # Levantar contenedor de este cliente (usa la imagen ya construida arriba)
+  docker run -d \
+    --name backend-$CLIENT_ID \
+    -p $PORT:3000 \
+    -v /root/backend-qhubomor/public/uploads/$CLIENT_ID:/app/public/uploads \
+    --restart unless-stopped \
+    --env-file /root/backend-qhubomor/.env.$CLIENT_ID \
+    qhubomor-backend
+
+  # Configurar subdominio + certificado SSL automáticamente usando el script de n8n
+  DOMAIN=$DOMAIN PORT=$PORT EMAIL=jonnymejia62@gmail.com \
+    bash /root/backend-qhubomor/scripts/setup-nginx.sh
+
+  echo "✅ Cliente $CLIENT_ID desplegado en https://$DOMAIN"
 }
-[AutoCuadre] Plan CORREGIDO: {
-  "justificacionGeneral": "Se realiza el cuadre de inventario ignorando 1 unidad de vaso de 12 onz sin licor reportada como dañada en las observaciones, y removiendo las 5 unidades restantes de la diferencia de inventario de la venta cmtozec0g02rbm7ii3dsx3wo5. Esto reduce el faltante de efectivo de $88,000 a $48,000. Dado que las transferencias están perfectamente cuadradas y no hay más justificaciones para el efectivo restante, se concluye un descuadre físico real en caja de $48,000.",
-  "acciones": [
-    {
-      "action": "ignore",
-      "motivo": "Se ignora 1 unidad de vaso de 12 onz sin licor debido a que la observación reporta un vaso dañado de esta categoría.",
-      "cantidadAIgnorar": 1,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Se remueven 5 unidades de Normal 12 Onz Sin licor para ajustar la diferencia de inventario restante de -5 unidades.",
-      "cantidadARemover": 5,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "ordenId": "cmtozec0m02rdm7iicb9gxkep",
-      "productoId": "Normal 12 Onz Sin licor",
-      "ventaId": "cmtozec0g02rbm7ii3dsx3wo5",
-      "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-038"
-    }
-  ]
-}
-[ExecuteAutoCuadre] Iniciando ejecución con 2 acciones
-[ExecuteAutoCuadre] Acciones recibidas: [
-  {
-    "action": "ignore",
-    "motivo": "Se ignora 1 unidad de vaso de 12 onz sin licor debido a que la observación reporta un vaso dañado de esta categoría.",
-    "cantidadAIgnorar": 1,
-    "nombreProducto": "Normal 12 Onz Sin licor",
-    "productoId": "9f390fc16"
-  },
-  {
-    "action": "remove_product",
-    "motivo": "Se remueven 5 unidades de Normal 12 Onz Sin licor para ajustar la diferencia de inventario restante de -5 unidades.",
-    "cantidadARemover": 5,
-    "nombreProducto": "Normal 12 Onz Sin licor",
-    "ordenId": "cmtozec0m02rdm7iicb9gxkep",
-    "productoId": "Normal 12 Onz Sin licor",
-    "ventaId": "cmtozec0g02rbm7ii3dsx3wo5",
-    "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-038"
-  }
-]
-[ExecuteAutoCuadre] Acción 1: {"action":"ignore","motivo":"Se ignora 1 unidad de vaso de 12 onz sin licor debido a que la observación reporta un vaso dañado de esta categoría.","cantidadAIgnorar":1,"nombreProducto":"Normal 12 Onz Sin licor","productoId":"9f390fc16"}
-[ExecuteAutoCuadre] → ⚠ ACCIÓN SALTADA: action=ignore, ventaId=FALTA, productoId=9f390fc16, ordenId=FALTA
-[ExecuteAutoCuadre] Acción 2: {"action":"remove_product","motivo":"Se remueven 5 unidades de Normal 12 Onz Sin licor para ajustar la diferencia de inventario restante de -5 unidades.","cantidadARemover":5,"nombreProducto":"Normal 12 Onz Sin licor","ordenId":"cmtozec0m02rdm7iicb9gxkep","productoId":"Normal 12 Onz Sin licor","ventaId":"cmtozec0g02rbm7ii3dsx3wo5","pedidoDisplay":"Sin Mesa - Cel Caja - V.R-C-038"}
-[ExecuteAutoCuadre] → Buscando orden cmtozec0m02rdm7iicb9gxkep...
-[ExecuteAutoCuadre] → Orden encontrada: Normal 12 Onz Sin licor, cant: 5
-[ExecuteAutoCuadre] → Orden eliminada completamente
-[ExecuteAutoCuadre] → Venta recalculada: $0
-[ExecuteAutoCuadre] Total acciones ejecutadas: 1 de 2
-[Nest] 19  - 09/06/2026, 5:50:05 AM     LOG [AppGateway] Client VCCqKV8SiU0Wh-2oAAXa joined room: ventas
-[RECETA-ENTRADA] Producto: "Normal 12 Onz Sin licor" x2 → 2 insumo(s) en receta
-[RECETA-ENTRADA]   └─ Insumo: "Pitillos" (937c0fa5) | receta=1 x vendido=2 = 2 a devolver
-[Nest] 19  - 09/06/2026, 5:50:17 AM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[RECETA-SKIP]   └─ Insumo: "Vasos de 12 onz" tiene descontarCantDeVentas="NO", omitido.
-[Nest] 19  - 09/06/2026, 5:50:17 AM     LOG [AppGateway] Emitting to Ventas room and all clients: refreshVentas
-[Nest] 19  - 09/06/2026, 5:50:17 AM     LOG [AppGateway] Broadcasting event refreshVentas to all clients in namespace
-[Nest] 19  - 09/06/2026, 5:50:22 AM     LOG [AppGateway] Client VCCqKV8SiU0Wh-2oAAXa joined room: caja
-[Nest] 19  - 09/06/2026, 5:50:24 AM     LOG [AppGateway] Client VCCqKV8SiU0Wh-2oAAXa joined room: caja
-[Nest] 19  - 09/06/2026, 5:50:44 AM     LOG [AppGateway] Client VCCqKV8SiU0Wh-2oAAXa joined room: kitchen
-[Nest] 19  - 09/06/2026, 5:50:44 AM     LOG [AppGateway] Client VCCqKV8SiU0Wh-2oAAXa joined room: caja
-[Nest] 19  - 09/06/2026, 5:51:34 AM     LOG [AppGateway] Client VCCqKV8SiU0Wh-2oAAXa joined room: caja
-[Nest] 19  - 09/06/2026, 5:51:35 AM     LOG [AppGateway] Client VCCqKV8SiU0Wh-2oAAXa joined room: caja
-[Nest] 19  - 09/06/2026, 5:53:04 AM     LOG [AppGateway] Client disconnected: VCCqKV8SiU0Wh-2oAAXa (was in rooms: user_cmq5v6m4y002011bzw7fd0znr, ventas, kitchen, caja)
-[Nest] 19  - 09/06/2026, 5:55:13 AM     LOG [AppGateway] Client 7r2Mx7yPESyBuBH7AAXd mapped to user cmp5oiyx8002o3sjumc803yml and joined user_cmp5oiyx8002o3sjumc803yml
-[Nest] 19  - 09/06/2026, 5:55:13 AM     LOG [AppGateway] Client 7r2Mx7yPESyBuBH7AAXd joined room: kitchen
-[Nest] 19  - 09/06/2026, 5:55:13 AM     LOG [AppGateway] Client 7r2Mx7yPESyBuBH7AAXd joined room: kitchen
-[Nest] 19  - 09/06/2026, 5:55:14 AM     LOG [AppGateway] Client 7r2Mx7yPESyBuBH7AAXd joined room: ventas
-[Nest] 19  - 09/06/2026, 5:55:15 AM     LOG [AppGateway] Client JAXivhkTwVif0qmtAAXf mapped to user cmq5v6m4y002011bzw7fd0znr and joined user_cmq5v6m4y002011bzw7fd0znr
-[Nest] 19  - 09/06/2026, 5:55:18 AM     LOG [AppGateway] Client JAXivhkTwVif0qmtAAXf joined room: ventas
-[Nest] 19  - 09/06/2026, 5:55:20 AM     LOG [AppGateway] Client JAXivhkTwVif0qmtAAXf joined room: ventas
-[Nest] 19  - 09/06/2026, 5:55:20 AM     LOG [AppGateway] Client JAXivhkTwVif0qmtAAXf joined room: ventas
-[Nest] 19  - 09/06/2026, 5:55:20 AM     LOG [AppGateway] Client JAXivhkTwVif0qmtAAXf joined room: kitchen
-[Nest] 19  - 09/06/2026, 5:55:20 AM     LOG [AppGateway] Client JAXivhkTwVif0qmtAAXf joined room: kitchen
-[Nest] 19  - 09/06/2026, 5:55:57 AM     LOG [AppGateway] Client disconnected: 2oBI8nzXZ6bHgjnNAAXO (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 5:55:59 AM     LOG [AppGateway] Client fuL19CvaoaLOMwVaAAXh mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 5:56:00 AM     LOG [AppGateway] Client fuL19CvaoaLOMwVaAAXh joined room: kitchen
-[Nest] 19  - 09/06/2026, 5:56:00 AM     LOG [AppGateway] Client fuL19CvaoaLOMwVaAAXh joined room: kitchen
-[Nest] 19  - 09/06/2026, 5:56:00 AM     LOG [AppGateway] Client fuL19CvaoaLOMwVaAAXh joined room: kitchen
-[Nest] 19  - 09/06/2026, 5:56:01 AM     LOG [AppGateway] Client fuL19CvaoaLOMwVaAAXh joined room: caja
-[Nest] 19  - 09/06/2026, 5:57:22 AM     LOG [AppGateway] Client disconnected: JAXivhkTwVif0qmtAAXf (was in rooms: user_cmq5v6m4y002011bzw7fd0znr, ventas, kitchen)
-[Nest] 19  - 09/06/2026, 6:06:08 AM     LOG [AppGateway] Client disconnected: 7r2Mx7yPESyBuBH7AAXd (was in rooms: user_cmp5oiyx8002o3sjumc803yml, kitchen, ventas)
-[Nest] 19  - 09/06/2026, 6:06:29 AM     LOG [AppGateway] Client disconnected: fuL19CvaoaLOMwVaAAXh (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen, caja)
-[Nest] 19  - 09/06/2026, 6:10:48 AM     LOG [AppGateway] Client WRA3KFrZ4UAVfGdiAAXj mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 6:10:49 AM     LOG [AppGateway] Client WRA3KFrZ4UAVfGdiAAXj joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:10:50 AM     LOG [AppGateway] Client WRA3KFrZ4UAVfGdiAAXj joined room: kitchen
-[RECETA-ENTRADA] Producto: "Normal 12 Onz Con licor" x2 → 2 insumo(s) en receta
-[RECETA-ENTRADA]   └─ Insumo: "Pitillos" (937c0fa5) | receta=1 x vendido=2 = 2 a devolver
-[Nest] 19  - 09/06/2026, 6:11:23 AM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[RECETA-SKIP]   └─ Insumo: "Vasos de 12 onz" tiene descontarCantDeVentas="NO", omitido.
-[RECETA-SALIDA] Producto: "Normal 12 Onz Con licor" x2 → 2 insumo(s) en receta
-[RECETA-SALIDA]   └─ Insumo: "Pitillos" (937c0fa5) | receta=1 x vendido=2 = 2 a descontar
-[Nest] 19  - 09/06/2026, 6:11:23 AM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[RECETA-SKIP]   └─ Insumo: "Vasos de 12 onz" tiene descontarCantDeVentas="NO", omitido.
-[Nest] 19  - 09/06/2026, 6:11:23 AM     LOG [AppGateway] Emitting to Ventas room and all clients: refreshVentas
-[Nest] 19  - 09/06/2026, 6:11:23 AM     LOG [AppGateway] Broadcasting event refreshVentas to all clients in namespace
-[RECETA-ENTRADA] Producto: "Normal 12 Onz Con licor" x2 → 2 insumo(s) en receta
-[RECETA-ENTRADA]   └─ Insumo: "Pitillos" (937c0fa5) | receta=1 x vendido=2 = 2 a devolver
-[Nest] 19  - 09/06/2026, 6:11:31 AM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[RECETA-SKIP]   └─ Insumo: "Vasos de 12 onz" tiene descontarCantDeVentas="NO", omitido.
-[RECETA-SALIDA] Producto: "Normal 12 Onz Con licor" x2 → 2 insumo(s) en receta
-[RECETA-SALIDA]   └─ Insumo: "Pitillos" (937c0fa5) | receta=1 x vendido=2 = 2 a descontar
-[Nest] 19  - 09/06/2026, 6:11:31 AM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[RECETA-SKIP]   └─ Insumo: "Vasos de 12 onz" tiene descontarCantDeVentas="NO", omitido.
-[Nest] 19  - 09/06/2026, 6:11:31 AM     LOG [AppGateway] Emitting to Ventas room and all clients: refreshVentas
-[Nest] 19  - 09/06/2026, 6:11:31 AM     LOG [AppGateway] Broadcasting event refreshVentas to all clients in namespace
-[Nest] 19  - 09/06/2026, 6:11:47 AM     LOG [AppGateway] Client WRA3KFrZ4UAVfGdiAAXj joined room: caja
-[Nest] 19  - 09/06/2026, 6:11:48 AM     LOG [AppGateway] Client WRA3KFrZ4UAVfGdiAAXj joined room: caja
-[Nest] 19  - 09/06/2026, 6:13:19 AM     LOG [AppGateway] Client disconnected: WRA3KFrZ4UAVfGdiAAXj (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen, caja)
-[Nest] 19  - 09/06/2026, 6:13:24 AM     LOG [AppGateway] Client vM5JcV0A7J99rA1cAAXl mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 6:13:24 AM     LOG [AppGateway] Client vM5JcV0A7J99rA1cAAXl joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:13:24 AM     LOG [AppGateway] Client vM5JcV0A7J99rA1cAAXl joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:13:27 AM     LOG [AppGateway] Client vM5JcV0A7J99rA1cAAXl joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:13:27 AM     LOG [AppGateway] Client vM5JcV0A7J99rA1cAAXl joined room: caja
-[Nest] 19  - 09/06/2026, 6:13:41 AM     LOG [AppGateway] Client vM5JcV0A7J99rA1cAAXl joined room: caja
-[Nest] 19  - 09/06/2026, 6:13:42 AM     LOG [AppGateway] Client vM5JcV0A7J99rA1cAAXl joined room: caja
-[Nest] 19  - 09/06/2026, 6:14:05 AM     LOG [AppGateway] Client vM5JcV0A7J99rA1cAAXl joined room: caja
-[Nest] 19  - 09/06/2026, 6:15:12 AM     LOG [AppGateway] Client L7zeADSjG-R-co59AAXn mapped to user cmq5v6m4y002011bzw7fd0znr and joined user_cmq5v6m4y002011bzw7fd0znr
-[Nest] 19  - 09/06/2026, 6:15:14 AM     LOG [AppGateway] Client L7zeADSjG-R-co59AAXn joined room: ventas
-[Nest] 19  - 09/06/2026, 6:15:15 AM     LOG [AppGateway] Client disconnected: L7zeADSjG-R-co59AAXn (was in rooms: user_cmq5v6m4y002011bzw7fd0znr, ventas)
-[Nest] 19  - 09/06/2026, 6:35:28 AM     LOG [AppGateway] Client disconnected: vM5JcV0A7J99rA1cAAXl (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen, caja)
-[Nest] 19  - 09/06/2026, 2:08:50 PM     LOG [AppGateway] Client disconnected: KKbJPmyhaTFe3G4NAATW (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 2:08:51 PM     LOG [AppGateway] Client IELCkSTMizSiugqlAAXp mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:08:52 PM     LOG [AppGateway] Client disconnected: IELCkSTMizSiugqlAAXp (was in rooms: user_cmom4whz80000k0qnjs8qb3sc)
-[Nest] 19  - 09/06/2026, 2:08:53 PM     LOG [AppGateway] Client nwAawEP1iidx5j_BAAXr mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:08:53 PM     LOG [AppGateway] Client nwAawEP1iidx5j_BAAXr joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:08:53 PM     LOG [AppGateway] Client nwAawEP1iidx5j_BAAXr joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:08:53 PM     LOG [AppGateway] Client disconnected: nwAawEP1iidx5j_BAAXr (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 2:08:54 PM     LOG [AppGateway] Client RUmmo6pqd6y85oV6AAXt mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:08:55 PM     LOG [AppGateway] Client RUmmo6pqd6y85oV6AAXt joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:08:55 PM     LOG [AppGateway] Client RUmmo6pqd6y85oV6AAXt joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:08:58 PM     LOG [AppGateway] Client disconnected: RUmmo6pqd6y85oV6AAXt (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 2:09:04 PM     LOG [AppGateway] Client co0fST3rXrk8MuabAAXv mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:09:04 PM     LOG [AppGateway] Client co0fST3rXrk8MuabAAXv joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:09:04 PM     LOG [AppGateway] Client co0fST3rXrk8MuabAAXv joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:11:30 PM     LOG [AppGateway] Client co0fST3rXrk8MuabAAXv joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:11:30 PM     LOG [AppGateway] Client co0fST3rXrk8MuabAAXv joined room: caja
-[Nest] 19  - 09/06/2026, 2:13:50 PM     LOG [AppGateway] Client co0fST3rXrk8MuabAAXv joined room: caja
-[Nest] 19  - 09/06/2026, 2:13:52 PM     LOG [AppGateway] Client co0fST3rXrk8MuabAAXv joined room: caja
-[Nest] 19  - 09/06/2026, 2:16:43 PM     LOG [AppGateway] Client Ej83CJUpHnn7QQETAAXx mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:16:44 PM     LOG [AppGateway] Client Ej83CJUpHnn7QQETAAXx joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:16:44 PM     LOG [AppGateway] Client Ej83CJUpHnn7QQETAAXx joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:16:44 PM     LOG [AppGateway] Client Ej83CJUpHnn7QQETAAXx joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:16:45 PM     LOG [AppGateway] Client Ej83CJUpHnn7QQETAAXx joined room: caja
-[Nest] 19  - 09/06/2026, 2:16:52 PM     LOG [AppGateway] Client Ej83CJUpHnn7QQETAAXx joined room: caja
-[Nest] 19  - 09/06/2026, 2:16:55 PM     LOG [AppGateway] Client Ej83CJUpHnn7QQETAAXx joined room: caja
-[Nest] 19  - 09/06/2026, 2:18:14 PM     LOG [AppGateway] Client co0fST3rXrk8MuabAAXv joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:18:14 PM     LOG [AppGateway] Client co0fST3rXrk8MuabAAXv joined room: caja
-[RECETA-ENTRADA] Producto: "Normal 16 Onz" x1 → 2 insumo(s) en receta
-[RECETA-ENTRADA]   └─ Insumo: "Pitillos" (937c0fa5) | receta=1 x vendido=1 = 1 a devolver
-[Nest] 19  - 09/06/2026, 2:18:30 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[RECETA-SKIP]   └─ Insumo: "Vaso de 16 onz" tiene descontarCantDeVentas="NO", omitido.
-[RECETA-ENTRADA] Producto: "Normal 12 Onz Con licor" x3 → 2 insumo(s) en receta
-[RECETA-ENTRADA]   └─ Insumo: "Pitillos" (937c0fa5) | receta=1 x vendido=3 = 3 a devolver
-[Nest] 19  - 09/06/2026, 2:18:30 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[RECETA-SKIP]   └─ Insumo: "Vasos de 12 onz" tiene descontarCantDeVentas="NO", omitido.
-[RECETA-SALIDA] Producto: "Normal 12 Onz Con licor" x3 → 2 insumo(s) en receta
-[RECETA-SALIDA]   └─ Insumo: "Pitillos" (937c0fa5) | receta=1 x vendido=3 = 3 a descontar
-[Nest] 19  - 09/06/2026, 2:18:30 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[RECETA-SKIP]   └─ Insumo: "Vasos de 12 onz" tiene descontarCantDeVentas="NO", omitido.
-[Nest] 19  - 09/06/2026, 2:18:30 PM     LOG [AppGateway] Emitting to Ventas room and all clients: refreshVentas
-[Nest] 19  - 09/06/2026, 2:18:30 PM     LOG [AppGateway] Broadcasting event refreshVentas to all clients in namespace
-[Nest] 19  - 09/06/2026, 2:18:34 PM     LOG [AppGateway] Client co0fST3rXrk8MuabAAXv joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:18:34 PM     LOG [AppGateway] Client co0fST3rXrk8MuabAAXv joined room: caja
-[Nest] 19  - 09/06/2026, 2:18:37 PM     LOG [AppGateway] Client co0fST3rXrk8MuabAAXv joined room: caja
-[Nest] 19  - 09/06/2026, 2:18:38 PM     LOG [AppGateway] Client co0fST3rXrk8MuabAAXv joined room: caja
-[Nest] 19  - 09/06/2026, 2:18:56 PM     LOG [AppGateway] Client disconnected: co0fST3rXrk8MuabAAXv (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen, caja)
-[Nest] 19  - 09/06/2026, 2:18:57 PM     LOG [AppGateway] Client 87VwxR3ZNYfURb9UAAXz mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:18:57 PM     LOG [AppGateway] Client 87VwxR3ZNYfURb9UAAXz joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:18:57 PM     LOG [AppGateway] Client 87VwxR3ZNYfURb9UAAXz joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:19:17 PM     LOG [AppGateway] Client disconnected: Ej83CJUpHnn7QQETAAXx (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen, caja)
-[Nest] 19  - 09/06/2026, 2:19:19 PM     LOG [AppGateway] Client dEHp1yHSG1emUiqCAAX1 mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:19:19 PM     LOG [AppGateway] Client dEHp1yHSG1emUiqCAAX1 joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:19:19 PM     LOG [AppGateway] Client dEHp1yHSG1emUiqCAAX1 joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:20:12 PM     LOG [AppGateway] Client disconnected: dEHp1yHSG1emUiqCAAX1 (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 2:20:14 PM     LOG [AppGateway] Client xwEU9t2mubOpqSfRAAX3 mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:20:14 PM     LOG [AppGateway] Client xwEU9t2mubOpqSfRAAX3 joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:20:14 PM     LOG [AppGateway] Client xwEU9t2mubOpqSfRAAX3 joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:20:20 PM     LOG [AppGateway] Client disconnected: xwEU9t2mubOpqSfRAAX3 (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 2:20:21 PM     LOG [AppGateway] Client djBauu4r2iMbf4OWAAX5 mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:20:22 PM     LOG [AppGateway] Client djBauu4r2iMbf4OWAAX5 joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:20:22 PM     LOG [AppGateway] Client djBauu4r2iMbf4OWAAX5 joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:21:14 PM     LOG [AppGateway] Client disconnected: djBauu4r2iMbf4OWAAX5 (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 2:21:15 PM     LOG [AppGateway] Client MEm1NNcKB8GzcG2FAAX7 mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:21:15 PM     LOG [AppGateway] Client MEm1NNcKB8GzcG2FAAX7 joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:21:16 PM     LOG [AppGateway] Client MEm1NNcKB8GzcG2FAAX7 joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:21:53 PM     LOG [AppGateway] Client disconnected: MEm1NNcKB8GzcG2FAAX7 (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 2:21:54 PM     LOG [AppGateway] Client V9sXwiEYX3b63SwtAAX9 mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:21:55 PM     LOG [AppGateway] Client V9sXwiEYX3b63SwtAAX9 joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:21:55 PM     LOG [AppGateway] Client V9sXwiEYX3b63SwtAAX9 joined room: kitchen
-[AiService] Solicitando configuración de IA a DB...
-[AiService] Configuración de IA obtenida: { isActive: true, hasApiKey: true, apiKeyPreview: 'AIzaS...' }
-[AiService] Respuesta RAW de Gemini: {
-  "acciones": [
-    {
-      "action": "ignore",
-      "motivo": "Se ignora 1 unidad de vaso de 12 onz sin licor debido a que la observación del cajero reporta 1 vaso dañado sin licor de 12 onz.",
-      "cantidadAIgnorar": 1,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 4,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtp54013035ym7iimbyvc4nl",
-      "productoId": "9f390fc10",
-      "ventaId": "cmtp5400u035um7iiht4yf08j"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 4,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtp6gdur039gm7ii7bdoyfdt",
-      "productoId": "9f390fc10",
-      "ventaId": "cmtp6gdun039em7iiu6gexaph"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 4,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtp6o5tq039ym7iidvvplqbb",
-      "productoId": "9f390fc10",
-      "ventaId": "cmtp6o5tj039wm7ii7mb0p5xe"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 3,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtpwd30r03yam7iigk3s9csd",
-      "productoId": "9f390fc10",
-      "ventaId": "cmtp9jpup03hcm7iibgcn84j0"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 3,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtpan4dy03k3m7iiw1ckp5vu",
-      "productoId": "9f390fc10",
-      "ventaId": "cmtpan4dr03k1m7ii7f4d1rwj"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 2,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtpbuo8u03m0m7ii6m61iw8s",
-      "productoId": "9f390fc10",
-      "ventaId": "cmtpbuo8403lwm7ii2k0annlt"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtov1icx02jem7ii220vxuax"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtov611m02k2m7ii1fx0pjtz"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtov86l602kdm7iio6vh4box"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtova3zy02kkm7iiu455i4g9"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtovjzh302krm7iie3n8bng3"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtovmucg02l2m7ii3qz9hqof"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 2,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtowgglk02lfm7iid3hps0aw"
-    }
-  ],
-  "justificacionGeneral": "Se procedió a realizar el cuadre de inventario y caja. Primero, se identificó en las observaciones que 1 vaso de 12 onz sin licor se reportó como dañado, por lo que se aplicó la acción 'ignore' para esa unidad. Las 20 unidades restantes de la diferencia positiva de 'Normal 12 Onz Sin licor' se añadieron a ventas elegibles en efectivo. Asimismo, se removieron las 20 unidades excedentes registradas en el sistema de 'Normal 12 Onz Con licor'. El impacto neto de estos movimientos de inventario redujo el efectivo esperado en $80,000, dejando una diferencia final de efectivo de +$16,000 (excedente físico menor en caja), mientras que las transferencias bancarias se mantuvieron perfectamente cuadradas con el reporte del banco."
-}
-[AutoCuadre] Plan RAW de IA: {
-  "acciones": [
-    {
-      "action": "ignore",
-      "motivo": "Se ignora 1 unidad de vaso de 12 onz sin licor debido a que la observación del cajero reporta 1 vaso dañado sin licor de 12 onz.",
-      "cantidadAIgnorar": 1,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 4,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtp54013035ym7iimbyvc4nl",
-      "productoId": "9f390fc10",
-      "ventaId": "cmtp5400u035um7iiht4yf08j"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 4,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtp6gdur039gm7ii7bdoyfdt",
-      "productoId": "9f390fc10",
-      "ventaId": "cmtp6gdun039em7iiu6gexaph"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 4,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtp6o5tq039ym7iidvvplqbb",
-      "productoId": "9f390fc10",
-      "ventaId": "cmtp6o5tj039wm7ii7mb0p5xe"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 3,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtpwd30r03yam7iigk3s9csd",
-      "productoId": "9f390fc10",
-      "ventaId": "cmtp9jpup03hcm7iibgcn84j0"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 3,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtpan4dy03k3m7iiw1ckp5vu",
-      "productoId": "9f390fc10",
-      "ventaId": "cmtpan4dr03k1m7ii7f4d1rwj"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 2,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtpbuo8u03m0m7ii6m61iw8s",
-      "productoId": "9f390fc10",
-      "ventaId": "cmtpbuo8403lwm7ii2k0annlt"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtov1icx02jem7ii220vxuax"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtov611m02k2m7ii1fx0pjtz"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtov86l602kdm7iio6vh4box"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtova3zy02kkm7iiu455i4g9"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtovjzh302krm7iie3n8bng3"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtovmucg02l2m7ii3qz9hqof"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 2,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16",
-      "ventaId": "cmtowgglk02lfm7iid3hps0aw"
-    }
-  ],
-  "justificacionGeneral": "Se procedió a realizar el cuadre de inventario y caja. Primero, se identificó en las observaciones que 1 vaso de 12 onz sin licor se reportó como dañado, por lo que se aplicó la acción 'ignore' para esa unidad. Las 20 unidades restantes de la diferencia positiva de 'Normal 12 Onz Sin licor' se añadieron a ventas elegibles en efectivo. Asimismo, se removieron las 20 unidades excedentes registradas en el sistema de 'Normal 12 Onz Con licor'. El impacto neto de estos movimientos de inventario redujo el efectivo esperado en $80,000, dejando una diferencia final de efectivo de +$16,000 (excedente físico menor en caja), mientras que las transferencias bancarias se mantuvieron perfectamente cuadradas con el reporte del banco."
-}
-[AutoCuadre] Plan CORREGIDO: {
-  "justificacionGeneral": "Se procedió a realizar el cuadre de inventario y caja. Primero, se identificó en las observaciones que 1 vaso de 12 onz sin licor se reportó como dañado, por lo que se aplicó la acción 'ignore' para esa unidad. Las 20 unidades restantes de la diferencia positiva de 'Normal 12 Onz Sin licor' se añadieron a ventas elegibles en efectivo. Asimismo, se removieron las 20 unidades excedentes registradas en el sistema de 'Normal 12 Onz Con licor'. El impacto neto de estos movimientos de inventario redujo el efectivo esperado en $80,000, dejando una diferencia final de efectivo de +$16,000 (excedente físico menor en caja), mientras que las transferencias bancarias se mantuvieron perfectamente cuadradas con el reporte del banco.",
-  "acciones": [
-    {
-      "action": "ignore",
-      "motivo": "Se ignora 1 unidad de vaso de 12 onz sin licor debido a que la observación del cajero reporta 1 vaso dañado sin licor de 12 onz.",
-      "cantidadAIgnorar": 1,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "9f390fc16"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 4,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtp54013035ym7iimbyvc4nl",
-      "productoId": "Normal 12 Onz Con licor",
-      "ventaId": "cmtp5400u035um7iiht4yf08j",
-      "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-094"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 4,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtp6gdur039gm7ii7bdoyfdt",
-      "productoId": "Normal 12 Onz Con licor",
-      "ventaId": "cmtp6gdun039em7iiu6gexaph",
-      "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-110"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 4,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtp6o5tq039ym7iidvvplqbb",
-      "productoId": "Normal 12 Onz Con licor",
-      "ventaId": "cmtp6o5tj039wm7ii7mb0p5xe",
-      "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-112"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 3,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtpwd30r03yam7iigk3s9csd",
-      "productoId": "Normal 12 Onz Con licor",
-      "ventaId": "cmtp9jpup03hcm7iibgcn84j0",
-      "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-143"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 3,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtpan4dy03k3m7iiw1ckp5vu",
-      "productoId": "Normal 12 Onz Con licor",
-      "ventaId": "cmtpan4dr03k1m7ii7f4d1rwj",
-      "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-154"
-    },
-    {
-      "action": "remove_product",
-      "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-      "cantidadARemover": 2,
-      "nombreProducto": "Normal 12 Onz Con licor",
-      "ordenId": "cmtpbuo8u03m0m7ii6m61iw8s",
-      "productoId": "Normal 12 Onz Con licor",
-      "ventaId": "cmtpbuo8403lwm7ii2k0annlt",
-      "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-163"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "Normal 12 Onz Sin licor",
-      "ventaId": "cmtov1icx02jem7ii220vxuax",
-      "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-004"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "Normal 12 Onz Sin licor",
-      "ventaId": "cmtov611m02k2m7ii1fx0pjtz",
-      "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-006"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "Normal 12 Onz Sin licor",
-      "ventaId": "cmtov86l602kdm7iio6vh4box",
-      "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-007"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "Normal 12 Onz Sin licor",
-      "ventaId": "cmtova3zy02kkm7iiu455i4g9",
-      "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-008"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "Normal 12 Onz Sin licor",
-      "ventaId": "cmtovjzh302krm7iie3n8bng3",
-      "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-009"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 3,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "Normal 12 Onz Sin licor",
-      "ventaId": "cmtovmucg02l2m7ii3qz9hqof",
-      "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-010"
-    },
-    {
-      "action": "add_product",
-      "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-      "cantidadAAnadir": 2,
-      "nombreProducto": "Normal 12 Onz Sin licor",
-      "productoId": "Normal 12 Onz Sin licor",
-      "ventaId": "cmtowgglk02lfm7iid3hps0aw",
-      "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-011"
-    }
-  ]
-}
-[ExecuteAutoCuadre] Iniciando ejecución con 14 acciones
-[ExecuteAutoCuadre] Acciones recibidas: [
-  {
-    "action": "ignore",
-    "motivo": "Se ignora 1 unidad de vaso de 12 onz sin licor debido a que la observación del cajero reporta 1 vaso dañado sin licor de 12 onz.",
-    "cantidadAIgnorar": 1,
-    "nombreProducto": "Normal 12 Onz Sin licor",
-    "productoId": "9f390fc16"
-  },
-  {
-    "action": "remove_product",
-    "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-    "cantidadARemover": 4,
-    "nombreProducto": "Normal 12 Onz Con licor",
-    "ordenId": "cmtp54013035ym7iimbyvc4nl",
-    "productoId": "Normal 12 Onz Con licor",
-    "ventaId": "cmtp5400u035um7iiht4yf08j",
-    "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-094"
-  },
-  {
-    "action": "remove_product",
-    "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-    "cantidadARemover": 4,
-    "nombreProducto": "Normal 12 Onz Con licor",
-    "ordenId": "cmtp6gdur039gm7ii7bdoyfdt",
-    "productoId": "Normal 12 Onz Con licor",
-    "ventaId": "cmtp6gdun039em7iiu6gexaph",
-    "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-110"
-  },
-  {
-    "action": "remove_product",
-    "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-    "cantidadARemover": 4,
-    "nombreProducto": "Normal 12 Onz Con licor",
-    "ordenId": "cmtp6o5tq039ym7iidvvplqbb",
-    "productoId": "Normal 12 Onz Con licor",
-    "ventaId": "cmtp6o5tj039wm7ii7mb0p5xe",
-    "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-112"
-  },
-  {
-    "action": "remove_product",
-    "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-    "cantidadARemover": 3,
-    "nombreProducto": "Normal 12 Onz Con licor",
-    "ordenId": "cmtpwd30r03yam7iigk3s9csd",
-    "productoId": "Normal 12 Onz Con licor",
-    "ventaId": "cmtp9jpup03hcm7iibgcn84j0",
-    "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-143"
-  },
-  {
-    "action": "remove_product",
-    "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-    "cantidadARemover": 3,
-    "nombreProducto": "Normal 12 Onz Con licor",
-    "ordenId": "cmtpan4dy03k3m7iiw1ckp5vu",
-    "productoId": "Normal 12 Onz Con licor",
-    "ventaId": "cmtpan4dr03k1m7ii7f4d1rwj",
-    "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-154"
-  },
-  {
-    "action": "remove_product",
-    "motivo": "Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.",
-    "cantidadARemover": 2,
-    "nombreProducto": "Normal 12 Onz Con licor",
-    "ordenId": "cmtpbuo8u03m0m7ii6m61iw8s",
-    "productoId": "Normal 12 Onz Con licor",
-    "ventaId": "cmtpbuo8403lwm7ii2k0annlt",
-    "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-163"
-  },
-  {
-    "action": "add_product",
-    "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-    "cantidadAAnadir": 3,
-    "nombreProducto": "Normal 12 Onz Sin licor",
-    "productoId": "Normal 12 Onz Sin licor",
-    "ventaId": "cmtov1icx02jem7ii220vxuax",
-    "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-004"
-  },
-  {
-    "action": "add_product",
-    "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-    "cantidadAAnadir": 3,
-    "nombreProducto": "Normal 12 Onz Sin licor",
-    "productoId": "Normal 12 Onz Sin licor",
-    "ventaId": "cmtov611m02k2m7ii1fx0pjtz",
-    "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-006"
-  },
-  {
-    "action": "add_product",
-    "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-    "cantidadAAnadir": 3,
-    "nombreProducto": "Normal 12 Onz Sin licor",
-    "productoId": "Normal 12 Onz Sin licor",
-    "ventaId": "cmtov86l602kdm7iio6vh4box",
-    "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-007"
-  },
-  {
-    "action": "add_product",
-    "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-    "cantidadAAnadir": 3,
-    "nombreProducto": "Normal 12 Onz Sin licor",
-    "productoId": "Normal 12 Onz Sin licor",
-    "ventaId": "cmtova3zy02kkm7iiu455i4g9",
-    "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-008"
-  },
-  {
-    "action": "add_product",
-    "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-    "cantidadAAnadir": 3,
-    "nombreProducto": "Normal 12 Onz Sin licor",
-    "productoId": "Normal 12 Onz Sin licor",
-    "ventaId": "cmtovjzh302krm7iie3n8bng3",
-    "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-009"
-  },
-  {
-    "action": "add_product",
-    "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-    "cantidadAAnadir": 3,
-    "nombreProducto": "Normal 12 Onz Sin licor",
-    "productoId": "Normal 12 Onz Sin licor",
-    "ventaId": "cmtovmucg02l2m7ii3qz9hqof",
-    "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-010"
-  },
-  {
-    "action": "add_product",
-    "motivo": "Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).",
-    "cantidadAAnadir": 2,
-    "nombreProducto": "Normal 12 Onz Sin licor",
-    "productoId": "Normal 12 Onz Sin licor",
-    "ventaId": "cmtowgglk02lfm7iid3hps0aw",
-    "pedidoDisplay": "Sin Mesa - Cel Caja - V.R-C-011"
-  }
-]
-[ExecuteAutoCuadre] Acción 1: {"action":"ignore","motivo":"Se ignora 1 unidad de vaso de 12 onz sin licor debido a que la observación del cajero reporta 1 vaso dañado sin licor de 12 onz.","cantidadAIgnorar":1,"nombreProducto":"Normal 12 Onz Sin licor","productoId":"9f390fc16"}
-[ExecuteAutoCuadre] → ⚠ ACCIÓN SALTADA: action=ignore, ventaId=FALTA, productoId=9f390fc16, ordenId=FALTA
-[ExecuteAutoCuadre] Acción 2: {"action":"remove_product","motivo":"Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.","cantidadARemover":4,"nombreProducto":"Normal 12 Onz Con licor","ordenId":"cmtp54013035ym7iimbyvc4nl","productoId":"Normal 12 Onz Con licor","ventaId":"cmtp5400u035um7iiht4yf08j","pedidoDisplay":"Sin Mesa - Cel Caja - V.R-C-094"}
-[ExecuteAutoCuadre] → Buscando orden cmtp54013035ym7iimbyvc4nl...
-[ExecuteAutoCuadre] → Orden encontrada: Normal 12 Onz Con licor, cant: 4
-[ExecuteAutoCuadre] → Orden eliminada completamente
-[ExecuteAutoCuadre] → Venta recalculada: $16000
-[ExecuteAutoCuadre] Acción 3: {"action":"remove_product","motivo":"Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.","cantidadARemover":4,"nombreProducto":"Normal 12 Onz Con licor","ordenId":"cmtp6gdur039gm7ii7bdoyfdt","productoId":"Normal 12 Onz Con licor","ventaId":"cmtp6gdun039em7iiu6gexaph","pedidoDisplay":"Sin Mesa - Cel Caja - V.R-C-110"}
-[ExecuteAutoCuadre] → Buscando orden cmtp6gdur039gm7ii7bdoyfdt...
-[ExecuteAutoCuadre] → Orden encontrada: Normal 12 Onz Con licor, cant: 4
-[ExecuteAutoCuadre] → Orden eliminada completamente
-[ExecuteAutoCuadre] → Venta recalculada: $0
-[ExecuteAutoCuadre] Acción 4: {"action":"remove_product","motivo":"Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.","cantidadARemover":4,"nombreProducto":"Normal 12 Onz Con licor","ordenId":"cmtp6o5tq039ym7iidvvplqbb","productoId":"Normal 12 Onz Con licor","ventaId":"cmtp6o5tj039wm7ii7mb0p5xe","pedidoDisplay":"Sin Mesa - Cel Caja - V.R-C-112"}
-[ExecuteAutoCuadre] → Buscando orden cmtp6o5tq039ym7iidvvplqbb...
-[ExecuteAutoCuadre] → Orden encontrada: Normal 12 Onz Con licor, cant: 4
-[ExecuteAutoCuadre] → Orden eliminada completamente
-[ExecuteAutoCuadre] → Venta recalculada: $0
-[ExecuteAutoCuadre] Acción 5: {"action":"remove_product","motivo":"Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.","cantidadARemover":3,"nombreProducto":"Normal 12 Onz Con licor","ordenId":"cmtpwd30r03yam7iigk3s9csd","productoId":"Normal 12 Onz Con licor","ventaId":"cmtp9jpup03hcm7iibgcn84j0","pedidoDisplay":"Sin Mesa - Cel Caja - V.R-C-143"}
-[ExecuteAutoCuadre] → Buscando orden cmtpwd30r03yam7iigk3s9csd...
-[ExecuteAutoCuadre] → Orden encontrada: Normal 12 Onz Con licor, cant: 3
-[ExecuteAutoCuadre] → Orden eliminada completamente
-[ExecuteAutoCuadre] → Venta recalculada: $0
-[ExecuteAutoCuadre] Acción 6: {"action":"remove_product","motivo":"Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.","cantidadARemover":3,"nombreProducto":"Normal 12 Onz Con licor","ordenId":"cmtpan4dy03k3m7iiw1ckp5vu","productoId":"Normal 12 Onz Con licor","ventaId":"cmtpan4dr03k1m7ii7f4d1rwj","pedidoDisplay":"Sin Mesa - Cel Caja - V.R-C-154"}
-[ExecuteAutoCuadre] → Buscando orden cmtpan4dy03k3m7iiw1ckp5vu...
-[ExecuteAutoCuadre] → Orden encontrada: Normal 12 Onz Con licor, cant: 3
-[ExecuteAutoCuadre] → Orden eliminada completamente
-[ExecuteAutoCuadre] → Venta recalculada: $0
-[ExecuteAutoCuadre] Acción 7: {"action":"remove_product","motivo":"Ajuste de inventario por descuadre físico de -20 unidades de Normal 12 Onz Con licor.","cantidadARemover":2,"nombreProducto":"Normal 12 Onz Con licor","ordenId":"cmtpbuo8u03m0m7ii6m61iw8s","productoId":"Normal 12 Onz Con licor","ventaId":"cmtpbuo8403lwm7ii2k0annlt","pedidoDisplay":"Sin Mesa - Cel Caja - V.R-C-163"}
-[ExecuteAutoCuadre] → Buscando orden cmtpbuo8u03m0m7ii6m61iw8s...
-[ExecuteAutoCuadre] → Orden encontrada: Normal 12 Onz Con licor, cant: 3
-[ExecuteAutoCuadre] → Cantidad reducida a 1
-[ExecuteAutoCuadre] → Venta recalculada: $28000
-[ExecuteAutoCuadre] Acción 8: {"action":"add_product","motivo":"Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).","cantidadAAnadir":3,"nombreProducto":"Normal 12 Onz Sin licor","productoId":"Normal 12 Onz Sin licor","ventaId":"cmtov1icx02jem7ii220vxuax","pedidoDisplay":"Sin Mesa - Cel Caja - V.R-C-004"}
-[ExecuteAutoCuadre] → ADD_PRODUCT: ventaId=cmtov1icx02jem7ii220vxuax, productoId=Normal 12 Onz Sin licor, cantidad=3
-[ExecuteAutoCuadre] → Venta encontrada: pedido=V.R-C-004, fecha=Sat Sep 05 2026 20:53:44 GMT+0000 (Coordinated Universal Time)
-[ExecuteAutoCuadre] → Producto NO existe en esta venta, creando nueva línea...
-[ExecuteAutoCuadre] → Producto encontrado: Normal 12 Onz Sin licor, precio unitario: $8000, total: $24000
-[ExecuteAutoCuadre] → Nueva línea creada con ID: ac-1788704627197-uulq
-[ExecuteAutoCuadre] → Venta total recalculada: $68000
-[ExecuteAutoCuadre] Acción 9: {"action":"add_product","motivo":"Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).","cantidadAAnadir":3,"nombreProducto":"Normal 12 Onz Sin licor","productoId":"Normal 12 Onz Sin licor","ventaId":"cmtov611m02k2m7ii1fx0pjtz","pedidoDisplay":"Sin Mesa - Cel Caja - V.R-C-006"}
-[ExecuteAutoCuadre] → ADD_PRODUCT: ventaId=cmtov611m02k2m7ii1fx0pjtz, productoId=Normal 12 Onz Sin licor, cantidad=3
-[ExecuteAutoCuadre] → Venta encontrada: pedido=V.R-C-006, fecha=Sat Sep 05 2026 20:57:15 GMT+0000 (Coordinated Universal Time)
-[ExecuteAutoCuadre] → Producto NO existe en esta venta, creando nueva línea...
-[ExecuteAutoCuadre] → Producto encontrado: Normal 12 Onz Sin licor, precio unitario: $8000, total: $24000
-[ExecuteAutoCuadre] → Nueva línea creada con ID: ac-1788704627220-33kd
-[ExecuteAutoCuadre] → Venta total recalculada: $44000
-[ExecuteAutoCuadre] Acción 10: {"action":"add_product","motivo":"Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).","cantidadAAnadir":3,"nombreProducto":"Normal 12 Onz Sin licor","productoId":"Normal 12 Onz Sin licor","ventaId":"cmtov86l602kdm7iio6vh4box","pedidoDisplay":"Sin Mesa - Cel Caja - V.R-C-007"}
-[ExecuteAutoCuadre] → ADD_PRODUCT: ventaId=cmtov86l602kdm7iio6vh4box, productoId=Normal 12 Onz Sin licor, cantidad=3
-[ExecuteAutoCuadre] → Venta encontrada: pedido=V.R-C-007, fecha=Sat Sep 05 2026 20:58:55 GMT+0000 (Coordinated Universal Time)
-[ExecuteAutoCuadre] → Producto NO existe en esta venta, creando nueva línea...
-[ExecuteAutoCuadre] → Producto encontrado: Normal 12 Onz Sin licor, precio unitario: $8000, total: $24000
-[ExecuteAutoCuadre] → Nueva línea creada con ID: ac-1788704627242-1smr
-[ExecuteAutoCuadre] → Venta total recalculada: $32000
-[ExecuteAutoCuadre] Acción 11: {"action":"add_product","motivo":"Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).","cantidadAAnadir":3,"nombreProducto":"Normal 12 Onz Sin licor","productoId":"Normal 12 Onz Sin licor","ventaId":"cmtova3zy02kkm7iiu455i4g9","pedidoDisplay":"Sin Mesa - Cel Caja - V.R-C-008"}
-[ExecuteAutoCuadre] → ADD_PRODUCT: ventaId=cmtova3zy02kkm7iiu455i4g9, productoId=Normal 12 Onz Sin licor, cantidad=3
-[ExecuteAutoCuadre] → Venta encontrada: pedido=V.R-C-008, fecha=Sat Sep 05 2026 21:00:25 GMT+0000 (Coordinated Universal Time)
-[ExecuteAutoCuadre] → Producto NO existe en esta venta, creando nueva línea...
-[ExecuteAutoCuadre] → Producto encontrado: Normal 12 Onz Sin licor, precio unitario: $8000, total: $24000
-[ExecuteAutoCuadre] → Nueva línea creada con ID: ac-1788704627266-xyti
-[ExecuteAutoCuadre] → Venta total recalculada: $40000
-[ExecuteAutoCuadre] Acción 12: {"action":"add_product","motivo":"Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).","cantidadAAnadir":3,"nombreProducto":"Normal 12 Onz Sin licor","productoId":"Normal 12 Onz Sin licor","ventaId":"cmtovjzh302krm7iie3n8bng3","pedidoDisplay":"Sin Mesa - Cel Caja - V.R-C-009"}
-[ExecuteAutoCuadre] → ADD_PRODUCT: ventaId=cmtovjzh302krm7iie3n8bng3, productoId=Normal 12 Onz Sin licor, cantidad=3
-[ExecuteAutoCuadre] → Venta encontrada: pedido=V.R-C-009, fecha=Sat Sep 05 2026 21:08:06 GMT+0000 (Coordinated Universal Time)
-[ExecuteAutoCuadre] → Producto NO existe en esta venta, creando nueva línea...
-[ExecuteAutoCuadre] → Producto encontrado: Normal 12 Onz Sin licor, precio unitario: $8000, total: $24000
-[ExecuteAutoCuadre] → Nueva línea creada con ID: ac-1788704627288-3oe8
-[ExecuteAutoCuadre] → Venta total recalculada: $56000
-[ExecuteAutoCuadre] Acción 13: {"action":"add_product","motivo":"Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).","cantidadAAnadir":3,"nombreProducto":"Normal 12 Onz Sin licor","productoId":"Normal 12 Onz Sin licor","ventaId":"cmtovmucg02l2m7ii3qz9hqof","pedidoDisplay":"Sin Mesa - Cel Caja - V.R-C-010"}
-[ExecuteAutoCuadre] → ADD_PRODUCT: ventaId=cmtovmucg02l2m7ii3qz9hqof, productoId=Normal 12 Onz Sin licor, cantidad=3
-[ExecuteAutoCuadre] → Venta encontrada: pedido=V.R-C-010, fecha=Sat Sep 05 2026 21:10:19 GMT+0000 (Coordinated Universal Time)
-[ExecuteAutoCuadre] → Producto NO existe en esta venta, creando nueva línea...
-[ExecuteAutoCuadre] → Producto encontrado: Normal 12 Onz Sin licor, precio unitario: $8000, total: $24000
-[ExecuteAutoCuadre] → Nueva línea creada con ID: ac-1788704627310-0ehl
-[ExecuteAutoCuadre] → Venta total recalculada: $32000
-[ExecuteAutoCuadre] Acción 14: {"action":"add_product","motivo":"Ajuste de inventario por descuadre físico de +21 unidades de Normal 12 Onz Sin licor (20 añadidas tras descontar 1 unidad justificada como dañada).","cantidadAAnadir":2,"nombreProducto":"Normal 12 Onz Sin licor","productoId":"Normal 12 Onz Sin licor","ventaId":"cmtowgglk02lfm7iid3hps0aw","pedidoDisplay":"Sin Mesa - Cel Caja - V.R-C-011"}
-[ExecuteAutoCuadre] → ADD_PRODUCT: ventaId=cmtowgglk02lfm7iid3hps0aw, productoId=Normal 12 Onz Sin licor, cantidad=2
-[ExecuteAutoCuadre] → Venta encontrada: pedido=V.R-C-011, fecha=Sat Sep 05 2026 21:33:21 GMT+0000 (Coordinated Universal Time)
-[ExecuteAutoCuadre] → Producto NO existe en esta venta, creando nueva línea...
-[ExecuteAutoCuadre] → Producto encontrado: Normal 12 Onz Sin licor, precio unitario: $8000, total: $16000
-[ExecuteAutoCuadre] → Nueva línea creada con ID: ac-1788704627334-avos
-[ExecuteAutoCuadre] → Venta total recalculada: $40000
-[ExecuteAutoCuadre] Total acciones ejecutadas: 13 de 14
-[Nest] 19  - 09/06/2026, 2:31:09 PM     LOG [AppGateway] Client disconnected: V9sXwiEYX3b63SwtAAX9 (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 2:31:10 PM     LOG [AppGateway] Client OWY6gakW5r8AafzVAAX_ mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:31:11 PM     LOG [AppGateway] Client OWY6gakW5r8AafzVAAX_ joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:31:11 PM     LOG [AppGateway] Client OWY6gakW5r8AafzVAAX_ joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:35:19 PM     LOG [AppGateway] Client disconnected: OWY6gakW5r8AafzVAAX_ (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 2:35:20 PM     LOG [AppGateway] Client SnwEHWwAttpAyIGWAAYB mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:35:21 PM     LOG [AppGateway] Client SnwEHWwAttpAyIGWAAYB joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:35:21 PM     LOG [AppGateway] Client SnwEHWwAttpAyIGWAAYB joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:35:25 PM     LOG [AppGateway] Client SnwEHWwAttpAyIGWAAYB joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:35:25 PM     LOG [AppGateway] Client SnwEHWwAttpAyIGWAAYB joined room: caja
-[Nest] 19  - 09/06/2026, 2:35:37 PM     LOG [AppGateway] Client SnwEHWwAttpAyIGWAAYB joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:35:37 PM     LOG [AppGateway] Client SnwEHWwAttpAyIGWAAYB joined room: caja
-[Nest] 19  - 09/06/2026, 2:36:07 PM     LOG [AppGateway] Client disconnected: 87VwxR3ZNYfURb9UAAXz (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 2:36:08 PM     LOG [AppGateway] Client 7MET3ctMSAAVHhjXAAYD mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:36:08 PM     LOG [AppGateway] Client 7MET3ctMSAAVHhjXAAYD joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:36:08 PM     LOG [AppGateway] Client 7MET3ctMSAAVHhjXAAYD joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:37:53 PM     LOG [AppGateway] Client disconnected: SnwEHWwAttpAyIGWAAYB (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen, caja)
-[Nest] 19  - 09/06/2026, 2:37:56 PM     LOG [AppGateway] Client lSqi8R37K2QJLEHOAAYF mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:37:57 PM     LOG [AppGateway] Client lSqi8R37K2QJLEHOAAYF joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:37:57 PM     LOG [AppGateway] Client lSqi8R37K2QJLEHOAAYF joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:40:26 PM     LOG [AppGateway] Client disconnected: lSqi8R37K2QJLEHOAAYF (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 2:40:29 PM     LOG [AppGateway] Client tdh6uXAprl16ufpmAAYH mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:40:30 PM     LOG [AppGateway] Client tdh6uXAprl16ufpmAAYH joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:40:30 PM     LOG [AppGateway] Client tdh6uXAprl16ufpmAAYH joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:41:19 PM     LOG [AppGateway] Client disconnected: tdh6uXAprl16ufpmAAYH (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 2:41:23 PM     LOG [AppGateway] Client zh5A7Eqbfr38rsBkAAYJ mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 2:41:24 PM     LOG [AppGateway] Client zh5A7Eqbfr38rsBkAAYJ joined room: kitchen
-[Nest] 19  - 09/06/2026, 2:41:24 PM     LOG [AppGateway] Client zh5A7Eqbfr38rsBkAAYJ joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:13:52 PM     LOG [AppGateway] Client disconnected: zh5A7Eqbfr38rsBkAAYJ (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 3:13:59 PM     LOG [AppGateway] Client PNjtp5C261A36togAAYL mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 3:14:00 PM     LOG [AppGateway] Client PNjtp5C261A36togAAYL joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:14:00 PM     LOG [AppGateway] Client PNjtp5C261A36togAAYL joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:14:08 PM     LOG [AppGateway] Client PNjtp5C261A36togAAYL joined room: caja
-[Nest] 19  - 09/06/2026, 3:14:20 PM     LOG [AppGateway] Client disconnected: PNjtp5C261A36togAAYL (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen, caja)
-[Nest] 19  - 09/06/2026, 3:14:33 PM     LOG [AppGateway] Client 7PL9eUDcKzgCOywwAAYN mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 3:14:40 PM     LOG [AppGateway] Client 7PL9eUDcKzgCOywwAAYN joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:14:40 PM     LOG [AppGateway] Client 7PL9eUDcKzgCOywwAAYN joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:32:23 PM     LOG [AppGateway] Client disconnected: 7PL9eUDcKzgCOywwAAYN (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 3:32:25 PM     LOG [AppGateway] Client WRtSc4-L1QPibG7_AAYP mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 3:32:25 PM     LOG [AppGateway] Client WRtSc4-L1QPibG7_AAYP joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:32:25 PM     LOG [AppGateway] Client WRtSc4-L1QPibG7_AAYP joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:32:35 PM     LOG [AppGateway] Client WRtSc4-L1QPibG7_AAYP joined room: caja
-[Nest] 19  - 09/06/2026, 3:32:39 PM     LOG [AppGateway] Client WRtSc4-L1QPibG7_AAYP joined room: caja
-[Nest] 19  - 09/06/2026, 3:32:58 PM     LOG [AppGateway] Client WRtSc4-L1QPibG7_AAYP joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:32:59 PM     LOG [AppGateway] Client WRtSc4-L1QPibG7_AAYP joined room: caja
-[RECETA-ENTRADA] Producto: "Normal 16 Onz" x1 → 2 insumo(s) en receta
-[RECETA-ENTRADA]   └─ Insumo: "Pitillos" (937c0fa5) | receta=1 x vendido=1 = 1 a devolver
-[Nest] 19  - 09/06/2026, 3:33:23 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[RECETA-SKIP]   └─ Insumo: "Vaso de 16 onz" tiene descontarCantDeVentas="NO", omitido.
-[RECETA-ENTRADA] Producto: "Normal 12 Onz Con licor" x2 → 2 insumo(s) en receta
-[RECETA-ENTRADA]   └─ Insumo: "Pitillos" (937c0fa5) | receta=1 x vendido=2 = 2 a devolver
-[Nest] 19  - 09/06/2026, 3:33:23 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[RECETA-SKIP]   └─ Insumo: "Vasos de 12 onz" tiene descontarCantDeVentas="NO", omitido.
-[RECETA-ENTRADA] Producto: "Normal 12 Onz Sin licor" x1 → 2 insumo(s) en receta
-[RECETA-ENTRADA]   └─ Insumo: "Pitillos" (937c0fa5) | receta=1 x vendido=1 = 1 a devolver
-[Nest] 19  - 09/06/2026, 3:33:23 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[RECETA-SKIP]   └─ Insumo: "Vasos de 12 onz" tiene descontarCantDeVentas="NO", omitido.
-[RECETA-SALIDA] Producto: "Normal 16 Onz" x2 → 2 insumo(s) en receta
-[RECETA-SALIDA]   └─ Insumo: "Pitillos" (937c0fa5) | receta=1 x vendido=2 = 2 a descontar
-[Nest] 19  - 09/06/2026, 3:33:23 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[RECETA-SKIP]   └─ Insumo: "Vaso de 16 onz" tiene descontarCantDeVentas="NO", omitido.
-[RECETA-SALIDA] Producto: "Normal 12 Onz Con licor" x2 → 2 insumo(s) en receta
-[RECETA-SALIDA]   └─ Insumo: "Pitillos" (937c0fa5) | receta=1 x vendido=2 = 2 a descontar
-[Nest] 19  - 09/06/2026, 3:33:23 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[RECETA-SKIP]   └─ Insumo: "Vasos de 12 onz" tiene descontarCantDeVentas="NO", omitido.
-[RECETA-SALIDA] Producto: "Normal 12 Onz Sin licor" x1 → 2 insumo(s) en receta
-[RECETA-SALIDA]   └─ Insumo: "Pitillos" (937c0fa5) | receta=1 x vendido=1 = 1 a descontar
-[Nest] 19  - 09/06/2026, 3:33:23 PM     LOG [AppGateway] Broadcasting event refreshInsumos to all clients in namespace
-[RECETA-SKIP]   └─ Insumo: "Vasos de 12 onz" tiene descontarCantDeVentas="NO", omitido.
-[Nest] 19  - 09/06/2026, 3:33:23 PM     LOG [AppGateway] Emitting to Ventas room and all clients: refreshVentas
-[Nest] 19  - 09/06/2026, 3:33:23 PM     LOG [AppGateway] Broadcasting event refreshVentas to all clients in namespace
-[Nest] 19  - 09/06/2026, 3:33:27 PM     LOG [AppGateway] Client WRtSc4-L1QPibG7_AAYP joined room: caja
-[Nest] 19  - 09/06/2026, 3:33:30 PM     LOG [AppGateway] Client WRtSc4-L1QPibG7_AAYP joined room: caja
-[Nest] 19  - 09/06/2026, 3:33:53 PM     LOG [AppGateway] Client WRtSc4-L1QPibG7_AAYP joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:33:53 PM     LOG [AppGateway] Client WRtSc4-L1QPibG7_AAYP joined room: caja
-[Nest] 19  - 09/06/2026, 3:33:57 PM     LOG [AppGateway] Client WRtSc4-L1QPibG7_AAYP joined room: caja
-[Nest] 19  - 09/06/2026, 3:33:58 PM     LOG [AppGateway] Client WRtSc4-L1QPibG7_AAYP joined room: caja
-[Nest] 19  - 09/06/2026, 3:34:01 PM     LOG [AppGateway] Client disconnected: WRtSc4-L1QPibG7_AAYP (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen, caja)
-[Nest] 19  - 09/06/2026, 3:34:04 PM     LOG [AppGateway] Client 7eNXWXMcO3l0xTt1AAYR mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 3:34:04 PM     LOG [AppGateway] Client 7eNXWXMcO3l0xTt1AAYR joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:34:04 PM     LOG [AppGateway] Client 7eNXWXMcO3l0xTt1AAYR joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:34:06 PM     LOG [AppGateway] Client 7eNXWXMcO3l0xTt1AAYR joined room: caja
-[Nest] 19  - 09/06/2026, 3:34:10 PM     LOG [AppGateway] Client 7eNXWXMcO3l0xTt1AAYR joined room: caja
-[Nest] 19  - 09/06/2026, 3:34:30 PM     LOG [AppGateway] Client disconnected: 7eNXWXMcO3l0xTt1AAYR (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen, caja)
-[Nest] 19  - 09/06/2026, 3:34:31 PM     LOG [AppGateway] Client jANRKWFSsGhETxnxAAYT mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 3:34:32 PM     LOG [AppGateway] Client jANRKWFSsGhETxnxAAYT joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:34:32 PM     LOG [AppGateway] Client jANRKWFSsGhETxnxAAYT joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:34:33 PM     LOG [AppGateway] Client disconnected: jANRKWFSsGhETxnxAAYT (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 3:34:36 PM     LOG [AppGateway] Client V8ofpTYpuS8AQWEyAAYV mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 3:34:36 PM     LOG [AppGateway] Client V8ofpTYpuS8AQWEyAAYV joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:34:37 PM     LOG [AppGateway] Client V8ofpTYpuS8AQWEyAAYV joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:34:37 PM     LOG [AppGateway] Client V8ofpTYpuS8AQWEyAAYV joined room: caja
-[Nest] 19  - 09/06/2026, 3:34:43 PM     LOG [AppGateway] Client V8ofpTYpuS8AQWEyAAYV joined room: caja
-[Nest] 19  - 09/06/2026, 3:45:39 PM     LOG [AppGateway] Client disconnected: V8ofpTYpuS8AQWEyAAYV (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen, caja)
-[Nest] 19  - 09/06/2026, 3:46:30 PM     LOG [AppGateway] Client SfN2F76y2ShrEJU-AAYX mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 3:46:30 PM     LOG [AppGateway] Client SfN2F76y2ShrEJU-AAYX joined room: kitchen
-[Nest] 19  - 09/06/2026, 3:46:30 PM     LOG [AppGateway] Client SfN2F76y2ShrEJU-AAYX joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:03:23 PM     LOG [AppGateway] Client disconnected: SfN2F76y2ShrEJU-AAYX (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 4:03:25 PM     LOG [AppGateway] Client mb60MfLB0cCF4AUJAAYZ mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 4:03:25 PM     LOG [AppGateway] Client mb60MfLB0cCF4AUJAAYZ joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:03:25 PM     LOG [AppGateway] Client mb60MfLB0cCF4AUJAAYZ joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:03:26 PM     LOG [AppGateway] Client mb60MfLB0cCF4AUJAAYZ joined room: caja
-[Nest] 19  - 09/06/2026, 4:03:29 PM     LOG [AppGateway] Client mb60MfLB0cCF4AUJAAYZ joined room: caja
-[Nest] 19  - 09/06/2026, 4:04:17 PM     LOG [AppGateway] Client mb60MfLB0cCF4AUJAAYZ joined room: caja
-[Nest] 19  - 09/06/2026, 4:04:26 PM     LOG [AppGateway] Client mb60MfLB0cCF4AUJAAYZ joined room: ventas
-[Nest] 19  - 09/06/2026, 4:04:30 PM     LOG [AppGateway] Client mb60MfLB0cCF4AUJAAYZ joined room: caja
-[Nest] 19  - 09/06/2026, 4:04:32 PM     LOG [AppGateway] Client mb60MfLB0cCF4AUJAAYZ joined room: caja
-[Nest] 19  - 09/06/2026, 4:14:34 PM     LOG [AppGateway] Client disconnected: mb60MfLB0cCF4AUJAAYZ (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen, caja, ventas)
-[Nest] 19  - 09/06/2026, 4:14:35 PM     LOG [AppGateway] Client n_YGJh17lw8NSqybAAYb mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 4:14:36 PM     LOG [AppGateway] Client n_YGJh17lw8NSqybAAYb joined room: ventas
-[Nest] 19  - 09/06/2026, 4:14:37 PM     LOG [AppGateway] Client n_YGJh17lw8NSqybAAYb joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:14:37 PM     LOG [AppGateway] Client n_YGJh17lw8NSqybAAYb joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:16:46 PM     LOG [AppGateway] Client disconnected: n_YGJh17lw8NSqybAAYb (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, ventas, kitchen)
-[Nest] 19  - 09/06/2026, 4:16:48 PM     LOG [AppGateway] Client 9qQf3bJgk7qlNePCAAYd mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 4:16:48 PM     LOG [AppGateway] Client 9qQf3bJgk7qlNePCAAYd joined room: ventas
-[Nest] 19  - 09/06/2026, 4:16:48 PM     LOG [AppGateway] Client 9qQf3bJgk7qlNePCAAYd joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:16:48 PM     LOG [AppGateway] Client 9qQf3bJgk7qlNePCAAYd joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:17:01 PM     LOG [AppGateway] Client disconnected: 9qQf3bJgk7qlNePCAAYd (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, ventas, kitchen)
-[Nest] 19  - 09/06/2026, 4:17:02 PM     LOG [AppGateway] Client m9DoEPeSsZEOt6j5AAYf mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 4:17:03 PM     LOG [AppGateway] Client m9DoEPeSsZEOt6j5AAYf joined room: ventas
-[Nest] 19  - 09/06/2026, 4:17:03 PM     LOG [AppGateway] Client m9DoEPeSsZEOt6j5AAYf joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:17:03 PM     LOG [AppGateway] Client m9DoEPeSsZEOt6j5AAYf joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:17:14 PM     LOG [AppGateway] Client m9DoEPeSsZEOt6j5AAYf joined room: caja
-[Nest] 19  - 09/06/2026, 4:17:27 PM     LOG [AppGateway] Client disconnected: m9DoEPeSsZEOt6j5AAYf (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, ventas, kitchen, caja)
-[Nest] 19  - 09/06/2026, 4:17:28 PM     LOG [AppGateway] Client fNP0HJAocLTShDnZAAYh mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 4:17:29 PM     LOG [AppGateway] Client fNP0HJAocLTShDnZAAYh joined room: ventas
-[Nest] 19  - 09/06/2026, 4:17:29 PM     LOG [AppGateway] Client fNP0HJAocLTShDnZAAYh joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:17:29 PM     LOG [AppGateway] Client fNP0HJAocLTShDnZAAYh joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:18:28 PM     LOG [AppGateway] Client _ygQ8-lIpiUClKSlAAYj mapped to user cmq5v6m4y002011bzw7fd0znr and joined user_cmq5v6m4y002011bzw7fd0znr
-[Nest] 19  - 09/06/2026, 4:18:29 PM     LOG [AppGateway] Client _ygQ8-lIpiUClKSlAAYj joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:18:29 PM     LOG [AppGateway] Client _ygQ8-lIpiUClKSlAAYj joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:18:31 PM     LOG [AppGateway] Client disconnected: _ygQ8-lIpiUClKSlAAYj (was in rooms: user_cmq5v6m4y002011bzw7fd0znr, kitchen)
-[Nest] 19  - 09/06/2026, 4:23:02 PM     LOG [AppGateway] Client n18Dx0F6xWmcI0E7AAYl mapped to user cmq5v6m4y002011bzw7fd0znr and joined user_cmq5v6m4y002011bzw7fd0znr
-[Nest] 19  - 09/06/2026, 4:23:02 PM     LOG [AppGateway] Client n18Dx0F6xWmcI0E7AAYl joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:23:02 PM     LOG [AppGateway] Client n18Dx0F6xWmcI0E7AAYl joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:23:07 PM     LOG [AppGateway] Client n18Dx0F6xWmcI0E7AAYl joined room: caja
-[Nest] 19  - 09/06/2026, 4:23:21 PM     LOG [AppGateway] Client n18Dx0F6xWmcI0E7AAYl joined room: caja
-[Nest] 19  - 09/06/2026, 4:23:47 PM     LOG [AppGateway] Client disconnected: n18Dx0F6xWmcI0E7AAYl (was in rooms: user_cmq5v6m4y002011bzw7fd0znr, kitchen, caja)
-[Nest] 19  - 09/06/2026, 4:23:51 PM     LOG [AppGateway] Client FBzvnhsfhNdUcZ8_AAYn mapped to user cmq5v6m4y002011bzw7fd0znr and joined user_cmq5v6m4y002011bzw7fd0znr
-[Nest] 19  - 09/06/2026, 4:23:51 PM     LOG [AppGateway] Client FBzvnhsfhNdUcZ8_AAYn joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:23:51 PM     LOG [AppGateway] Client FBzvnhsfhNdUcZ8_AAYn joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:23:52 PM     LOG [AppGateway] Client FBzvnhsfhNdUcZ8_AAYn joined room: caja
-[Nest] 19  - 09/06/2026, 4:23:59 PM     LOG [AppGateway] Client disconnected: FBzvnhsfhNdUcZ8_AAYn (was in rooms: user_cmq5v6m4y002011bzw7fd0znr, kitchen, caja)
-[Nest] 19  - 09/06/2026, 4:24:24 PM     LOG [AppGateway] Client 3cVbhZSfYyZpxqvCAAYp mapped to user cmq5v6m4y002011bzw7fd0znr and joined user_cmq5v6m4y002011bzw7fd0znr
-[Nest] 19  - 09/06/2026, 4:24:25 PM     LOG [AppGateway] Client 3cVbhZSfYyZpxqvCAAYp joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:24:25 PM     LOG [AppGateway] Client 3cVbhZSfYyZpxqvCAAYp joined room: kitchen
-[Nest] 19  - 09/06/2026, 4:24:25 PM     LOG [AppGateway] Client 3cVbhZSfYyZpxqvCAAYp joined room: caja
-[Nest] 19  - 09/06/2026, 4:24:39 PM     LOG [AppGateway] Client disconnected: 3cVbhZSfYyZpxqvCAAYp (was in rooms: user_cmq5v6m4y002011bzw7fd0znr, kitchen, caja)
-[Nest] 19  - 09/06/2026, 4:34:45 PM     LOG [AppGateway] Client disconnected: fNP0HJAocLTShDnZAAYh (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, ventas, kitchen)
-[Nest] 19  - 09/06/2026, 5:38:11 PM   ERROR [AllExceptionsFilter] Unhandled exception: Not Found
-NotFoundError: Not Found
-    at createHttpError (/app/node_modules/send/index.js:861:12)
-    at SendStream.error (/app/node_modules/send/index.js:168:31)
-    at SendStream.pipe (/app/node_modules/send/index.js:468:14)
-    at serveStatic (/app/node_modules/serve-static/index.js:124:12)
-    at Layer.handleRequest (/app/node_modules/router/lib/layer.js:152:17)
-    at trimPrefix (/app/node_modules/router/index.js:342:13)
-    at /app/node_modules/router/index.js:297:9
-    at processParams (/app/node_modules/router/index.js:582:12)
-    at next (/app/node_modules/router/index.js:291:5)
-    at read (/app/node_modules/body-parser/lib/read.js:53:5)
-[Nest] 19  - 09/06/2026, 6:41:47 PM     LOG [AppGateway] Client LLnw92oTfhcMhv63AAYr mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 6:41:47 PM     LOG [AppGateway] Client LLnw92oTfhcMhv63AAYr joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:41:48 PM     LOG [AppGateway] Client LLnw92oTfhcMhv63AAYr joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:45:23 PM     LOG [AppGateway] Client disconnected: 7MET3ctMSAAVHhjXAAYD (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 6:45:25 PM     LOG [AppGateway] Client QiI9GuRelDbPe6faAAYt mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 6:45:26 PM     LOG [AppGateway] Client QiI9GuRelDbPe6faAAYt joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:45:26 PM     LOG [AppGateway] Client QiI9GuRelDbPe6faAAYt joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:45:42 PM     LOG [AppGateway] Client disconnected: QiI9GuRelDbPe6faAAYt (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 6:45:43 PM     LOG [AppGateway] Client WeviT-2sHNfimn9EAAYv mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 6:45:44 PM     LOG [AppGateway] Client WeviT-2sHNfimn9EAAYv joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:45:44 PM     LOG [AppGateway] Client WeviT-2sHNfimn9EAAYv joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:46:45 PM     LOG [AppGateway] Client disconnected: WeviT-2sHNfimn9EAAYv (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 6:46:47 PM     LOG [AppGateway] Client AaszVhNji_D5YGMWAAYx mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 6:46:47 PM     LOG [AppGateway] Client AaszVhNji_D5YGMWAAYx joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:46:47 PM     LOG [AppGateway] Client AaszVhNji_D5YGMWAAYx joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:46:52 PM     LOG [AppGateway] Client disconnected: AaszVhNji_D5YGMWAAYx (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 6:46:53 PM     LOG [AppGateway] Client yP6MqKEq08dvmH0nAAYz mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 6:46:54 PM     LOG [AppGateway] Client yP6MqKEq08dvmH0nAAYz joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:46:54 PM     LOG [AppGateway] Client yP6MqKEq08dvmH0nAAYz joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:46:59 PM     LOG [AppGateway] Client disconnected: yP6MqKEq08dvmH0nAAYz (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 6:47:00 PM     LOG [AppGateway] Client 2iSD9vmmcBR_0vdBAAY1 mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 6:47:00 PM     LOG [AppGateway] Client 2iSD9vmmcBR_0vdBAAY1 joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:47:00 PM     LOG [AppGateway] Client 2iSD9vmmcBR_0vdBAAY1 joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:47:09 PM     LOG [AppGateway] Client disconnected: 2iSD9vmmcBR_0vdBAAY1 (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 6:47:11 PM     LOG [AppGateway] Client YshKKgI2e9ja4UUpAAY4 mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 6:47:11 PM     LOG [AppGateway] Client YshKKgI2e9ja4UUpAAY4 joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:47:11 PM     LOG [AppGateway] Client YshKKgI2e9ja4UUpAAY4 joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:47:12 PM     LOG [AppGateway] Client disconnected: YshKKgI2e9ja4UUpAAY4 (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 6:47:13 PM     LOG [AppGateway] Client o_E0VYrQ1CplSU_TAAY6 mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 6:47:13 PM     LOG [AppGateway] Client o_E0VYrQ1CplSU_TAAY6 joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:47:13 PM     LOG [AppGateway] Client o_E0VYrQ1CplSU_TAAY6 joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:47:23 PM     LOG [AppGateway] Client disconnected: o_E0VYrQ1CplSU_TAAY6 (was in rooms: user_cmom4whz80000k0qnjs8qb3sc, kitchen)
-[Nest] 19  - 09/06/2026, 6:47:25 PM     LOG [AppGateway] Client DV1-fxO58TQ3JPmbAAY8 mapped to user cmom4whz80000k0qnjs8qb3sc and joined user_cmom4whz80000k0qnjs8qb3sc
-[Nest] 19  - 09/06/2026, 6:47:26 PM     LOG [AppGateway] Client DV1-fxO58TQ3JPmbAAY8 joined room: kitchen
-[Nest] 19  - 09/06/2026, 6:47:26 PM     LOG [AppGateway] Client DV1-fxO58TQ3JPmbAAY8 joined room: kitchen
+
+# ----------------------------------------------------------
+# LISTA DE CLIENTES ACTIVOS
+# Para agregar uno nuevo: copia la línea de abajo,
+# cambia los valores y crea el secreto en GitHub.
+# ----------------------------------------------------------
+deploy_new_client \
+  "restaurante2" \
+  "8071" \
+  "api-restaurante2.autosystemprojects.site" \
+  "***
+"
+deploy_new_client \
+  "fogata" \
+  "8072" \
+  "api-fogata.autosystemprojects.site" \
+  "***
+"
+
+2026-09-18T02:46:41.1072181Z   port: 22
+2026-09-18T02:46:41.1072543Z   timeout: 30s
+2026-09-18T02:46:41.1072905Z   proxy_port: 22
+2026-09-18T02:46:41.1073277Z   proxy_timeout: 30s
+2026-09-18T02:46:41.1073656Z ##[endgroup]
+2026-09-18T02:46:41.1198315Z ##[command]/usr/bin/docker run --name f15b0f0e1aaad23d3d45d6b1ac1a89ab58d5ac_065f20 --label f15b0f --workdir /github/workspace --rm -e "INPUT_HOST" -e "INPUT_USERNAME" -e "INPUT_PASSWORD" -e "INPUT_COMMAND_TIMEOUT" -e "INPUT_SCRIPT" -e "INPUT_PORT" -e "INPUT_PASSPHRASE" -e "INPUT_SYNC" -e "INPUT_USE_INSECURE_CIPHER" -e "INPUT_CIPHER" -e "INPUT_TIMEOUT" -e "INPUT_KEY" -e "INPUT_KEY_PATH" -e "INPUT_FINGERPRINT" -e "INPUT_PROXY_HOST" -e "INPUT_PROXY_PORT" -e "INPUT_PROXY_USERNAME" -e "INPUT_PROXY_PASSWORD" -e "INPUT_PROXY_PASSPHRASE" -e "INPUT_PROXY_TIMEOUT" -e "INPUT_PROXY_KEY" -e "INPUT_PROXY_KEY_PATH" -e "INPUT_PROXY_FINGERPRINT" -e "INPUT_PROXY_CIPHER" -e "INPUT_PROXY_USE_INSECURE_CIPHER" -e "INPUT_SCRIPT_STOP" -e "INPUT_ENVS" -e "INPUT_ENVS_FORMAT" -e "INPUT_DEBUG" -e "INPUT_ALLENVS" -e "INPUT_REQUEST_PTY" -e "HOME" -e "GITHUB_JOB" -e "GITHUB_REF" -e "GITHUB_SHA" -e "GITHUB_REPOSITORY" -e "GITHUB_REPOSITORY_OWNER" -e "GITHUB_REPOSITORY_OWNER_ID" -e "GITHUB_RUN_ID" -e "GITHUB_RUN_NUMBER" -e "GITHUB_RETENTION_DAYS" -e "GITHUB_RUN_ATTEMPT" -e "GITHUB_ACTOR_ID" -e "GITHUB_ACTOR" -e "GITHUB_WORKFLOW" -e "GITHUB_HEAD_REF" -e "GITHUB_BASE_REF" -e "GITHUB_EVENT_NAME" -e "GITHUB_SERVER_URL" -e "GITHUB_API_URL" -e "GITHUB_GRAPHQL_URL" -e "GITHUB_REF_NAME" -e "GITHUB_REF_PROTECTED" -e "GITHUB_REF_TYPE" -e "GITHUB_WORKFLOW_REF" -e "GITHUB_WORKFLOW_SHA" -e "GITHUB_REPOSITORY_ID" -e "GITHUB_TRIGGERING_ACTOR" -e "GITHUB_WORKSPACE" -e "GITHUB_ACTION" -e "GITHUB_EVENT_PATH" -e "GITHUB_ACTION_REPOSITORY" -e "GITHUB_ACTION_REF" -e "GITHUB_PATH" -e "GITHUB_ENV" -e "GITHUB_STEP_SUMMARY" -e "GITHUB_STATE" -e "GITHUB_OUTPUT" -e "GITHUB_ARTIFACTS" -e "GITHUB_ARTIFACTS_LIST" -e "RUNNER_OS" -e "RUNNER_ARCH" -e "RUNNER_NAME" -e "RUNNER_ENVIRONMENT" -e "RUNNER_TOOL_CACHE" -e "RUNNER_TEMP" -e "RUNNER_WORKSPACE" -e "ACTIONS_RUNTIME_URL" -e "ACTIONS_RUNTIME_TOKEN" -e "ACTIONS_CACHE_URL" -e "ACTIONS_RESULTS_URL" -e "ACTIONS_CACHE_MODE" -e "ACTIONS_ORCHESTRATION_ID" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work/_temp":"/github/runner_temp" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" -v "/home/runner/work/_temp/_runner_file_commands":"/github/file_commands" -v "/home/runner/work/backend-nest-js-qhubomor/backend-nest-js-qhubomor":"/github/workspace" f15b0f:0e1aaad23d3d45d6b1ac1a89ab58d5ac
+2026-09-18T02:46:41.2953473Z ======CMD======
+2026-09-18T02:46:41.2953942Z set -e
+2026-09-18T02:46:41.2954167Z 
+2026-09-18T02:46:41.2955220Z # 0. Limpiar imagenes viejas del proyecto y caché de construcción
+2026-09-18T02:46:41.2956220Z echo "Limpiando espacio en disco de imagenes viejas..."
+2026-09-18T02:46:41.2956773Z docker image prune -f || true
+2026-09-18T02:46:41.2957220Z docker builder prune -f || true
+2026-09-18T02:46:41.2957471Z 
+2026-09-18T02:46:41.2957689Z # 1. Crear directorio del proyecto si no existe
+2026-09-18T02:46:41.2958166Z mkdir -p /root/backend-qhubomor
+2026-09-18T02:46:41.2958575Z cd /root/backend-qhubomor
+2026-09-18T02:46:41.2958805Z 
+2026-09-18T02:46:41.2959418Z # 2. Clonar el repositorio o actualizarlo si ya existe
+2026-09-18T02:46:41.2959941Z if [ ! -d ".git" ]; then
+2026-09-18T02:46:41.2960384Z   echo "Clonando repositorio por primera vez..."
+2026-09-18T02:46:41.2961646Z   git clone https://***@github.com/JhonnM62/backend-nest-js-qhubomor.git .
+2026-09-18T02:46:41.2962188Z else
+2026-09-18T02:46:41.2962589Z   echo "Actualizando repositorio existente..."
+2026-09-18T02:46:41.2963421Z   git remote set-url origin https://***@github.com/JhonnM62/backend-nest-js-qhubomor.git
+2026-09-18T02:46:41.2964036Z   git fetch --all
+2026-09-18T02:46:41.2964424Z   git reset --hard origin/main
+2026-09-18T02:46:41.2965924Z   git clean -fd
+2026-09-18T02:46:41.2966423Z fi
+2026-09-18T02:46:41.2966614Z 
+2026-09-18T02:46:41.2966890Z # 3. Inyectar las variables de entorno desde los secretos de GitHub
+2026-09-18T02:46:41.2967433Z cat << 'EOF' > .env
+2026-09-18T02:46:41.2967852Z ***
+2026-09-18T02:46:41.2968545Z ***
+2026-09-18T02:46:41.2968912Z ***
+2026-09-18T02:46:41.2969268Z ***
+2026-09-18T02:46:41.2969626Z ***
+2026-09-18T02:46:41.2969994Z ***
+2026-09-18T02:46:41.2970384Z ***
+2026-09-18T02:46:41.2970588Z 
+2026-09-18T02:46:41.2970748Z ***
+2026-09-18T02:46:41.2971351Z ***
+2026-09-18T02:46:41.2971696Z ***
+2026-09-18T02:46:41.2971878Z 
+2026-09-18T02:46:41.2972029Z ***
+2026-09-18T02:46:41.2972485Z ***
+2026-09-18T02:46:41.2972910Z ***
+2026-09-18T02:46:41.2973093Z 
+2026-09-18T02:46:41.2973257Z ***
+2026-09-18T02:46:41.2973599Z ***
+2026-09-18T02:46:41.2973943Z ***
+2026-09-18T02:46:41.2974120Z 
+2026-09-18T02:46:41.2974283Z ***
+2026-09-18T02:46:41.2974893Z ***
+2026-09-18T02:46:41.2975413Z ***
+2026-09-18T02:46:41.2975686Z 
+2026-09-18T02:46:41.2975907Z EOF
+2026-09-18T02:46:41.2976178Z 
+2026-09-18T02:46:41.2976801Z # 4. Construir la nueva imagen de Docker localmente en Contabo (sin cache para asegurar construccion limpia)
+2026-09-18T02:46:41.2977851Z echo "Construyendo imagen Docker..."
+2026-09-18T02:46:41.2978515Z docker build -t qhubomor-backend .
+2026-09-18T02:46:41.2978904Z 
+2026-09-18T02:46:41.2979262Z # 5. Detener y eliminar el contenedor anterior si existe
+2026-09-18T02:46:41.2980003Z echo "Deteniendo contenedor anterior..."
+2026-09-18T02:46:41.2980673Z docker stop qhubomor-backend-app || true
+2026-09-18T02:46:41.2981191Z docker rm qhubomor-backend-app || true
+2026-09-18T02:46:41.2981459Z 
+2026-09-18T02:46:41.2981719Z # 5.1 Crear directorios de subidas en el host para persistencia
+2026-09-18T02:46:41.2982286Z mkdir -p /root/backend-qhubomor/public/uploads/insumos
+2026-09-18T02:46:41.2982816Z mkdir -p /root/backend-qhubomor/public/uploads/gastos
+2026-09-18T02:46:41.2983342Z mkdir -p /root/backend-qhubomor/public/uploads/asistencia
+2026-09-18T02:46:41.2983872Z mkdir -p /root/backend-qhubomor/public/uploads/productos
+2026-09-18T02:46:41.2984177Z 
+2026-09-18T02:46:41.2984489Z # 5.5 Aplicar migraciones/push de Prisma a la base de datos remotamente (sin borrar data)
+2026-09-18T02:46:41.2985327Z echo "Sincronizando esquema de base de datos..."
+2026-09-18T02:46:41.2985941Z docker run --rm --env-file .env qhubomor-backend npx prisma db push --accept-data-loss
+2026-09-18T02:46:41.2986369Z 
+2026-09-18T02:46:41.2986674Z # 6. Levantar el nuevo contenedor mapeando el puerto y el volumen de persistencia
+2026-09-18T02:46:41.2987273Z echo "Levantando nuevo contenedor..."
+2026-09-18T02:46:41.2987693Z docker run -d \
+2026-09-18T02:46:41.2988082Z   --name qhubomor-backend-app \
+2026-09-18T02:46:41.2988521Z   -p 8061:3000 \
+2026-09-18T02:46:41.2988977Z   -v /root/backend-qhubomor/public/uploads:/app/public/uploads \
+2026-09-18T02:46:41.2989508Z   --restart unless-stopped \
+2026-09-18T02:46:41.2989904Z   --env-file .env \
+2026-09-18T02:46:41.2990281Z   qhubomor-backend
+2026-09-18T02:46:41.2990491Z 
+2026-09-18T02:46:41.2990858Z echo "¡Despliegue completado exitosamente!"
+2026-09-18T02:46:41.2991157Z 
+2026-09-18T02:46:41.2991357Z # =========================================================
+2026-09-18T02:46:41.2991879Z # FÁBRICA DE NUEVOS CLIENTES
+2026-09-18T02:46:41.2992414Z # Función reutilizable - la imagen ya fue construida arriba.
+2026-09-18T02:46:41.2993292Z # Para agregar un cliente: copia la última línea y cambia
+2026-09-18T02:46:41.2993916Z # los parámetros (CLIENT_ID, PUERTO, DOMINIO, SECRETO).
+2026-09-18T02:46:41.2994436Z # =========================================================
+2026-09-18T02:46:41.2995126Z deploy_new_client() {
+2026-09-18T02:46:41.2995501Z   CLIENT_ID=$1
+2026-09-18T02:46:41.2995852Z   PORT=$2
+2026-09-18T02:46:41.2996190Z   DOMAIN=$3
+2026-09-18T02:46:41.2996537Z   ENV_CONTENT=$4
+2026-09-18T02:46:41.2996738Z 
+2026-09-18T02:46:41.2997188Z   echo "🚀 Desplegando Backend para: $CLIENT_ID en $DOMAIN:$PORT"
+2026-09-18T02:46:41.2997546Z 
+2026-09-18T02:46:41.2997758Z   # Crear archivo .env exclusivo para este cliente
+2026-09-18T02:46:41.2998316Z   printf '%s' "$ENV_CONTENT" > /root/backend-qhubomor/.env.$CLIENT_ID
+2026-09-18T02:46:41.2998662Z 
+2026-09-18T02:46:41.2998907Z   # Crear directorios de uploads exclusivos para este cliente
+2026-09-18T02:46:41.2999497Z   mkdir -p /root/backend-qhubomor/public/uploads/$CLIENT_ID/insumos
+2026-09-18T02:46:41.3000114Z   mkdir -p /root/backend-qhubomor/public/uploads/$CLIENT_ID/gastos
+2026-09-18T02:46:41.3000716Z   mkdir -p /root/backend-qhubomor/public/uploads/$CLIENT_ID/asistencia
+2026-09-18T02:46:41.3001532Z   mkdir -p /root/backend-qhubomor/public/uploads/$CLIENT_ID/productos
+2026-09-18T02:46:41.3001892Z 
+2026-09-18T02:46:41.3002124Z   # Detener y eliminar contenedor anterior de este cliente
+2026-09-18T02:46:41.3002632Z   docker stop backend-$CLIENT_ID || true
+2026-09-18T02:46:41.3003088Z   docker rm backend-$CLIENT_ID || true
+2026-09-18T02:46:41.3003351Z 
+2026-09-18T02:46:41.3003611Z   # Sincronizar esquema en la BD de este cliente (sin borrar datos)
+2026-09-18T02:46:41.3004156Z   echo "Sincronizando BD para $CLIENT_ID..."
+2026-09-18T02:46:41.3004603Z   docker run --rm \
+2026-09-18T02:46:41.3005264Z     --env-file /root/backend-qhubomor/.env.$CLIENT_ID \
+2026-09-18T02:46:41.3005745Z     qhubomor-backend \
+2026-09-18T02:46:41.3006163Z     npx prisma db push --accept-data-loss
+2026-09-18T02:46:41.3006435Z 
+2026-09-18T02:46:41.3006737Z   # Levantar contenedor de este cliente (usa la imagen ya construida arriba)
+2026-09-18T02:46:41.3007288Z   docker run -d \
+2026-09-18T02:46:41.3007688Z     --name backend-$CLIENT_ID \
+2026-09-18T02:46:41.3008096Z     -p $PORT:3000 \
+2026-09-18T02:46:41.3008606Z     -v /root/backend-qhubomor/public/uploads/$CLIENT_ID:/app/public/uploads \
+2026-09-18T02:46:41.3009179Z     --restart unless-stopped \
+2026-09-18T02:46:41.3009637Z     --env-file /root/backend-qhubomor/.env.$CLIENT_ID \
+2026-09-18T02:46:41.3010114Z     qhubomor-backend
+2026-09-18T02:46:41.3010333Z 
+2026-09-18T02:46:41.3010761Z   # Configurar subdominio + certificado SSL automáticamente usando el script de n8n
+2026-09-18T02:46:41.3011413Z   DOMAIN=$DOMAIN PORT=$PORT EMAIL=jonnymejia62@gmail.com \
+2026-09-18T02:46:41.3011960Z     bash /root/backend-qhubomor/scripts/setup-nginx.sh
+2026-09-18T02:46:41.3012270Z 
+2026-09-18T02:46:41.3012587Z   echo "✅ Cliente $CLIENT_ID desplegado en https://$DOMAIN"
+2026-09-18T02:46:41.3013057Z }
+2026-09-18T02:46:41.3013262Z 
+2026-09-18T02:46:41.3013480Z # ----------------------------------------------------------
+2026-09-18T02:46:41.3013976Z # LISTA DE CLIENTES ACTIVOS
+2026-09-18T02:46:41.3014466Z # Para agregar uno nuevo: copia la línea de abajo,
+2026-09-18T02:46:41.3015248Z # cambia los valores y crea el secreto en GitHub.
+2026-09-18T02:46:41.3015753Z # ----------------------------------------------------------
+2026-09-18T02:46:41.3016214Z deploy_new_client \
+2026-09-18T02:46:41.3016588Z   "restaurante2" \
+2026-09-18T02:46:41.3016940Z   "8071" \
+2026-09-18T02:46:41.3017342Z   "api-restaurante2.autosystemprojects.site" \
+2026-09-18T02:46:41.3017927Z   "***
+2026-09-18T02:46:41.3018776Z ***
+2026-09-18T02:46:41.3019155Z ***
+2026-09-18T02:46:41.3019510Z ***
+2026-09-18T02:46:41.3019861Z ***
+2026-09-18T02:46:41.3020225Z ***
+2026-09-18T02:46:41.3020580Z ***
+2026-09-18T02:46:41.3020754Z 
+2026-09-18T02:46:41.3020911Z ***
+2026-09-18T02:46:41.3021258Z ***
+2026-09-18T02:46:41.3021594Z ***
+2026-09-18T02:46:41.3021768Z 
+2026-09-18T02:46:41.3022116Z ***
+2026-09-18T02:46:41.3022547Z ***
+2026-09-18T02:46:41.3022897Z ***
+2026-09-18T02:46:41.3023088Z 
+2026-09-18T02:46:41.3023243Z ***
+2026-09-18T02:46:41.3023573Z ***
+2026-09-18T02:46:41.3023907Z ***
+2026-09-18T02:46:41.3024079Z 
+2026-09-18T02:46:41.3024248Z ***
+2026-09-18T02:46:41.3024618Z ***
+2026-09-18T02:46:41.3025212Z ***
+2026-09-18T02:46:41.3025530Z "
+2026-09-18T02:46:41.3025877Z deploy_new_client \
+2026-09-18T02:46:41.3026255Z   "fogata" \
+2026-09-18T02:46:41.3026600Z   "8072" \
+2026-09-18T02:46:41.3026993Z   "api-fogata.autosystemprojects.site" \
+2026-09-18T02:46:41.3027446Z   "***
+2026-09-18T02:46:41.3028114Z ***
+2026-09-18T02:46:41.3028476Z ***
+2026-09-18T02:46:41.3028823Z ***
+2026-09-18T02:46:41.3029171Z ***
+2026-09-18T02:46:41.3029531Z ***
+2026-09-18T02:46:41.3029888Z ***
+2026-09-18T02:46:41.3030063Z 
+2026-09-18T02:46:41.3030221Z ***
+2026-09-18T02:46:41.3030566Z ***
+2026-09-18T02:46:41.3030902Z ***
+2026-09-18T02:46:41.3031074Z 
+2026-09-18T02:46:41.3031232Z ***
+2026-09-18T02:46:41.3031668Z ***
+2026-09-18T02:46:41.3032017Z ***
+2026-09-18T02:46:41.3032194Z 
+2026-09-18T02:46:41.3032349Z ***
+2026-09-18T02:46:41.3032854Z ***
+2026-09-18T02:46:41.3033192Z ***
+2026-09-18T02:46:41.3033365Z 
+2026-09-18T02:46:41.3033523Z ***
+2026-09-18T02:46:41.3033884Z ***
+2026-09-18T02:46:41.3034240Z ***
+2026-09-18T02:46:41.3034553Z "
+2026-09-18T02:46:41.3034962Z 
+2026-09-18T02:46:41.3035124Z ======END======
+2026-09-18T02:46:42.3871471Z out: Limpiando espacio en disco de imagenes viejas...
+2026-09-18T02:46:42.4015525Z out: Total reclaimed space: 0B
+2026-09-18T02:46:42.4768927Z out: Total:	0B
+2026-09-18T02:46:42.4817771Z out: Actualizando repositorio existente...
+2026-09-18T02:46:42.4930801Z out: Fetching origin
+2026-09-18T02:46:42.9658163Z err: From https://github.com/JhonnM62/backend-nest-js-qhubomor
+2026-09-18T02:46:42.9658997Z err:    819f805..6f67699  main       -> origin/main
+2026-09-18T02:46:43.0017529Z out: HEAD is now at 6f67699 feat: add GitHub Actions workflow for backend deployment
+2026-09-18T02:46:43.0061984Z out: Removing .env.restaurante2
+2026-09-18T02:46:43.0076159Z out: Construyendo imagen Docker...
+2026-09-18T02:46:43.3904137Z err: #0 building with "default" instance using docker driver
+2026-09-18T02:46:43.3905132Z err: #1 [internal] load build definition from Dockerfile
+2026-09-18T02:46:43.3905891Z err: #1 transferring dockerfile: 1.15kB done
+2026-09-18T02:46:43.3906409Z err: #1 DONE 0.1s
+2026-09-18T02:46:43.3906968Z err: #2 [internal] load metadata for docker.io/library/node:20-slim
+2026-09-18T02:46:43.4137071Z err: #2 DONE 0.2s
+2026-09-18T02:46:43.5937303Z err: #3 [builder 1/6] FROM docker.io/library/node:20-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0
+2026-09-18T02:46:43.5938093Z err: #3 CACHED
+2026-09-18T02:46:43.5938483Z err: #4 [internal] load .dockerignore
+2026-09-18T02:46:43.5938931Z err: #4 transferring context: 105B done
+2026-09-18T02:46:43.5939350Z err: #4 DONE 0.0s
+2026-09-18T02:46:43.5939723Z err: #5 [internal] load build context
+2026-09-18T02:46:43.6760859Z err: #5 transferring context: 12.42MB 0.1s done
+2026-09-18T02:46:43.6761390Z err: #5 DONE 0.2s
+2026-09-18T02:46:43.6761811Z err: #6 [deps 5/6] COPY prisma ./prisma/
+2026-09-18T02:46:43.6762239Z err: #6 CACHED
+2026-09-18T02:46:43.6762805Z err: #7 [deps 2/6] RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+2026-09-18T02:46:43.6763404Z err: #7 CACHED
+2026-09-18T02:46:43.6763775Z err: #8 [deps 3/6] WORKDIR /app
+2026-09-18T02:46:43.6764273Z err: #8 CACHED
+2026-09-18T02:46:43.6764995Z err: #9 [builder 4/7] COPY --from=deps /app/node_modules ./node_modules
+2026-09-18T02:46:43.6765594Z err: #9 CACHED
+2026-09-18T02:46:43.6765957Z err: #10 [builder 5/7] COPY . .
+2026-09-18T02:46:43.6766345Z err: #10 CACHED
+2026-09-18T02:46:43.6766804Z err: #11 [runner 4/8] COPY --from=builder /app/node_modules ./node_modules
+2026-09-18T02:46:43.6767309Z err: #11 CACHED
+2026-09-18T02:46:43.6767736Z err: #12 [runner 7/8] COPY --from=builder /app/prisma ./prisma
+2026-09-18T02:46:43.6768426Z err: #12 CACHED
+2026-09-18T02:46:43.6787174Z err: #13 [deps 4/6] COPY package*.json ./
+2026-09-18T02:46:43.6787633Z err: #13 CACHED
+2026-09-18T02:46:43.6788042Z err: #14 [builder 7/7] RUN npm run build
+2026-09-18T02:46:43.6788466Z err: #14 CACHED
+2026-09-18T02:46:43.6788853Z err: #15 [deps 6/6] RUN npm ci
+2026-09-18T02:46:43.6789232Z err: #15 CACHED
+2026-09-18T02:46:43.6789610Z err: #16 [builder 6/7] RUN npx prisma generate
+2026-09-18T02:46:43.6790036Z err: #16 CACHED
+2026-09-18T02:46:43.6790499Z err: #17 [runner 6/8] COPY --from=builder /app/package.json ./package.json
+2026-09-18T02:46:43.6791010Z err: #17 CACHED
+2026-09-18T02:46:43.6791425Z err: #18 [runner 5/8] COPY --from=builder /app/dist ./dist
+2026-09-18T02:46:43.6791873Z err: #18 CACHED
+2026-09-18T02:46:43.6792493Z err: #19 [runner 8/8] RUN mkdir -p /app/public/uploads/insumos /app/public/uploads/gastos /app/public/uploads/asistencia
+2026-09-18T02:46:43.6793177Z err: #19 CACHED
+2026-09-18T02:46:43.6793539Z err: #20 exporting to image
+2026-09-18T02:46:43.6793949Z err: #20 exporting layers done
+2026-09-18T02:46:43.6794553Z err: #20 writing image sha256:66af9931fa5f3d4bee7c41d489353b9434820af9b77107d8c6239ba63a316925 done
+2026-09-18T02:46:43.6795673Z err: #20 naming to docker.io/library/qhubomor-backend done
+2026-09-18T02:46:43.6796138Z err: #20 DONE 0.0s
+2026-09-18T02:46:43.6821147Z out: Deteniendo contenedor anterior...
+2026-09-18T02:46:44.4346678Z out: qhubomor-backend-app
+2026-09-18T02:46:44.4584417Z out: qhubomor-backend-app
+2026-09-18T02:46:44.4637769Z out: Sincronizando esquema de base de datos...
+2026-09-18T02:46:45.5202122Z out: Prisma schema loaded from prisma/schema.prisma
+2026-09-18T02:46:45.5259197Z out: Datasource "db": PostgreSQL database "Dbreactnative", schema "public" at "100.42.185.2:8003"
+2026-09-18T02:46:45.7503474Z out: The database is already in sync with the Prisma schema.
+2026-09-18T02:46:45.7507199Z out: Running generate... (Use --skip-generate to skip the generators)
+2026-09-18T02:46:46.1739717Z out: [2K[1A[2K[GRunning generate... - Prisma Client
+2026-09-18T02:46:46.6465850Z out: [2K[1A[2K[G✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 472ms
+2026-09-18T02:46:46.8794103Z err: npm notice
+2026-09-18T02:46:46.8794976Z err: npm notice New major version of npm available! 10.8.2 -> 12.0.2
+2026-09-18T02:46:46.8795672Z err: npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+2026-09-18T02:46:46.8796370Z err: npm notice To update run: npm install -g npm@12.0.2
+2026-09-18T02:46:46.8796837Z err: npm notice
+2026-09-18T02:46:47.0771492Z out: Levantando nuevo contenedor...
+2026-09-18T02:46:47.1072156Z out: 596d8b81cca7fd4bb59bffe7cc7318ceb2c9ef09e31915d8db235642edd0d9c0
+2026-09-18T02:46:47.2641466Z out: ¡Despliegue completado exitosamente!
+2026-09-18T02:46:47.2642595Z out: 🚀 Desplegando Backend para: restaurante2 en api-restaurante2.autosystemprojects.site:8071
+2026-09-18T02:46:47.9809713Z out: backend-restaurante2
+2026-09-18T02:46:48.0036032Z out: backend-restaurante2
+2026-09-18T02:46:48.0082435Z out: Sincronizando BD para restaurante2...
+2026-09-18T02:46:48.9093595Z out: Prisma schema loaded from prisma/schema.prisma
+2026-09-18T02:46:48.9150578Z out: Datasource "db": PostgreSQL database "qhubomor_restaurante2", schema "public" at "100.42.185.2:8004"
+2026-09-18T02:46:49.0283271Z out: The database is already in sync with the Prisma schema.
+2026-09-18T02:46:49.0288432Z out: Running generate... (Use --skip-generate to skip the generators)
+2026-09-18T02:46:49.3840679Z out: [2K[1A[2K[GRunning generate... - Prisma Client
+2026-09-18T02:46:49.8678480Z out: [2K[1A[2K[G✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 481ms
+2026-09-18T02:46:50.0844546Z err: npm notice
+2026-09-18T02:46:50.0845491Z err: npm notice New major version of npm available! 10.8.2 -> 12.0.2
+2026-09-18T02:46:50.0846228Z err: npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+2026-09-18T02:46:50.0846912Z err: npm notice To update run: npm install -g npm@12.0.2
+2026-09-18T02:46:50.0847450Z err: npm notice
+2026-09-18T02:46:50.4422252Z out: 67cc27c5e8455426214ab59b6b932d8be725f6151e48932b8d88b32e9fab8678
+2026-09-18T02:46:50.5846548Z out: 🚀 Configurando Nginx para api-restaurante2.autosystemprojects.site en el puerto 8071...
+2026-09-18T02:46:50.5856273Z out: 📝 Archivo de configuración ya existe. Asegurando que el puerto sea el correcto...
+2026-09-18T02:46:50.6652102Z err: nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+2026-09-18T02:46:50.6652821Z err: nginx: configuration file /etc/nginx/nginx.conf test is successful
+2026-09-18T02:46:50.6982532Z out: ✅ Nginx recargado.
+2026-09-18T02:46:50.6983521Z out: 🔄 Certificado SSL ya existe para api-restaurante2.autosystemprojects.site.
+2026-09-18T02:46:50.6990412Z out: Renovando si es necesario...
+2026-09-18T02:46:51.3575368Z out: ⏰ Configurando renovación automática de SSL...
+2026-09-18T02:46:51.3801865Z out: 🎉 ¡Configuración de Nginx y SSL completada exitosamente!
+2026-09-18T02:46:51.3803001Z out:    - Dominio: https://api-restaurante2.autosystemprojects.site
+2026-09-18T02:46:51.3803894Z out:    - Puerto interno: 8071
+2026-09-18T02:46:51.3804565Z out:    - Email de Let's Encrypt: jonnymejia62@gmail.com
+2026-09-18T02:46:51.3806639Z out: ✅ Cliente restaurante2 desplegado en https://api-restaurante2.autosystemprojects.site
+2026-09-18T02:46:51.3807732Z out: 🚀 Desplegando Backend para: fogata en api-fogata.autosystemprojects.site:8072
+2026-09-18T02:46:51.4029251Z err: Error response from daemon: No such container: backend-fogata
+2026-09-18T02:46:51.4261033Z err: Error response from daemon: No such container: backend-fogata
+2026-09-18T02:46:51.4283981Z out: Sincronizando BD para fogata...
+2026-09-18T02:46:52.5115501Z out: Prisma schema loaded from prisma/schema.prisma
+2026-09-18T02:46:52.5182311Z out: Datasource "db": PostgreSQL database "qhubomor_fogata", schema "public" at "100.42.185.2:8005"
+2026-09-18T02:46:52.8883802Z out: 🚀  Your database is now in sync with your Prisma schema. Done in 316ms
+2026-09-18T02:46:52.8886410Z out: Running generate... (Use --skip-generate to skip the generators)
+2026-09-18T02:46:53.1742057Z out: [2K[1A[2K[GRunning generate... - Prisma Client
+2026-09-18T02:46:53.5350046Z out: [2K[1A[2K[G✔ Generated Prisma Client (v5.22.0) to ./node_modules/@prisma/client in 359ms
+2026-09-18T02:46:53.7512222Z err: npm notice
+2026-09-18T02:46:53.7512768Z err: npm notice New major version of npm available! 10.8.2 -> 12.0.2
+2026-09-18T02:46:53.7513456Z err: npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+2026-09-18T02:46:53.7514063Z err: npm notice To update run: npm install -g npm@12.0.2
+2026-09-18T02:46:53.7514520Z err: npm notice
+2026-09-18T02:46:54.0564198Z out: 560ef485b7eef6da935b0e0c9106ab7804b3dd3456864f297a763c4fecb178dd
+2026-09-18T02:46:54.2825019Z err: docker: Error response from daemon: failed to set up container networking: driver failed programming external connectivity on endpoint backend-fogata (09af4aff8b0ee1167d8465d84a3e3229d63762199baae2dca861cb245058c8a8): Bind for 0.0.0.0:8072 failed: port is already allocated
+2026-09-18T02:46:54.2826426Z err: Run 'docker run --help' for more information
+2026-09-18T02:46:54.2833256Z 2026/09/18 02:46:54 Process exited with status 125
+2026-09-18T02:46:54.3580338Z Cleaning up orphan processes
+2026-09-18T02:46:36.1286999Z Publicación de imagen: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260907.300

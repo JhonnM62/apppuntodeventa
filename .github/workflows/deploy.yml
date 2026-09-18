@@ -97,6 +97,7 @@ jobs:
               # ENV_EXTRA puede incluir variables adicionales del frontend
               printf '%s\n' "$ENV_EXTRA" > /root/frontend-qhubomor/.env.$CLIENT_ID
               echo "EXPO_PUBLIC_API_URL=$API_URL" >> /root/frontend-qhubomor/.env.$CLIENT_ID
+              echo "EXPO_PUBLIC_APP_VARIANT=$CLIENT_ID" >> /root/frontend-qhubomor/.env.$CLIENT_ID
 
               # Copiar el .env al directorio raíz para que Docker lo tome en el build
               cp /root/frontend-qhubomor/.env.$CLIENT_ID /root/frontend-qhubomor/.env

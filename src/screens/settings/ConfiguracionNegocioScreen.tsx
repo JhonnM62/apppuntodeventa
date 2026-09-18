@@ -11,6 +11,7 @@ import { getConfiguracion, updateConfiguracion, getConfiguracionWhatsapp, update
 import api, { getConfiguracionIA, updateConfiguracionIA } from '../../services/api';
 import { Picker } from '@react-native-picker/picker';
 import divipolaData from '../../data/divipola';
+import { APP_CONFIG } from '../../constants/app.config';
 
 let Location: any;
 try {
@@ -31,7 +32,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const [modoOperacion, setModoOperacion] = useState('GENERAL');
   
   // Datos comerciales
-  const [nombreComercial, setNombreComercial] = useState('Q HUBO MOR');
+  const [nombreComercial, setNombreComercial] = useState(APP_CONFIG.ticketName);
   const [nit, setNit] = useState('');
   const [direccion, setDireccion] = useState('');
   const [telefono, setTelefono] = useState('');
@@ -356,7 +357,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             style={styles.input}
             value={nombreComercial}
             onChangeText={setNombreComercial}
-            placeholder="Ej. Q HUBO MOR"
+            placeholder={`Ej. ${APP_CONFIG.ticketName}`}
           />
 
           <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>

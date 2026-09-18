@@ -13,9 +13,22 @@ module.exports = ({ config }) => {
     return {
       ...config,
       name: "Fogata POS",
+      icon: "./assets/icon-fogata.png",
+      splash: {
+        ...config.splash,
+        image: "./assets/splash-icon-fogata.png"
+      },
+      web: {
+        ...config.web,
+        favicon: "./assets/favicon-fogata.png"
+      },
       android: {
         ...config.android,
-        package: "com.anonymous.fogata"
+        package: "com.anonymous.fogata",
+        adaptiveIcon: {
+          foregroundImage: "./assets/adaptive-icon-fogata.png",
+          backgroundColor: "#ffffff"
+        }
       }
     };
   }

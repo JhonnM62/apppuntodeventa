@@ -27,7 +27,7 @@ docker run -d --name postgres-fogata -e POSTGRES_USER=postgres -e POSTGRES_PASSW
    ```yaml
             deploy_new_client \
               "fogata" \
-              "8081" \
+              "8073" \
               "api-fogata.autosystemprojects.site" \
               "${{ secrets.ENV_BACKEND_FOGATA }}"
    ```
@@ -45,7 +45,7 @@ docker run -d --name postgres-fogata -e POSTGRES_USER=postgres -e POSTGRES_PASSW
    ```yaml
             deploy_new_client_web \
               "fogata" \
-              "8082" \
+              "8074" \
               "app-fogata.autosystemprojects.site" \
               "https://api-fogata.autosystemprojects.site/api/v1" \
               "${{ secrets.ENV_FRONTEND_FOGATA }}"
@@ -66,22 +66,45 @@ Asegúrate de ir a tu proveedor de dominios (donde compraste `autosystemprojects
 Para generar una APK independiente (para que no sobreescriba las otras apps en el mismo celular), debes editar dos archivos en tu código frontend:
 
 **1. Archivo `app.config.js`:**
-Debes agregar un bloque `if` para tu nueva app antes del `return config;` final. Por ejemplo:
+Debes agregar un bloque `if` para tu nueva app antes del `return config;` final. Aquí también puedes decirle qué ícono usar para la APK. Por ejemplo:
 ```javascript
   if (process.env.APP_VARIANT === 'fogata') {
     return {
       ...config,
       name: "Fogata POS",
+      icon: "./assets/icon-fogata.png",
       android: {
         ...config.android,
-        package: "com.anonymous.fogata"
+        package: "com.anonymous.fogata",
+        adaptiveIcon: {
+          foregroundImage: "./assets/adaptive-icon-fogata.png",
+          backgroundColor: "#ffffff"
+        }
       }
     };
   }
 ```
 *(Nota: La primera aplicación "Granizados" no necesita bloque `if` porque utiliza los datos por defecto que vienen en el archivo `app.json`. Las apps adicionales sí necesitan su propio bloque).*
 
-**2. Archivo `eas.json`:**
+**2. Personalizar los Iconos (Imágenes)**
+Para que el sistema tome tus nuevos íconos en Android y en la Web, debes agregar estas imágenes en la carpeta `assets` de tu código (reemplazando `fogata` por el nombre del nuevo cliente):
+- `icon-fogata.png`: Debe medir **1024x1024 píxeles** (formato PNG, cuadrado). Ícono principal.
+- `adaptive-icon-fogata.png`: Debe medir **1024x1024 píxeles** (formato PNG, con tu logo en el centro y fondo transparente/color).
+- `splash-icon-fogata.png`: Debe medir **1242x2436 píxeles** o ser cuadrado de gran tamaño (formato PNG). Es la pantalla de carga de la App móvil.
+- `favicon-fogata.png`: Debe medir **48x48 o 192x192 píxeles** (formato PNG, cuadrado). Es el ícono pequeñito que sale en la pestaña del navegador web.
+
+**3. Personalizar el Nombre y la Letra (UI y Web)**
+Abre el archivo `src/constants/app.config.ts`. Allí centralizamos la lógica visual:
+```typescript
+export const APP_CONFIG = {
+  name: APP_VARIANT === 'fogata' ? 'Fogata POS' : "Q'hubo Mor",
+  logoLetter: APP_VARIANT === 'fogata' ? 'F' : 'Q',
+  ticketName: APP_VARIANT === 'fogata' ? 'FOGATA' : 'Q HUBO MOR',
+};
+```
+Simplemente añade otro `? :` o expande la condición para soportar un nuevo restaurante (ejemplo: `APP_VARIANT === 'restaurante4' ? 'Nuevo POS' : ...`).
+
+**4. Archivo `eas.json`:**
 Agrega un nuevo perfil (ej. `"fogata"`) dentro del bloque `"build"`, copiándolo de uno existente y cambiando el `APP_VARIANT` y la URL:
 ```json
     "fogata": {

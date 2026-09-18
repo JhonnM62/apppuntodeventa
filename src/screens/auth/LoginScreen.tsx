@@ -10,6 +10,7 @@ import { Text } from '../../components/ui/text';
 import { Button } from '../../components/ui/button';
 import { Link } from '../../components/ui/link';
 import useAuthStore from '../../store/useAuthStore';
+import { APP_CONFIG } from '../../constants/app.config';
 
 interface LoginFormData {
   email: string;
@@ -88,9 +89,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
         <View className="flex-1 justify-center">
           <View className="items-center px-6 mb-6">
             <View className="w-20 h-20 rounded-3xl bg-primary justify-center items-center shadow-md shadow-primary/30">
-              <Text className="text-primary-foreground font-extrabold text-4xl">Q</Text>
+              <Text className="text-primary-foreground font-extrabold text-4xl">{APP_CONFIG.logoLetter}</Text>
             </View>
-            <Text className="text-2xl font-bold mt-5 text-center text-foreground">Q'hubo Mor</Text>
+            <Text className="text-2xl font-bold mt-5 text-center text-foreground">{APP_CONFIG.name}</Text>
             <Text className="mt-1 text-center uppercase tracking-widest text-xs text-muted-foreground">
               Sistema de Punto de Venta
             </Text>
@@ -201,9 +202,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ navigation }) => {
             </Card>
           </Animated.View>
 
-          <Text className="text-center mt-10 mb-4 text-muted-foreground text-xs">
-            © 2026 Q'hubo Mor. Todos los derechos reservados.
-          </Text>
+          <View className="py-4 items-center mb-6">
+            <Text className="text-xs text-muted-foreground">
+              © {new Date().getFullYear()} {APP_CONFIG.name}. Todos los derechos reservados.
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

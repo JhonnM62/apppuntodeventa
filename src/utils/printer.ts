@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { getConfiguracion } from '../services/configuracion';
+import { APP_CONFIG } from '../constants/app.config';
 
 let BLEPrinter: any = null;
 let currentConnectedMac: string | null = null;
@@ -144,7 +145,7 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
     const { nombre, nit, direccion, telefono } = data.comercio;
     payload += ESC_CMD.ALIGN_CT;
     payload += ESC_CMD.TXT_BOLD_ON;
-    payload += alignCenter(cleanText(nombre || 'Q HUBO MOR'), width) + '\n';
+    payload += alignCenter(cleanText(nombre || APP_CONFIG.ticketName), width) + '\n';
     payload += ESC_CMD.TXT_NORMAL;
     payload += ESC_CMD.TXT_BOLD_OFF;
     if (nit) payload += alignCenter(cleanText(`NIT: ${nit}`), width) + '\n';
@@ -154,7 +155,7 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
   } else {
     payload += ESC_CMD.ALIGN_CT;
     payload += ESC_CMD.TXT_BOLD_ON;
-    payload += alignCenter(cleanText('Q HUBO MOR'), width) + '\n';
+    payload += alignCenter(cleanText(APP_CONFIG.ticketName), width) + '\n';
     payload += ESC_CMD.TXT_NORMAL;
     payload += ESC_CMD.TXT_BOLD_OFF;
     payload += alignCenter(cleanText('SISTEMA POS'), width) + '\n';
