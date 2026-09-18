@@ -1798,6 +1798,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             showsHorizontalScrollIndicator={false}
             style={styles.categoriesScroll}
             contentContainerStyle={styles.categoriesContent}
+            keyboardShouldPersistTaps="handled"
           >
             {categories.map((cat, index) => renderCategoryChip(cat, index))}
           </ScrollView>
@@ -1828,6 +1829,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                 // @ts-ignore
                 estimatedItemSize={200}
                 contentContainerStyle={{ paddingBottom: 100 }}
+                keyboardShouldPersistTaps="handled"
               />
             </View>
           )}
