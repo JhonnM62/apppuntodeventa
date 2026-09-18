@@ -135,4 +135,10 @@ jobs:
               "app-restaurante2.autosystemprojects.site" \
               "https://api-restaurante2.autosystemprojects.site/api/v1" \
               "${{ secrets.ENV_FRONTEND_RESTAURANTE2 }}"
+            deploy_new_client_web \
+              "fogata" \
+              "8073" \
+              "app-fogata.autosystemprojects.site" \
+              "https://api-fogata.autosystemprojects.site/api/v1" \
+              "${{ secrets.ENV_FRONTEND_FOGATA }}"
 
