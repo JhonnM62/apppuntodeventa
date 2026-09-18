@@ -806,7 +806,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         <Animated.View style={[styles.modalContent, { 
           transform: [{ translateY: slideAnim }], 
           maxHeight: windowHeight * 0.94,
-          marginBottom: Platform.OS === 'android' ? keyboardHeight : 0
+          marginBottom: (Platform.OS === 'android' || Platform.OS === 'web') ? keyboardHeight : 0
         }]}>
           <View style={styles.handle} />
 

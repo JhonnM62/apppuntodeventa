@@ -1,25 +1,41 @@
 import { useEffect, useState } from 'react';
-import { Keyboard, KeyboardEvent } from 'react-native';
+import { Keyboard, KeyboardEvent, Platform } from 'react-native';
 
 export const useKeyboardHeight = () => {
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
-    const onKeyboardDidShow = (e: KeyboardEvent) => {
-      setKeyboardHeight(e.endCoordinates.height);
-    };
+    if (Platform.OS === 'web') {
+      const vv = window.visualViewport;
+      if (!vv) return;
 
-    const onKeyboardDidHide = () => {
-      setKeyboardHeight(0);
-    };
+      const onResize = () => {
+        // En móviles, visualViewport.height disminuye cuando se abre el teclado
+        // Asumimos que window.innerHeight representa el total (aunque a veces varía, vv es más confiable)
+        const diff = window.innerHeight - vv.height;
+        // Si la diferencia es significativa (ej. > 100), es el teclado
+        setKeyboardHeight(diff > 100 ? diff : 0);
+      };
 
-    const showSubscription = Keyboard.addListener('keyboardDidShow', onKeyboardDidShow);
-    const hideSubscription = Keyboard.addListener('keyboardDidHide', onKeyboardDidHide);
+      vv.addEventListener('resize', onResize);
+      return () => vv.removeEventListener('resize', onResize);
+    } else {
+      const onKeyboardDidShow = (e: KeyboardEvent) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      };
 
-    return () => {
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
+      const onKeyboardDidHide = () => {
+        setKeyboardHeight(0);
+      };
+
+      const showSubscription = Keyboard.addListener('keyboardDidShow', onKeyboardDidShow);
+      const hideSubscription = Keyboard.addListener('keyboardDidHide', onKeyboardDidHide);
+
+      return () => {
+        showSubscription.remove();
+        hideSubscription.remove();
+      };
+    }
   }, []);
 
   return keyboardHeight;
