@@ -592,14 +592,23 @@ const PedidosScreen = () => {
     });
   }, [cachedVentas]);
 
+  const fetchIdRef = useRef<number>(0);
+
   const fetchVentas = useCallback(async (force = false) => {
     if (!force && !shouldRefetchVentas() && cachedVentas && Array.isArray(cachedVentas) && cachedVentas.length > 0) {
       setLoading(false);
       return;
     }
+    const currentFetchId = Date.now();
+    fetchIdRef.current = currentFetchId;
+
     try {
       // Pedimos datos frescos de ventas
       const data = await getSales({ limit: 500 });
+      if (fetchIdRef.current !== currentFetchId) {
+        console.log('[Pedidos] Ignorando respuesta stale de getSales');
+        return;
+      }
       // Extraemos array si viene envuelto en objeto { data: [...], meta: {...} }
       const ventasData = data?.data || data;
       if (Array.isArray(ventasData)) {
