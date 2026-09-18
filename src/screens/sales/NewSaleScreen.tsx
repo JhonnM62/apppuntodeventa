@@ -1878,14 +1878,12 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                   <Text style={styles.clearCartText}>Limpiar</Text>
                 </TouchableOpacity>
               </View>
-              <View style={{ maxHeight: 300 }}>
-                <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
-                  {cart.map((item, index) => (
-                    <View key={`${item.IDproductos}-${index}`}>
-                      {renderCartItem({ item })}
-                    </View>
-                  ))}
-                </ScrollView>
+              <View style={{ paddingBottom: 10 }}>
+                {cart.map((item, index) => (
+                  <View key={`${item.IDproductos}-${index}`}>
+                    {renderCartItem({ item })}
+                  </View>
+                ))}
               </View>
             </View>
           )}
