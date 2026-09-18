@@ -780,7 +780,82 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         clearCart();
         setSelectedMesa(null);
 
-        // Eliminamos el setTimeout optimista para esperar a la respuesta del backend
+        
+        // IMPRESIÓN OPTIMISTA PARA VENTA EXISTENTE
+        setTimeout(() => {
+          const finalMethod = payload.venta.medioDePago;
+          const printStore = usePrinterStore.getState();
+          if (printStore.shouldPrintComanda(paymentData.estado) || printStore.shouldPrintFactura(paymentData.estado)) {
+            let cleanOrderId = editingSaleId;
+            if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
+              cleanOrderId = cleanOrderId.substring(7);
+            }
+
+            let nuevosProductos: any[] = [];
+            let productosAnteriores: any[] = [];
+            
+            if (isEditing && editingVenta) {
+               const originalQtyMap: Record<string, number> = {};
+               const preparadaQtyMap: Record<string, number> = {};
+               editingVenta.ordenVentas?.forEach((ov: any) => {
+                 const id = ov.producto?.IDproductos || ov.productoId || ov.IDorderventas;
+                 originalQtyMap[id] = (originalQtyMap[id] || 0) + (ov.cantidad || 1);
+                 preparadaQtyMap[id] = (preparadaQtyMap[id] || 0) + (ov.cantidadPreparada || 0);
+               });
+
+               payload.productos.forEach(item => {
+                 const id = item.productoId;
+                 const originalQty = originalQtyMap[id as string] || 0;
+                 const newQty = item.cantidad - originalQty;
+
+                 if (newQty > 0) {
+                   nuevosProductos.push({
+                     cantidad: newQty,
+                     nombre: item.nombre,
+                     precioUnitario: item.precio,
+                     subtotal: item.precio * newQty,
+                     modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
+                   });
+                 }
+
+                 if (originalQty > 0) {
+                   const prevQty = Math.min(originalQty, item.cantidad);
+                   productosAnteriores.push({
+                     cantidad: prevQty,
+                     nombre: item.nombre,
+                     precioUnitario: item.precio,
+                     subtotal: item.precio * prevQty,
+                     modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
+                     cantidadPreparada: preparadaQtyMap[id as string] || 0,
+                   });
+                 }
+               });
+            } else {
+               nuevosProductos = payload.productos.map(item => ({
+                 cantidad: item.cantidad,
+                 nombre: item.nombre,
+                 precioUnitario: item.precio,
+                 subtotal: item.precioTotal,
+                 modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
+               }));
+            }
+
+            const ticketData = {
+              orderId: cleanOrderId,
+              fecha: new Date().toLocaleString('es-CO'),
+              total: payload.venta.totalInput,
+              productos: nuevosProductos,
+              productosAnteriores: productosAnteriores,
+              estado: paymentData.estado,
+              metodoPago: finalMethod,
+              efectivoRecibido: payload.venta.efectivoRecibido,
+              devueltas: payload.venta.devueltas,
+              vendedor: useAuthStore.getState().user?.nombre || 'Caja'
+            };
+            printStore.printTicket(ticketData);
+          }
+        }, 0);
+
 
         import('../../services/sales').then(async ({ updateVentaCompleta }) => {
           try {
@@ -799,78 +874,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               productos: payload.productos 
             });
 
-            // IMMPRESIÓN CON DATOS REALES DEL BACKEND
-            const finalMethod = payload.venta.medioDePago;
-            const printStore = usePrinterStore.getState();
-            if (printStore.shouldPrintComanda(paymentData.estado) || printStore.shouldPrintFactura(paymentData.estado)) {
-              let cleanOrderId = ventaActualizada?.pedido || editingSaleId;
-              if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
-                cleanOrderId = cleanOrderId.substring(7);
-              }
-
-              let nuevosProductos: any[] = [];
-              let productosAnteriores: any[] = [];
-              
-              if (isEditing && editingVenta) {
-                 const originalQtyMap: Record<string, number> = {};
-                 const preparadaQtyMap: Record<string, number> = {};
-                 editingVenta.ordenVentas?.forEach((ov: any) => {
-                   const id = ov.producto?.IDproductos || ov.productoId || ov.IDorderventas;
-                   originalQtyMap[id] = (originalQtyMap[id] || 0) + (ov.cantidad || 1);
-                   preparadaQtyMap[id] = (preparadaQtyMap[id] || 0) + (ov.cantidadPreparada || 0);
-                 });
-
-                 payload.productos.forEach(item => {
-                   const id = item.productoId;
-                   const originalQty = originalQtyMap[id as string] || 0;
-                   const newQty = item.cantidad - originalQty;
-
-                   if (newQty > 0) {
-                     nuevosProductos.push({
-                       cantidad: newQty,
-                       nombre: item.nombre,
-                       precioUnitario: item.precio,
-                       subtotal: item.precio * newQty,
-                       modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
-                     });
-                   }
-
-                   if (originalQty > 0) {
-                     const prevQty = Math.min(originalQty, item.cantidad);
-                     productosAnteriores.push({
-                       cantidad: prevQty,
-                       nombre: item.nombre,
-                       precioUnitario: item.precio,
-                       subtotal: item.precio * prevQty,
-                       modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
-                       cantidadPreparada: preparadaQtyMap[id as string] || 0,
-                     });
-                   }
-                 });
-              } else {
-                 nuevosProductos = payload.productos.map(item => ({
-                   cantidad: item.cantidad,
-                   nombre: item.nombre,
-                   precioUnitario: item.precio,
-                   subtotal: item.precioTotal,
-                   modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
-                 }));
-              }
-
-              const ticketData = {
-                orderId: cleanOrderId,
-                fecha: new Date().toLocaleString('es-CO'),
-                total: payload.venta.totalInput,
-                productos: nuevosProductos,
-                productosAnteriores: productosAnteriores,
-                estado: paymentData.estado,
-                metodoPago: finalMethod,
-                efectivoRecibido: payload.venta.efectivoRecibido,
-                devueltas: payload.venta.devueltas,
-                vendedor: useAuthStore.getState().user?.nombre || 'Caja'
-              };
-              printStore.printTicket(ticketData);
-            }
+            
 
             setTimeout(() => {
               Toast.show({
@@ -932,6 +936,34 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       setSelectedMesa(null);
       setSelectedCliente(null);
 
+      // IMPRESIÓN OPTIMISTA CON CÁLCULO LOCAL
+      setTimeout(() => {
+         const finalMethod = payload.venta.medioDePago;
+         const printStore = usePrinterStore.getState();
+         if (printStore.shouldPrintComanda(payload.venta.estado) || printStore.shouldPrintFactura(payload.venta.estado)) {
+           const cleanOrderId = useSalesStore.getState().calculateNextPedidoNumber(selectedMesa?.nombre || 'V.R', useAuthStore.getState().user?.nombre || 'Caja');
+
+           const ticketData = {
+             orderId: cleanOrderId,
+             fecha: new Date().toLocaleString('es-CO'),
+             total: payload.venta.totalInput,
+             productos: payload.productos.map(item => ({
+               cantidad: item.cantidad,
+               nombre: item.nombre,
+               precioUnitario: item.precio,
+               subtotal: item.precioTotal,
+               modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
+             })),
+             estado: payload.venta.estado,
+             metodoPago: finalMethod,
+             efectivoRecibido: payload.venta.efectivoRecibido,
+             devueltas: payload.venta.devueltas,
+             vendedor: useAuthStore.getState().user?.nombre || 'Caja'
+           };
+           printStore.printTicket(ticketData);
+         }
+      }, 0);
+
       // Proceso de backend asíncrono (Promesa huérfana para no bloquear)
       createSale(payload)
         .then((response: any) => {
@@ -949,35 +981,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             ventaId: ventaCreada?.IDventas || pedidoGenerado,
           };
           emitNuevaOrden(ordenData);
-
-          // IMMPRESIÓN CON DATOS REALES DEL BACKEND
-          const finalMethod = payload.venta.medioDePago;
-          const printStore = usePrinterStore.getState();
-          if (printStore.shouldPrintComanda(payload.venta.estado) || printStore.shouldPrintFactura(payload.venta.estado)) {
-            let cleanOrderId = pedidoGenerado;
-            if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
-              cleanOrderId = cleanOrderId.substring(7);
-            }
-
-            const ticketData = {
-              orderId: cleanOrderId,
-              fecha: new Date().toLocaleString('es-CO'),
-              total: payload.venta.totalInput,
-              productos: payload.productos.map(item => ({
-                cantidad: item.cantidad,
-                nombre: item.nombre,
-                precioUnitario: item.precio,
-                subtotal: item.precioTotal,
-                modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
-              })),
-              estado: payload.venta.estado,
-              metodoPago: finalMethod,
-              efectivoRecibido: payload.venta.efectivoRecibido,
-              devueltas: payload.venta.devueltas,
-              vendedor: useAuthStore.getState().user?.nombre || 'Caja'
-            };
-            printStore.printTicket(ticketData);
-          }
           
           setTimeout(() => {
             Toast.show({
@@ -1087,78 +1090,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               productos: payload.productos
             });
 
-            // IMMPRESIÓN CON DATOS REALES DEL BACKEND
-            const finalMethod = data.medioDePago || editingVenta?.medioDePago || 'PENDIENTE';
-            const printStore = usePrinterStore.getState();
-            if (printStore.shouldPrintComanda(data.estado) || printStore.shouldPrintFactura(data.estado)) {
-              let cleanOrderId = ventaActualizada?.pedido || editingSaleId;
-              if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
-                cleanOrderId = cleanOrderId.substring(7);
-              }
-
-              let nuevosProductos: any[] = [];
-              let productosAnteriores: any[] = [];
-              
-              if (isEditing && editingVenta) {
-                 const originalQtyMap: Record<string, number> = {};
-                 const preparadaQtyMap: Record<string, number> = {};
-                 editingVenta.ordenVentas?.forEach((ov: any) => {
-                   const id = ov.producto?.IDproductos || ov.productoId || ov.IDorderventas;
-                   originalQtyMap[id] = (originalQtyMap[id] || 0) + (ov.cantidad || 1);
-                   preparadaQtyMap[id] = (preparadaQtyMap[id] || 0) + (ov.cantidadPreparada || 0);
-                 });
-
-                 payload.productos.forEach(item => {
-                   const id = item.productoId;
-                   const originalQty = originalQtyMap[id as string] || 0;
-                   const newQty = item.cantidad - originalQty;
-
-                   if (newQty > 0) {
-                     nuevosProductos.push({
-                       cantidad: newQty,
-                       nombre: item.nombre,
-                       precioUnitario: item.precio,
-                       subtotal: item.precio * newQty,
-                       modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
-                     });
-                   }
-
-                   if (originalQty > 0) {
-                     const prevQty = Math.min(originalQty, item.cantidad);
-                     productosAnteriores.push({
-                       cantidad: prevQty,
-                       nombre: item.nombre,
-                       precioUnitario: item.precio,
-                       subtotal: item.precio * prevQty,
-                       modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
-                       cantidadPreparada: preparadaQtyMap[id as string] || 0,
-                     });
-                   }
-                 });
-              } else {
-                 nuevosProductos = payload.productos.map(item => ({
-                   cantidad: item.cantidad,
-                   nombre: item.nombre,
-                   precioUnitario: item.precio,
-                   subtotal: item.precioTotal,
-                   modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
-                 }));
-              }
-
-              const ticketData = {
-                orderId: cleanOrderId,
-                fecha: new Date().toLocaleString('es-CO'),
-                total: payload.venta.totalInput,
-                productos: nuevosProductos,
-                productosAnteriores: productosAnteriores,
-                estado: data.estado,
-                metodoPago: finalMethod,
-                efectivoRecibido: payload.venta.efectivoRecibido,
-                devueltas: payload.venta.devueltas,
-                vendedor: useAuthStore.getState().user?.nombre || 'Caja'
-              };
-              printStore.printTicket(ticketData);
-            }
+            
 
             setPaymentModalVisible(false);
             clearCart();
@@ -1227,34 +1159,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             const ventaCreada = response?.data || response;
             const pedidoGenerado = ventaCreada?.pedido || `pedido-${Date.now()}`;
             
-            // IMMPRESIÓN CON DATOS REALES DEL BACKEND
-            const finalMethod = data.medioDePago || 'PENDIENTE';
-            const printStore = usePrinterStore.getState();
-            if (printStore.shouldPrintComanda(data.estado) || printStore.shouldPrintFactura(data.estado)) {
-              let cleanOrderId = pedidoGenerado;
-              if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
-                cleanOrderId = cleanOrderId.substring(7);
-              }
-
-              const ticketData = {
-                orderId: cleanOrderId,
-                fecha: new Date().toLocaleString('es-CO'),
-                total: payload.venta.totalInput,
-                productos: payload.productos.map(item => ({
-                  cantidad: item.cantidad,
-                  nombre: item.nombre,
-                  precioUnitario: item.precio,
-                  subtotal: item.precioTotal,
-                  modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
-                })),
-                estado: data.estado,
-                metodoPago: finalMethod,
-                efectivoRecibido: payload.venta.efectivoRecibido,
-                devueltas: payload.venta.devueltas,
-                vendedor: useAuthStore.getState().user?.nombre || 'Caja'
-              };
-              printStore.printTicket(ticketData);
-            }
+            
 
             setPaymentModalVisible(false);
             clearCart();

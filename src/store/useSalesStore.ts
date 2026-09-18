@@ -30,6 +30,7 @@ interface SalesStore {
   clearCache: () => void;
   getVentasByEstado: (estado: string) => VentaItem[];
   getPendingOrdersCount: () => number;
+  calculateNextPedidoNumber: (mesaNombre: string, userName: string) => string;
 }
 
 const CACHE_DURATION = 2 * 60 * 1000;
@@ -100,9 +101,37 @@ export const useSalesStore = create<SalesStore>()(
         const { ventas } = get();
         if (!Array.isArray(ventas)) return 0;
         return ventas.filter(v => 
-          v.estado && v.estado !== 'PAGADO' && v.estado !== 'ENTREGADO'
+          v.estado === 'en_proceso' || 
+          v.estado === 'listo'
         ).length;
       },
+
+      calculateNextPedidoNumber: (mesaNombre: string, userName: string) => {
+        const { ventas } = get();
+        let maxConsecutivo = 0;
+        const ventasArray = Array.isArray(ventas) ? ventas : [];
+        for (const venta of ventasArray) {
+          if (venta.pedido) {
+            const match = venta.pedido.match(/-(\d+)$/);
+            if (match) {
+              const num = parseInt(match[1], 10);
+              if (num > maxConsecutivo) {
+                maxConsecutivo = num;
+              }
+            }
+          }
+        }
+        const siguienteNumero = maxConsecutivo + 1;
+        const numeroConsecutivo = siguienteNumero.toString().padStart(3, '0');
+        
+        let mesaStr = 'V.R';
+        if (mesaNombre && mesaNombre !== 'V.R' && mesaNombre !== 'CAJA') {
+          mesaStr = mesaNombre; 
+        }
+
+        const inicial = userName ? userName.charAt(0).toUpperCase() : 'X';
+        return `${mesaStr}-${inicial}-${numeroConsecutivo}`;
+      }
     }),
     {
       name: 'sales-cache',
