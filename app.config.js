@@ -1,5 +1,7 @@
 module.exports = ({ config }) => {
-  if (process.env.APP_VARIANT === 'restaurante') {
+  const variant = process.env.APP_VARIANT || process.env.EXPO_PUBLIC_APP_VARIANT;
+
+  if (variant === 'restaurante') {
     return {
       ...config,
       name: "Q Hubo Mor Restaurante",
@@ -9,7 +11,7 @@ module.exports = ({ config }) => {
       }
     };
   }
-  if (process.env.APP_VARIANT === 'fogata') {
+  if (variant === 'fogata') {
     return {
       ...config,
       name: "Fogata POS",
