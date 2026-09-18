@@ -273,31 +273,26 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     if (finalIsLoading) return;
     setLocalLoading(true);
     
-    // Yield main thread to allow loader to render before heavy parent logic
-    setTimeout(async () => {
-      try {
-        const estadoActual = selectedEstado;
-        const pedidoIdActual = editingPedidoId;
-        
-        const result = await onSave({ estado: estadoActual, pedidoId: pedidoIdActual, medioDePago: method });
-        const finalOrderId = (result && 'pedidoId' in result) ? result.pedidoId : pedidoIdActual;
-        
-        // Intentar impresión automática en segundo plano
-        if (finalOrderId && finalOrderId !== 'PROCESANDO...' && !finalOrderId.startsWith('PROCESANDO')) {
-          setTimeout(() => {
-            attemptAutoPrint(estadoActual, finalOrderId).catch(err => {
-              console.log('Error en auto-print:', err);
-            });
-          }, 0);
-        }
-        
-      } catch (error) {
-        console.error('Error saving:', error);
-        Toast.show({ type: 'error', text1: 'Error', text2: 'Hubo un problema al guardar la orden', position: 'top' });
-      } finally {
-        setLocalLoading(false);
+    try {
+      const estadoActual = selectedEstado;
+      const pedidoIdActual = editingPedidoId;
+      
+      const result = await onSave({ estado: estadoActual, pedidoId: pedidoIdActual, medioDePago: method });
+      const finalOrderId = (result && 'pedidoId' in result) ? result.pedidoId : pedidoIdActual;
+      
+      // Intentar impresión automática en segundo plano
+      if (finalOrderId && finalOrderId !== 'PROCESANDO...' && !finalOrderId.startsWith('PROCESANDO')) {
+        attemptAutoPrint(estadoActual, finalOrderId).catch(err => {
+          console.log('Error en auto-print:', err);
+        });
       }
-    }, 50);
+      
+    } catch (error) {
+      console.error('Error saving:', error);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'Hubo un problema al guardar la orden', position: 'top' });
+    } finally {
+      setLocalLoading(false);
+    }
   };
 
   const handleConfirmCobrar = async () => {
@@ -310,10 +305,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     if (!onCobrar) return;
 
     setLocalLoading(true);
-    setTimeout(() => {
-      // Ejecutar lógica de interfaz de usuario de inmediato
-      onCobrarLogic().finally(() => setLocalLoading(false));
-    }, 50);
+    onCobrarLogic().finally(() => setLocalLoading(false));
   };
 
   const onCobrarLogic = async () => {
@@ -359,11 +351,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       // Si el ID es 'PROCESANDO...' (Optimistic UI), la impresión se hará desde el manejador de éxito del componente padre.
       const finalOrderId = (result && 'pedidoId' in result) ? result.pedidoId : editingPedidoId;
       if (finalOrderId && finalOrderId !== 'PROCESANDO...' && !finalOrderId.startsWith('PROCESANDO')) {
-        setTimeout(() => {
-          attemptAutoPrint(selectedEstado, finalOrderId, finalMethod as string, finalEfectivo, finalDevueltas).catch(err => {
-            console.log('Error en auto-print:', err);
-          });
-        }, 0);
+        attemptAutoPrint(selectedEstado, finalOrderId, finalMethod as string, finalEfectivo, finalDevueltas).catch(err => {
+          console.log('Error en auto-print:', err);
+        });
       }
 
     } catch (error) {

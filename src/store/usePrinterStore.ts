@@ -68,11 +68,13 @@ const usePrinterStore = create<PrinterState>()(
         }
       },
       shouldPrintComanda: (estadoOrden: string) => {
-        const config = get().configs.find((c) => c.estadoOrden === estadoOrden);
+        if (!estadoOrden) return false;
+        const config = get().configs.find((c) => c.estadoOrden?.toUpperCase() === estadoOrden.toUpperCase());
         return config ? config.imprimirComanda : false;
       },
       shouldPrintFactura: (estadoOrden: string) => {
-        const config = get().configs.find((c) => c.estadoOrden === estadoOrden);
+        if (!estadoOrden) return false;
+        const config = get().configs.find((c) => c.estadoOrden?.toUpperCase() === estadoOrden.toUpperCase());
         return config ? config.imprimirFactura : false;
       },
       printTicket: async (ticketData: any) => {
