@@ -1241,14 +1241,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           .finally(() => {
             setIsSubmitting(false);
           });
-      }); text1: 'Error',
-              text2: error?.response?.data?.message || 'Hubo un problema al guardar el pedido',
-              position: 'top',
-            });
-          })
-          .finally(() => {
-            setIsSubmitting(false);
-          });
       });
 
       return { pedidoId: 'PROCESANDO...' };
