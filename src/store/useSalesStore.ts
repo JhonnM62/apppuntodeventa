@@ -111,7 +111,7 @@ export const useSalesStore = create<SalesStore>()(
         let maxConsecutivo = 0;
         const ventasArray = Array.isArray(ventas) ? ventas : [];
         for (const venta of ventasArray) {
-          if (venta.pedido) {
+          if (venta.pedido && typeof venta.pedido === 'string') {
             const match = venta.pedido.match(/-(\d+)$/);
             if (match) {
               const num = parseInt(match[1], 10);

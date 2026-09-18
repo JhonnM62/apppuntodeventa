@@ -786,7 +786,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           const finalMethod = payload.venta.medioDePago;
           const printStore = usePrinterStore.getState();
           if (printStore.shouldPrintComanda(paymentData.estado) || printStore.shouldPrintFactura(paymentData.estado)) {
-            let cleanOrderId = editingSaleId;
+            let cleanOrderId = editingVenta?.pedido || editingSaleId;
             if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
               cleanOrderId = cleanOrderId.substring(7);
             }
@@ -795,11 +795,12 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             let productosAnteriores: any[] = [];
             
             if (isEditing && editingVenta) {
+               const isFromCarrito = editingVenta.estado === 'EN_EL_CARRITO';
                const originalQtyMap: Record<string, number> = {};
                const preparadaQtyMap: Record<string, number> = {};
                editingVenta.ordenVentas?.forEach((ov: any) => {
                  const id = ov.producto?.IDproductos || ov.productoId || ov.IDorderventas;
-                 originalQtyMap[id] = (originalQtyMap[id] || 0) + (ov.cantidad || 1);
+                 originalQtyMap[id] = isFromCarrito ? 0 : ((originalQtyMap[id] || 0) + (ov.cantidad || 1));
                  preparadaQtyMap[id] = (preparadaQtyMap[id] || 0) + (ov.cantidadPreparada || 0);
                });
 

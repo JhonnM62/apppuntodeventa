@@ -23,12 +23,24 @@
     },
     "production": {},
     "restaurante2": {
-      "distribution": "internal",
+      "extends": "production",
       "env": {
         "EXPO_PUBLIC_API_URL": "https://api-restaurante2.autosystemprojects.site/api/v1",
-        "GRADLE_OPTS": "-Dorg.gradle.jvmargs=\"-Xmx1536m -XX:MaxMetaspaceSize=512m\" -Dorg.gradle.daemon=false",
+        "NODE_OPTIONS": "--max-old-space-size=4096",
         "EAS_BUILD_MAX_WORKERS": "2",
         "APP_VARIANT": "restaurante"
+      },
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "fogata": {
+      "extends": "production",
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://api-fogata.autosystemprojects.site/api/v1",
+        "NODE_OPTIONS": "--max-old-space-size=4096",
+        "EAS_BUILD_MAX_WORKERS": "2",
+        "APP_VARIANT": "fogata"
       },
       "android": {
         "buildType": "apk"
