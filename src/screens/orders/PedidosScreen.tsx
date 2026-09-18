@@ -175,6 +175,24 @@ const formatDurationStr = (diff: number, formatAsStopwatch: boolean = false) => 
   return durStr;
 };
 
+
+const getTimerStyle = (diffMs: number, estado: string) => {
+  if (estado === 'PAGADO' || estado === 'ENTREGADO' || estado === 'CANCELADO') {
+    return { bg: '#f3f4f6', text: '#6b7280', icon: 'pause-circle-outline' as const };
+  }
+  if (estado === 'LISTO') {
+    return { bg: '#d1fae5', text: '#10b981', icon: 'checkmark-done-circle' as const };
+  }
+  const diffMins = diffMs / (1000 * 60);
+  if (diffMins < 10) {
+    return { bg: '#d1fae5', text: '#10b981', icon: 'time-outline' as const };
+  } else if (diffMins < 20) {
+    return { bg: '#fef3c7', text: '#f59e0b', icon: 'time-outline' as const };
+  } else {
+    return { bg: '#fee2e2', text: '#ef4444', icon: 'warning-outline' as const };
+  }
+};
+
 const PreparationTimer = ({ 
   registroDeTiempo, 
   preparadoAt, 
@@ -227,10 +245,17 @@ const PreparationTimer = ({
 
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
-      <Ionicons name={estado === 'LISTO' ? "checkmark-done-circle" : "time-outline"} size={14} color={estado === 'LISTO' ? "#10b981" : "#f59e0b"} style={{ marginRight: 4 }} />
-      <RNText style={{ fontSize: 12, color: estado === 'LISTO' ? "#10b981" : "#f59e0b", fontWeight: '600' }}>
-        {elapsed}
-      </RNText>
+      {(() => {
+        const style = getTimerStyle(estado === 'LISTO' && preparadoAt ? computeActiveMs(registroDeTiempo, new Date(preparadoAt).getTime()) : computeActiveMs(registroDeTiempo, Date.now()), estado || 'INICIADO');
+        return (
+          <>
+            <Ionicons name={style.icon as any} size={14} color={style.text} style={{ marginRight: 4 }} />
+            <RNText style={{ fontSize: 12, color: style.text, fontWeight: '600' }}>
+              {elapsed}
+            </RNText>
+          </>
+        );
+      })()}
     </View>
   );
 };
@@ -271,11 +296,34 @@ const RealtimeDurationTimer = React.memo(({ selectedVenta }: { selectedVenta: an
 
   if (!realtimeDuration) return null;
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3f4f6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16, marginTop: 4 }}>
-      <Ionicons name="time-outline" size={14} color="#4b5563" style={{ marginRight: 4 }} />
-      <RNText style={{ fontSize: 12, color: '#4b5563', fontWeight: 'bold' }}>
-        {realtimeDuration}
-      </RNText>
+    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: (() => {
+      let diff = 0;
+      if (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') {
+        const lastEntry = selectedVenta.registroDeTiempo?.[selectedVenta.registroDeTiempo.length - 1];
+        diff = lastEntry ? computeActiveMs(selectedVenta.registroDeTiempo, new Date(lastEntry.fecha_hora).getTime()) : 0;
+      } else {
+        diff = computeActiveMs(selectedVenta.registroDeTiempo, Date.now());
+      }
+      return getTimerStyle(diff, selectedVenta.estado || 'INICIADO').bg;
+    })(), paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16, marginTop: 4 }}>
+      {(() => {
+        let diff = 0;
+        if (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') {
+          const lastEntry = selectedVenta.registroDeTiempo?.[selectedVenta.registroDeTiempo.length - 1];
+          diff = lastEntry ? computeActiveMs(selectedVenta.registroDeTiempo, new Date(lastEntry.fecha_hora).getTime()) : 0;
+        } else {
+          diff = computeActiveMs(selectedVenta.registroDeTiempo, Date.now());
+        }
+        const style = getTimerStyle(diff, selectedVenta.estado || 'INICIADO');
+        return (
+          <>
+            <Ionicons name={style.icon as any} size={14} color={style.text} style={{ marginRight: 4 }} />
+            <RNText style={{ fontSize: 12, color: style.text, fontWeight: 'bold' }}>
+              {realtimeDuration}
+            </RNText>
+          </>
+        );
+      })()}
     </View>
   );
 });
