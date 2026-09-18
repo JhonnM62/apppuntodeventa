@@ -1040,6 +1040,33 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       const descuento = Math.floor(exactDiscount / 1000) * 1000;
       const finalTotal = recalcularTotal - descuento;
 
+      // IMPRESIÓN OPTIMISTA CON CÁLCULO LOCAL PARA GUARDAR PEDIDO
+      const printStore = usePrinterStore.getState();
+      if (printStore.shouldPrintComanda(data.estado) || printStore.shouldPrintFactura(data.estado)) {
+        const cleanOrderId = (isEditing && editingSaleId)
+          ? (editingVenta?.pedido || 'Editando...')
+          : useSalesStore.getState().calculateNextPedidoNumber(selectedMesa?.nombre || 'V.R', useAuthStore.getState().user?.nombre || 'Caja');
+
+        const ticketData = {
+          orderId: cleanOrderId,
+          fecha: new Date().toLocaleString('es-CO'),
+          total: finalTotal,
+          productos: cart.map(item => ({
+            cantidad: item.quantity,
+            nombre: item.nombre,
+            precioUnitario: Number(item.precioUnitario || item.Precio_Unitario || 0),
+            subtotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
+            modifiers: item.modifiers,
+          })),
+          estado: data.estado,
+          metodoPago: data.medioDePago || (isEditing ? editingVenta?.medioDePago : 'PENDIENTE'),
+          efectivoRecibido: isEditing ? (editingVenta?.efectivoRecibido || finalTotal) : 0,
+          devueltas: isEditing ? (editingVenta?.devueltas || 0) : 0,
+          vendedor: useAuthStore.getState().user?.nombre || 'Caja'
+        };
+        printStore.printTicket(ticketData);
+      }
+
       if (isEditing && editingSaleId) {
         const payload: SalePayload = {
           venta: {
