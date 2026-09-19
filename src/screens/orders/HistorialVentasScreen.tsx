@@ -183,7 +183,8 @@ function HistorialVentasScreenInner({ navigation }: any) {
   const fetchStatsHoy = async () => {
     try {
       const data = await getSalesHoy();
-      const ventasHoy = Array.isArray(data) ? data : (data?.data || []);
+      let extractedHoyData = (data as any)?.data;
+      const ventasHoy = Array.isArray(data) ? data : (Array.isArray(extractedHoyData) ? extractedHoyData : []);
       let total = 0;
       let efectivo = 0;
       let transferencias = 0;
@@ -246,7 +247,8 @@ function HistorialVentasScreenInner({ navigation }: any) {
         ...currentFilters
       });
 
-      let newData = Array.isArray(response) ? response : ((response as any)?.data || []);
+      let extractedData = (response as any)?.data;
+      let newData = Array.isArray(response) ? response : (Array.isArray(extractedData) ? extractedData : []);
       const meta = (response as any)?.meta || {};
 
       // Sort intelligently based on search matches

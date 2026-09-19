@@ -45,8 +45,8 @@ export const useSalesStore = create<SalesStore>()(
       _hasHydrated: false,
 
       setVentas: (ventas) => {
-        // Asegurarnos de que siempre estamos guardando un array
-        const ventasArray = Array.isArray(ventas) ? ventas : (ventas as any)?.data || [];
+        let extracted = (ventas as any)?.data;
+        const ventasArray = Array.isArray(ventas) ? ventas : (Array.isArray(extracted) ? extracted : []);
         set({ ventas: ventasArray, lastFetched: Date.now() });
       },
 
