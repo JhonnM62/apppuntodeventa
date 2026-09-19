@@ -321,6 +321,15 @@ function HistorialVentasScreenInner({ navigation }: any) {
           text2: 'No se pudo cargar el historial de ventas'
         });
       }
+      // FIX: Prevent infinite onEndReached loop on error by setting hasNextPage to false
+      setCache(prev => ({
+        ...prev,
+        [tab]: {
+          ...prev[tab as keyof typeof prev],
+          hasNextPage: false,
+          initialized: true
+        }
+      }));
     } finally {
       setLoading(false);
       setLoadingMore(false);

@@ -98,13 +98,9 @@ export const getSales = async (params?: {
   totalMax?: string;
   categoriaProducto?: string;
 }) => {
+  const queryParams = { ...params, _t: new Date().getTime() };
   const response = await api.get('/ventas', { 
-    params,
-    headers: {
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Pragma': 'no-cache',
-      'Expires': '0'
-    }
+    params: queryParams
   });
   
   // FIX: Return response directly. Interceptor already returns response.data
