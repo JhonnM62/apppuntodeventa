@@ -28,6 +28,7 @@ export interface SalePayload {
     pedido?: string;
     cartStartTime?: string;
     clienteId?: number;
+    temporalId?: string;
   };
   productos: SaleProduct[];
 }

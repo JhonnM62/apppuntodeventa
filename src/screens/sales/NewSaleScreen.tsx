@@ -13,7 +13,7 @@ import { createSale, addProductosToVenta, SalePayload, getSales } from '../../se
 import { processVoiceOrderWithIA } from '../../services/api';
 import { useSocket, useSocketEmitter, useSocketEvent } from '../../hooks';
 import { useCustomAlert } from '../../context/CustomAlertContext';
-import { Room } from '../../types/socket.types';
+import { Room, SocketEvent } from '../../types/socket.types';
 import Toast from 'react-native-toast-message';
 import { useProductStore } from '../../store/useProductStore';
 import { useMesaStore } from '../../store/useMesaStore';
@@ -226,6 +226,29 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const [modifiersModalVisible, setModifiersModalVisible] = useState(false);
   const [clienteModalVisible, setClienteModalVisible] = useState(false);
   
+  const activeTemporalIdRef = useRef<string | null>(null);
+  const lastTicketDataRef = useRef<any>(null);
+  const printTriggeredRef = useRef<boolean>(false);
+  const printStoreRef = useRef(usePrinterStore.getState());
+
+  useEffect(() => {
+    printStoreRef.current = usePrinterStore.getState();
+  }, [usePrinterStore.getState()]);
+
+  useSocketEvent(SocketEvent.VENTA_ID_GENERATED, useCallback((data: any) => {
+    if (data && activeTemporalIdRef.current && data.temporalId === activeTemporalIdRef.current) {
+       if (!printTriggeredRef.current && lastTicketDataRef.current) {
+         printTriggeredRef.current = true;
+         console.log('[IMPRESIÓN RÁPIDA] Ticket impreso vía socket con ID:', data.pedido);
+         const ticketData = { ...lastTicketDataRef.current, orderId: data.pedido };
+         if (printStoreRef.current.shouldPrintComanda(ticketData.estado) || printStoreRef.current.shouldPrintFactura(ticketData.estado)) {
+           printStoreRef.current.printTicket(ticketData);
+         }
+       }
+       activeTemporalIdRef.current = null;
+    }
+  }, []));
+
   const [mesaSearchQuery, setMesaSearchQuery] = useState('');
   const [mesaNota, setMesaNota] = useState('');
   
@@ -1143,6 +1166,28 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       }
 
       const mesaValue = selectedMesa?.IdMesas || 'V.R';
+      
+      const temporalId = `temp_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+      activeTemporalIdRef.current = temporalId;
+      printTriggeredRef.current = false;
+      
+      lastTicketDataRef.current = {
+        orderId: 'PROCESANDO...',
+        fecha: new Date().toLocaleString('es-CO'),
+        total: finalTotal,
+        productos: cart.map(item => ({
+          cantidad: item.quantity,
+          nombre: item.nombre,
+          precioUnitario: Number(item.precioUnitario || item.Precio_Unitario || 0),
+          subtotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
+          modifiers: item.modifiers,
+        })),
+        estado: data.estado,
+        metodoPago: data.medioDePago || 'PENDIENTE',
+        efectivoRecibido: 0,
+        devueltas: 0,
+        vendedor: useAuthStore.getState().user?.nombre || 'Caja'
+      };
 
       const payload: SalePayload = {
         venta: {
@@ -1156,6 +1201,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           descuento: descuento,
           porcentajeDeDescuento: discountPercent.toString(),
           cartStartTime: cartStartTime,
+          temporalId: temporalId,
         },
         productos: cart.map((item) => ({
           productoId: item.IDproductos,
@@ -1180,27 +1226,15 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             const ventaCreada = response?.data || response;
             const pedidoGenerado = ventaCreada?.pedido || `pedido-${Date.now()}`;
             
-            // IMPRESIÓN CON EL ID REAL DEL BACKEND (CREATE)
+            // IMPRESIÓN CON EL ID REAL DEL BACKEND (CREATE) FALLBACK
             const printStore = usePrinterStore.getState();
-            if (printStore.shouldPrintComanda(data.estado) || printStore.shouldPrintFactura(data.estado)) {
-              const ticketData = {
-                orderId: pedidoGenerado,
-                fecha: new Date().toLocaleString('es-CO'),
-                total: finalTotal,
-                productos: cart.map(item => ({
-                  cantidad: item.quantity,
-                  nombre: item.nombre,
-                  precioUnitario: Number(item.precioUnitario || item.Precio_Unitario || 0),
-                  subtotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
-                  modifiers: item.modifiers,
-                })),
-                estado: data.estado,
-                metodoPago: data.medioDePago || 'PENDIENTE',
-                efectivoRecibido: 0,
-                devueltas: 0,
-                vendedor: useAuthStore.getState().user?.nombre || 'Caja'
-              };
-              printStore.printTicket(ticketData);
+            if (!printTriggeredRef.current) {
+              printTriggeredRef.current = true;
+              console.log('[IMPRESIÓN FALLBACK] Imprimiendo después del createSale');
+              if (printStore.shouldPrintComanda(data.estado) || printStore.shouldPrintFactura(data.estado)) {
+                const ticketData = { ...lastTicketDataRef.current, orderId: pedidoGenerado };
+                printStore.printTicket(ticketData);
+              }
             }
 
             setPaymentModalVisible(false);
