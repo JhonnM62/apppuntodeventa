@@ -2375,6 +2375,9 @@ showAlert({
         totalInput: totalReal,
       };
 
+      // Actualizamos la tienda local inmediatamente para que desaparezca de TOMADO y pase a PAGADO
+      updateVenta(cobrarVenta.IDventas, updatedVenta);
+
       emitOrdenActualizada({
         ventaId: cobrarVenta.IDventas,
         IDventas: cobrarVenta.IDventas,
