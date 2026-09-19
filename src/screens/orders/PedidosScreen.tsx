@@ -625,7 +625,14 @@ const PedidosScreen = () => {
         return;
       }
       // Extraemos array si viene envuelto en objeto { data: [...], meta: {...} }
-      const ventasData = Array.isArray(data) ? data : (data?.data || []);
+        let ventasData = [];
+        if (Array.isArray(data)) {
+          ventasData = data;
+        } else if (data?.data && Array.isArray(data.data)) {
+          ventasData = data.data;
+        } else if (data?.data?.data && Array.isArray(data.data.data)) {
+          ventasData = data.data.data;
+        }
       if (Array.isArray(ventasData)) {
         setCachedVentas(ventasData);
       }
@@ -735,7 +742,14 @@ const PedidosScreen = () => {
         if (filters.pedidoNumero) query.search = query.search ? `${query.search} ${filters.pedidoNumero}` : filters.pedidoNumero;
 
         const data = await getSales(query);
-        const ventasData = data?.data || data;
+          let ventasData = [];
+          if (Array.isArray(data)) {
+            ventasData = data;
+          } else if (data?.data && Array.isArray(data.data)) {
+            ventasData = data.data;
+          } else if (data?.data?.data && Array.isArray(data.data.data)) {
+            ventasData = data.data.data;
+          }
         if (Array.isArray(ventasData)) {
           setRemoteSearchResults(ventasData);
         }
@@ -2428,6 +2442,7 @@ showAlert({
     propina?: number;
     porcentajePropina?: string;
     descuento?: number;
+    totalInput?: number;
   }) => {
     if (!cobrarVenta) return;
     try {

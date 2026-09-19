@@ -44,9 +44,15 @@ export const useSalesStore = create<SalesStore>()(
       isLoading: false,
       _hasHydrated: false,
 
-      setVentas: (ventas) => {
-        let extracted = (ventas as any)?.data;
-        const ventasArray = Array.isArray(ventas) ? ventas : (Array.isArray(extracted) ? extracted : []);
+      setVentas: (ventas: any) => {
+        let ventasArray: VentaItem[] = [];
+        if (Array.isArray(ventas)) {
+          ventasArray = ventas;
+        } else if (ventas?.data && Array.isArray(ventas.data)) {
+          ventasArray = ventas.data;
+        } else if (ventas?.data?.data && Array.isArray(ventas.data.data)) {
+          ventasArray = ventas.data.data;
+        }
         set({ ventas: ventasArray, lastFetched: Date.now() });
       },
 
