@@ -554,10 +554,41 @@ export const executePrint = async (
       return true; // Simulado
     }
 
+    // Helper for logo printing
+    const printLogoIfConfigured = async () => {
+      if (type === 'factura') {
+        try {
+          const configReq = await getConfiguracion();
+          const conf = configReq.data || configReq;
+          if (conf.imprimirLogo && conf.logoUrl) {
+            const logoWidth = paperSize === 58 ? (conf.logoSize58 || 380) : (conf.logoSize80 || 500);
+            const response = await fetch(conf.logoUrl);
+            const blob = await response.blob();
+            const base64Logo = await new Promise<string>((resolve) => {
+              const reader = new FileReader();
+              reader.onloadend = () => {
+                const b64 = (reader.result as string).split(',')[1];
+                resolve(b64);
+              };
+              reader.readAsDataURL(blob);
+            });
+            
+            if (base64Logo && BLEPrinter.printImageBase64) {
+              await BLEPrinter.printImageBase64(base64Logo, { imageWidth: logoWidth });
+              await new Promise(resolve => setTimeout(resolve, 800));
+            }
+          }
+        } catch (logoErr) {
+          console.log('Error imprimiendo logo:', logoErr);
+        }
+      }
+    };
+
     // Intentar imprimir sin reconectar si es la misma impresora
     let connected = false;
     if (currentConnectedMac === macAddress) {
       try {
+        await printLogoIfConfigured();
         const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
         await BLEPrinter.printText(payload);
         return true;
@@ -583,6 +614,9 @@ export const executePrint = async (
         console.log('La impresora está apagada o desconectada:', connectionError);
         throw new Error(typeof connectionError === 'string' ? connectionError : 'La impresora está apagada o fuera de rango');
       }
+
+      // 1) Intentar imprimir logo si está habilitado y es una factura
+      await printLogoIfConfigured();
 
       const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
       await BLEPrinter.printText(payload);

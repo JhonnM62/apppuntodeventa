@@ -7,11 +7,13 @@ import Toast from 'react-native-toast-message';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getConfiguracion, updateConfiguracion, getConfiguracionWhatsapp, updateConfiguracionWhatsapp } from '../../services/configuracion';
+import { getConfiguracion, updateConfiguracion, getConfiguracionWhatsapp, updateConfiguracionWhatsapp, uploadLogo } from '../../services/configuracion';
 import api, { getConfiguracionIA, updateConfiguracionIA } from '../../services/api';
 import { Picker } from '@react-native-picker/picker';
 import divipolaData from '../../data/divipola';
 import { APP_CONFIG } from '../../constants/app.config';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'react-native';
 
 let Location: any;
 try {
@@ -41,6 +43,12 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const [radioGeocercaM, setRadioGeocercaM] = useState('100');
   const [radioGeocercaDescansoM, setRadioGeocercaDescansoM] = useState('50');
   const [minutosGraciaLlegadaTarde, setMinutosGraciaLlegadaTarde] = useState('5');
+  
+  // Opciones de Logo y Ticket
+  const [logoUrl, setLogoUrl] = useState<string>('');
+  const [imprimirLogo, setImprimirLogo] = useState(false);
+  const [logoSize58, setLogoSize58] = useState('380');
+  const [logoSize80, setLogoSize80] = useState('500');
   
   // Estados para IA
   const [iaConfig, setIaConfig] = useState({
@@ -135,6 +143,11 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         if (dataNegocio.radioGeocercaDescansoM !== null && dataNegocio.radioGeocercaDescansoM !== undefined) setRadioGeocercaDescansoM(String(dataNegocio.radioGeocercaDescansoM));
         if (dataNegocio.minutosGraciaLlegadaTarde !== null && dataNegocio.minutosGraciaLlegadaTarde !== undefined) setMinutosGraciaLlegadaTarde(String(dataNegocio.minutosGraciaLlegadaTarde));
         
+        if (dataNegocio.logoUrl) setLogoUrl(dataNegocio.logoUrl);
+        if (dataNegocio.imprimirLogo !== undefined) setImprimirLogo(dataNegocio.imprimirLogo);
+        if (dataNegocio.logoSize58 !== undefined) setLogoSize58(String(dataNegocio.logoSize58));
+        if (dataNegocio.logoSize80 !== undefined) setLogoSize80(String(dataNegocio.logoSize80));
+        
         setFactusConfig({
           emitirFacturaAutomatica: dataNegocio.emitirFacturaAutomatica ?? false,
           preguntarFacturaElectronica: dataNegocio.preguntarFacturaElectronica ?? false,
@@ -200,6 +213,9 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           radioGeocercaM: radioGeocercaM ? parseInt(radioGeocercaM, 10) : 100,
           radioGeocercaDescansoM: radioGeocercaDescansoM ? parseInt(radioGeocercaDescansoM, 10) : 50,
           minutosGraciaLlegadaTarde: minutosGraciaLlegadaTarde ? parseInt(minutosGraciaLlegadaTarde, 10) : 5,
+          imprimirLogo,
+          logoSize58: logoSize58 ? parseInt(logoSize58, 10) : 380,
+          logoSize80: logoSize80 ? parseInt(logoSize80, 10) : 500,
           ...factusToSave
         } as any),
         updateConfiguracionIA({
@@ -313,6 +329,41 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
       Toast.show({ type: 'error', text1: 'Error', text2: 'Hubo un error al enviar (ver detalles)', visibilityTime: 5000 });
     } finally {
       setTestingWhatsapp(false);
+    }
+  };
+
+  const handlePickLogo = async () => {
+    try {
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.granted === false) {
+        Toast.show({ type: 'error', text1: 'Permisos requeridos', text2: 'Se necesita permiso para acceder a la galería' });
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 1,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        setSaving(true);
+        // Usamos una baseUrl ficticia pero que resuelve en el backend para la URL pública
+        // En producción el backend sabe su propia IP o dominio, pero usamos esto por compatibilidad
+        const baseUrl = (process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api/v1').replace('/api/v1', '').replace('/api', '');
+        const res = await uploadLogo(result.assets[0].uri, baseUrl);
+        if (res.success && res.url) {
+          setLogoUrl(res.url);
+          Toast.show({ type: 'success', text1: 'Éxito', text2: 'Logo subido correctamente. Se convirtió a blanco y negro.' });
+        }
+      }
+    } catch (error) {
+      console.error(error);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo subir el logo' });
+    } finally {
+      setSaving(false);
     }
   };
 

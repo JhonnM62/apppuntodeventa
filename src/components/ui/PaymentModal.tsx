@@ -26,12 +26,12 @@ import { Cliente } from '../../services/clientes.service';
 
 type PaymentMethod = 'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'EFECTIVO Y OTROS';
 
-type OrderStatus = 'PAGADO' | 'EN_EL_CARRITO' | 'TOMADO' | 'LISTO_PARA_ENTREGA' | 'ENTREGADO' | 'DEUDOR';
+type OrderStatus = 'PAGADO' | 'EN_EL_CARRITO' | 'TOMADO' | 'LISTO_PARA_ENTREGA' | 'ENTREGADO' | 'DEUDOR' | 'RESERVA';
 
 interface PaymentModalProps {
   visible: boolean;
   onClose: () => void;
-  onSave: (data: { estado: OrderStatus; pedidoId?: string; medioDePago?: string | null }) => Promise<{ pedidoId?: string } | void>;
+  onSave: (data: { estado: OrderStatus; pedidoId?: string; medioDePago?: string | null; abono?: number }) => Promise<{ pedidoId?: string } | void>;
   onCobrar?: (paymentData: {
     medioDePago: string;
     banco?: string | null;
@@ -40,8 +40,10 @@ interface PaymentModalProps {
     transferencia?: number;
     estado: OrderStatus;
     pedidoId?: string;
+    abono?: number;
   }) => Promise<{ pedidoId?: string } | void>;
   total: number;
+  abonoPrevio?: number;
   isLoading?: boolean;
   editingPedidoId?: string;
   cliente?: Cliente | null;
@@ -59,6 +61,7 @@ const ORDER_STATUSES: { key: OrderStatus; label: string; color: string; icon: st
   { key: 'TOMADO', label: 'TOMADO', color: '#3b82f6', icon: 'hand-left' },
   { key: 'LISTO_PARA_ENTREGA', label: 'LISTO', color: '#8b5cf6', icon: 'checkmark-done' },
   { key: 'ENTREGADO', label: 'ENTREGADO', color: '#10b981', icon: 'paper-plane' },
+  { key: 'RESERVA', label: 'RESERVA', color: '#f43f5e', icon: 'calendar' },
   { key: 'DEUDOR', label: 'DEUDOR', color: '#ef4444', icon: 'alert-circle' },
 ];
 
@@ -90,6 +93,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   isLoading = false,
   editingPedidoId,
   cliente,
+  abonoPrevio = 0,
 }) => {
   const { height: windowHeight } = useWindowDimensions();
   const [method, setMethod] = useState<PaymentMethod | null>(null);
@@ -100,7 +104,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const finalIsLoading = isLoading || localLoading;
   const [efectivoInput, setEfectivoInput] = useState('');
   const [transferenciaInput, setTransferenciaInput] = useState('');
+  const [abonoInput, setAbonoInput] = useState('');
   const [selectedBank, setSelectedBank] = useState<string | null>(null);
+  
+  // Propinas
+  const [propinaPercent, setPropinaPercent] = useState<number>(0);
+  const OPCIONES_PROPINA = [0, 0.05, 0.10, 0.15];
+
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(2000));
   const keyboardHeight = useKeyboardHeight();
@@ -109,7 +119,31 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const { currentPrinter, paperSize, isConnected, shouldPrintComanda, shouldPrintFactura } = usePrinterStore();
   const { cart, discountPercent, setDiscountPercent, getDiscountAmount, getFinalTotalPrice } = useCartStore();
   const { user } = useAuthStore();
-  const actualTotal = getFinalTotalPrice();
+  
+  // Cálculo de totales con redondeo
+  const calculateTotals = () => {
+    let subtotal = getFinalTotalPrice(); // Incluye descuentos si los aplica el store
+    const propinaValue = subtotal * propinaPercent;
+    let totalConPropina = subtotal + propinaValue;
+    
+    // Regla de redondeo de los 50 pesos
+    const residuo = totalConPropina % 100;
+    if (residuo >= 50) {
+      totalConPropina = totalConPropina - residuo + 100; // Redondeo arriba
+    } else {
+      totalConPropina = totalConPropina - residuo;       // Redondeo abajo
+    }
+    
+    return {
+      subtotal,
+      propinaValue,
+      totalFinal: totalConPropina
+    };
+  };
+
+  const { totalFinal, propinaValue } = calculateTotals();
+  const actualTotal = totalFinal - abonoPrevio; // Lo que resta por pagar
+
 
   useEffect(() => {
     if (visible) {
@@ -118,6 +152,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       setSelectedBank(null); // Reset bank on open
       setEfectivoInput('');
       setTransferenciaInput('');
+      setAbonoInput('');
       setSelectedEstado(isCobrarMode ? 'PAGADO' : 'EN_EL_CARRITO');
       Animated.parallel([
         Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
@@ -150,6 +185,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const efectivoAmount = parseMoney(efectivoInput);
   const transferenciaAmount = parseMoney(transferenciaInput);
+  const abonoAmount = parseMoney(abonoInput);
   const devueltas = efectivoAmount > actualTotal ? efectivoAmount - actualTotal : 0;
   const remaining = actualTotal - efectivoAmount - transferenciaAmount;
   const isMixedPaymentComplete = efectivoAmount + transferenciaAmount >= actualTotal && efectivoAmount > 0 && transferenciaAmount > 0;
@@ -189,6 +225,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     if (method === 'EFECTIVO Y OTROS' && value > 0 && value < actualTotal) {
       const suggestedEfectivo = actualTotal - value;
       setEfectivoInput(suggestedEfectivo.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+    }
+  };
+
+  const handleAbonoChange = (text: string) => {
+    const value = parseMoney(text);
+    if (!value) {
+      setAbonoInput('');
+    } else {
+      setAbonoInput(value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
     }
   };
 
@@ -277,7 +322,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       const estadoActual = selectedEstado;
       const pedidoIdActual = editingPedidoId;
       
-      const result = await onSave({ estado: estadoActual, pedidoId: pedidoIdActual, medioDePago: method });
+      const result = await onSave({ 
+        estado: estadoActual, 
+        pedidoId: pedidoIdActual, 
+        medioDePago: method,
+        abono: selectedEstado === 'RESERVA' ? abonoAmount : undefined
+      });
       const finalOrderId = (result && 'pedidoId' in result) ? result.pedidoId : pedidoIdActual;
       
       // Intentar impresión automática en segundo plano
@@ -345,6 +395,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         transferencia: method === 'TRANSFERENCIA' || method === 'TARJETA' || method === 'EFECTIVO Y OTROS' ? transferenciaAmount : undefined,
         estado: selectedEstado,
         pedidoId: editingPedidoId,
+        abono: selectedEstado === 'RESERVA' ? abonoAmount : undefined
       });
 
       // Si tenemos un resultado válido del backend con el ID real, imprimimos.
@@ -525,6 +576,27 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     </View>
   );
 
+  const renderAbonoInput = () => (
+    <View style={styles.inputSection}>
+      <View style={styles.inputHeader}>
+        <Ionicons name="calendar-outline" size={18} color="#6b7280" />
+        <RNText style={styles.inputLabel}>MONTO DEL ABONO (RESERVA)</RNText>
+      </View>
+      <View style={styles.inputWrapper}>
+        <RNText style={styles.currencySymbol}>$</RNText>
+        <TextInput
+          style={styles.moneyInput}
+          value={abonoInput ? abonoInput : ''}
+          onChangeText={handleAbonoChange}
+          keyboardType="numeric"
+          placeholder="0"
+          placeholderTextColor="#d1d5db"
+          accessibilityLabel="Monto del abono"
+        />
+      </View>
+    </View>
+  );
+
   const renderMixedPayment = () => (
     <View style={styles.mixedContainer}>
       <View style={styles.mixedRow}>
@@ -699,6 +771,31 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             })}
           </View>
         </View>
+
+        {/* CONTROLES DE PROPINA */}
+        <View style={styles.discountContainer}>
+          <View style={styles.inputHeader}>
+            <Ionicons name="heart-outline" size={14} color="#6b7280" />
+            <RNText style={styles.inputLabelSmall}>PROPINA / SERVICIO</RNText>
+          </View>
+          <View style={styles.discountRow}>
+            {OPCIONES_PROPINA.map((percent) => {
+              const isSelected = propinaPercent === percent;
+              return (
+                <TouchableOpacity
+                  key={percent}
+                  style={[styles.discountChip, isSelected && { backgroundColor: '#3b82f6', borderColor: '#3b82f6' }]}
+                  onPress={() => setPropinaPercent(percent)}
+                  activeOpacity={0.7}
+                >
+                  <RNText style={[styles.discountChipText, isSelected && styles.discountChipTextSelected]}>
+                    {percent === 0 ? '0%' : `+${percent * 100}%`}
+                  </RNText>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
       </View>
     );
   };
@@ -717,6 +814,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       return (
         <ScrollView style={[styles.scrollContent, { flexShrink: 1 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {renderEstadoSelector()}
+          {selectedEstado === 'RESERVA' && renderAbonoInput()}
         </ScrollView>
       );
     }
@@ -846,11 +944,23 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           {renderCartSummary()}
 
           <View style={styles.totalDisplay}>
-            <RNText style={styles.totalLabel}>TOTAL A PAGAR</RNText>
-            {discountPercent > 0 && (
-              <RNText style={styles.originalAmountLineThrough}>{formatMoney(total)}</RNText>
+            <RNText style={styles.totalLabel}>
+              {selectedEstado === 'RESERVA' ? 'TOTAL RESERVA' : 'TOTAL A PAGAR'}
+            </RNText>
+            
+            {(discountPercent > 0 || propinaValue > 0) && (
+              <RNText style={styles.originalAmountLineThrough}>
+                {formatMoney(getFinalTotalPrice() + getDiscountAmount())}
+              </RNText>
             )}
+            
             <RNText style={styles.totalAmount}>{formatMoney(actualTotal)}</RNText>
+            
+            {abonoPrevio > 0 && (
+              <RNText style={styles.abonoLabel}>
+                (Total original: {formatMoney(totalFinal)} | Abono: -{formatMoney(abonoPrevio)})
+              </RNText>
+            )}
           </View>
 
           {renderContent()}
@@ -917,8 +1027,9 @@ const styles = StyleSheet.create({
   closeBtn: { padding: 6, borderRadius: 12, backgroundColor: '#f3f4f6' },
   totalDisplay: { backgroundColor: '#f9fafb', marginHorizontal: 20, marginTop: 10, padding: 16, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: '#e5e7eb' },
   totalLabel: { fontSize: 12, fontWeight: '700', color: '#6b7280', letterSpacing: 1.5, marginBottom: 6 },
-  originalAmountLineThrough: { fontSize: 16, fontWeight: '700', color: '#ef4444', textDecorationLine: 'line-through', marginBottom: 2 },
+  originalAmountLineThrough: { fontSize: 16, fontWeight: '700', color: '#9ca3af', textDecorationLine: 'line-through', marginBottom: 2 },
   totalAmount: { fontSize: 40, fontWeight: '800', color: '#111827' },
+  abonoLabel: { fontSize: 12, fontWeight: '600', color: '#3b82f6', marginTop: 4 },
   scrollContent: { paddingHorizontal: 20 },
   backButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, backgroundColor: '#f3f4f6', borderRadius: 12, alignSelf: 'flex-start' },
   backText: { fontSize: 15, fontWeight: '600', color: '#374151', marginLeft: 6 },

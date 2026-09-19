@@ -38,3 +38,29 @@ export const uploadAndSendCajaWhatsapp = async (pdfUri: string, fileName: string
   });
   return response.data;
 };
+
+export const uploadLogo = async (imageUri: string, baseUrl: string) => {
+  const formData = new FormData();
+  
+  // Extract filename from URI
+  const filename = imageUri.split('/').pop() || 'logo.jpg';
+  
+  // Infer type
+  const match = /\.(\w+)$/.exec(filename);
+  const type = match ? `image/${match[1]}` : 'image/jpeg';
+  
+  formData.append('logo', {
+    uri: imageUri,
+    name: filename,
+    type,
+  } as any);
+  
+  formData.append('baseUrl', baseUrl);
+
+  const response = await api.post('/configuracion/logo', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  
+  cachedConfig = null; // Invalidate cache so next fetch gets new logo URL
+  return response.data;
+};

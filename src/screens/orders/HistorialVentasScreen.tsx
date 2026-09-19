@@ -1052,6 +1052,7 @@ export default function HistorialVentasScreen({ navigation }: any) {
           </View>
         ) : (
           <FlatList
+            style={{ flex: 1 }}
             data={flatListData}
             renderItem={renderItem}
             keyExtractor={(item: any, index: number) => item.isHeader ? `header-${item.title}` : (item.IDventas || `venta-${index}`)}

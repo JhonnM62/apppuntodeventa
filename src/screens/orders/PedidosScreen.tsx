@@ -31,12 +31,13 @@ const TABS = [
   { key: 'TOMADO', label: 'TOMADO', color: '#3b82f6' },
   { key: 'LISTO_PARA_ENTREGA', label: 'LISTO PARA ENTREGA', color: '#8b5cf6' },
   { key: 'ENTREGADO', label: 'ENTREGADO', color: '#10b981' },
+  { key: 'RESERVA', label: 'RESERVA', color: '#f43f5e' },
   { key: 'DEUDOR', label: 'DEUDOR', color: '#ef4444' },
   { key: 'EN_EL_CARRITO', label: 'EN EL CARRITO', color: '#f59e0b' },
 ];
 
 const METODOS_PAGO = ['EFECTIVO', 'TARJETA', 'TRANSFERENCIA', 'Nequi', 'Daviplata', 'PENDIENTE'];
-const ESTADOS_POSIBLES = ['EN_EL_CARRITO', 'TOMADO', 'LISTO_PARA_ENTREGA', 'PAGADO', 'ENTREGADO', 'DEUDOR'];
+const ESTADOS_POSIBLES = ['EN_EL_CARRITO', 'TOMADO', 'LISTO_PARA_ENTREGA', 'PAGADO', 'ENTREGADO', 'RESERVA', 'DEUDOR'];
 
 type VentaItem = {
   IDventas: string;
@@ -47,6 +48,7 @@ type VentaItem = {
   devueltas?: number;
   banco?: string;
   totalInput?: number;
+  abono?: number;
   pedido?: string;
   fecha?: string;
   hora?: string;
@@ -2648,6 +2650,7 @@ showAlert({
         </View>
       ) : (
         <FlatList
+          style={{ flex: 1 }}
           data={flatListData}
           extraData={[selectedToDelete, isSelectionMode]}
           renderItem={renderListItem}
@@ -2693,6 +2696,7 @@ showAlert({
         onCobrar={handleCobrarConfirm}
         total={getVentaTotal(cobrarVenta)}
         editingPedidoId={cobrarVenta?.pedido || cobrarVenta?.IDventas}
+        abonoPrevio={Number(cobrarVenta?.abono) || 0}
       />
       
       <PrintPreviewModal
