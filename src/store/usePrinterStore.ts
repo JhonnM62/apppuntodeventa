@@ -103,7 +103,7 @@ const usePrinterStore = create<PrinterState>()(
         }
 
         if (printFactura) {
-          if (printComanda) {
+          if (printComanda && Platform.OS !== 'web') {
             await new Promise(resolve => setTimeout(resolve, 1500));
           }
           try {

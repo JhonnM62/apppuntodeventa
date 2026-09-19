@@ -1,7 +1,21 @@
 import api from './api';
 
-export const getConfiguracion = () => api.get('/configuracion');
-export const updateConfiguracion = (data: { horaCorteDia?: string, modoOperacion?: string, nombreComercial?: string, nit?: string, direccion?: string, telefono?: string }) => api.put('/configuracion', data);
+let cachedConfig: any = null;
+
+export const getConfiguracion = async (forceRefresh = false) => {
+  if (!forceRefresh && cachedConfig) {
+    return Promise.resolve(cachedConfig);
+  }
+  const res = await api.get('/configuracion');
+  cachedConfig = res;
+  return res;
+};
+
+export const updateConfiguracion = async (data: { horaCorteDia?: string, modoOperacion?: string, nombreComercial?: string, nit?: string, direccion?: string, telefono?: string }) => {
+  const res = await api.put('/configuracion', data);
+  cachedConfig = null; // Invalidate cache
+  return res;
+};
 
 export const getConfiguracionWhatsapp = () => api.get('/configuracion/whatsapp');
 export const updateConfiguracionWhatsapp = (data: any) => api.put('/configuracion/whatsapp', data);
