@@ -53,13 +53,29 @@ api.interceptors.request.use(
   (error: AxiosError) => Promise.reject(error)
 );
 
+// Helper to build a unique cache key including query params
+const getCacheKey = (config: InternalAxiosRequestConfig | any) => {
+  let key = `cache_${config.url}`;
+  if (config.params) {
+    try {
+      key += `_${JSON.stringify(config.params)}`;
+    } catch (e) {
+      // Ignorar si params no es stringificable
+    }
+  }
+  return key;
+};
+
 // Response interceptor — handle 401 with silent token refresh
 api.interceptors.response.use(
   (response: AxiosResponse) => {
     // Si es una petición GET, guardamos en caché
     if (response.config.method?.toLowerCase() === 'get') {
-      const cacheKey = `cache_${response.config.url}`;
-      AsyncStorage.setItem(cacheKey, JSON.stringify(response.data)).catch(() => {});
+      const isHeavyEndpoint = response.config.url?.includes('/ventas') || response.config.url?.includes('/ventas/hoy');
+      if (!isHeavyEndpoint) {
+        const cacheKey = getCacheKey(response.config);
+        AsyncStorage.setItem(cacheKey, JSON.stringify(response.data)).catch(() => {});
+      }
     }
     console.log(`[DEBUG api.ts] URL: ${response.config.url} | typeof data: ${typeof response.data} | isArray: ${Array.isArray(response.data)}`);
     return response.data;
@@ -70,7 +86,7 @@ api.interceptors.response.use(
     // Si hay un error de red y es GET, devolver caché
     if ((error.message === 'Network Error' || error.code === 'ECONNABORTED' || !error.response) && originalRequest?.method?.toLowerCase() === 'get') {
       try {
-        const cacheKey = `cache_${originalRequest.url}`;
+        const cacheKey = getCacheKey(originalRequest);
         const cachedData = await AsyncStorage.getItem(cacheKey);
         if (cachedData) {
           console.log(`[DEBUG api.ts] Offline fallback for URL: ${originalRequest.url}`);

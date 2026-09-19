@@ -22,6 +22,7 @@ import usePrinterStore from '../../store/usePrinterStore';
 import { executePrint, TicketData } from '../../utils/printer';
 import useCartStore from '../../store/useCartStore';
 import useAuthStore from '../../store/useAuthStore';
+import { getConfiguracion } from '../../services/configuracion';
 import { Cliente } from '../../services/clientes.service';
 
 type PaymentMethod = 'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'EFECTIVO Y OTROS';
@@ -41,6 +42,9 @@ interface PaymentModalProps {
     estado: OrderStatus;
     pedidoId?: string;
     abono?: number;
+    propina?: number;
+    porcentajePropina?: string;
+    descuento?: number;
   }) => Promise<{ pedidoId?: string } | void>;
   total: number;
   abonoPrevio?: number;
@@ -107,9 +111,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [abonoInput, setAbonoInput] = useState('');
   const [selectedBank, setSelectedBank] = useState<string | null>(null);
   
+  // Configuración de Negocio (Descuentos y Propinas)
+  const [habilitarPropinas, setHabilitarPropinas] = useState(true);
+  const [habilitarDescuentos, setHabilitarDescuentos] = useState(true);
+  const [opcionesPropina, setOpcionesPropina] = useState<number[]>([0, 0.05, 0.10, 0.15]);
+  const [opcionesDescuento, setOpcionesDescuento] = useState<number[]>([0, 0.15, 0.30, 0.50]);
+
   // Propinas
   const [propinaPercent, setPropinaPercent] = useState<number>(0);
-  const OPCIONES_PROPINA = [0, 0.05, 0.10, 0.15];
 
   const [fadeAnim] = useState(new Animated.Value(0));
   const [slideAnim] = useState(new Animated.Value(2000));
@@ -147,6 +156,26 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   useEffect(() => {
     if (visible) {
+      // Fetch configuracion para Propinas y Descuentos
+      getConfiguracion().then(res => {
+        const data = res.data || res;
+        if (data.habilitarPropinas !== undefined) setHabilitarPropinas(data.habilitarPropinas);
+        if (data.habilitarDescuentos !== undefined) setHabilitarDescuentos(data.habilitarDescuentos);
+        
+        if (data.opcionesPropina) {
+            try {
+                const parsed = typeof data.opcionesPropina === 'string' ? JSON.parse(data.opcionesPropina) : data.opcionesPropina;
+                if (Array.isArray(parsed)) setOpcionesPropina([0, ...parsed.map((p: number) => p / 100)]);
+            } catch(e) {}
+        }
+        if (data.opcionesDescuento) {
+            try {
+                const parsed = typeof data.opcionesDescuento === 'string' ? JSON.parse(data.opcionesDescuento) : data.opcionesDescuento;
+                if (Array.isArray(parsed)) setOpcionesDescuento([0, ...parsed.map((p: number) => p / 100)]);
+            } catch(e) {}
+        }
+      }).catch(err => console.log('Error fetching config in PaymentModal', err));
+
       const isCobrarMode = !!onCobrar;
       setMethod(isCobrarMode ? 'EFECTIVO' : null);
       setSelectedBank(null); // Reset bank on open
@@ -270,11 +299,19 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       cleanOrderId = orderId.substring(7); // Remueve "pedido-"
     }
 
+    const abonoTotal = (abonoPrevio || 0) + (selectedEstado === 'RESERVA' ? abonoAmount : 0);
+    const totalRemaining = totalFinal - abonoTotal;
+
     const ticketData: TicketData = {
       orderId: cleanOrderId,
       fecha: new Date().toLocaleString('es-CO'),
-      total: actualTotal,
+      total: totalRemaining,
+      totalGlobal: totalFinal,
       vendedor: user?.nombre,
+      propina: propinaValue,
+      porcentajePropina: propinaPercent > 0 ? (propinaPercent * 100).toString() : undefined,
+      descuento: getDiscountAmount(),
+      abono: abonoTotal,
       productos: cart.map(item => {
         const precioUnitario = Number(item.precioUnitario || item.Precio_Unitario || 0);
         const modifiersTotal = (item.modifiers || []).reduce((sum: number, mod: any) => sum + (Number(mod.price) * (mod.quantity || 1)), 0);
@@ -395,7 +432,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         transferencia: method === 'TRANSFERENCIA' || method === 'TARJETA' || method === 'EFECTIVO Y OTROS' ? transferenciaAmount : undefined,
         estado: selectedEstado,
         pedidoId: editingPedidoId,
-        abono: selectedEstado === 'RESERVA' ? abonoAmount : undefined
+        abono: selectedEstado === 'RESERVA' ? abonoAmount : undefined,
+        propina: propinaValue,
+        porcentajePropina: propinaPercent > 0 ? (propinaPercent * 100).toString() : undefined,
+        descuento: getDiscountAmount()
       });
 
       // Si tenemos un resultado válido del backend con el ID real, imprimimos.
@@ -748,13 +788,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         </ScrollView>
 
         {/* CONTROLES DE DESCUENTO */}
+        {habilitarDescuentos && (
         <View style={styles.discountContainer}>
           <View style={styles.inputHeader}>
             <Ionicons name="pricetag-outline" size={14} color="#6b7280" />
             <RNText style={styles.inputLabelSmall}>DESCUENTO APLICABLE</RNText>
           </View>
           <View style={styles.discountRow}>
-            {[0, 0.15, 0.30, 0.50].map((percent) => {
+            {opcionesDescuento.map((percent) => {
               const isSelected = discountPercent === percent;
               return (
                 <TouchableOpacity
@@ -771,15 +812,17 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             })}
           </View>
         </View>
+        )}
 
         {/* CONTROLES DE PROPINA */}
+        {habilitarPropinas && (
         <View style={styles.discountContainer}>
           <View style={styles.inputHeader}>
             <Ionicons name="heart-outline" size={14} color="#6b7280" />
             <RNText style={styles.inputLabelSmall}>PROPINA / SERVICIO</RNText>
           </View>
           <View style={styles.discountRow}>
-            {OPCIONES_PROPINA.map((percent) => {
+            {opcionesPropina.map((percent) => {
               const isSelected = propinaPercent === percent;
               return (
                 <TouchableOpacity
@@ -796,6 +839,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             })}
           </View>
         </View>
+        )}
       </View>
     );
   };

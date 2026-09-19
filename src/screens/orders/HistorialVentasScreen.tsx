@@ -245,8 +245,8 @@ export default function HistorialVentasScreen({ navigation }: any) {
         ...currentFilters
       });
 
-      let newData = response.data || [];
-      const meta = response.meta || {};
+      let newData = Array.isArray(response) ? response : ((response as any)?.data || []);
+      const meta = (response as any)?.meta || {};
 
       // Sort intelligently based on search matches
       if (search) {

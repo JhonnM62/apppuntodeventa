@@ -44,6 +44,12 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const [radioGeocercaDescansoM, setRadioGeocercaDescansoM] = useState('50');
   const [minutosGraciaLlegadaTarde, setMinutosGraciaLlegadaTarde] = useState('5');
   
+  // Propinas y Descuentos
+  const [habilitarPropinas, setHabilitarPropinas] = useState(true);
+  const [habilitarDescuentos, setHabilitarDescuentos] = useState(true);
+  const [opcionesPropinaStr, setOpcionesPropinaStr] = useState('5, 10, 15');
+  const [opcionesDescuentoStr, setOpcionesDescuentoStr] = useState('5, 10, 20');
+  
   // Opciones de Logo y Ticket
   const [logoUrl, setLogoUrl] = useState<string>('');
   const [imprimirLogo, setImprimirLogo] = useState(false);
@@ -143,6 +149,21 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         if (dataNegocio.radioGeocercaDescansoM !== null && dataNegocio.radioGeocercaDescansoM !== undefined) setRadioGeocercaDescansoM(String(dataNegocio.radioGeocercaDescansoM));
         if (dataNegocio.minutosGraciaLlegadaTarde !== null && dataNegocio.minutosGraciaLlegadaTarde !== undefined) setMinutosGraciaLlegadaTarde(String(dataNegocio.minutosGraciaLlegadaTarde));
         
+        if (dataNegocio.habilitarPropinas !== undefined) setHabilitarPropinas(dataNegocio.habilitarPropinas);
+        if (dataNegocio.habilitarDescuentos !== undefined) setHabilitarDescuentos(dataNegocio.habilitarDescuentos);
+        if (dataNegocio.opcionesPropina) {
+          try {
+            const arr = typeof dataNegocio.opcionesPropina === 'string' ? JSON.parse(dataNegocio.opcionesPropina) : dataNegocio.opcionesPropina;
+            setOpcionesPropinaStr(Array.isArray(arr) ? arr.join(', ') : '5, 10, 15');
+          } catch(e) {}
+        }
+        if (dataNegocio.opcionesDescuento) {
+          try {
+            const arr = typeof dataNegocio.opcionesDescuento === 'string' ? JSON.parse(dataNegocio.opcionesDescuento) : dataNegocio.opcionesDescuento;
+            setOpcionesDescuentoStr(Array.isArray(arr) ? arr.join(', ') : '5, 10, 20');
+          } catch(e) {}
+        }
+
         if (dataNegocio.logoUrl) setLogoUrl(dataNegocio.logoUrl);
         if (dataNegocio.imprimirLogo !== undefined) setImprimirLogo(dataNegocio.imprimirLogo);
         if (dataNegocio.logoSize58 !== undefined) setLogoSize58(String(dataNegocio.logoSize58));
@@ -213,6 +234,10 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           radioGeocercaM: radioGeocercaM ? parseInt(radioGeocercaM, 10) : 100,
           radioGeocercaDescansoM: radioGeocercaDescansoM ? parseInt(radioGeocercaDescansoM, 10) : 50,
           minutosGraciaLlegadaTarde: minutosGraciaLlegadaTarde ? parseInt(minutosGraciaLlegadaTarde, 10) : 5,
+          habilitarPropinas,
+          habilitarDescuentos,
+          opcionesPropina: JSON.stringify(opcionesPropinaStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))),
+          opcionesDescuento: JSON.stringify(opcionesDescuentoStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))),
           imprimirLogo,
           logoSize58: logoSize58 ? parseInt(logoSize58, 10) : 380,
           logoSize80: logoSize80 ? parseInt(logoSize80, 10) : 500,
@@ -482,6 +507,67 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 8 }}>
             El modo Restaurante habilita el control de insumos por plato en los reportes de caja.
           </Text>
+
+          {/* PROPINAS Y DESCUENTOS */}
+          <View style={{ marginTop: 24, borderTopWidth: 1, borderTopColor: '#f3f4f6', paddingTop: 16 }}>
+            <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>Propinas y Descuentos</Text>
+            
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Habilitar Propinas</Text>
+                <Text style={{ fontSize: 12, color: '#6b7280' }}>Mostrar módulo de propinas en el modal de pagos.</Text>
+              </View>
+              <Switch
+                value={habilitarPropinas}
+                onValueChange={setHabilitarPropinas}
+                trackColor={{ false: '#d1d5db', true: '#818cf8' }}
+                thumbColor={habilitarPropinas ? '#4f46e5' : '#f3f4f6'}
+              />
+            </View>
+
+            {habilitarPropinas && (
+              <View style={{ marginBottom: 16 }}>
+                <Text style={styles.label}>Opciones de Propina (%)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={opcionesPropinaStr}
+                  onChangeText={setOpcionesPropinaStr}
+                  placeholder="Ej. 5, 10, 15"
+                />
+                <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
+                  Valores separados por comas, ej. 5, 10, 15
+                </Text>
+              </View>
+            )}
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, marginTop: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Habilitar Descuentos Dinámicos</Text>
+                <Text style={{ fontSize: 12, color: '#6b7280' }}>Permitir aplicar descuentos configurables.</Text>
+              </View>
+              <Switch
+                value={habilitarDescuentos}
+                onValueChange={setHabilitarDescuentos}
+                trackColor={{ false: '#d1d5db', true: '#818cf8' }}
+                thumbColor={habilitarDescuentos ? '#4f46e5' : '#f3f4f6'}
+              />
+            </View>
+
+            {habilitarDescuentos && (
+              <View style={{ marginBottom: 16 }}>
+                <Text style={styles.label}>Opciones de Descuento (%)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={opcionesDescuentoStr}
+                  onChangeText={setOpcionesDescuentoStr}
+                  placeholder="Ej. 5, 10, 20, 50, 100"
+                />
+                <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
+                  Valores separados por comas, ej. 5, 10, 20
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* GEOCERCA NÓMINA */}

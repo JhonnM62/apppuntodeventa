@@ -107,12 +107,14 @@ export const getSales = async (params?: {
     }
   });
   
-  return response?.data ?? response;
+  // FIX: Return response directly. Interceptor already returns response.data
+  return response;
 };
 
 export const getSalesHoy = async () => {
   const response = await api.get('/ventas/hoy');
-  return response?.data ?? response;
+  // FIX: Return response directly. Interceptor already returns response.data
+  return response;
 };
 
 export const updateVentaEstado = async (ventaId: string, estado: string) => {

@@ -596,8 +596,11 @@ const PedidosScreen = () => {
   const fetchIdRef = useRef<number>(0);
 
   const fetchVentas = useCallback(async (force = false) => {
-    const currentCachedVentas = useSalesStore.getState().ventas;
-    if (!force && !shouldRefetchVentas() && currentCachedVentas && Array.isArray(currentCachedVentas) && currentCachedVentas.length > 0) {
+    const state = useSalesStore.getState();
+    const currentCachedVentas = state.ventas;
+    const hasHydrated = state._hasHydrated;
+    
+    if (!force && hasHydrated && !shouldRefetchVentas() && currentCachedVentas && Array.isArray(currentCachedVentas) && currentCachedVentas.length > 0) {
       setLoading(false);
       return;
     }
@@ -612,7 +615,7 @@ const PedidosScreen = () => {
         return;
       }
       // Extraemos array si viene envuelto en objeto { data: [...], meta: {...} }
-      const ventasData = data?.data || data;
+      const ventasData = Array.isArray(data) ? data : (data?.data || []);
       if (Array.isArray(ventasData)) {
         setCachedVentas(ventasData);
       }
@@ -1692,14 +1695,32 @@ showAlert({
               </View>
 
               <View style={styles.modalSection}>
-                <View style={styles.totalSection}>
-                  <RNText style={styles.totalSectionLabel}>TOTAL</RNText>
-                  <RNText style={styles.totalSectionAmount}>
-                    {formatMoney(
-                      // FIX: si totalInput es 0 o nulo, calcularlo desde los productos
-                      getVentaTotal(selectedVenta)
-                    )}
-                  </RNText>
+                <View style={[styles.totalSection, { flexDirection: 'column', alignItems: 'stretch', gap: 8 }]}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <RNText style={styles.totalSectionLabel}>TOTAL GLOBAL</RNText>
+                    <RNText style={styles.totalSectionAmount}>
+                      {formatMoney(
+                        // FIX: si totalInput es 0 o nulo, calcularlo desde los productos
+                        getVentaTotal(selectedVenta)
+                      )}
+                    </RNText>
+                  </View>
+                  {selectedVenta.estado === 'RESERVA' && selectedVenta.abono && selectedVenta.abono > 0 ? (
+                    <>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <RNText style={[styles.totalSectionLabel, { color: '#059669' }]}>ABONO</RNText>
+                        <RNText style={[styles.totalSectionAmount, { color: '#059669' }]}>
+                          -{formatMoney(selectedVenta.abono)}
+                        </RNText>
+                      </View>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 8 }}>
+                        <RNText style={styles.totalSectionLabel}>TOTAL A PAGAR</RNText>
+                        <RNText style={styles.totalSectionAmount}>
+                          {formatMoney(getVentaTotal(selectedVenta) - selectedVenta.abono)}
+                        </RNText>
+                      </View>
+                    </>
+                  ) : null}
                 </View>
               </View>
 
@@ -1894,6 +1915,31 @@ showAlert({
                         >
                           <Ionicons name="cash-outline" size={20} color="#fff" />
                           <RNText style={styles.actionBtnText}>Cobrar</RNText>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { backgroundColor: '#6b7280' }]}
+                          onPress={handleVolverCarrito}
+                        >
+                          <Ionicons name="cart-outline" size={20} color="#fff" />
+                          <RNText style={styles.actionBtnText}>Volver a Carrito</RNText>
+                        </TouchableOpacity>
+                      </>
+                    )}
+                    {selectedVenta.estado === 'RESERVA' && (
+                      <>
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { backgroundColor: '#f59e0b' }]}
+                          onPress={() => handleChangeEstado('TOMADO')}
+                        >
+                          <Ionicons name="hand-left-outline" size={20} color="#fff" />
+                          <RNText style={styles.actionBtnText}>Pasar a Tomado</RNText>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
+                          onPress={handleOpenCobrar}
+                        >
+                          <Ionicons name="cash-outline" size={20} color="#fff" />
+                          <RNText style={styles.actionBtnText}>Cobrar / Pago</RNText>
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[styles.actionBtn, { backgroundColor: '#6b7280' }]}

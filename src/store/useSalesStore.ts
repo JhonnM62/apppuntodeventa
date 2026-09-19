@@ -21,6 +21,7 @@ interface SalesStore {
   ventas: VentaItem[];
   lastFetched: number | null;
   isLoading: boolean;
+  _hasHydrated: boolean;
   setVentas: (ventas: VentaItem[]) => void;
   addVenta: (venta: VentaItem) => void;
   updateVenta: (ventaId: string, updates: Partial<VentaItem>) => void;
@@ -41,6 +42,7 @@ export const useSalesStore = create<SalesStore>()(
       ventas: [],
       lastFetched: null,
       isLoading: false,
+      _hasHydrated: false,
 
       setVentas: (ventas) => {
         // Asegurarnos de que siempre estamos guardando un array
@@ -145,7 +147,37 @@ export const useSalesStore = create<SalesStore>()(
         
         return {
           ventas: [...pending, ...completed],
-          lastFetched: state.lastFetched,
+          // FIX: NO persistir lastFetched. Esto fuerza un API call fresco en cada carga de página,
+          // evitando que el cache shortcircuit muestre solo pedidos locales en navegadores móviles.
+        };
+      },
+      // FIX: merge personalizado para que la hidratación no sobrescriba datos frescos del API.
+      // Si el store actual ya tiene datos frescos (lastFetched reciente), conservarlos.
+      // Solo restaurar datos persistidos si el store está vacío (arranque fresco).
+      merge: (persistedState, currentState) => {
+        const current = currentState as SalesStore;
+        // Si el store actual ya fue poblado por un fetch del API (tiene lastFetched),
+        // NO dejar que la hidratación sobrescriba con datos viejos del localStorage.
+        if (current.lastFetched && current.ventas.length > 0) {
+          return { ...current, _hasHydrated: true };
+        }
+        // Si el store está vacío (arranque fresco), restaurar los datos persistidos
+        const persisted = (persistedState as Partial<SalesStore>) || {};
+        const persistedVentas = Array.isArray(persisted.ventas) ? persisted.ventas : [];
+        return {
+          ...current,
+          ventas: persistedVentas.length > 0 ? persistedVentas : current.ventas,
+          // No restaurar lastFetched — forzar un fetch fresco
+          _hasHydrated: true,
+        };
+      },
+      onRehydrateStorage: () => {
+        return (_state, error) => {
+          if (error) {
+            console.warn('[useSalesStore] Error al rehidratar desde localStorage:', error);
+          }
+          // Marcar como hidratado para que fetchVentas sepa que puede confiar en el cache
+          useSalesStore.setState({ _hasHydrated: true });
         };
       },
     }

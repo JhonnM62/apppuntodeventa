@@ -16,7 +16,8 @@ export const useGlobalSalesSync = () => {
   const fetchSales = useCallback(async () => {
     try {
       const data = await getSales({ limit: 100 });
-      setCachedVentas(data?.data || []);
+      const ventasArray = Array.isArray(data) ? data : (data?.data || []);
+      setCachedVentas(ventasArray);
     } catch (err) {
       console.error('[useGlobalSalesSync] Error fetching sales:', err);
     }

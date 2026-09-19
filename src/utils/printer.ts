@@ -39,6 +39,13 @@ export interface TicketData {
   observaciones?: string;
   estado?: string;
   vendedor?: string;
+  propina?: number;
+  porcentajePropina?: string;
+  descuento?: number;
+  abono?: number;
+  totalGlobal?: number;
+  logoUrl?: string;
+  imprimirLogo?: boolean;
   comercio?: {
     nombre?: string;
     nit?: string;
@@ -256,6 +263,19 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
   payload += boldSeparator + '\n';
 
   // TOTALES
+  if (data.descuento && data.descuento > 0) {
+    payload += alignRight(cleanText(`Descuento: -${formatCurrency(data.descuento)}`), width) + '\n';
+  }
+  if (data.propina && data.propina > 0) {
+    const propinaLabel = data.porcentajePropina ? `Propina (${data.porcentajePropina}%): ` : `Propina: `;
+    payload += alignRight(cleanText(`${propinaLabel}${formatCurrency(data.propina)}`), width) + '\n';
+  }
+  if (data.totalGlobal !== undefined) {
+    payload += alignRight(cleanText(`TOTAL GLOBAL: ${formatCurrency(data.totalGlobal)}`), width) + '\n';
+  }
+  if (data.abono && data.abono > 0) {
+    payload += alignRight(cleanText(`Abono: -${formatCurrency(data.abono)}`), width) + '\n';
+  }
   payload += alignRight(cleanText(`TOTAL A PAGAR: ${formatCurrency(data.total)}`), width) + '\n';
   
   if (data.metodoPago) {
