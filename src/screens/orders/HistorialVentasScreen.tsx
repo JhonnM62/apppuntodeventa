@@ -41,8 +41,9 @@ import { usePermissions } from '../../hooks/usePermissions';
 import AdminSaleFormModal from './AdminSaleFormModal';
 import { useProductStore } from '../../store/useProductStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
+import { ErrorBoundary } from '../../components/ErrorBoundary';
 
-export default function HistorialVentasScreen({ navigation }: any) {
+function HistorialVentasScreenInner({ navigation }: any) {
   const { canCreate, canEdit, canDelete } = usePermissions('historial_ventas');
   const { primaryColor } = useSettingsStore();
   // Tabs cache state for instantaneous switching
@@ -1788,5 +1789,12 @@ export default function HistorialVentasScreen({ navigation }: any) {
       />
 
     </View>
+  );
+}
+export default function HistorialVentasScreen(props: any) {
+  return (
+    <ErrorBoundary>
+      <HistorialVentasScreenInner {...props} />
+    </ErrorBoundary>
   );
 }

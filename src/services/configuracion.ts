@@ -57,9 +57,7 @@ export const uploadLogo = async (imageUri: string, baseUrl: string) => {
   
   formData.append('baseUrl', baseUrl);
 
-  const response = await api.post('/configuracion/logo', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const response = await api.post('/configuracion/logo', formData);
   
   cachedConfig = null; // Invalidate cache so next fetch gets new logo URL
   return response.data;

@@ -2420,11 +2420,14 @@ showAlert({
 
   const handleCobrarConfirm = async (paymentData: {
     medioDePago: string;
-    banco?: string;
+    banco?: string | null;
     efectivoRecibido?: number;
     devueltas?: number;
     transferencia?: number;
     estado: string;
+    propina?: number;
+    porcentajePropina?: string;
+    descuento?: number;
   }) => {
     if (!cobrarVenta) return;
     try {
@@ -2442,7 +2445,10 @@ showAlert({
         devueltas: paymentData.devueltas,
         banco: paymentData.banco,
         transferencia: paymentData.transferencia,
-        totalInput: totalReal,
+        propina: paymentData.propina,
+        porcentajePropina: paymentData.porcentajePropina,
+        descuento: paymentData.descuento,
+        totalInput: paymentData.totalInput ?? totalReal,
       });
 
       // Actualizamos UI localmente de forma opcional (el socket confirmará después)
@@ -2454,7 +2460,10 @@ showAlert({
         devueltas: paymentData.devueltas,
         banco: paymentData.banco,
         transferencia: paymentData.transferencia,
-        totalInput: totalReal,
+        propina: paymentData.propina,
+        porcentajePropina: paymentData.porcentajePropina,
+        descuento: paymentData.descuento,
+        totalInput: paymentData.totalInput ?? totalReal,
       };
 
       // Actualizamos la tienda local inmediatamente para que desaparezca de TOMADO y pase a PAGADO

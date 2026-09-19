@@ -45,6 +45,7 @@ interface PaymentModalProps {
     propina?: number;
     porcentajePropina?: string;
     descuento?: number;
+    totalInput?: number;
   }) => Promise<{ pedidoId?: string } | void>;
   total: number;
   abonoPrevio?: number;
@@ -435,7 +436,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         abono: selectedEstado === 'RESERVA' ? abonoAmount : undefined,
         propina: propinaValue,
         porcentajePropina: propinaPercent > 0 ? (propinaPercent * 100).toString() : undefined,
-        descuento: getDiscountAmount()
+        descuento: getDiscountAmount(),
+        totalInput: actualTotal
       });
 
       // Si tenemos un resultado válido del backend con el ID real, imprimimos.
