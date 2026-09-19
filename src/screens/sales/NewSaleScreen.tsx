@@ -1094,11 +1094,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
         import('../../services/sales').then(async ({ updateVentaCompleta }) => {
           try {
-            const response = await updateVentaCompleta(editingSaleId, payload);
-            const ventaActualizada = response?.data || response;
-            const pedidoGenerado = ventaActualizada?.pedido || editingVenta?.pedido || 'Editando...';
-            
-            // IMPRESIÓN CON EL ID REAL DEL BACKEND (EDIT)
+            // IMPRESIÓN INSTANTÁNEA ANTES DE GUARDAR EN BASE DE DATOS
+            const pedidoGenerado = editingVenta?.pedido || 'Editando...';
             const printStore = usePrinterStore.getState();
             if (printStore.shouldPrintComanda(data.estado) || printStore.shouldPrintFactura(data.estado)) {
               const ticketData = {
@@ -1120,6 +1117,10 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               };
               printStore.printTicket(ticketData);
             }
+
+            // AHORA SÍ, GUARDAMOS EN SEGUNDO PLANO
+            const response = await updateVentaCompleta(editingSaleId, payload);
+            const ventaActualizada = response?.data || response;
 
             emitOrdenActualizada({ 
               ventaId: editingSaleId, 
