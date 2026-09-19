@@ -511,19 +511,57 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           />
 
           <Text style={[styles.label, { marginTop: 20 }]}>Hora de Corte del Día</Text>
-          <TouchableOpacity style={styles.timePickerButton} onPress={openTimePicker}>
-            <Ionicons name="time-outline" size={24} color="#4f46e5" style={{ marginRight: 10 }} />
-            <Text style={styles.timePickerText}>{format12Hour(horaCorteDia)}</Text>
-          </TouchableOpacity>
+          {Platform.OS === 'web' ? (
+            <View style={[styles.timePickerButton, { padding: 0, overflow: 'hidden' }]}>
+              <View style={{ position: 'absolute', left: 15, zIndex: 1, pointerEvents: 'none' }}>
+                <Ionicons name="time-outline" size={24} color="#4f46e5" />
+              </View>
+              {/* @ts-ignore */}
+              <input 
+                type="time"
+                value={horaCorteDia}
+                onChange={(e: any) => {
+                  if (e.target.value) {
+                    setHoraCorteDia(e.target.value);
+                    const [h, m] = e.target.value.split(':');
+                    const d = new Date(tempDate);
+                    d.setHours(parseInt(h, 10));
+                    d.setMinutes(parseInt(m, 10));
+                    setTempDate(d);
+                  }
+                }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  paddingLeft: 50,
+                  border: 'none',
+                  backgroundColor: 'transparent',
+                  color: '#1f2937',
+                  fontSize: 16,
+                  fontWeight: '600',
+                  outline: 'none',
+                  fontFamily: 'system-ui',
+                  cursor: 'pointer'
+                }}
+              />
+            </View>
+          ) : (
+            <>
+              <TouchableOpacity style={styles.timePickerButton} onPress={openTimePicker}>
+                <Ionicons name="time-outline" size={24} color="#4f46e5" style={{ marginRight: 10 }} />
+                <Text style={styles.timePickerText}>{format12Hour(horaCorteDia)}</Text>
+              </TouchableOpacity>
 
-          {showTimePicker && (
-            <DateTimePicker
-              value={tempDate}
-              mode="time"
-              is24Hour={false}
-              display="default"
-              onChange={onChangeTime}
-            />
+              {showTimePicker && (
+                <DateTimePicker
+                  value={tempDate}
+                  mode="time"
+                  is24Hour={false}
+                  display="default"
+                  onChange={onChangeTime}
+                />
+              )}
+            </>
           )}
 
           <Text style={[styles.label, { marginTop: 20 }]}>Modo de Operación</Text>
