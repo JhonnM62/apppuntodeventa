@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Modal, ScrollView, Image, TextInput, Platform, KeyboardAvoidingView, RefreshControl, StatusBar } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Modal, ScrollView, Image, TextInput, Platform, KeyboardAvoidingView, RefreshControl, StatusBar, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { FlashList as OriginalFlashList } from '@shopify/flash-list';
-const FlashList = OriginalFlashList as any;
+// Removed FlashList import because it causes layout bugs on mobile web viewports.
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFocusEffect } from '@react-navigation/native';
 import Toast from 'react-native-toast-message';
@@ -1052,10 +1051,9 @@ export default function HistorialVentasScreen({ navigation }: any) {
             <ActivityIndicator size="large" color="#22c55e" />
           </View>
         ) : (
-          <FlashList
+          <FlatList
             data={flatListData}
             renderItem={renderItem}
-            estimatedItemSize={140}
             keyExtractor={(item: any, index: number) => item.isHeader ? `header-${item.title}` : (item.IDventas || `venta-${index}`)}
             contentContainerStyle={{ paddingBottom: 100 }}
             onScroll={handleScroll}

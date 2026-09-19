@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput, KeyboardAvoidingView, Platform, AppState, AppStateStatus, Linking } from 'react-native';
-import { FlashList as OriginalFlashList } from '@shopify/flash-list';
-const FlashList = OriginalFlashList as any;
+// Removed FlashList import because it causes layout bugs on mobile web viewports.
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -2648,14 +2647,12 @@ showAlert({
           <ActivityIndicator size="large" color="#4CAF50" />
         </View>
       ) : (
-        <FlashList
+        <FlatList
           data={flatListData}
           extraData={[selectedToDelete, isSelectionMode]}
           renderItem={renderListItem}
           keyExtractor={keyExtractor}
-          getItemType={(item) => 'isHeader' in item ? 'header' : 'item'}
           contentContainerStyle={styles.listContent}
-          estimatedItemSize={200}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4CAF50']} />
           }
