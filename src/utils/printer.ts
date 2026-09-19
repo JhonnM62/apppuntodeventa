@@ -533,20 +533,23 @@ export const executePrint = async (
         document.head.appendChild(style);
         document.body.appendChild(printDiv);
         
-        // Pequeño delay para asegurar que el DOM haya renderizado el estilo
+        // Forzar reflujo para que el navegador aplique los estilos inmediatamente antes de imprimir
+        // Esto evita tener que usar setTimeout, el cual hace que Chrome Móvil pierda 
+        // el contexto de acción del usuario y bloquee la impresión.
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        printDiv.offsetHeight;
+
+        window.print();
+        
+        // Limpieza diferida (se ejecutará cuando se cierre el diálogo de impresión o retorne el hilo)
         setTimeout(() => {
-          window.print();
-          
-          // Limpieza después de que se cierre el diálogo de impresión
-          setTimeout(() => {
-            if (document.body.contains(printDiv)) {
-              document.body.removeChild(printDiv);
-            }
-            if (document.head.contains(style)) {
-              document.head.removeChild(style);
-            }
-          }, 1000);
-        }, 100);
+          if (document.body.contains(printDiv)) {
+            document.body.removeChild(printDiv);
+          }
+          if (document.head.contains(style)) {
+            document.head.removeChild(style);
+          }
+        }, 1000);
       }
       return true; // Simulado
     }

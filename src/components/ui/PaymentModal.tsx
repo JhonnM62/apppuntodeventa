@@ -627,7 +627,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           <Ionicons name="cart" size={16} color="#4b5563" />
           <RNText style={styles.cartSummaryTitle}>PRODUCTOS ({cart.reduce((sum, item) => sum + item.quantity, 0)})</RNText>
         </View>
-        <ScrollView style={[styles.cartSummaryList, { maxHeight: windowHeight * 0.18 }]} showsVerticalScrollIndicator={false} nestedScrollEnabled>
+        <ScrollView style={[styles.cartSummaryList, { maxHeight: Math.max(140, windowHeight * 0.18) }]} showsVerticalScrollIndicator={false} nestedScrollEnabled>
           {cart.map((item, index) => {
             const unitPrice = Number(item.precioUnitario || item.Precio_Unitario || 0);
             const baseSubtotal = item.quantity * unitPrice;
@@ -706,7 +706,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const renderContent = () => {
     if (isPagado && !method) {
       return (
-        <ScrollView style={[styles.scrollContent, { maxHeight: windowHeight * 0.32 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView style={[styles.scrollContent, { flexShrink: 1 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {renderEstadoSelector()}
           {renderMethodSelector()}
         </ScrollView>
@@ -715,7 +715,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
     if (!isPagado && !method) {
       return (
-        <ScrollView style={[styles.scrollContent, { maxHeight: windowHeight * 0.32 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView style={[styles.scrollContent, { flexShrink: 1 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {renderEstadoSelector()}
         </ScrollView>
       );
@@ -724,7 +724,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     const methodIcon = METHOD_ICONS[method!];
 
     return (
-      <ScrollView style={[styles.scrollContent, { maxHeight: windowHeight * 0.32 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <ScrollView style={[styles.scrollContent, { flexShrink: 1 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.headerMethodActions}>
           <TouchableOpacity
             style={styles.backButton}
@@ -806,7 +806,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         <Animated.View style={[styles.modalContent, { 
           transform: [{ translateY: slideAnim }], 
           maxHeight: windowHeight * 0.94,
-          marginBottom: (Platform.OS === 'android' || Platform.OS === 'web') ? keyboardHeight : 0
+          marginBottom: Platform.OS === 'android' ? keyboardHeight : 0
         }]}>
           <View style={styles.handle} />
 
