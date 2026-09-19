@@ -26,6 +26,50 @@ type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'ConfiguracionNegocio'>;
 };
 
+const PercentageChips = ({ values, onChange }: { values: number[], onChange: (v: number[]) => void }) => {
+  const [input, setInput] = useState('');
+  
+  const addValue = () => {
+    const val = parseInt(input.trim(), 10);
+    if (!isNaN(val) && !values.includes(val)) {
+      onChange([...values, val].sort((a, b) => a - b));
+    }
+    setInput('');
+  };
+  
+  const removeValue = (valToRemove: number) => {
+    onChange(values.filter(v => v !== valToRemove));
+  };
+
+  return (
+    <View style={{ marginBottom: 16 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+        {values.map(v => (
+          <View key={v} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#e0e7ff', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 }}>
+            <Text style={{ color: '#4f46e5', fontWeight: 'bold' }}>{v}%</Text>
+            <TouchableOpacity onPress={() => removeValue(v)} style={{ marginLeft: 6 }}>
+              <Ionicons name="close-circle" size={16} color="#4f46e5" />
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <TextInput
+          style={[styles.input, { flex: 1, marginBottom: 0 }]}
+          value={input}
+          onChangeText={setInput}
+          placeholder="Añadir porcentaje..."
+          keyboardType="numeric"
+          onSubmitEditing={addValue}
+        />
+        <TouchableOpacity onPress={addValue} style={{ backgroundColor: '#4f46e5', padding: 12, borderRadius: 8, marginLeft: 8 }}>
+          <Text style={{ color: 'white', fontWeight: 'bold' }}>Añadir</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
 export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
@@ -47,8 +91,8 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   // Propinas y Descuentos
   const [habilitarPropinas, setHabilitarPropinas] = useState(true);
   const [habilitarDescuentos, setHabilitarDescuentos] = useState(true);
-  const [opcionesPropinaStr, setOpcionesPropinaStr] = useState('5, 10, 15');
-  const [opcionesDescuentoStr, setOpcionesDescuentoStr] = useState('5, 10, 20');
+  const [opcionesPropina, setOpcionesPropina] = useState<number[]>([5, 10, 15]);
+  const [opcionesDescuento, setOpcionesDescuento] = useState<number[]>([5, 10, 20]);
   
   // Opciones de Logo y Ticket
   const [logoUrl, setLogoUrl] = useState<string>('');
@@ -154,13 +198,13 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         if (dataNegocio.opcionesPropina) {
           try {
             const arr = typeof dataNegocio.opcionesPropina === 'string' ? JSON.parse(dataNegocio.opcionesPropina) : dataNegocio.opcionesPropina;
-            setOpcionesPropinaStr(Array.isArray(arr) ? arr.join(', ') : '5, 10, 15');
+            if (Array.isArray(arr)) setOpcionesPropina(arr);
           } catch(e) {}
         }
         if (dataNegocio.opcionesDescuento) {
           try {
             const arr = typeof dataNegocio.opcionesDescuento === 'string' ? JSON.parse(dataNegocio.opcionesDescuento) : dataNegocio.opcionesDescuento;
-            setOpcionesDescuentoStr(Array.isArray(arr) ? arr.join(', ') : '5, 10, 20');
+            if (Array.isArray(arr)) setOpcionesDescuento(arr);
           } catch(e) {}
         }
 
@@ -236,8 +280,8 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           minutosGraciaLlegadaTarde: minutosGraciaLlegadaTarde ? parseInt(minutosGraciaLlegadaTarde, 10) : 5,
           habilitarPropinas,
           habilitarDescuentos,
-          opcionesPropina: JSON.stringify(opcionesPropinaStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))),
-          opcionesDescuento: JSON.stringify(opcionesDescuentoStr.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n))),
+          opcionesPropina: JSON.stringify(opcionesPropina),
+          opcionesDescuento: JSON.stringify(opcionesDescuento),
           imprimirLogo,
           logoSize58: logoSize58 ? parseInt(logoSize58, 10) : 380,
           logoSize80: logoSize80 ? parseInt(logoSize80, 10) : 500,
@@ -508,6 +552,60 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             El modo Restaurante habilita el control de insumos por plato en los reportes de caja.
           </Text>
 
+          {/* OPCIONES DE LOGO */}
+          <View style={{ marginTop: 24, borderTopWidth: 1, borderTopColor: '#f3f4f6', paddingTop: 16 }}>
+            <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>Logotipo y Ticket</Text>
+            
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+              {logoUrl ? (
+                <Image source={{ uri: logoUrl }} style={{ width: 80, height: 80, borderRadius: 8, marginRight: 16, backgroundColor: '#f3f4f6' }} resizeMode="contain" />
+              ) : (
+                <View style={{ width: 80, height: 80, borderRadius: 8, marginRight: 16, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="image-outline" size={32} color="#9ca3af" />
+                </View>
+              )}
+              <TouchableOpacity onPress={handlePickLogo} style={{ backgroundColor: '#4f46e5', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8 }}>
+                <Text style={{ color: '#fff', fontWeight: 'bold' }}>{logoUrl ? 'Cambiar Logo' : 'Subir Logo'}</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Imprimir Logo en Tickets</Text>
+                <Text style={{ fontSize: 12, color: '#6b7280' }}>Si está habilitado, el logo se imprimirá en los tickets.</Text>
+              </View>
+              <Switch
+                value={imprimirLogo}
+                onValueChange={setImprimirLogo}
+                trackColor={{ false: '#d1d5db', true: '#818cf8' }}
+                thumbColor={imprimirLogo ? '#4f46e5' : '#f3f4f6'}
+              />
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Tamaño (58mm)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={logoSize58}
+                  onChangeText={setLogoSize58}
+                  placeholder="Ej. 380"
+                  keyboardType="numeric"
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Tamaño (80mm)</Text>
+                <TextInput
+                  style={styles.input}
+                  value={logoSize80}
+                  onChangeText={setLogoSize80}
+                  placeholder="Ej. 500"
+                  keyboardType="numeric"
+                />
+              </View>
+            </View>
+          </View>
+
           {/* PROPINAS Y DESCUENTOS */}
           <View style={{ marginTop: 24, borderTopWidth: 1, borderTopColor: '#f3f4f6', paddingTop: 16 }}>
             <Text style={[styles.sectionTitle, { marginBottom: 16 }]}>Propinas y Descuentos</Text>
@@ -528,15 +626,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             {habilitarPropinas && (
               <View style={{ marginBottom: 16 }}>
                 <Text style={styles.label}>Opciones de Propina (%)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={opcionesPropinaStr}
-                  onChangeText={setOpcionesPropinaStr}
-                  placeholder="Ej. 5, 10, 15"
-                />
-                <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
-                  Valores separados por comas, ej. 5, 10, 15
-                </Text>
+                <PercentageChips values={opcionesPropina} onChange={setOpcionesPropina} />
               </View>
             )}
 
@@ -556,15 +646,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             {habilitarDescuentos && (
               <View style={{ marginBottom: 16 }}>
                 <Text style={styles.label}>Opciones de Descuento (%)</Text>
-                <TextInput
-                  style={styles.input}
-                  value={opcionesDescuentoStr}
-                  onChangeText={setOpcionesDescuentoStr}
-                  placeholder="Ej. 5, 10, 20, 50, 100"
-                />
-                <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>
-                  Valores separados por comas, ej. 5, 10, 20
-                </Text>
+                <PercentageChips values={opcionesDescuento} onChange={setOpcionesDescuento} />
               </View>
             )}
           </View>

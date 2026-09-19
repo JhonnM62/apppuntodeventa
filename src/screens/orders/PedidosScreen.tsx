@@ -57,6 +57,11 @@ type VentaItem = {
   costoDelDomicilio?: number;
   descuento?: number;
   porcentajeDeDescuento?: string;
+  propina?: number;
+  porcentajePropina?: string;
+  totalGlobal?: number;
+  Total?: number;
+  notas?: string;
   numeroTelefono?: number;
   mensaje?: string;
   cliente?: string;
@@ -386,13 +391,18 @@ const PedidosScreen = () => {
       estado: venta.estado,
       vendedor: venta.usuarioRelacion?.nombre,
       observaciones: venta.notas,
+      propina: venta.propina ? Number(venta.propina) : undefined,
+      porcentajePropina: venta.porcentajePropina,
+      descuento: venta.descuento ? Number(venta.descuento) : undefined,
+      abono: venta.abono ? Number(venta.abono) : undefined,
+      totalGlobal: venta.totalGlobal ? Number(venta.totalGlobal) : undefined,
       productos: (venta.ordenVentas || []).map((prod: any) => ({
         cantidad: Number(prod.cantidad || 1),
         nombre: prod.nombre || 'Producto',
         precioUnitario: Number(prod.precio || 0),
         subtotal: Number(prod.precioTotal || ((prod.precio || 0) * (prod.cantidad || 1))),
         modifiers: getModifiers(prod.comentarios),
-        cantidadPreparada: Number(prod.cantidadPreparada || 0)
+        cantidadPreparada: prod.cantidadPreparada ? Number(prod.cantidadPreparada) : undefined
       }))
     };
   };
@@ -1696,31 +1706,56 @@ showAlert({
 
               <View style={styles.modalSection}>
                 <View style={[styles.totalSection, { flexDirection: 'column', alignItems: 'stretch', gap: 8 }]}>
+                  {selectedVenta.descuento && Number(selectedVenta.descuento) > 0 ? (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                      <RNText style={[styles.totalSectionLabel, { color: '#ef4444' }]}>DESCUENTO</RNText>
+                      <RNText style={[styles.totalSectionAmount, { color: '#ef4444' }]}>
+                        -{formatMoney(Number(selectedVenta.descuento))}
+                      </RNText>
+                    </View>
+                  ) : null}
+
+                  {selectedVenta.propina && Number(selectedVenta.propina) > 0 ? (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                      <RNText style={styles.totalSectionLabel}>PROPINA {selectedVenta.porcentajePropina ? `(${selectedVenta.porcentajePropina}%)` : ''}</RNText>
+                      <RNText style={styles.totalSectionAmount}>
+                        {formatMoney(Number(selectedVenta.propina))}
+                      </RNText>
+                    </View>
+                  ) : null}
+
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <RNText style={styles.totalSectionLabel}>TOTAL GLOBAL</RNText>
                     <RNText style={styles.totalSectionAmount}>
                       {formatMoney(
-                        // FIX: si totalInput es 0 o nulo, calcularlo desde los productos
                         getVentaTotal(selectedVenta)
                       )}
                     </RNText>
                   </View>
-                  {selectedVenta.estado === 'RESERVA' && selectedVenta.abono && selectedVenta.abono > 0 ? (
+                  
+                  {selectedVenta.abono && Number(selectedVenta.abono) > 0 ? (
                     <>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                         <RNText style={[styles.totalSectionLabel, { color: '#059669' }]}>ABONO</RNText>
                         <RNText style={[styles.totalSectionAmount, { color: '#059669' }]}>
-                          -{formatMoney(selectedVenta.abono)}
+                          -{formatMoney(Number(selectedVenta.abono))}
                         </RNText>
                       </View>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 8 }}>
                         <RNText style={styles.totalSectionLabel}>TOTAL A PAGAR</RNText>
                         <RNText style={styles.totalSectionAmount}>
-                          {formatMoney(getVentaTotal(selectedVenta) - selectedVenta.abono)}
+                          {formatMoney(getVentaTotal(selectedVenta) - Number(selectedVenta.abono))}
                         </RNText>
                       </View>
                     </>
-                  ) : null}
+                  ) : (
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 8 }}>
+                      <RNText style={styles.totalSectionLabel}>TOTAL A PAGAR</RNText>
+                      <RNText style={styles.totalSectionAmount}>
+                        {formatMoney(getVentaTotal(selectedVenta))}
+                      </RNText>
+                    </View>
+                  )}
                 </View>
               </View>
 
