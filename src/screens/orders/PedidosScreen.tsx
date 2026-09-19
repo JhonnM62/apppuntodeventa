@@ -595,7 +595,8 @@ const PedidosScreen = () => {
   const fetchIdRef = useRef<number>(0);
 
   const fetchVentas = useCallback(async (force = false) => {
-    if (!force && !shouldRefetchVentas() && cachedVentas && Array.isArray(cachedVentas) && cachedVentas.length > 0) {
+    const currentCachedVentas = useSalesStore.getState().ventas;
+    if (!force && !shouldRefetchVentas() && currentCachedVentas && Array.isArray(currentCachedVentas) && currentCachedVentas.length > 0) {
       setLoading(false);
       return;
     }
@@ -624,7 +625,7 @@ const PedidosScreen = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [cachedVentas, shouldRefetchVentas, setCachedVentas]);
+  }, [shouldRefetchVentas, setCachedVentas]);
 
   useEffect(() => {
     forceFetchRef.current = () => fetchVentas(true);

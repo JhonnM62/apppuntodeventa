@@ -97,8 +97,10 @@ export const getSales = async (params?: {
   totalMin?: string;
   totalMax?: string;
   categoriaProducto?: string;
+  _t?: number;
 }) => {
-  const response = await api.get('/ventas', { params });
+  const queryParams = { ...params, _t: Date.now() };
+  const response = await api.get('/ventas', { params: queryParams });
   
   return response?.data ?? response;
 };
