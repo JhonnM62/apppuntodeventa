@@ -247,7 +247,7 @@ function HistorialVentasScreenInner({ navigation }: any) {
     try {
       const response = await getSales({
         page: pageNumber,
-        limit: 20,
+        limit: 9999, // Fetch all records as requested
         includeDeleted: tab === 'eliminadas',
         search: search || undefined,
         ...currentFilters
@@ -304,8 +304,8 @@ function HistorialVentasScreenInner({ navigation }: any) {
         [tab]: {
           data: isLoadMore ? [...prev[tab].data, ...newData] : newData,
           page: pageNumber,
-          hasNextPage: meta.hasNextPage ?? false,
-          total: meta.total ?? 0,
+          hasNextPage: meta?.hasNextPage ?? false,
+          total: meta?.total ?? newData.length,
           initialized: true
         }
       }));

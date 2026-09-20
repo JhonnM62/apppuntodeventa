@@ -741,7 +741,7 @@ const PedidosScreen = () => {
         if (filters.cliente) query.search = query.search ? `${query.search} ${filters.cliente}` : filters.cliente;
         if (filters.pedidoNumero) query.search = query.search ? `${query.search} ${filters.pedidoNumero}` : filters.pedidoNumero;
 
-        const data = await getSales(query);
+        const data = await getSales({ ...query, limit: 500 });
           let ventasData = [];
           if (Array.isArray(data)) {
             ventasData = data;
