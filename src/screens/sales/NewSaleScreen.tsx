@@ -743,6 +743,9 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     devueltas?: number;
     transferencia?: number;
     estado: string;
+    propina?: number;
+    porcentajePropina?: string;
+    totalInput?: number;
   }) => {
     if (isSubmitting) return; // FIX: Prevent double submission
     setIsSubmitting(true);
@@ -776,12 +779,14 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             mesa: mesaValue,
             estado: paymentData.estado,
             medioDePago: paymentData.medioDePago,
-            efectivoRecibido: paymentData.efectivoRecibido || finalTotal,
+            efectivoRecibido: paymentData.efectivoRecibido || paymentData.totalInput || finalTotal,
             devueltas: paymentData.devueltas || 0,
             banco: paymentData.medioDePago === 'EFECTIVO' ? null : paymentData.banco,
-            totalInput: finalTotal,
+            totalInput: paymentData.totalInput || finalTotal,
             descuento: descuento,
             porcentajeDeDescuento: discountPercent.toString(),
+            propina: paymentData.propina,
+            porcentajePropina: paymentData.porcentajePropina,
             clienteId: selectedCliente ? selectedCliente.IDcliente : undefined,
           },
           productos: cart.map((item) => ({
@@ -928,12 +933,14 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           mesa: mesaValue,
           estado: paymentData.estado,
           medioDePago: paymentData.medioDePago,
-          efectivoRecibido: paymentData.efectivoRecibido || finalTotal,
+          efectivoRecibido: paymentData.efectivoRecibido || paymentData.totalInput || finalTotal,
           devueltas: paymentData.devueltas || 0,
           banco: paymentData.medioDePago === 'EFECTIVO' ? null : paymentData.banco,
-          totalInput: finalTotal,
+          totalInput: paymentData.totalInput || finalTotal,
           descuento: descuento,
           porcentajeDeDescuento: discountPercent.toString(),
+          propina: paymentData.propina,
+          porcentajePropina: paymentData.porcentajePropina,
           cartStartTime: cartStartTime,
           clienteId: selectedCliente ? selectedCliente.IDcliente : undefined,
         },
@@ -984,6 +991,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               metodoPago: finalMethod,
               efectivoRecibido: payload.venta.efectivoRecibido,
               devueltas: payload.venta.devueltas,
+              propina: payload.venta.propina,
+              porcentajePropina: payload.venta.porcentajePropina,
               vendedor: useAuthStore.getState().user?.nombre || 'Caja'
             };
             printStore.printTicket(ticketData);
@@ -1113,6 +1122,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                 metodoPago: data.medioDePago || editingVenta?.medioDePago || 'PENDIENTE',
                 efectivoRecibido: editingVenta?.efectivoRecibido || finalTotal,
                 devueltas: editingVenta?.devueltas || 0,
+                propina: editingVenta?.propina,
+                porcentajePropina: editingVenta?.porcentajePropina,
                 vendedor: useAuthStore.getState().user?.nombre || 'Caja'
               };
               printStore.printTicket(ticketData);

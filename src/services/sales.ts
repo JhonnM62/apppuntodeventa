@@ -25,6 +25,8 @@ export interface SalePayload {
     totalInput: number;
     descuento?: number;
     porcentajeDeDescuento?: string;
+    propina?: number;
+    porcentajePropina?: string;
     pedido?: string;
     cartStartTime?: string;
     clienteId?: number;
