@@ -14,9 +14,10 @@ import { navigationRef } from '../navigation/RootNavigator';
 // Configure behavior
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldPlaySound: true,
-    shouldSetBadge: true, shouldShowBanner: true, shouldShowList: true,
+    shouldSetBadge: true, 
+    shouldShowBanner: true, 
+    shouldShowList: true,
   }),
 });
 

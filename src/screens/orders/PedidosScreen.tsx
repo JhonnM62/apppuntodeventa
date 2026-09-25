@@ -704,6 +704,9 @@ const PedidosScreen = () => {
         if (selectedVenta?.IDventas === data.ventaId) closeModal();
       } else if (data.action === 'bulkDelete' && data.ventaIds) {
         data.ventaIds.forEach((id) => removeVenta(id));
+      } else if (data.action === 'restore' && data.venta) {
+        // Venta restaurada desde papelera: vuelve a aparecer en la lista
+        addVenta(data.venta);
       } else {
         // Fallback para acciones desconocidas: re-fetch completo
         fetchVentas(true);
@@ -1040,7 +1043,7 @@ const PedidosScreen = () => {
     try {
       await deleteSale(id);
       Toast.show({ type: 'success', text1: 'Eliminado', text2: 'El pedido fue eliminado exitosamente' });
-      fetchVentas(true);
+      removeVenta(id); // Actualización optimista local sin resetear la caché
       if (selectedVenta?.IDventas === id) {
         closeModal();
       }
@@ -1073,9 +1076,9 @@ showAlert({
         try {
           await deleteSalesBulk(selectedToDelete);
           Toast.show({ type: 'success', text1: 'Eliminados', text2: `${selectedToDelete.length} pedidos fueron eliminados` });
+          selectedToDelete.forEach(id => removeVenta(id)); // Actualización optimista
           setSelectedToDelete([]);
           setIsSelectionMode(false);
-          fetchVentas(true);
         } catch (error) {
           console.error('Error en eliminación masiva:', error);
           Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudieron eliminar los pedidos' });
@@ -1522,6 +1525,7 @@ showAlert({
         onRequestClose={closeModal}
         presentationStyle="pageSheet"
       >
+        <StatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
@@ -2158,6 +2162,7 @@ showAlert({
       onRequestClose={() => setFilterModalVisible(false)}
       presentationStyle="pageSheet"
     >
+      <StatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
         <View style={styles.filterModalContainer}>
         <View style={styles.filterModalHeader}>

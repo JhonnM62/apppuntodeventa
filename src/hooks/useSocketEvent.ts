@@ -69,12 +69,6 @@ export function useSocketEvent<T = any>(
     };
   }, [socket, event, ...dependencies]);
 
-  useEffect(() => {
-    if (isConnected && lastDataRef.current) {
-      console.log(`[useSocketEvent] Re-triggering handler with last data for event: ${event}`);
-      handlerRef.current(lastDataRef.current);
-    }
-  }, [isConnected]);
 }
 
 export default useSocketEvent;

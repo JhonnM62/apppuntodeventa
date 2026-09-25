@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView } from 'react-native';
+import { View, TouchableOpacity, Text as RNText, StyleSheet, ScrollView, StatusBar, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import useAuthStore from '../../store/useAuthStore';
@@ -174,7 +174,8 @@ const SettingsScreen = ({ navigation }: Props) => {
 
   return (
     <View style={styles.container}>
-      <View style={{ backgroundColor: '#fff', paddingTop: insets.top }}>
+      <StatusBar backgroundColor="#ffffff" barStyle="dark-content" translucent={Platform.OS === 'ios'} />
+      <View style={{ backgroundColor: '#fff', paddingTop: Math.max(insets.top, Platform.OS === 'android' ? 40 : 0) }}>
         <View style={styles.header}>
           <RNText style={styles.headerTitle}>Configuración</RNText>
           <TouchableOpacity onPress={handleLogout} style={styles.logoutBtn}>

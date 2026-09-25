@@ -1,9 +1,9 @@
 {
   "name": "qhubomor-pos-app",
-  "version": "1.0.218",
+  "version": "1.0.220",
   "main": "index.js",
   "scripts": {
-    "start": "npx cross-env REACT_NATIVE_PACKAGER_HOSTNAME=backendnestpv.autosystemprojects.site expo start --dev-client",
+    "start": "expo start --dev-client",
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",

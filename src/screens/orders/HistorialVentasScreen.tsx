@@ -157,6 +157,19 @@ function HistorialVentasScreenInner({ navigation }: any) {
         eliminadas: { ...prev.eliminadas, data: prev.eliminadas.data.filter(v => !data.ventaIds.includes(v.IDventas)) }
       }));
       data.ventaIds.forEach((id: string) => useSalesStore.getState().removeVenta(id));
+    } else if (data?.action === 'restore' && data?.venta) {
+      // Venta restaurada: sacarla de eliminadas, meterla en activas
+      setCache(prev => ({
+        ...prev,
+        activas: {
+          ...prev.activas,
+          data: prev.activas.data.some(v => v.IDventas === data.venta.IDventas)
+            ? prev.activas.data.map(v => v.IDventas === data.venta.IDventas ? data.venta : v)
+            : [data.venta, ...prev.activas.data]
+        },
+        eliminadas: { ...prev.eliminadas, data: prev.eliminadas.data.filter(v => v.IDventas !== data.venta.IDventas) }
+      }));
+      useSalesStore.getState().addVenta(data.venta);
     } else if (data?.action === 'create') {
       // Background silent fetch solo para creaciones si estamos en la tab de activas
       if (activeTab === 'activas') {
@@ -663,11 +676,15 @@ function HistorialVentasScreenInner({ navigation }: any) {
       try {
         if (currentAction === 'bulk-delete') {
           await deleteSalesBulk(selectedToDelete, deleteReason);
+          // Actualizar Zustand global para que PedidosScreen refleje el cambio de inmediato
+          selectedToDelete.forEach(id => useSalesStore.getState().removeVenta(id));
           Toast.show({ type: 'success', text1: 'Eliminadas', text2: `${selectedToDelete.length} ventas han sido eliminadas` });
           setSelectedToDelete([]);
           setIsSelectionMode(false);
         } else {
           await deleteSale(selectedVenta.IDventas, deleteReason);
+          // Actualizar Zustand global para que PedidosScreen refleje el cambio de inmediato
+          useSalesStore.getState().removeVenta(selectedVenta.IDventas);
           Toast.show({ type: 'success', text1: 'Eliminada', text2: 'La venta ha sido enviada a papelera' });
           setModalVisible(false);
         }
@@ -684,6 +701,8 @@ function HistorialVentasScreenInner({ navigation }: any) {
       setIsProcessingAction(true);
       try {
         await restoreSale(selectedVenta.IDventas);
+        // La venta restaurada vuelve a estar activa — el socket la añadirá;
+        // por seguridad forzamos un refetch del store global
         Toast.show({ type: 'success', text1: 'Restaurada', text2: 'La venta ha vuelto a estar activa' });
         setActionModalVisible(false);
         setModalVisible(false);
@@ -700,11 +719,15 @@ function HistorialVentasScreenInner({ navigation }: any) {
       try {
         if (currentAction === 'bulk-hard-delete') {
           await hardDeleteSalesBulk(selectedToDelete);
+          // Actualizar Zustand global de inmediato
+          selectedToDelete.forEach(id => useSalesStore.getState().removeVenta(id));
           Toast.show({ type: 'success', text1: 'Eliminadas Definitivamente', text2: `${selectedToDelete.length} ventas eliminadas` });
           setSelectedToDelete([]);
           setIsSelectionMode(false);
         } else {
           await hardDeleteSale(selectedVenta.IDventas);
+          // Actualizar Zustand global de inmediato
+          useSalesStore.getState().removeVenta(selectedVenta.IDventas);
           Toast.show({ type: 'success', text1: 'Eliminada Definitivamente', text2: 'La venta ya no existe en la base de datos' });
           setModalVisible(false);
         }

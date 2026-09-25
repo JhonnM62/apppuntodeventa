@@ -22,7 +22,7 @@ import usePrinterStore from '../../store/usePrinterStore';
 import { executePrint, TicketData } from '../../utils/printer';
 import useCartStore from '../../store/useCartStore';
 import useAuthStore from '../../store/useAuthStore';
-import { getConfiguracion } from '../../services/configuracion';
+import { getConfiguracion, getCachedConfiguracion } from '../../services/configuracion';
 import { Cliente } from '../../services/clientes.service';
 
 type PaymentMethod = 'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'EFECTIVO Y OTROS';
@@ -113,10 +113,34 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [selectedBank, setSelectedBank] = useState<string | null>(null);
   
   // Configuración de Negocio (Descuentos y Propinas)
-  const [habilitarPropinas, setHabilitarPropinas] = useState(true);
-  const [habilitarDescuentos, setHabilitarDescuentos] = useState(true);
-  const [opcionesPropina, setOpcionesPropina] = useState<number[]>([0, 0.05, 0.10, 0.15]);
-  const [opcionesDescuento, setOpcionesDescuento] = useState<number[]>([0, 0.15, 0.30, 0.50]);
+  const [habilitarPropinas, setHabilitarPropinas] = useState<boolean>(() => {
+    const cache = getCachedConfiguracion()?.data || getCachedConfiguracion();
+    return cache?.habilitarPropinas !== undefined ? cache.habilitarPropinas : false;
+  });
+  const [habilitarDescuentos, setHabilitarDescuentos] = useState<boolean>(() => {
+    const cache = getCachedConfiguracion()?.data || getCachedConfiguracion();
+    return cache?.habilitarDescuentos !== undefined ? cache.habilitarDescuentos : true;
+  });
+  const [opcionesPropina, setOpcionesPropina] = useState<number[]>(() => {
+    const cache = getCachedConfiguracion()?.data || getCachedConfiguracion();
+    if (cache?.opcionesPropina) {
+        try {
+            const parsed = typeof cache.opcionesPropina === 'string' ? JSON.parse(cache.opcionesPropina) : cache.opcionesPropina;
+            if (Array.isArray(parsed)) return [0, ...parsed.map((p: number) => p / 100)];
+        } catch(e) {}
+    }
+    return [0, 0.05, 0.10, 0.15];
+  });
+  const [opcionesDescuento, setOpcionesDescuento] = useState<number[]>(() => {
+    const cache = getCachedConfiguracion()?.data || getCachedConfiguracion();
+    if (cache?.opcionesDescuento) {
+        try {
+            const parsed = typeof cache.opcionesDescuento === 'string' ? JSON.parse(cache.opcionesDescuento) : cache.opcionesDescuento;
+            if (Array.isArray(parsed)) return [0, ...parsed.map((p: number) => p / 100)];
+        } catch(e) {}
+    }
+    return [0, 0.15, 0.30, 0.50];
+  });
 
   // Propinas
   const [propinaPercent, setPropinaPercent] = useState<number>(0);
@@ -930,7 +954,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       animationType="slide"
       onRequestClose={handleClose}
       presentationStyle="pageSheet"
-      transparent={true}
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}

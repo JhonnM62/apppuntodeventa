@@ -11,6 +11,8 @@ export const getConfiguracion = async (forceRefresh = false) => {
   return res;
 };
 
+export const getCachedConfiguracion = () => cachedConfig;
+
 export const updateConfiguracion = async (data: { horaCorteDia?: string, modoOperacion?: string, nombreComercial?: string, nit?: string, direccion?: string, telefono?: string }) => {
   const res = await api.put('/configuracion', data);
   cachedConfig = null; // Invalidate cache
