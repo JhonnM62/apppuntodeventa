@@ -58,9 +58,9 @@ jobs:
             # 3. Inyectar las variables de entorno desde los secretos de GitHub
             echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
             
-            # 4. Construir la nueva imagen de Docker (sin cache)
+            # 4. Construir la nueva imagen de Docker
             echo "Construyendo imagen Docker para web..."
-            docker build --no-cache -t qhubomor-frontend .
+            docker build -t qhubomor-frontend .
             
             # 5. Detener y eliminar el contenedor anterior si existe
             echo "Deteniendo contenedor anterior..."
@@ -105,7 +105,7 @@ jobs:
               # Compilar imagen única para este cliente (con su API URL)
               echo "Compilando imagen para $CLIENT_ID..."
               cd /root/frontend-qhubomor
-              docker build --no-cache -t frontend-$CLIENT_ID .
+              docker build -t frontend-$CLIENT_ID .
 
               # Detener y eliminar contenedor anterior de este cliente
               docker stop frontend-$CLIENT_ID || true
