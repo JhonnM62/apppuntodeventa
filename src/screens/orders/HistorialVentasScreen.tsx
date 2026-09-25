@@ -247,7 +247,7 @@ function HistorialVentasScreenInner({ navigation }: any) {
     try {
       const response = await getSales({
         page: pageNumber,
-        limit: 9999, // Fetch all records as requested
+        limit: 20, // Load initial chunk and fetch more on scroll
         includeDeleted: tab === 'eliminadas',
         search: search || undefined,
         ...currentFilters

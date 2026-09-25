@@ -341,6 +341,9 @@ const PedidosScreen = () => {
   const { canCreate: canCreateVenta } = usePermissions('ventas');
   const [activeTab, setActiveTab] = useState('todos');
   const [loading, setLoading] = useState(useSalesStore.getState().ventas.length === 0);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [selectedToDelete, setSelectedToDelete] = useState<string[]>([]);
@@ -605,36 +608,47 @@ const PedidosScreen = () => {
 
   const fetchIdRef = useRef<number>(0);
 
-  const fetchVentas = useCallback(async (force = false) => {
+  const fetchVentas = useCallback(async (force = false, pageNumber = 1, isLoadMore = false) => {
     const state = useSalesStore.getState();
     const currentCachedVentas = state.ventas;
     const hasHydrated = state._hasHydrated;
     
-    if (!force && hasHydrated && !shouldRefetchVentas() && currentCachedVentas && Array.isArray(currentCachedVentas) && currentCachedVentas.length > 0) {
+    if (!force && hasHydrated && !shouldRefetchVentas() && currentCachedVentas && Array.isArray(currentCachedVentas) && currentCachedVentas.length > 0 && !isLoadMore) {
       setLoading(false);
       return;
     }
     const currentFetchId = Date.now();
     fetchIdRef.current = currentFetchId;
 
+    if (isLoadMore) setLoadingMore(true);
+
     try {
       // Pedimos datos frescos de ventas
-      const data = await getSales({ limit: 500 });
-      if (fetchIdRef.current !== currentFetchId) {
+      const data = await getSales({ limit: 20, page: pageNumber });
+      if (fetchIdRef.current !== currentFetchId && !isLoadMore) {
         console.log('[Pedidos] Ignorando respuesta stale de getSales');
         return;
       }
-      // Extraemos array si viene envuelto en objeto { data: [...], meta: {...} }
-        let ventasData = [];
-        if (Array.isArray(data)) {
-          ventasData = data;
-        } else if (data?.data && Array.isArray(data.data)) {
-          ventasData = data.data;
-        } else if (data?.data?.data && Array.isArray(data.data.data)) {
-          ventasData = data.data.data;
-        }
+      
+      let ventasData = [];
+      if (Array.isArray(data)) {
+        ventasData = data;
+      } else if (data?.data && Array.isArray(data.data)) {
+        ventasData = data.data;
+      } else if (data?.data?.data && Array.isArray(data.data.data)) {
+        ventasData = data.data.data;
+      }
+
+      const meta = (data as any)?.meta || (data as any)?.data?.meta || {};
+
       if (Array.isArray(ventasData)) {
-        setCachedVentas(ventasData);
+        if (isLoadMore) {
+          setCachedVentas([...useSalesStore.getState().ventas, ...ventasData]);
+        } else {
+          setCachedVentas(ventasData);
+        }
+        setPage(pageNumber);
+        setHasNextPage(meta?.hasNextPage ?? false);
       }
     } catch (error: any) {
       if (error?.message === 'Network Error') {
@@ -642,9 +656,11 @@ const PedidosScreen = () => {
       } else {
         console.error('Error fetching sales:', error?.message || error);
       }
+      setHasNextPage(false);
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
   }, [shouldRefetchVentas, setCachedVentas]);
 
@@ -718,50 +734,78 @@ const PedidosScreen = () => {
     return count;
   }, [filters]);
 
+  const fetchRemoteSearch = async (pageNumber = 1, isLoadMore = false) => {
+    setIsSearchingRemote(true);
+    if (isLoadMore) setLoadingMore(true);
+
+    try {
+      const query: any = { limit: 20, page: pageNumber };
+      if (filters.searchText) query.search = filters.searchText;
+      if (filters.estados && filters.estados.length > 0) query.estado = filters.estados.join(',');
+      if (filters.mediosDePago && filters.mediosDePago.length > 0) query.medioDePago = filters.mediosDePago.join(',');
+      if (filters.fechaDesde) query.fechaDesde = filters.fechaDesde;
+      if (filters.fechaHasta) query.fechaHasta = filters.fechaHasta;
+      if (filters.vendedor) query.usuario = filters.vendedor;
+      if (filters.minTotal) query.totalMin = filters.minTotal;
+      if (filters.maxTotal) query.totalMax = filters.maxTotal;
+      if (filters.categoriaProducto) query.categoriaProducto = filters.categoriaProducto;
+      if (filters.cliente) query.search = query.search ? `${query.search} ${filters.cliente}` : filters.cliente;
+      if (filters.pedidoNumero) query.search = query.search ? `${query.search} ${filters.pedidoNumero}` : filters.pedidoNumero;
+
+      const data = await getSales(query);
+      let ventasData = [];
+      if (Array.isArray(data)) {
+        ventasData = data;
+      } else if (data?.data && Array.isArray(data.data)) {
+        ventasData = data.data;
+      } else if (data?.data?.data && Array.isArray(data.data.data)) {
+        ventasData = data.data.data;
+      }
+
+      const meta = (data as any)?.meta || (data as any)?.data?.meta || {};
+
+      if (Array.isArray(ventasData)) {
+        if (isLoadMore && remoteSearchResults) {
+          setRemoteSearchResults([...remoteSearchResults, ...ventasData]);
+        } else {
+          setRemoteSearchResults(ventasData);
+        }
+        setPage(pageNumber);
+        setHasNextPage(meta?.hasNextPage ?? false);
+      }
+    } catch (e) {
+      console.error('Error fetching remote search', e);
+      setHasNextPage(false);
+    } finally {
+      setIsSearchingRemote(false);
+      setLoadingMore(false);
+    }
+  };
+
   useEffect(() => {
-    if (activeFiltersCount === 0) {
+    if (activeFiltersCount === 0 && !filters.searchText) {
       setRemoteSearchResults(null);
       setIsSearchingRemote(false);
+      setPage(1); // Reset page when clearing filters
       return;
     }
 
-    const delayDebounceFn = setTimeout(async () => {
-      setIsSearchingRemote(true);
-      try {
-        const query: any = { limit: 150 };
-        if (filters.searchText) query.search = filters.searchText;
-        if (filters.estados && filters.estados.length > 0) query.estado = filters.estados.join(',');
-        if (filters.mediosDePago && filters.mediosDePago.length > 0) query.medioDePago = filters.mediosDePago.join(',');
-        if (filters.fechaDesde) query.fechaDesde = filters.fechaDesde;
-        if (filters.fechaHasta) query.fechaHasta = filters.fechaHasta;
-        if (filters.vendedor) query.usuario = filters.vendedor;
-        if (filters.minTotal) query.totalMin = filters.minTotal;
-        if (filters.maxTotal) query.totalMax = filters.maxTotal;
-        if (filters.categoriaProducto) query.categoriaProducto = filters.categoriaProducto;
-        if (filters.cliente) query.search = query.search ? `${query.search} ${filters.cliente}` : filters.cliente;
-        if (filters.pedidoNumero) query.search = query.search ? `${query.search} ${filters.pedidoNumero}` : filters.pedidoNumero;
-
-        const data = await getSales({ ...query, limit: 500 });
-          let ventasData = [];
-          if (Array.isArray(data)) {
-            ventasData = data;
-          } else if (data?.data && Array.isArray(data.data)) {
-            ventasData = data.data;
-          } else if (data?.data?.data && Array.isArray(data.data.data)) {
-            ventasData = data.data.data;
-          }
-        if (Array.isArray(ventasData)) {
-          setRemoteSearchResults(ventasData);
-        }
-      } catch (e) {
-        console.error('Error fetching remote search', e);
-      } finally {
-        setIsSearchingRemote(false);
-      }
+    const delayDebounceFn = setTimeout(() => {
+      fetchRemoteSearch(1, false);
     }, 600);
 
     return () => clearTimeout(delayDebounceFn);
   }, [filters, activeFiltersCount]);
+
+  const handleLoadMore = () => {
+    if (!hasNextPage || loadingMore || loading) return;
+    
+    if (activeFiltersCount > 0 || filters.searchText) {
+      fetchRemoteSearch(page + 1, true);
+    } else {
+      fetchVentas(false, page + 1, true);
+    }
+  };
 
 
   const applyFilters = useCallback((ventas: VentaItem[]) => {
@@ -2760,6 +2804,15 @@ showAlert({
           extraData={[selectedToDelete, isSelectionMode]}
           renderItem={renderListItem}
           keyExtractor={keyExtractor}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={{ padding: 20 }}>
+                <ActivityIndicator size="small" color="#4CAF50" />
+              </View>
+            ) : null
+          }
           contentContainerStyle={styles.listContent}
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#4CAF50']} />
