@@ -873,26 +873,26 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const renderContent = () => {
     if (isPagado && !method) {
       return (
-        <ScrollView style={[styles.scrollContent, { flexShrink: 1 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <View style={styles.scrollContent}>
           {renderEstadoSelector()}
           {renderMethodSelector()}
-        </ScrollView>
+        </View>
       );
     }
 
     if (!isPagado && !method) {
       return (
-        <ScrollView style={[styles.scrollContent, { flexShrink: 1 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <View style={styles.scrollContent}>
           {renderEstadoSelector()}
           {selectedEstado === 'RESERVA' && renderAbonoInput()}
-        </ScrollView>
+        </View>
       );
     }
 
     const methodIcon = METHOD_ICONS[method!];
 
     return (
-      <ScrollView style={[styles.scrollContent, { flexShrink: 1 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <View style={styles.scrollContent}>
         <View style={styles.headerMethodActions}>
           <TouchableOpacity
             style={styles.backButton}
@@ -944,7 +944,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         {method === 'TRANSFERENCIA' && renderTransferenciaInput()}
         {method === 'TARJETA' && renderTransferenciaInput()}
         {method === 'EFECTIVO Y OTROS' && renderMixedPayment()}
-      </ScrollView>
+      </View>
     );
   };
 
@@ -992,6 +992,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             </TouchableOpacity>
           </View>
 
+          <ScrollView 
+            style={{ flexShrink: 1 }} 
+            contentContainerStyle={{ paddingBottom: 20 }}
+            showsVerticalScrollIndicator={false} 
+            keyboardShouldPersistTaps="handled"
+          >
           {cliente && (
             <View style={styles.clientInfoContainer}>
               <View style={styles.clientInfoLeft}>
@@ -1033,6 +1039,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           </View>
 
           {renderContent()}
+          </ScrollView>
 
           <View style={styles.footer}>
             <TouchableOpacity

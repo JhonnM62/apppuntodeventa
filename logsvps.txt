@@ -1,900 +1,1423 @@
-2026-09-25T03:08:29.0335715Z Current runner version: '2.337.0'
-2026-09-25T03:08:29.0356124Z ##[group]Runner Image Provisioner
-2026-09-25T03:08:29.0356909Z Hosted Compute Agent
-2026-09-25T03:08:29.0357559Z Version: 20260828.587
-2026-09-25T03:08:29.0358129Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
-2026-09-25T03:08:29.0358846Z Build Date: 2026-08-28T16:44:25Z
-2026-09-25T03:08:29.0359461Z Worker ID: {f74511b4-dec3-4ecb-8249-1770103d23b8}
-2026-09-25T03:08:29.0360171Z Azure Region: westus3
-2026-09-25T03:08:29.0360699Z ##[endgroup]
-2026-09-25T03:08:29.0361875Z ##[group]Operating System
-2026-09-25T03:08:29.0362510Z Ubuntu
-2026-09-25T03:08:29.0362997Z 24.04.5
-2026-09-25T03:08:29.0363877Z LTS
-2026-09-25T03:08:29.0364343Z ##[endgroup]
-2026-09-25T03:08:29.0365183Z ##[group]Runner Image
-2026-09-25T03:08:29.0365737Z Image: ubuntu-24.04
-2026-09-25T03:08:29.0366290Z Version: 20260920.314.1
-2026-09-25T03:08:29.0367455Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260920.314/images/ubuntu/Ubuntu2404-Readme.md
-2026-09-25T03:08:29.0368780Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260920.314
-2026-09-25T03:08:29.0369655Z ##[endgroup]
-2026-09-25T03:08:29.0370725Z ##[group]GITHUB_TOKEN Permissions
-2026-09-25T03:08:29.0372485Z Contents: read
-2026-09-25T03:08:29.0373061Z Metadata: read
-2026-09-25T03:08:29.0373614Z Packages: read
-2026-09-25T03:08:29.0374125Z ##[endgroup]
-2026-09-25T03:08:29.0376167Z Secret source: Actions
-2026-09-25T03:08:29.0377125Z Cache mode: write
-2026-09-25T03:08:29.0377759Z Prepare workflow directory
-2026-09-25T03:08:29.0827557Z Prepare all required actions
-2026-09-25T03:08:29.0866665Z Getting action download info
-2026-09-25T03:08:29.3729970Z Download action repository 'appleboy/ssh-action@v1.0.3' (SHA:029f5b4aeeeb58fdfe1410a5d17f967dacf36262)
-2026-09-25T03:08:30.0576489Z Complete job name: deploy
-2026-09-25T03:08:30.1037245Z ##[group]Build container for action use: '/home/runner/work/_actions/appleboy/ssh-action/v1.0.3/Dockerfile'.
-2026-09-25T03:08:30.1127282Z ##[command]/usr/bin/docker build -t 96e358:68ce301366a941db8ef1312205f8418f -f "/home/runner/work/_actions/appleboy/ssh-action/v1.0.3/Dockerfile" "/home/runner/work/_actions/appleboy/ssh-action/v1.0.3"
-2026-09-25T03:08:30.9193190Z #0 building with "default" instance using docker driver
-2026-09-25T03:08:30.9193870Z 
-2026-09-25T03:08:30.9194145Z #1 [internal] load build definition from Dockerfile
-2026-09-25T03:08:30.9195024Z #1 transferring dockerfile: 149B done
-2026-09-25T03:08:30.9195570Z #1 DONE 0.0s
-2026-09-25T03:08:30.9195816Z 
-2026-09-25T03:08:30.9196175Z #2 [internal] load metadata for ghcr.io/appleboy/drone-ssh:1.7.3
-2026-09-25T03:08:31.5892162Z #2 DONE 0.8s
-2026-09-25T03:08:31.7019586Z 
-2026-09-25T03:08:31.7020273Z #3 [internal] load .dockerignore
-2026-09-25T03:08:31.7020931Z #3 transferring context: 2B done
-2026-09-25T03:08:31.7021685Z #3 DONE 0.0s
-2026-09-25T03:08:31.7022056Z 
-2026-09-25T03:08:31.7022277Z #4 [internal] load build context
-2026-09-25T03:08:31.7022785Z #4 transferring context: 108B done
-2026-09-25T03:08:31.7023265Z #4 DONE 0.0s
-2026-09-25T03:08:31.7023474Z 
-2026-09-25T03:08:31.7024034Z #5 [1/2] FROM ghcr.io/appleboy/drone-ssh:1.7.3@sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158
-2026-09-25T03:08:31.7025400Z #5 resolve ghcr.io/appleboy/drone-ssh:1.7.3@sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158 done
-2026-09-25T03:08:31.7026911Z #5 sha256:c4781b8d012b16b6c7468dc9104fad0a63f2a8815b2af8b7176bb544253ea8c7 3.86kB / 3.86kB done
-2026-09-25T03:08:31.7028219Z #5 sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca 0B / 3.38MB 0.1s
-2026-09-25T03:08:31.7029525Z #5 sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6 0B / 284.83kB 0.1s
-2026-09-25T03:08:31.7030819Z #5 sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c 0B / 1.20kB 0.1s
-2026-09-25T03:08:31.7032070Z #5 sha256:179cbd253771007f2ebcaf7a3860afe059207351de1f3378efafac93bd310158 2.38kB / 2.38kB done
-2026-09-25T03:08:31.7033299Z #5 sha256:1a52f94820e830bc9734623deb03bbafa6a248fba19cdc2e5605c70d90d91441 1.24kB / 1.24kB done
-2026-09-25T03:08:31.8517200Z #5 sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca 3.38MB / 3.38MB 0.2s done
-2026-09-25T03:08:31.8519712Z #5 sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6 284.83kB / 284.83kB 0.2s done
-2026-09-25T03:08:31.8522082Z #5 sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c 1.20kB / 1.20kB 0.2s done
-2026-09-25T03:08:31.8523815Z #5 extracting sha256:1207c741d8c9b028d98c4006013f9de959da3c55f85b91ed5e4583438a0112ca 0.1s done
-2026-09-25T03:08:31.8525981Z #5 sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 0B / 125B 0.2s
-2026-09-25T03:08:31.8528158Z #5 sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 0B / 2.44MB 0.2s
-2026-09-25T03:08:32.0573500Z #5 sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 125B / 125B 0.3s done
-2026-09-25T03:08:32.0576021Z #5 extracting sha256:654aaee5654be60f81172539ecd74485cf8bbe2e9137bab0d429862c31c676f6 0.0s done
-2026-09-25T03:08:32.1022135Z #5 sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 2.44MB / 2.44MB 0.4s done
-2026-09-25T03:08:36.8618386Z #5 extracting sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c
-2026-09-25T03:08:37.0031559Z #5 extracting sha256:7e20f48a19643465f486f59127b8f4e0f4114bedc8bd5260fb4f92d5fda95f1c done
-2026-09-25T03:08:37.0032499Z #5 extracting sha256:066e5b821e26d8313055e0314c056e6c297847bcf963e5df10e7aa03107f2246 done
-2026-09-25T03:08:37.0033196Z #5 extracting sha256:47353a6f9201a145b687290e5ae0278ac269faf4bb61bee3e9246c37a8d74277 0.0s done
-2026-09-25T03:08:37.0033776Z #5 DONE 5.3s
-2026-09-25T03:08:37.0033982Z 
-2026-09-25T03:08:37.0034222Z #6 [2/2] COPY entrypoint.sh /bin/entrypoint.sh
-2026-09-25T03:08:37.0035371Z #6 DONE 0.0s
-2026-09-25T03:08:37.0035610Z 
-2026-09-25T03:08:37.0035781Z #7 exporting to image
-2026-09-25T03:08:37.0036150Z #7 exporting layers 0.0s done
-2026-09-25T03:08:37.0159651Z #7 writing image sha256:e5bb1f01efb2d6dfcb4a7b19ccf34a81234d212a9a7b96c8df0c28a2913cf34b done
-2026-09-25T03:08:37.0160409Z #7 naming to docker.io/library/96e358:68ce301366a941db8ef1312205f8418f done
-2026-09-25T03:08:37.0160886Z #7 DONE 0.1s
-2026-09-25T03:08:37.0202672Z ##[endgroup]
-2026-09-25T03:08:37.0402699Z ##[group]Run if [[ "$AUTH_SERVER" == *"@"* ]]; then
-2026-09-25T03:08:37.0403134Z [36;1mif [[ "$AUTH_SERVER" == *"@"* ]]; then[0m
-2026-09-25T03:08:37.0403552Z [36;1m  echo "username=$(echo $AUTH_SERVER | cut -d'@' -f1)" >> $GITHUB_OUTPUT[0m
-2026-09-25T03:08:37.0403989Z [36;1m  echo "host=$(echo $AUTH_SERVER | cut -d'@' -f2)" >> $GITHUB_OUTPUT[0m
-2026-09-25T03:08:37.0404336Z [36;1melse[0m
-2026-09-25T03:08:37.0404832Z [36;1m  echo "username=root" >> $GITHUB_OUTPUT[0m
-2026-09-25T03:08:37.0405187Z [36;1m  echo "host=$AUTH_SERVER" >> $GITHUB_OUTPUT[0m
-2026-09-25T03:08:37.0405477Z [36;1mfi[0m
-2026-09-25T03:08:37.0571737Z shell: /usr/bin/bash -e {0}
-2026-09-25T03:08:37.0572642Z env:
-2026-09-25T03:08:37.0573229Z   AUTH_SERVER: ***
-2026-09-25T03:08:37.0573464Z ##[endgroup]
-2026-09-25T03:08:37.0876545Z ##[group]Run appleboy/ssh-action@v1.0.3
-2026-09-25T03:08:37.0876875Z with:
-2026-09-25T03:08:37.0877120Z   host: 100.42.185.2
-2026-09-25T03:08:37.0877364Z   username: root
-2026-09-25T03:08:37.0877712Z   password: ***
-2026-09-25T03:08:37.0877946Z   command_timeout: 30m
-2026-09-25T03:08:37.0888927Z   script: set -e
+ ⚡Administrador ❯❯ .\auto-deploy-windows-fast.ps1 -Profile preview
+=============================================
+🔥 MODO FAST: Compilación con Caché Nativo 🔥
+=============================================
+Sincronizando el codigo fuente en el VPS...
+HEAD is now at 78d90a6 feat: add payment modal, order and settings screens, configuration services, and deployment scripts
+From https://github.com/JhonnM62/apppuntodeventa
+   78d90a6..4dc5774  main       -> origin/main
+Updating 78d90a6..4dc5774
+Fast-forward
+ app.json                                           |   4 +-
+ .../specs/2026-09-25-guia-compilacion-fast.md      | 138 ++++++++++++------
+ package.json                                       |   2 +-
+ scripts/compile-vps-fast.sh                        | 154 +++++++++++++++------
+ 4 files changed, 214 insertions(+), 84 deletions(-)
+Iniciando compilacion remota rapida en el VPS (100.42.185.2) con perfil: preview...
+scripts/compile-vps-fast.sh: line 1: ﻿#!/bin/bash: No such file or directory
+=================================================
+   INICIANDO GRANJA DE COMPILACION (FAST MODE v2)
+   Perfil: preview
+=================================================
+   RAM disponible antes del build: 3808 MB
+[1/6] Verificando entorno basico...
+[2/6] Actualizando codigo fuente...
+HEAD is now at 4dc5774 feat: add fast VPS APK compilation script and user guide
+Already up to date.
+Codigo actualizado.
+[3/6] Instalando dependencias NPM...
 
-# 0. Limpiar imagenes viejas del proyecto y caché de construcción
-echo "Limpiando espacio en disco de imagenes viejas..."
-docker image prune -f || true
-docker builder prune -f || true
+> qhubomor-pos-app@1.0.221 prepare
+> husky
 
-# 1. Crear directorio del proyecto si no existe
-mkdir -p /root/frontend-qhubomor
-cd /root/frontend-qhubomor
 
-# 2. Clonar el repositorio o actualizarlo si ya existe
-if [ ! -d ".git" ]; then
-  echo "Clonando repositorio por primera vez..."
-  # Reemplaza 'JhonnM62/frontend-repo' por el nombre real de tu repositorio en GitHub
-  git clone https://***@github.com/JhonnM62/apppuntodeventa.git .
-else
-  echo "Actualizando repositorio existente..."
-  # Asegúrate de colocar la ruta correcta de tu repositorio en GitHub
-  git remote set-url origin https://***@github.com/JhonnM62/apppuntodeventa.git
-  git fetch --all
-  git reset --hard origin/main
-  git clean -fd
-fi
+up to date, audited 1199 packages in 9s
 
-# 3. Inyectar las variables de entorno desde los secretos de GitHub
-echo "***" > .env
+120 packages are looking for funding
+  run `npm fund` for details
 
-# 4. Construir la nueva imagen de Docker (sin cache)
-echo "Construyendo imagen Docker para web..."
-docker build --no-cache -t qhubomor-frontend .
+38 vulnerabilities (2 low, 21 moderate, 13 high, 2 critical)
 
-# 5. Detener y eliminar el contenedor anterior si existe
-echo "Deteniendo contenedor anterior..."
-docker stop qhubomor-frontend-app || true
-docker rm qhubomor-frontend-app || true
+To address issues that do not require attention, run:
+  npm audit fix
 
-# 6. Levantar el nuevo contenedor en el puerto 8062
-echo "Levantando nuevo contenedor..."
-docker run -d \
-  --name qhubomor-frontend-app \
-  -p 8062:80 \
-  --restart unless-stopped \
-  qhubomor-frontend
+To address all issues (including breaking changes), run:
+  npm audit fix --force
 
-echo "¡Despliegue del Frontend completado exitosamente!"
+Run `npm audit` for details.
+Dependencias instaladas.
+[4/6] Inyectando variables de entorno desde eas.json para preview...
+[5/6] Gestionando cache de proyecto nativo para perfil 'preview'...
+   Ultimo perfil compilado: (ninguno)
+   Perfil solicitado: preview
+Mismo perfil 'preview'. Reutilizando android/ existente -> build rapido (~2 min).
+   Ejecutando: npx expo prebuild --platform android
+- Creating native directory (./android)
+✔ Created native directory | reusing /android
+- Updating package.json
+✔ Updated package.json | no changes
+- Running prebuild
+- Running prebuild
+» android: androidStatusBar.backgroundColor: Color conflicts with the splash.backgroundColor
+» android: userInterfaceStyle: Install expo-system-ui in your project to enable this feature.
+- Running prebuild
+✔ Finished prebuild
+Proyecto nativo listo.
+[6/6] Construyendo APK (Gradle Assemble) con cache...
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build
+> Task :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:shared:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:shared:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava NO-SOURCE
+> Task :gradle-plugin:shared:processResources NO-SOURCE
+> Task :gradle-plugin:shared:classes UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:processResources NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:classes UP-TO-DATE
+> Task :gradle-plugin:shared:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:settings-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:settings-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:classes UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-settings-plugin:jar UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-dev-launcher-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-dev-launcher-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-dev-launcher-gradle-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-module-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-module-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-module-gradle-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:compileKotlin UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:classes UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:jar UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:react-native-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:react-native-gradle-plugin:jar UP-TO-DATE
+> Task :expo-dev-launcher-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :expo-module-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :expo-dev-launcher-gradle-plugin:compileJava NO-SOURCE
+> Task :expo-dev-launcher-gradle-plugin:classes UP-TO-DATE
+> Task :expo-module-gradle-plugin:compileJava NO-SOURCE
+> Task :expo-module-gradle-plugin:classes UP-TO-DATE
+> Task :expo-dev-launcher-gradle-plugin:jar UP-TO-DATE
+> Task :expo-module-gradle-plugin:jar UP-TO-DATE
 
-# =========================================================
-# FÁBRICA DE NUEVOS FRONTENDS WEB
-# Importante: cada cliente requiere su propia imagen porque
-# la URL del backend queda "quemada" en el build de Expo/React.
-# Para agregar un cliente: copia la llamada de abajo y cambia
-# los parámetros (CLIENT_ID, PUERTO, DOMINIO, API_URL, SECRETO).
-# =========================================================
-deploy_new_client_web() {
-  CLIENT_ID=$1
-  PORT=$2
-  DOMAIN=$3
-  API_URL=$4
-  ENV_EXTRA=$5
+> Configure project :
+[ExpoRootProject] Using the following versions:
+  - buildTools:  36.0.0
+  - minSdk:      24
+  - compileSdk:  36
+  - targetSdk:   36
+  - ndk:         27.1.12297006
+  - kotlin:      2.1.20
+  - ksp:         2.1.20-2.0.1
 
-  echo "🚀 Desplegando Frontend para: $CLIENT_ID en $DOMAIN:$PORT"
+> Configure project :app
+ ℹ️  Applying gradle plugin 'expo-dev-launcher-gradle-plugin'
 
-  # Crear .env con la URL del backend de este cliente
-  # ENV_EXTRA puede incluir variables adicionales del frontend
-  printf '%s\n' "$ENV_EXTRA" > /root/frontend-qhubomor/.env.$CLIENT_ID
-  echo "EXPO_PUBLIC_API_URL=$API_URL" >> /root/frontend-qhubomor/.env.$CLIENT_ID
-  echo "EXPO_PUBLIC_APP_VARIANT=$CLIENT_ID" >> /root/frontend-qhubomor/.env.$CLIENT_ID
+> Configure project :expo
 
-  # Copiar el .env al directorio raíz para que Docker lo tome en el build
-  cp /root/frontend-qhubomor/.env.$CLIENT_ID /root/frontend-qhubomor/.env
+Using expo modules
+  - expo-constants (18.0.13)
+  - expo-dev-client (6.0.21)
+  - expo-dev-launcher (6.0.21)
+  - expo-dev-menu (7.0.19)
+  - expo-dev-menu-interface (2.0.0)
+  - expo-json-utils (0.15.0)
+  - expo-manifests (1.0.11)
+  - expo-modules-core (3.0.30)
+  - expo-speech-recognition (0.1.0)
+  - expo-updates-interface (2.0.0)
+  - [📦] expo-application (7.0.8)
+  - [📦] expo-asset (12.0.13)
+  - [📦] expo-av (16.0.8)
+  - [📦] expo-device (8.0.10)
+  - [📦] expo-document-picker (14.0.8)
+  - [📦] expo-file-system (19.0.23)
+  - [📦] expo-font (14.0.12)
+  - [📦] expo-image (3.0.11)
+  - [📦] expo-image-loader (6.0.0)
+  - [📦] expo-image-picker (17.0.11)
+  - [📦] expo-intent-launcher (13.0.8)
+  - [📦] expo-keep-awake (15.0.8)
+  - [📦] expo-linear-gradient (15.0.8)
+  - [📦] expo-location (19.0.8)
+  - [📦] expo-notifications (0.32.17)
+  - [📦] expo-print (15.0.8)
+  - [📦] expo-screen-orientation (9.0.9)
+  - [📦] expo-sharing (14.0.8)
 
-  # Compilar imagen única para este cliente (con su API URL)
-  echo "Compilando imagen para $CLIENT_ID..."
-  cd /root/frontend-qhubomor
-  docker build --no-cache -t frontend-$CLIENT_ID .
+WARNING: The specified Android SDK Build Tools version (32.0.0) is ignored, as it is below the minimum supported version (35.0.0) for Android Gradle Plugin 8.11.0.
+Android SDK Build Tools 35.0.0 will be used.
+To suppress this warning, remove "buildToolsVersion '32.0.0'" from your build.gradle file, as each version of the Android Gradle Plugin now has a default version of the build tools.
 
-  # Detener y eliminar contenedor anterior de este cliente
-  docker stop frontend-$CLIENT_ID || true
-  docker rm frontend-$CLIENT_ID || true
+> Task :app:generateAutolinkingNewArchitectureFiles
+> Task :app:generateAutolinkingPackageList
+> Task :app:generateCodegenSchemaFromJavaScript SKIPPED
+> Task :app:generateCodegenArtifactsFromSchema SKIPPED
+> Task :app:generateReactNativeEntryPoint
+> Task :expo:generatePackagesList UP-TO-DATE
+> Task :expo:preBuild UP-TO-DATE
 
-  # Levantar el nuevo contenedor
-  docker run -d \
-    --name frontend-$CLIENT_ID \
-    -p $PORT:80 \
-    --restart unless-stopped \
-    frontend-$CLIENT_ID
+> Task :expo-constants:createExpoConfig
 
-  # Configurar subdominio + certificado SSL automáticamente usando el script de n8n
-  DOMAIN=$DOMAIN PORT=$PORT EMAIL=jonnymejia62@gmail.com \
-    bash /root/frontend-qhubomor/scripts/setup-nginx.sh
+> Task :expo-constants:preBuild
+> Task :expo-dev-client:preBuild UP-TO-DATE
+The NODE_ENV environment variable is required but was not specified. Ensure the project is bundled with Expo CLI or NODE_ENV is set. Using only .env.local and .env
+> Task :expo-dev-launcher:preBuild UP-TO-DATE
+> Task :expo-dev-menu:preBuild UP-TO-DATE
+> Task :expo-dev-menu-interface:preBuild UP-TO-DATE
+> Task :expo-json-utils:preBuild UP-TO-DATE
+> Task :expo-manifests:preBuild UP-TO-DATE
+> Task :expo-modules-core:preBuild UP-TO-DATE
+> Task :expo-speech-recognition:preBuild UP-TO-DATE
+> Task :expo-updates-interface:preBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :react-native-async-storage_async-storage:preBuild UP-TO-DATE
+> Task :react-native-community_datetimepicker:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :react-native-community_datetimepicker:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :react-native-community_datetimepicker:preBuild UP-TO-DATE
+> Task :react-native-community_netinfo:preBuild UP-TO-DATE
+> Task :react-native-linear-gradient:preBuild UP-TO-DATE
+> Task :react-native-picker_picker:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :react-native-picker_picker:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :react-native-picker_picker:preBuild UP-TO-DATE
+> Task :react-native-ping:preBuild UP-TO-DATE
+> Task :react-native-safe-area-context:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :react-native-safe-area-context:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :react-native-safe-area-context:preBuild UP-TO-DATE
+> Task :react-native-screens:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :react-native-screens:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :react-native-screens:preBuild UP-TO-DATE
+> Task :react-native-svg:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :react-native-svg:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :react-native-svg:preBuild UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:preBuild UP-TO-DATE
+> Task :react-native-view-shot:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :react-native-view-shot:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :react-native-view-shot:preBuild UP-TO-DATE
+> Task :react-native-webview:generateCodegenSchemaFromJavaScript UP-TO-DATE
+> Task :react-native-webview:generateCodegenArtifactsFromSchema UP-TO-DATE
+> Task :react-native-webview:preBuild UP-TO-DATE
+> Task :app:preBuild
+> Task :app:preReleaseBuild
+> Task :app:configureCMakeRelWithDebInfo[arm64-v8a]
+> Task :app:buildCMakeRelWithDebInfo[arm64-v8a]
+> Task :app:configureCMakeRelWithDebInfo[armeabi-v7a]
+> Task :app:buildCMakeRelWithDebInfo[armeabi-v7a]
+> Task :app:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :expo:preReleaseBuild UP-TO-DATE
+> Task :expo:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :expo:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :expo-constants:preReleaseBuild
+> Task :expo-constants:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :expo-constants:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-constants:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :expo-dev-client:preReleaseBuild UP-TO-DATE
+> Task :expo-dev-client:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :expo-dev-client:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-dev-client:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :expo-dev-launcher:preReleaseBuild UP-TO-DATE
+> Task :expo-dev-launcher:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :expo-dev-launcher:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-dev-launcher:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :expo-dev-menu:preReleaseBuild UP-TO-DATE
+> Task :expo-dev-menu:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :expo-dev-menu:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-dev-menu:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :expo-dev-menu-interface:preReleaseBuild UP-TO-DATE
+> Task :expo-dev-menu-interface:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :expo-dev-menu-interface:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-dev-menu-interface:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :expo-json-utils:preReleaseBuild UP-TO-DATE
+> Task :expo-json-utils:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :expo-json-utils:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-json-utils:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :expo-manifests:preReleaseBuild UP-TO-DATE
+> Task :expo-manifests:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :expo-manifests:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-manifests:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :expo-modules-core:preReleaseBuild UP-TO-DATE
+> Task :expo-modules-core:configureCMakeRelWithDebInfo[arm64-v8a]
+> Task :expo-modules-core:buildCMakeRelWithDebInfo[arm64-v8a]
+> Task :expo-modules-core:configureCMakeRelWithDebInfo[armeabi-v7a]
+> Task :expo-modules-core:buildCMakeRelWithDebInfo[armeabi-v7a]
+> Task :expo-modules-core:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :expo-modules-core:mergeReleaseNativeLibs UP-TO-DATE
+> Task :expo-modules-core:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :expo-speech-recognition:preReleaseBuild UP-TO-DATE
+> Task :expo-speech-recognition:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :expo-speech-recognition:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-speech-recognition:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :expo-updates-interface:preReleaseBuild UP-TO-DATE
+> Task :expo-updates-interface:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :expo-updates-interface:mergeReleaseNativeLibs NO-SOURCE
+> Task :expo-updates-interface:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-async-storage_async-storage:preReleaseBuild UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-async-storage_async-storage:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-community_datetimepicker:preReleaseBuild UP-TO-DATE
+> Task :react-native-community_datetimepicker:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :react-native-community_datetimepicker:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-community_datetimepicker:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-community_netinfo:preReleaseBuild UP-TO-DATE
+> Task :react-native-community_netinfo:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :react-native-community_netinfo:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-community_netinfo:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-linear-gradient:preReleaseBuild UP-TO-DATE
+> Task :react-native-linear-gradient:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :react-native-linear-gradient:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-linear-gradient:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-picker_picker:preReleaseBuild UP-TO-DATE
+> Task :react-native-picker_picker:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :react-native-picker_picker:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-picker_picker:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-ping:preReleaseBuild UP-TO-DATE
+> Task :react-native-ping:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :react-native-ping:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-ping:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-safe-area-context:preReleaseBuild UP-TO-DATE
+> Task :react-native-safe-area-context:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :react-native-safe-area-context:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-safe-area-context:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-screens:preReleaseBuild UP-TO-DATE
+> Task :react-native-screens:configureCMakeRelWithDebInfo[arm64-v8a]
+> Task :react-native-screens:buildCMakeRelWithDebInfo[arm64-v8a]
+> Task :react-native-screens:configureCMakeRelWithDebInfo[armeabi-v7a]
+> Task :react-native-screens:buildCMakeRelWithDebInfo[armeabi-v7a]
+> Task :react-native-screens:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :react-native-screens:mergeReleaseNativeLibs UP-TO-DATE
+> Task :react-native-screens:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-svg:preReleaseBuild UP-TO-DATE
+> Task :react-native-svg:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :react-native-svg:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-svg:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:preReleaseBuild UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-thermal-receipt-printer-image-qr:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-view-shot:preReleaseBuild UP-TO-DATE
+> Task :react-native-view-shot:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :react-native-view-shot:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-view-shot:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :react-native-webview:preReleaseBuild UP-TO-DATE
+> Task :react-native-webview:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :react-native-webview:mergeReleaseNativeLibs NO-SOURCE
+> Task :react-native-webview:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :app:mergeReleaseNativeLibs UP-TO-DATE
+> Task :app:stripReleaseDebugSymbols UP-TO-DATE
+> Task :app:extractReleaseNativeSymbolTables UP-TO-DATE
+> Task :app:mergeReleaseNativeDebugMetadata UP-TO-DATE
+> Task :react-native-community_datetimepicker:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-community_datetimepicker:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-community_datetimepicker:generateReleaseResValues UP-TO-DATE
+> Task :react-native-community_datetimepicker:generateReleaseResources UP-TO-DATE
+> Task :react-native-community_datetimepicker:packageReleaseResources UP-TO-DATE
+> Task :react-native-community_datetimepicker:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-community_datetimepicker:generateReleaseRFile UP-TO-DATE
+> Task :react-native-community_datetimepicker:compileReleaseKotlin UP-TO-DATE
+> Task :react-native-community_datetimepicker:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-community_datetimepicker:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-community_datetimepicker:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :react-native-safe-area-context:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-safe-area-context:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-safe-area-context:generateReleaseResValues UP-TO-DATE
+> Task :react-native-safe-area-context:generateReleaseResources UP-TO-DATE
+> Task :react-native-safe-area-context:packageReleaseResources UP-TO-DATE
+> Task :react-native-safe-area-context:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-safe-area-context:generateReleaseRFile UP-TO-DATE
+> Task :react-native-safe-area-context:compileReleaseKotlin UP-TO-DATE
+> Task :react-native-safe-area-context:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-safe-area-context:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-safe-area-context:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :react-native-screens:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-screens:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-screens:generateReleaseResValues UP-TO-DATE
+> Task :react-native-screens:generateReleaseResources UP-TO-DATE
+> Task :react-native-screens:packageReleaseResources UP-TO-DATE
+> Task :react-native-screens:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-screens:generateReleaseRFile UP-TO-DATE
+> Task :react-native-screens:compileReleaseKotlin UP-TO-DATE
+> Task :react-native-screens:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-screens:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-screens:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :react-native-webview:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :react-native-webview:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-webview:generateReleaseResValues UP-TO-DATE
+> Task :react-native-webview:generateReleaseResources UP-TO-DATE
+> Task :react-native-webview:packageReleaseResources UP-TO-DATE
+> Task :react-native-webview:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-webview:generateReleaseRFile UP-TO-DATE
+> Task :react-native-webview:compileReleaseKotlin UP-TO-DATE
+> Task :react-native-webview:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-webview:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-webview:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateReleaseResValues UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateReleaseResources UP-TO-DATE
+> Task :react-native-async-storage_async-storage:packageReleaseResources UP-TO-DATE
+> Task :react-native-async-storage_async-storage:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateReleaseRFile UP-TO-DATE
+> Task :react-native-async-storage_async-storage:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-async-storage_async-storage:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :react-native-community_netinfo:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-community_netinfo:generateReleaseResValues UP-TO-DATE
+> Task :react-native-community_netinfo:generateReleaseResources UP-TO-DATE
+> Task :react-native-community_netinfo:packageReleaseResources UP-TO-DATE
+> Task :react-native-community_netinfo:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-community_netinfo:generateReleaseRFile UP-TO-DATE
+> Task :react-native-community_netinfo:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-community_netinfo:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-community_netinfo:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :react-native-picker_picker:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-picker_picker:generateReleaseResValues UP-TO-DATE
+> Task :react-native-picker_picker:generateReleaseResources UP-TO-DATE
+> Task :react-native-picker_picker:packageReleaseResources UP-TO-DATE
+> Task :react-native-picker_picker:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-picker_picker:generateReleaseRFile UP-TO-DATE
+> Task :react-native-picker_picker:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-picker_picker:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-picker_picker:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo:generateReleaseResValues UP-TO-DATE
+> Task :expo:generateReleaseResources UP-TO-DATE
+> Task :expo:packageReleaseResources UP-TO-DATE
+> Task :expo:parseReleaseLocalResources UP-TO-DATE
+> Task :expo:generateReleaseRFile UP-TO-DATE
+> Task :expo-constants:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-constants:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-constants:generateReleaseResValues UP-TO-DATE
+> Task :expo-constants:generateReleaseResources UP-TO-DATE
+> Task :expo-constants:packageReleaseResources UP-TO-DATE
+> Task :expo-constants:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-constants:generateReleaseRFile UP-TO-DATE
+> Task :expo-modules-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-modules-core:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-modules-core:generateReleaseResValues UP-TO-DATE
+> Task :expo-modules-core:generateReleaseResources UP-TO-DATE
+> Task :expo-modules-core:packageReleaseResources UP-TO-DATE
+> Task :expo-modules-core:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-modules-core:generateReleaseRFile UP-TO-DATE
+> Task :expo-modules-core:compileReleaseKotlin UP-TO-DATE
+> Task :expo-modules-core:javaPreCompileRelease UP-TO-DATE
+> Task :expo-modules-core:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-modules-core:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :expo-constants:compileReleaseKotlin UP-TO-DATE
+> Task :expo-constants:javaPreCompileRelease UP-TO-DATE
+> Task :expo-constants:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-constants:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :expo-dev-client:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-dev-client:dataBindingMergeDependencyArtifactsRelease UP-TO-DATE
+> Task :expo-dev-client:generateReleaseResValues UP-TO-DATE
+> Task :expo-dev-client:generateReleaseResources UP-TO-DATE
+> Task :expo-dev-client:packageReleaseResources UP-TO-DATE
+> Task :expo-dev-client:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-dev-client:dataBindingGenBaseClassesRelease UP-TO-DATE
+> Task :expo-dev-client:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-dev-client:generateReleaseRFile UP-TO-DATE
+> Task :expo-dev-client:compileReleaseKotlin NO-SOURCE
+> Task :expo-dev-client:javaPreCompileRelease UP-TO-DATE
+> Task :expo-dev-client:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-dev-client:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :expo-dev-launcher:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-dev-launcher:dataBindingMergeDependencyArtifactsRelease UP-TO-DATE
+> Task :expo-dev-launcher:generateReleaseResValues UP-TO-DATE
+> Task :expo-dev-launcher:generateReleaseResources UP-TO-DATE
+> Task :expo-dev-launcher:packageReleaseResources UP-TO-DATE
+> Task :expo-dev-launcher:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-dev-menu:generateReleaseResValues UP-TO-DATE
+> Task :expo-dev-menu:generateReleaseResources UP-TO-DATE
+> Task :expo-dev-menu:packageReleaseResources UP-TO-DATE
+> Task :expo-dev-menu:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-dev-menu:generateReleaseRFile UP-TO-DATE
+> Task :expo-dev-menu-interface:generateReleaseResValues UP-TO-DATE
+> Task :expo-dev-menu-interface:generateReleaseResources UP-TO-DATE
+> Task :expo-dev-menu-interface:packageReleaseResources UP-TO-DATE
+> Task :expo-dev-menu-interface:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-dev-menu-interface:generateReleaseRFile UP-TO-DATE
+> Task :expo-json-utils:generateReleaseResValues UP-TO-DATE
+> Task :expo-json-utils:generateReleaseResources UP-TO-DATE
+> Task :expo-json-utils:packageReleaseResources UP-TO-DATE
+> Task :expo-json-utils:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-json-utils:generateReleaseRFile UP-TO-DATE
+> Task :expo-manifests:generateReleaseResValues UP-TO-DATE
+> Task :expo-manifests:generateReleaseResources UP-TO-DATE
+> Task :expo-manifests:packageReleaseResources UP-TO-DATE
+> Task :expo-manifests:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-manifests:generateReleaseRFile UP-TO-DATE
+> Task :expo-updates-interface:generateReleaseResValues UP-TO-DATE
+> Task :expo-updates-interface:generateReleaseResources UP-TO-DATE
+> Task :expo-updates-interface:packageReleaseResources UP-TO-DATE
+> Task :expo-updates-interface:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-updates-interface:generateReleaseRFile UP-TO-DATE
+> Task :expo-dev-launcher:dataBindingGenBaseClassesRelease UP-TO-DATE
+> Task :expo-dev-launcher:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-dev-launcher:generateReleaseRFile UP-TO-DATE
+> Task :expo-dev-launcher:checkApolloVersions UP-TO-DATE
+> Task :expo-dev-launcher:generateServiceApolloOptions UP-TO-DATE
+> Task :expo-dev-launcher:generateServiceApolloSources UP-TO-DATE
+> Task :expo-dev-menu:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-dev-menu:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-dev-menu-interface:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-dev-menu-interface:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-dev-menu-interface:compileReleaseKotlin UP-TO-DATE
+> Task :expo-dev-menu-interface:javaPreCompileRelease UP-TO-DATE
+> Task :expo-dev-menu-interface:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-dev-menu-interface:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :expo-json-utils:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-json-utils:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-json-utils:compileReleaseKotlin UP-TO-DATE
+> Task :expo-json-utils:javaPreCompileRelease UP-TO-DATE
+> Task :expo-json-utils:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-json-utils:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :expo-manifests:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-manifests:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-manifests:compileReleaseKotlin UP-TO-DATE
+> Task :expo-manifests:javaPreCompileRelease UP-TO-DATE
+> Task :expo-manifests:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-manifests:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :expo-dev-menu:compileReleaseKotlin UP-TO-DATE
+> Task :expo-dev-menu:javaPreCompileRelease UP-TO-DATE
+> Task :expo-dev-menu:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-dev-menu:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :expo-updates-interface:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-updates-interface:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-updates-interface:compileReleaseKotlin UP-TO-DATE
+> Task :expo-updates-interface:javaPreCompileRelease UP-TO-DATE
+> Task :expo-updates-interface:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-updates-interface:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :expo-dev-launcher:compileReleaseKotlin UP-TO-DATE
+> Task :expo-dev-launcher:javaPreCompileRelease UP-TO-DATE
+> Task :expo-dev-launcher:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-dev-launcher:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :expo-speech-recognition:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-speech-recognition:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-speech-recognition:generateReleaseResValues UP-TO-DATE
+> Task :expo-speech-recognition:generateReleaseResources UP-TO-DATE
+> Task :expo-speech-recognition:packageReleaseResources UP-TO-DATE
+> Task :expo-speech-recognition:parseReleaseLocalResources UP-TO-DATE
+> Task :expo-speech-recognition:generateReleaseRFile UP-TO-DATE
+> Task :expo-speech-recognition:compileReleaseKotlin UP-TO-DATE
+> Task :expo-speech-recognition:javaPreCompileRelease UP-TO-DATE
+> Task :expo-speech-recognition:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-speech-recognition:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :expo:compileReleaseKotlin UP-TO-DATE
+> Task :expo:javaPreCompileRelease UP-TO-DATE
+> Task :expo:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :react-native-linear-gradient:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-linear-gradient:generateReleaseResValues UP-TO-DATE
+> Task :react-native-linear-gradient:generateReleaseResources UP-TO-DATE
+> Task :react-native-linear-gradient:packageReleaseResources UP-TO-DATE
+> Task :react-native-linear-gradient:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-linear-gradient:generateReleaseRFile UP-TO-DATE
+> Task :react-native-linear-gradient:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-linear-gradient:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-linear-gradient:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :react-native-ping:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-ping:generateReleaseResValues UP-TO-DATE
+> Task :react-native-ping:generateReleaseResources UP-TO-DATE
+> Task :react-native-ping:packageReleaseResources UP-TO-DATE
+> Task :react-native-ping:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-ping:generateReleaseRFile UP-TO-DATE
+> Task :react-native-ping:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-ping:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-ping:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :react-native-svg:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-svg:generateReleaseResValues UP-TO-DATE
+> Task :react-native-svg:generateReleaseResources UP-TO-DATE
+> Task :react-native-svg:packageReleaseResources UP-TO-DATE
+> Task :react-native-svg:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-svg:generateReleaseRFile UP-TO-DATE
+> Task :react-native-svg:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-svg:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-svg:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:generateReleaseResValues UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:generateReleaseResources UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:packageReleaseResources UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:generateReleaseRFile UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :react-native-view-shot:generateReleaseBuildConfig UP-TO-DATE
+> Task :react-native-view-shot:generateReleaseResValues UP-TO-DATE
+> Task :react-native-view-shot:generateReleaseResources UP-TO-DATE
+> Task :react-native-view-shot:packageReleaseResources UP-TO-DATE
+> Task :react-native-view-shot:parseReleaseLocalResources UP-TO-DATE
+> Task :react-native-view-shot:generateReleaseRFile UP-TO-DATE
+> Task :react-native-view-shot:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-view-shot:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-view-shot:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-dev-launcher:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-dev-menu:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-dev-menu-interface:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-speech-recognition:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-modules-core:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-constants:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-dev-client:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-manifests:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-json-utils:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-updates-interface:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :app:checkReleaseDuplicateClasses UP-TO-DATE
+> Task :app:buildKotlinToolingMetadata UP-TO-DATE
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :app:generateReleaseBuildConfig
+> Task :expo:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo-constants:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo-dev-client:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo-dev-launcher:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo-dev-menu:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo-dev-menu-interface:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo-json-utils:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo-manifests:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo-modules-core:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo-speech-recognition:writeReleaseAarMetadata UP-TO-DATE
+> Task :expo-updates-interface:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-async-storage_async-storage:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-community_datetimepicker:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-community_netinfo:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-linear-gradient:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-picker_picker:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-ping:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-safe-area-context:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-screens:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-svg:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-view-shot:writeReleaseAarMetadata UP-TO-DATE
+> Task :react-native-webview:writeReleaseAarMetadata UP-TO-DATE
+> Task :app:checkReleaseAarMetadata UP-TO-DATE
+> Task :app:createBundleReleaseJsAndAssets UP-TO-DATE
+> Task :app:generateReleaseResValues UP-TO-DATE
+> Task :app:processReleaseGoogleServices UP-TO-DATE
+> Task :app:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :app:generateReleaseResources UP-TO-DATE
+> Task :app:mergeReleaseResources UP-TO-DATE
+> Task :app:packageReleaseResources UP-TO-DATE
+> Task :app:parseReleaseLocalResources UP-TO-DATE
+> Task :app:createReleaseCompatibleScreenManifests
+> Task :app:extractDeepLinksRelease UP-TO-DATE
+> Task :expo:extractDeepLinksRelease UP-TO-DATE
+> Task :expo:processReleaseManifest UP-TO-DATE
+> Task :expo-constants:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-constants:processReleaseManifest UP-TO-DATE
+> Task :expo-dev-client:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-dev-client:processReleaseManifest UP-TO-DATE
+> Task :expo-dev-launcher:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-dev-launcher:processReleaseManifest UP-TO-DATE
+> Task :expo-dev-menu:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-dev-menu:processReleaseManifest UP-TO-DATE
+> Task :expo-dev-menu-interface:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-dev-menu-interface:processReleaseManifest UP-TO-DATE
+> Task :expo-json-utils:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-json-utils:processReleaseManifest UP-TO-DATE
+> Task :expo-manifests:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-manifests:processReleaseManifest UP-TO-DATE
+> Task :expo-modules-core:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-modules-core:processReleaseManifest UP-TO-DATE
+> Task :expo-speech-recognition:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-speech-recognition:processReleaseManifest UP-TO-DATE
+> Task :expo-updates-interface:extractDeepLinksRelease UP-TO-DATE
+> Task :expo-updates-interface:processReleaseManifest UP-TO-DATE
+> Task :react-native-async-storage_async-storage:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:processReleaseManifest UP-TO-DATE
+> Task :react-native-community_datetimepicker:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-community_datetimepicker:processReleaseManifest UP-TO-DATE
+> Task :react-native-community_netinfo:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-community_netinfo:processReleaseManifest UP-TO-DATE
+> Task :react-native-linear-gradient:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-linear-gradient:processReleaseManifest UP-TO-DATE
+> Task :react-native-picker_picker:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-picker_picker:processReleaseManifest UP-TO-DATE
+> Task :react-native-ping:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-ping:processReleaseManifest UP-TO-DATE
+> Task :react-native-safe-area-context:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-safe-area-context:processReleaseManifest UP-TO-DATE
+> Task :react-native-screens:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-screens:processReleaseManifest UP-TO-DATE
+> Task :react-native-svg:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-svg:processReleaseManifest UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:processReleaseManifest UP-TO-DATE
+> Task :react-native-view-shot:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-view-shot:processReleaseManifest UP-TO-DATE
+> Task :react-native-webview:extractDeepLinksRelease UP-TO-DATE
+> Task :react-native-webview:processReleaseManifest UP-TO-DATE
 
-  echo "✅ Frontend $CLIENT_ID desplegado en https://$DOMAIN"
-}
+> Task :app:processReleaseMainManifest
+/opt/build-farm/apppuntodeventa/android/app/src/main/AndroidManifest.xml Warning:
+        activity#expo.modules.imagepicker.ExpoCropImageActivity@android:exported was tagged at AndroidManifest.xml:0 to replace other declarations but no other declaration present
+/opt/build-farm/apppuntodeventa/android/app/src/main/AndroidManifest.xml Warning:
+        provider#expo.modules.filesystem.FileSystemFileProvider@android:authorities was tagged at AndroidManifest.xml:0 to replace other declarations but no other declaration present
 
-# ----------------------------------------------------------
-# LISTA DE CLIENTES ACTIVOS
-# Para agregar uno nuevo: copia la línea de abajo,
-# cambia los valores y crea el secreto en GitHub.
-# ----------------------------------------------------------
-deploy_new_client_web \
-  "restaurante2" \
-  "8072" \
-  "app-restaurante2.autosystemprojects.site" \
-  "https://api-restaurante2.autosystemprojects.site/api/v1" \
-  ""
-deploy_new_client_web \
-  "fogata" \
-  "8074" \
-  "app-fogata.autosystemprojects.site" \
-  "https://api-fogata.autosystemprojects.site/api/v1" \
-  "***
-"
+> Task :app:processReleaseManifest
+> Task :expo:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-constants:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-dev-client:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-dev-launcher:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-dev-menu:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-dev-menu-interface:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-json-utils:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-manifests:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-modules-core:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-speech-recognition:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo-updates-interface:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-async-storage_async-storage:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-community_datetimepicker:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-community_netinfo:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-linear-gradient:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-picker_picker:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-ping:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-safe-area-context:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-screens:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-svg:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-view-shot:compileReleaseLibraryResources UP-TO-DATE
+> Task :react-native-webview:compileReleaseLibraryResources UP-TO-DATE
+> Task :expo:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :react-native-community_datetimepicker:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :react-native-community_netinfo:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :react-native-linear-gradient:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :react-native-picker_picker:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :react-native-ping:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :react-native-safe-area-context:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :app:processReleaseManifestForPackage
+> Task :react-native-screens:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :react-native-svg:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :react-native-view-shot:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :react-native-webview:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :app:javaPreCompileRelease UP-TO-DATE
+> Task :app:desugarReleaseFileDependencies UP-TO-DATE
+> Task :app:mergeReleaseStartupProfile UP-TO-DATE
+> Task :app:mergeExtDexRelease UP-TO-DATE
+> Task :expo:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-constants:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-dev-client:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-dev-launcher:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-dev-menu:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-dev-menu-interface:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-json-utils:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-manifests:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-modules-core:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-speech-recognition:prepareReleaseArtProfile UP-TO-DATE
+> Task :expo-updates-interface:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-async-storage_async-storage:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-community_datetimepicker:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-community_netinfo:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-linear-gradient:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-picker_picker:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-ping:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-safe-area-context:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-screens:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-svg:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-view-shot:prepareReleaseArtProfile UP-TO-DATE
+> Task :react-native-webview:prepareReleaseArtProfile UP-TO-DATE
+> Task :app:mergeReleaseArtProfile UP-TO-DATE
+> Task :react-native-community_datetimepicker:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :react-native-safe-area-context:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :react-native-screens:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :react-native-webview:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :react-native-community_netinfo:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :react-native-picker_picker:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :expo:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :react-native-linear-gradient:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :react-native-ping:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :react-native-svg:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :react-native-view-shot:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :expo-dev-launcher:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :expo-dev-menu:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :expo-dev-menu-interface:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :expo-speech-recognition:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :expo-modules-core:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :expo-constants:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :expo-dev-client:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :expo-manifests:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :expo-json-utils:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :expo-updates-interface:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :app:mergeReleaseShaders UP-TO-DATE
+> Task :app:compileReleaseShaders NO-SOURCE
+> Task :app:generateReleaseAssets UP-TO-DATE
+> Task :expo:mergeReleaseShaders UP-TO-DATE
+> Task :expo:compileReleaseShaders NO-SOURCE
+> Task :expo:generateReleaseAssets UP-TO-DATE
+> Task :expo:mergeReleaseAssets UP-TO-DATE
+> Task :expo-constants:mergeReleaseShaders UP-TO-DATE
+> Task :expo-constants:compileReleaseShaders NO-SOURCE
+> Task :expo-constants:generateReleaseAssets UP-TO-DATE
+> Task :expo-constants:mergeReleaseAssets
+> Task :expo-dev-client:mergeReleaseShaders UP-TO-DATE
+> Task :expo-dev-client:compileReleaseShaders NO-SOURCE
+> Task :expo-dev-client:generateReleaseAssets UP-TO-DATE
+> Task :expo-dev-client:mergeReleaseAssets UP-TO-DATE
+> Task :expo-dev-launcher:mergeReleaseShaders UP-TO-DATE
+> Task :expo-dev-launcher:compileReleaseShaders NO-SOURCE
+> Task :expo-dev-launcher:generateReleaseAssets UP-TO-DATE
+> Task :expo-dev-launcher:mergeReleaseAssets UP-TO-DATE
+> Task :expo-dev-menu:mergeReleaseShaders UP-TO-DATE
+> Task :expo-dev-menu:compileReleaseShaders NO-SOURCE
+> Task :expo-dev-menu:generateReleaseAssets UP-TO-DATE
+> Task :expo-dev-menu:mergeReleaseAssets UP-TO-DATE
+> Task :expo-dev-menu-interface:mergeReleaseShaders UP-TO-DATE
+> Task :expo-dev-menu-interface:compileReleaseShaders NO-SOURCE
+> Task :expo-dev-menu-interface:generateReleaseAssets UP-TO-DATE
+> Task :expo-dev-menu-interface:mergeReleaseAssets UP-TO-DATE
+> Task :expo-json-utils:mergeReleaseShaders UP-TO-DATE
+> Task :expo-json-utils:compileReleaseShaders NO-SOURCE
+> Task :expo-json-utils:generateReleaseAssets UP-TO-DATE
+> Task :expo-json-utils:mergeReleaseAssets UP-TO-DATE
+> Task :expo-manifests:mergeReleaseShaders UP-TO-DATE
+> Task :expo-manifests:compileReleaseShaders NO-SOURCE
+> Task :expo-manifests:generateReleaseAssets UP-TO-DATE
+> Task :expo-manifests:mergeReleaseAssets UP-TO-DATE
+> Task :expo-modules-core:mergeReleaseShaders UP-TO-DATE
+> Task :expo-modules-core:compileReleaseShaders NO-SOURCE
+> Task :expo-modules-core:generateReleaseAssets UP-TO-DATE
+> Task :expo-modules-core:mergeReleaseAssets UP-TO-DATE
+> Task :expo-speech-recognition:mergeReleaseShaders UP-TO-DATE
+> Task :expo-speech-recognition:compileReleaseShaders NO-SOURCE
+> Task :expo-speech-recognition:generateReleaseAssets UP-TO-DATE
+> Task :expo-speech-recognition:mergeReleaseAssets UP-TO-DATE
+> Task :expo-updates-interface:mergeReleaseShaders UP-TO-DATE
+> Task :expo-updates-interface:compileReleaseShaders NO-SOURCE
+> Task :expo-updates-interface:generateReleaseAssets UP-TO-DATE
+> Task :expo-updates-interface:mergeReleaseAssets UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-async-storage_async-storage:compileReleaseShaders NO-SOURCE
+> Task :react-native-async-storage_async-storage:generateReleaseAssets UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeReleaseAssets UP-TO-DATE
+> Task :react-native-community_datetimepicker:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-community_datetimepicker:compileReleaseShaders NO-SOURCE
+> Task :react-native-community_datetimepicker:generateReleaseAssets UP-TO-DATE
+> Task :react-native-community_datetimepicker:mergeReleaseAssets UP-TO-DATE
+> Task :react-native-community_netinfo:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-community_netinfo:compileReleaseShaders NO-SOURCE
+> Task :react-native-community_netinfo:generateReleaseAssets UP-TO-DATE
+> Task :react-native-community_netinfo:mergeReleaseAssets UP-TO-DATE
+> Task :react-native-linear-gradient:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-linear-gradient:compileReleaseShaders NO-SOURCE
+> Task :react-native-linear-gradient:generateReleaseAssets UP-TO-DATE
+> Task :react-native-linear-gradient:mergeReleaseAssets UP-TO-DATE
+> Task :react-native-picker_picker:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-picker_picker:compileReleaseShaders NO-SOURCE
+> Task :react-native-picker_picker:generateReleaseAssets UP-TO-DATE
+> Task :react-native-picker_picker:mergeReleaseAssets UP-TO-DATE
+> Task :react-native-ping:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-ping:compileReleaseShaders NO-SOURCE
+> Task :react-native-ping:generateReleaseAssets UP-TO-DATE
+> Task :react-native-ping:mergeReleaseAssets UP-TO-DATE
+> Task :react-native-safe-area-context:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-safe-area-context:compileReleaseShaders NO-SOURCE
+> Task :react-native-safe-area-context:generateReleaseAssets UP-TO-DATE
+> Task :react-native-safe-area-context:mergeReleaseAssets UP-TO-DATE
+> Task :react-native-screens:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-screens:compileReleaseShaders NO-SOURCE
+> Task :react-native-screens:generateReleaseAssets UP-TO-DATE
+> Task :react-native-screens:mergeReleaseAssets UP-TO-DATE
+> Task :react-native-svg:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-svg:compileReleaseShaders NO-SOURCE
+> Task :react-native-svg:generateReleaseAssets UP-TO-DATE
+> Task :react-native-svg:mergeReleaseAssets UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:compileReleaseShaders NO-SOURCE
+> Task :react-native-thermal-receipt-printer-image-qr:generateReleaseAssets UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:mergeReleaseAssets UP-TO-DATE
+> Task :react-native-view-shot:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-view-shot:compileReleaseShaders NO-SOURCE
+> Task :react-native-view-shot:generateReleaseAssets UP-TO-DATE
+> Task :react-native-view-shot:mergeReleaseAssets UP-TO-DATE
+> Task :react-native-webview:mergeReleaseShaders UP-TO-DATE
+> Task :react-native-webview:compileReleaseShaders NO-SOURCE
+> Task :react-native-webview:generateReleaseAssets UP-TO-DATE
+> Task :react-native-webview:mergeReleaseAssets UP-TO-DATE
+> Task :app:mergeReleaseAssets
+> Task :app:extractReleaseVersionControlInfo UP-TO-DATE
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :expo:processReleaseJavaRes UP-TO-DATE
+> Task :app:compressReleaseAssets
+> Task :expo:createFullJarRelease UP-TO-DATE
+> Task :expo:extractProguardFiles UP-TO-DATE
+> Task :expo-constants:processReleaseJavaRes UP-TO-DATE
+> Task :expo-constants:createFullJarRelease UP-TO-DATE
+> Task :expo-constants:extractProguardFiles UP-TO-DATE
+> Task :expo-modules-core:processReleaseJavaRes UP-TO-DATE
+> Task :expo-modules-core:createFullJarRelease UP-TO-DATE
+> Task :expo-modules-core:extractProguardFiles UP-TO-DATE
+> Task :expo-modules-core:generateReleaseLintModel UP-TO-DATE
+> Task :expo-modules-core:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-constants:generateReleaseLintModel UP-TO-DATE
+> Task :expo-constants:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-dev-client:processReleaseJavaRes NO-SOURCE
+> Task :expo-dev-client:createFullJarRelease UP-TO-DATE
+> Task :expo-dev-client:extractProguardFiles UP-TO-DATE
+> Task :expo-dev-client:generateReleaseLintModel UP-TO-DATE
+> Task :expo-dev-client:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-dev-launcher:processReleaseJavaRes UP-TO-DATE
+> Task :expo-dev-launcher:createFullJarRelease UP-TO-DATE
+> Task :expo-dev-launcher:extractProguardFiles UP-TO-DATE
+> Task :expo-dev-menu:processReleaseJavaRes UP-TO-DATE
+> Task :expo-dev-menu:createFullJarRelease UP-TO-DATE
+> Task :expo-dev-menu:extractProguardFiles UP-TO-DATE
+> Task :expo-dev-menu-interface:processReleaseJavaRes UP-TO-DATE
+> Task :expo-dev-menu-interface:createFullJarRelease UP-TO-DATE
+> Task :expo-dev-menu-interface:extractProguardFiles UP-TO-DATE
+> Task :expo-dev-menu-interface:generateReleaseLintModel UP-TO-DATE
+> Task :expo-dev-menu-interface:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-json-utils:processReleaseJavaRes UP-TO-DATE
+> Task :expo-json-utils:createFullJarRelease UP-TO-DATE
+> Task :expo-json-utils:extractProguardFiles UP-TO-DATE
+> Task :expo-json-utils:generateReleaseLintModel UP-TO-DATE
+> Task :expo-json-utils:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-manifests:processReleaseJavaRes UP-TO-DATE
+> Task :expo-manifests:createFullJarRelease UP-TO-DATE
+> Task :expo-manifests:extractProguardFiles UP-TO-DATE
+> Task :expo-manifests:generateReleaseLintModel UP-TO-DATE
+> Task :expo-manifests:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-dev-menu:generateReleaseLintModel UP-TO-DATE
+> Task :expo-dev-menu:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-updates-interface:processReleaseJavaRes UP-TO-DATE
+> Task :expo-updates-interface:createFullJarRelease UP-TO-DATE
+> Task :expo-updates-interface:extractProguardFiles UP-TO-DATE
+> Task :expo-updates-interface:generateReleaseLintModel UP-TO-DATE
+> Task :expo-updates-interface:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-dev-launcher:generateReleaseLintModel UP-TO-DATE
+> Task :expo-dev-launcher:prepareLintJarForPublish UP-TO-DATE
+> Task :expo-speech-recognition:processReleaseJavaRes UP-TO-DATE
+> Task :expo-speech-recognition:createFullJarRelease UP-TO-DATE
+> Task :expo-speech-recognition:extractProguardFiles UP-TO-DATE
+> Task :expo-speech-recognition:generateReleaseLintModel UP-TO-DATE
+> Task :expo-speech-recognition:prepareLintJarForPublish UP-TO-DATE
+> Task :app:processReleaseResources
+> Task :expo:generateReleaseLintModel UP-TO-DATE
+> Task :expo:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-async-storage_async-storage:processReleaseJavaRes NO-SOURCE
+> Task :react-native-async-storage_async-storage:createFullJarRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:extractProguardFiles UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateReleaseLintModel UP-TO-DATE
+> Task :react-native-async-storage_async-storage:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-community_datetimepicker:processReleaseJavaRes UP-TO-DATE
+> Task :react-native-community_datetimepicker:createFullJarRelease UP-TO-DATE
+> Task :react-native-community_datetimepicker:extractProguardFiles UP-TO-DATE
+> Task :react-native-community_datetimepicker:generateReleaseLintModel UP-TO-DATE
+> Task :react-native-community_datetimepicker:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-community_netinfo:processReleaseJavaRes NO-SOURCE
+> Task :react-native-community_netinfo:createFullJarRelease UP-TO-DATE
+> Task :react-native-community_netinfo:extractProguardFiles UP-TO-DATE
+> Task :react-native-community_netinfo:generateReleaseLintModel UP-TO-DATE
+> Task :react-native-community_netinfo:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-linear-gradient:processReleaseJavaRes NO-SOURCE
+> Task :react-native-linear-gradient:createFullJarRelease UP-TO-DATE
+> Task :react-native-linear-gradient:extractProguardFiles UP-TO-DATE
+> Task :react-native-linear-gradient:generateReleaseLintModel UP-TO-DATE
+> Task :react-native-linear-gradient:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-picker_picker:processReleaseJavaRes NO-SOURCE
+> Task :react-native-picker_picker:createFullJarRelease UP-TO-DATE
+> Task :react-native-picker_picker:extractProguardFiles UP-TO-DATE
+> Task :react-native-picker_picker:generateReleaseLintModel UP-TO-DATE
+> Task :react-native-picker_picker:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-ping:processReleaseJavaRes NO-SOURCE
+> Task :react-native-ping:createFullJarRelease UP-TO-DATE
+> Task :react-native-ping:extractProguardFiles UP-TO-DATE
+> Task :react-native-ping:generateReleaseLintModel UP-TO-DATE
+> Task :react-native-ping:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-safe-area-context:processReleaseJavaRes UP-TO-DATE
+> Task :react-native-safe-area-context:createFullJarRelease UP-TO-DATE
+> Task :react-native-safe-area-context:extractProguardFiles UP-TO-DATE
+> Task :react-native-safe-area-context:generateReleaseLintModel UP-TO-DATE
+> Task :react-native-safe-area-context:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-screens:processReleaseJavaRes UP-TO-DATE
+> Task :react-native-screens:createFullJarRelease UP-TO-DATE
+> Task :react-native-screens:extractProguardFiles UP-TO-DATE
+> Task :react-native-screens:generateReleaseLintModel UP-TO-DATE
+> Task :react-native-screens:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-svg:processReleaseJavaRes NO-SOURCE
+> Task :react-native-svg:createFullJarRelease UP-TO-DATE
+> Task :react-native-svg:extractProguardFiles UP-TO-DATE
+> Task :react-native-svg:generateReleaseLintModel UP-TO-DATE
+> Task :react-native-svg:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:processReleaseJavaRes NO-SOURCE
+> Task :react-native-thermal-receipt-printer-image-qr:createFullJarRelease UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:extractProguardFiles UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:generateReleaseLintModel UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-view-shot:processReleaseJavaRes NO-SOURCE
+> Task :react-native-view-shot:createFullJarRelease UP-TO-DATE
+> Task :react-native-view-shot:extractProguardFiles UP-TO-DATE
+> Task :react-native-view-shot:generateReleaseLintModel UP-TO-DATE
+> Task :react-native-view-shot:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-webview:processReleaseJavaRes UP-TO-DATE
+> Task :react-native-webview:createFullJarRelease UP-TO-DATE
+> Task :react-native-webview:extractProguardFiles UP-TO-DATE
+> Task :react-native-webview:generateReleaseLintModel UP-TO-DATE
+> Task :react-native-webview:prepareLintJarForPublish UP-TO-DATE
+> Task :react-native-community_datetimepicker:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-community_datetimepicker:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-community_datetimepicker:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-community_datetimepicker:extractReleaseAnnotations UP-TO-DATE
+> Task :react-native-community_datetimepicker:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-community_datetimepicker:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-community_datetimepicker:mergeReleaseJavaResource UP-TO-DATE
+> Task :react-native-community_datetimepicker:syncReleaseLibJars UP-TO-DATE
+> Task :react-native-community_datetimepicker:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :react-native-safe-area-context:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-safe-area-context:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-safe-area-context:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-safe-area-context:extractReleaseAnnotations UP-TO-DATE
+> Task :react-native-safe-area-context:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-safe-area-context:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-safe-area-context:mergeReleaseJavaResource UP-TO-DATE
+> Task :react-native-safe-area-context:syncReleaseLibJars UP-TO-DATE
+> Task :react-native-safe-area-context:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :react-native-screens:stripReleaseDebugSymbols UP-TO-DATE
+> Task :react-native-screens:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-screens:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-screens:extractReleaseAnnotations UP-TO-DATE
+> Task :react-native-screens:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-screens:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-screens:mergeReleaseJavaResource UP-TO-DATE
+> Task :react-native-screens:syncReleaseLibJars UP-TO-DATE
+> Task :react-native-screens:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :react-native-webview:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-webview:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-webview:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-webview:extractReleaseAnnotations UP-TO-DATE
+> Task :react-native-webview:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-webview:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-webview:mergeReleaseJavaResource UP-TO-DATE
+> Task :react-native-webview:syncReleaseLibJars UP-TO-DATE
+> Task :react-native-webview:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :react-native-async-storage_async-storage:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-async-storage_async-storage:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-async-storage_async-storage:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:extractReleaseAnnotations UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeReleaseJavaResource UP-TO-DATE
+> Task :react-native-async-storage_async-storage:syncReleaseLibJars UP-TO-DATE
+> Task :react-native-async-storage_async-storage:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :react-native-community_netinfo:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-community_netinfo:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-community_netinfo:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-community_netinfo:extractReleaseAnnotations UP-TO-DATE
+> Task :react-native-community_netinfo:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-community_netinfo:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-community_netinfo:mergeReleaseJavaResource UP-TO-DATE
+> Task :react-native-community_netinfo:syncReleaseLibJars UP-TO-DATE
+> Task :react-native-community_netinfo:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :react-native-picker_picker:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-picker_picker:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-picker_picker:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-picker_picker:extractReleaseAnnotations UP-TO-DATE
+> Task :react-native-picker_picker:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-picker_picker:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-picker_picker:mergeReleaseJavaResource UP-TO-DATE
+> Task :react-native-picker_picker:syncReleaseLibJars UP-TO-DATE
+> Task :react-native-picker_picker:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :expo:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :expo:extractReleaseAnnotations UP-TO-DATE
+> Task :expo:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :expo:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :expo:mergeReleaseJavaResource UP-TO-DATE
+> Task :expo:syncReleaseLibJars UP-TO-DATE
+> Task :expo:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :react-native-linear-gradient:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-linear-gradient:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-linear-gradient:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-linear-gradient:extractReleaseAnnotations UP-TO-DATE
+> Task :react-native-linear-gradient:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-linear-gradient:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-linear-gradient:mergeReleaseJavaResource UP-TO-DATE
+> Task :react-native-linear-gradient:syncReleaseLibJars UP-TO-DATE
+> Task :react-native-linear-gradient:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :react-native-ping:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-ping:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-ping:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-ping:extractReleaseAnnotations UP-TO-DATE
+> Task :react-native-ping:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-ping:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-ping:mergeReleaseJavaResource UP-TO-DATE
+> Task :react-native-ping:syncReleaseLibJars UP-TO-DATE
+> Task :react-native-ping:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :react-native-svg:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-svg:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-svg:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-svg:extractReleaseAnnotations UP-TO-DATE
+> Task :react-native-svg:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-svg:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-svg:mergeReleaseJavaResource UP-TO-DATE
+> Task :react-native-svg:syncReleaseLibJars UP-TO-DATE
+> Task :react-native-svg:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-thermal-receipt-printer-image-qr:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:extractReleaseAnnotations UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:mergeReleaseJavaResource UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:syncReleaseLibJars UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :react-native-view-shot:stripReleaseDebugSymbols NO-SOURCE
+> Task :react-native-view-shot:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :react-native-view-shot:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :react-native-view-shot:extractReleaseAnnotations UP-TO-DATE
+> Task :react-native-view-shot:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :react-native-view-shot:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :react-native-view-shot:mergeReleaseJavaResource UP-TO-DATE
+> Task :react-native-view-shot:syncReleaseLibJars UP-TO-DATE
+> Task :react-native-view-shot:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :expo-dev-launcher:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-dev-launcher:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-dev-launcher:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :expo-dev-launcher:extractReleaseAnnotations UP-TO-DATE
+> Task :expo-dev-launcher:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :expo-dev-launcher:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :expo-dev-launcher:mergeReleaseJavaResource UP-TO-DATE
+> Task :expo-dev-launcher:syncReleaseLibJars UP-TO-DATE
+> Task :expo-dev-launcher:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :expo-dev-menu:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-dev-menu:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-dev-menu:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :expo-dev-menu:extractReleaseAnnotations UP-TO-DATE
+> Task :expo-dev-menu:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :expo-dev-menu:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :expo-dev-menu:mergeReleaseJavaResource UP-TO-DATE
+> Task :expo-dev-menu:syncReleaseLibJars UP-TO-DATE
+> Task :expo-dev-menu:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :expo-dev-menu-interface:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-dev-menu-interface:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-dev-menu-interface:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :expo-dev-menu-interface:extractReleaseAnnotations UP-TO-DATE
+> Task :expo-dev-menu-interface:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :expo-dev-menu-interface:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :expo-dev-menu-interface:mergeReleaseJavaResource UP-TO-DATE
+> Task :expo-dev-menu-interface:syncReleaseLibJars UP-TO-DATE
+> Task :expo-dev-menu-interface:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :expo-speech-recognition:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-speech-recognition:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-speech-recognition:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :expo-speech-recognition:extractReleaseAnnotations UP-TO-DATE
+> Task :expo-speech-recognition:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :expo-speech-recognition:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :expo-speech-recognition:mergeReleaseJavaResource UP-TO-DATE
+> Task :expo-speech-recognition:syncReleaseLibJars UP-TO-DATE
+> Task :expo-speech-recognition:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :expo-modules-core:stripReleaseDebugSymbols UP-TO-DATE
+> Task :expo-modules-core:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-modules-core:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :expo-modules-core:extractReleaseAnnotations UP-TO-DATE
+> Task :expo-modules-core:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :expo-modules-core:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :expo-modules-core:mergeReleaseJavaResource UP-TO-DATE
+> Task :expo-modules-core:syncReleaseLibJars UP-TO-DATE
+> Task :expo-modules-core:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :expo-constants:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-constants:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-constants:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :expo-constants:extractReleaseAnnotations UP-TO-DATE
+> Task :expo-constants:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :expo-constants:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :expo-constants:mergeReleaseJavaResource UP-TO-DATE
+> Task :expo-constants:syncReleaseLibJars UP-TO-DATE
+> Task :expo-constants:bundleReleaseLocalLintAar
+> Task :expo-dev-client:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-dev-client:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-dev-client:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :expo-dev-client:extractReleaseAnnotations UP-TO-DATE
+> Task :expo-dev-client:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :expo-dev-client:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :expo-dev-client:mergeReleaseJavaResource UP-TO-DATE
+> Task :expo-dev-client:syncReleaseLibJars UP-TO-DATE
+> Task :expo-dev-client:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :expo-manifests:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-manifests:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-manifests:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :expo-manifests:extractReleaseAnnotations UP-TO-DATE
+> Task :expo-manifests:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :expo-manifests:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :expo-manifests:mergeReleaseJavaResource UP-TO-DATE
+> Task :expo-manifests:syncReleaseLibJars UP-TO-DATE
+> Task :expo-manifests:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :expo-json-utils:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-json-utils:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-json-utils:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :expo-json-utils:extractReleaseAnnotations UP-TO-DATE
+> Task :expo-json-utils:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :expo-json-utils:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :expo-json-utils:mergeReleaseJavaResource UP-TO-DATE
+> Task :expo-json-utils:syncReleaseLibJars UP-TO-DATE
+> Task :expo-json-utils:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :expo-updates-interface:stripReleaseDebugSymbols NO-SOURCE
+> Task :expo-updates-interface:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :expo-updates-interface:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :expo-updates-interface:extractReleaseAnnotations UP-TO-DATE
+> Task :expo-updates-interface:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :expo-updates-interface:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :expo-updates-interface:mergeReleaseJavaResource UP-TO-DATE
+> Task :expo-updates-interface:syncReleaseLibJars UP-TO-DATE
+> Task :expo-updates-interface:bundleReleaseLocalLintAar UP-TO-DATE
+> Task :expo-constants:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :expo-dev-client:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :expo-dev-launcher:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :expo-dev-menu:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :expo-dev-menu-interface:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :expo-json-utils:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :expo-manifests:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :expo-modules-core:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :expo-speech-recognition:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :expo-updates-interface:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :expo:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :expo-constants:lintVitalAnalyzeRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :react-native-community_datetimepicker:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :react-native-community_netinfo:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :react-native-linear-gradient:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :react-native-picker_picker:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :react-native-ping:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :react-native-safe-area-context:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :react-native-screens:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :react-native-svg:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :react-native-view-shot:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :react-native-webview:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :expo:generateReleaseLintVitalModel UP-TO-DATE
+> Task :expo-constants:generateReleaseLintVitalModel UP-TO-DATE
+> Task :expo-dev-client:generateReleaseLintVitalModel UP-TO-DATE
+> Task :expo-dev-launcher:generateReleaseLintVitalModel UP-TO-DATE
+> Task :expo-dev-menu:generateReleaseLintVitalModel UP-TO-DATE
+> Task :expo-dev-menu-interface:generateReleaseLintVitalModel UP-TO-DATE
+> Task :expo-json-utils:generateReleaseLintVitalModel UP-TO-DATE
+> Task :expo-manifests:generateReleaseLintVitalModel UP-TO-DATE
+> Task :expo-modules-core:generateReleaseLintVitalModel UP-TO-DATE
+> Task :expo-speech-recognition:generateReleaseLintVitalModel UP-TO-DATE
+> Task :expo-updates-interface:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-community_datetimepicker:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-community_netinfo:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-linear-gradient:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-picker_picker:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-ping:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-safe-area-context:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-screens:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-svg:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-view-shot:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-webview:generateReleaseLintVitalModel UP-TO-DATE
+> Task :app:optimizeReleaseResources
+> Task :app:collectReleaseDependencies UP-TO-DATE
+> Task :app:sdkReleaseDependencyData UP-TO-DATE
+> Task :app:validateSigningRelease UP-TO-DATE
+> Task :app:writeReleaseAppMetadata UP-TO-DATE
+> Task :app:writeReleaseSigningConfigVersions UP-TO-DATE
+> Task :expo:bundleReleaseAar UP-TO-DATE
+> Task :expo:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :expo:mergeReleaseResources UP-TO-DATE
+> Task :expo:verifyReleaseResources UP-TO-DATE
+> Task :expo:assembleRelease UP-TO-DATE
+> Task :expo-constants:bundleReleaseAar
+> Task :expo-constants:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :expo-constants:mergeReleaseResources UP-TO-DATE
+> Task :expo-constants:verifyReleaseResources UP-TO-DATE
+> Task :expo-constants:assembleRelease
+> Task :expo-dev-client:bundleReleaseAar UP-TO-DATE
+> Task :expo-dev-client:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :expo-dev-client:mergeReleaseResources UP-TO-DATE
+> Task :expo-dev-client:verifyReleaseResources UP-TO-DATE
+> Task :expo-dev-client:assembleRelease UP-TO-DATE
+> Task :expo-dev-launcher:bundleReleaseAar UP-TO-DATE
+> Task :expo-dev-launcher:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :expo-dev-launcher:mergeReleaseResources UP-TO-DATE
+> Task :expo-dev-launcher:verifyReleaseResources UP-TO-DATE
+> Task :expo-dev-launcher:assembleRelease UP-TO-DATE
+> Task :expo-dev-menu:bundleReleaseAar UP-TO-DATE
+> Task :expo-dev-menu:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :expo-dev-menu:mergeReleaseResources UP-TO-DATE
+> Task :expo-dev-menu:verifyReleaseResources UP-TO-DATE
+> Task :expo-dev-menu:assembleRelease UP-TO-DATE
+> Task :expo-dev-menu-interface:bundleReleaseAar UP-TO-DATE
+> Task :expo-dev-menu-interface:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :expo-dev-menu-interface:mergeReleaseResources UP-TO-DATE
+> Task :expo-dev-menu-interface:verifyReleaseResources UP-TO-DATE
+> Task :expo-dev-menu-interface:assembleRelease UP-TO-DATE
+> Task :expo-json-utils:bundleReleaseAar UP-TO-DATE
+> Task :expo-json-utils:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :expo-json-utils:mergeReleaseResources UP-TO-DATE
+> Task :expo-json-utils:verifyReleaseResources UP-TO-DATE
+> Task :expo-json-utils:assembleRelease UP-TO-DATE
+> Task :expo-manifests:bundleReleaseAar UP-TO-DATE
+> Task :expo-manifests:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :expo-manifests:mergeReleaseResources UP-TO-DATE
+> Task :expo-manifests:verifyReleaseResources UP-TO-DATE
+> Task :expo-manifests:assembleRelease UP-TO-DATE
+> Task :expo-modules-core:bundleReleaseAar UP-TO-DATE
+> Task :expo-modules-core:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :expo-modules-core:mergeReleaseResources UP-TO-DATE
+> Task :expo-modules-core:verifyReleaseResources UP-TO-DATE
+> Task :expo-modules-core:assembleRelease UP-TO-DATE
+> Task :expo-speech-recognition:bundleReleaseAar UP-TO-DATE
+> Task :expo-speech-recognition:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :expo-speech-recognition:mergeReleaseResources UP-TO-DATE
+> Task :expo-speech-recognition:verifyReleaseResources UP-TO-DATE
+> Task :expo-speech-recognition:assembleRelease UP-TO-DATE
+> Task :expo-updates-interface:bundleReleaseAar UP-TO-DATE
+> Task :expo-updates-interface:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :expo-updates-interface:mergeReleaseResources UP-TO-DATE
+> Task :expo-updates-interface:verifyReleaseResources UP-TO-DATE
+> Task :expo-updates-interface:assembleRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:bundleReleaseAar UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :react-native-async-storage_async-storage:mergeReleaseResources UP-TO-DATE
+> Task :react-native-async-storage_async-storage:verifyReleaseResources UP-TO-DATE
+> Task :react-native-async-storage_async-storage:assembleRelease UP-TO-DATE
+> Task :react-native-community_datetimepicker:bundleReleaseAar UP-TO-DATE
+> Task :react-native-community_datetimepicker:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :react-native-community_datetimepicker:mergeReleaseResources UP-TO-DATE
+> Task :react-native-community_datetimepicker:verifyReleaseResources UP-TO-DATE
+> Task :react-native-community_datetimepicker:assembleRelease UP-TO-DATE
+> Task :react-native-community_netinfo:bundleReleaseAar UP-TO-DATE
+> Task :react-native-community_netinfo:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :react-native-community_netinfo:mergeReleaseResources UP-TO-DATE
+> Task :react-native-community_netinfo:verifyReleaseResources UP-TO-DATE
+> Task :react-native-community_netinfo:assembleRelease UP-TO-DATE
+> Task :react-native-linear-gradient:bundleReleaseAar UP-TO-DATE
+> Task :react-native-linear-gradient:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :react-native-linear-gradient:mergeReleaseResources UP-TO-DATE
+> Task :react-native-linear-gradient:verifyReleaseResources UP-TO-DATE
+> Task :react-native-linear-gradient:assembleRelease UP-TO-DATE
+> Task :react-native-picker_picker:bundleReleaseAar UP-TO-DATE
+> Task :react-native-picker_picker:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :react-native-picker_picker:mergeReleaseResources UP-TO-DATE
+> Task :react-native-picker_picker:verifyReleaseResources UP-TO-DATE
+> Task :react-native-picker_picker:assembleRelease UP-TO-DATE
+> Task :react-native-ping:bundleReleaseAar UP-TO-DATE
+> Task :react-native-ping:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :react-native-ping:mergeReleaseResources UP-TO-DATE
+> Task :react-native-ping:verifyReleaseResources UP-TO-DATE
+> Task :react-native-ping:assembleRelease UP-TO-DATE
+> Task :react-native-safe-area-context:bundleReleaseAar UP-TO-DATE
+> Task :react-native-safe-area-context:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :react-native-safe-area-context:mergeReleaseResources UP-TO-DATE
+> Task :react-native-safe-area-context:verifyReleaseResources UP-TO-DATE
+> Task :react-native-safe-area-context:assembleRelease UP-TO-DATE
+> Task :react-native-screens:bundleReleaseAar UP-TO-DATE
+> Task :react-native-screens:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :react-native-screens:mergeReleaseResources UP-TO-DATE
+> Task :react-native-screens:verifyReleaseResources UP-TO-DATE
+> Task :react-native-screens:assembleRelease UP-TO-DATE
+> Task :react-native-svg:bundleReleaseAar UP-TO-DATE
+> Task :react-native-svg:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :react-native-svg:mergeReleaseResources UP-TO-DATE
+> Task :react-native-svg:verifyReleaseResources UP-TO-DATE
+> Task :react-native-svg:assembleRelease UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:bundleReleaseAar UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:mergeReleaseResources UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:verifyReleaseResources UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:assembleRelease UP-TO-DATE
+> Task :react-native-view-shot:bundleReleaseAar UP-TO-DATE
+> Task :react-native-view-shot:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :react-native-view-shot:mergeReleaseResources UP-TO-DATE
+> Task :react-native-view-shot:verifyReleaseResources UP-TO-DATE
+> Task :react-native-view-shot:assembleRelease UP-TO-DATE
+> Task :react-native-webview:bundleReleaseAar UP-TO-DATE
+> Task :react-native-webview:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :react-native-webview:mergeReleaseResources UP-TO-DATE
+> Task :react-native-webview:verifyReleaseResources UP-TO-DATE
+> Task :react-native-webview:assembleRelease UP-TO-DATE
+> Task :expo-dev-client:lintVitalAnalyzeRelease
 
-2026-09-25T03:08:37.0899177Z   port: 22
-2026-09-25T03:08:37.0899399Z   timeout: 30s
-2026-09-25T03:08:37.0899616Z   proxy_port: 22
-2026-09-25T03:08:37.0899842Z   proxy_timeout: 30s
-2026-09-25T03:08:37.0900075Z ##[endgroup]
-2026-09-25T03:08:37.0995717Z ##[command]/usr/bin/docker run --name e35868ce301366a941db8ef1312205f8418f_f77d20 --label 96e358 --workdir /github/workspace --rm -e "INPUT_HOST" -e "INPUT_USERNAME" -e "INPUT_PASSWORD" -e "INPUT_COMMAND_TIMEOUT" -e "INPUT_SCRIPT" -e "INPUT_PORT" -e "INPUT_PASSPHRASE" -e "INPUT_SYNC" -e "INPUT_USE_INSECURE_CIPHER" -e "INPUT_CIPHER" -e "INPUT_TIMEOUT" -e "INPUT_KEY" -e "INPUT_KEY_PATH" -e "INPUT_FINGERPRINT" -e "INPUT_PROXY_HOST" -e "INPUT_PROXY_PORT" -e "INPUT_PROXY_USERNAME" -e "INPUT_PROXY_PASSWORD" -e "INPUT_PROXY_PASSPHRASE" -e "INPUT_PROXY_TIMEOUT" -e "INPUT_PROXY_KEY" -e "INPUT_PROXY_KEY_PATH" -e "INPUT_PROXY_FINGERPRINT" -e "INPUT_PROXY_CIPHER" -e "INPUT_PROXY_USE_INSECURE_CIPHER" -e "INPUT_SCRIPT_STOP" -e "INPUT_ENVS" -e "INPUT_ENVS_FORMAT" -e "INPUT_DEBUG" -e "INPUT_ALLENVS" -e "INPUT_REQUEST_PTY" -e "HOME" -e "GITHUB_JOB" -e "GITHUB_REF" -e "GITHUB_SHA" -e "GITHUB_REPOSITORY" -e "GITHUB_REPOSITORY_OWNER" -e "GITHUB_REPOSITORY_OWNER_ID" -e "GITHUB_RUN_ID" -e "GITHUB_RUN_NUMBER" -e "GITHUB_RETENTION_DAYS" -e "GITHUB_RUN_ATTEMPT" -e "GITHUB_ACTOR_ID" -e "GITHUB_ACTOR" -e "GITHUB_WORKFLOW" -e "GITHUB_HEAD_REF" -e "GITHUB_BASE_REF" -e "GITHUB_EVENT_NAME" -e "GITHUB_SERVER_URL" -e "GITHUB_API_URL" -e "GITHUB_GRAPHQL_URL" -e "GITHUB_REF_NAME" -e "GITHUB_REF_PROTECTED" -e "GITHUB_REF_TYPE" -e "GITHUB_WORKFLOW_REF" -e "GITHUB_WORKFLOW_SHA" -e "GITHUB_REPOSITORY_ID" -e "GITHUB_TRIGGERING_ACTOR" -e "GITHUB_WORKSPACE" -e "GITHUB_ACTION" -e "GITHUB_EVENT_PATH" -e "GITHUB_ACTION_REPOSITORY" -e "GITHUB_ACTION_REF" -e "GITHUB_PATH" -e "GITHUB_ENV" -e "GITHUB_STEP_SUMMARY" -e "GITHUB_STATE" -e "GITHUB_OUTPUT" -e "GITHUB_ARTIFACTS" -e "GITHUB_ARTIFACTS_LIST" -e "RUNNER_OS" -e "RUNNER_ARCH" -e "RUNNER_NAME" -e "RUNNER_ENVIRONMENT" -e "RUNNER_TOOL_CACHE" -e "RUNNER_TEMP" -e "RUNNER_WORKSPACE" -e "ACTIONS_RUNTIME_URL" -e "ACTIONS_RUNTIME_TOKEN" -e "ACTIONS_CACHE_URL" -e "ACTIONS_RESULTS_URL" -e "ACTIONS_CACHE_MODE" -e "ACTIONS_ORCHESTRATION_ID" -e GITHUB_ACTIONS=true -e CI=true -v "/var/run/docker.sock":"/var/run/docker.sock" -v "/home/runner/work/_temp":"/github/runner_temp" -v "/home/runner/work/_temp/_github_home":"/github/home" -v "/home/runner/work/_temp/_github_workflow":"/github/workflow" -v "/home/runner/work/_temp/_runner_file_commands":"/github/file_commands" -v "/home/runner/work/apppuntodeventa/apppuntodeventa":"/github/workspace" 96e358:68ce301366a941db8ef1312205f8418f
-2026-09-25T03:08:37.2640654Z ======CMD======
-2026-09-25T03:08:37.2640939Z set -e
-2026-09-25T03:08:37.2641055Z 
-2026-09-25T03:08:37.2713179Z # 0. Limpiar imagenes viejas del proyecto y caché de construcción
-2026-09-25T03:08:37.2713643Z echo "Limpiando espacio en disco de imagenes viejas..."
-2026-09-25T03:08:37.2713945Z docker image prune -f || true
-2026-09-25T03:08:37.2714172Z docker builder prune -f || true
-2026-09-25T03:08:37.2714319Z 
-2026-09-25T03:08:37.2714578Z # 1. Crear directorio del proyecto si no existe
-2026-09-25T03:08:37.2714929Z mkdir -p /root/frontend-qhubomor
-2026-09-25T03:08:37.2715171Z cd /root/frontend-qhubomor
-2026-09-25T03:08:37.2715307Z 
-2026-09-25T03:08:37.2715428Z # 2. Clonar el repositorio o actualizarlo si ya existe
-2026-09-25T03:08:37.2715704Z if [ ! -d ".git" ]; then
-2026-09-25T03:08:37.2715936Z   echo "Clonando repositorio por primera vez..."
-2026-09-25T03:08:37.2716328Z   # Reemplaza 'JhonnM62/frontend-repo' por el nombre real de tu repositorio en GitHub
-2026-09-25T03:08:37.2717138Z   git clone https://***@github.com/JhonnM62/apppuntodeventa.git .
-2026-09-25T03:08:37.2717453Z else
-2026-09-25T03:08:37.2717658Z   echo "Actualizando repositorio existente..."
-2026-09-25T03:08:37.2718306Z   # Asegúrate de colocar la ruta correcta de tu repositorio en GitHub
-2026-09-25T03:08:37.2718894Z   git remote set-url origin https://***@github.com/JhonnM62/apppuntodeventa.git
-2026-09-25T03:08:37.2719234Z   git fetch --all
-2026-09-25T03:08:37.2719433Z   git reset --hard origin/main
-2026-09-25T03:08:37.2719668Z   git clean -fd
-2026-09-25T03:08:37.2719889Z fi
-2026-09-25T03:08:37.2719986Z 
-2026-09-25T03:08:37.2720149Z # 3. Inyectar las variables de entorno desde los secretos de GitHub
-2026-09-25T03:08:37.2720609Z echo "***" > .env
-2026-09-25T03:08:37.2720718Z 
-2026-09-25T03:08:37.2720857Z # 4. Construir la nueva imagen de Docker (sin cache)
-2026-09-25T03:08:37.2721163Z echo "Construyendo imagen Docker para web..."
-2026-09-25T03:08:37.2721446Z docker build --no-cache -t qhubomor-frontend .
-2026-09-25T03:08:37.2721617Z 
-2026-09-25T03:08:37.2721732Z # 5. Detener y eliminar el contenedor anterior si existe
-2026-09-25T03:08:37.2722111Z echo "Deteniendo contenedor anterior..."
-2026-09-25T03:08:37.2722515Z docker stop qhubomor-frontend-app || true
-2026-09-25T03:08:37.2722770Z docker rm qhubomor-frontend-app || true
-2026-09-25T03:08:37.2722925Z 
-2026-09-25T03:08:37.2723041Z # 6. Levantar el nuevo contenedor en el puerto 8062
-2026-09-25T03:08:37.2723306Z echo "Levantando nuevo contenedor..."
-2026-09-25T03:08:37.2723525Z docker run -d \
-2026-09-25T03:08:37.2723729Z   --name qhubomor-frontend-app \
-2026-09-25T03:08:37.2723966Z   -p 8062:80 \
-2026-09-25T03:08:37.2724163Z   --restart unless-stopped \
-2026-09-25T03:08:37.2724372Z   qhubomor-frontend
-2026-09-25T03:08:37.2724597Z 
-2026-09-25T03:08:37.2724787Z echo "¡Despliegue del Frontend completado exitosamente!"
-2026-09-25T03:08:37.2724995Z 
-2026-09-25T03:08:37.2725092Z # =========================================================
-2026-09-25T03:08:37.2725387Z # FÁBRICA DE NUEVOS FRONTENDS WEB
-2026-09-25T03:08:37.2725665Z # Importante: cada cliente requiere su propia imagen porque
-2026-09-25T03:08:37.2726000Z # la URL del backend queda "quemada" en el build de Expo/React.
-2026-09-25T03:08:37.2726345Z # Para agregar un cliente: copia la llamada de abajo y cambia
-2026-09-25T03:08:37.2726730Z # los parámetros (CLIENT_ID, PUERTO, DOMINIO, API_URL, SECRETO).
-2026-09-25T03:08:37.2727025Z # =========================================================
-2026-09-25T03:08:37.2727269Z deploy_new_client_web() {
-2026-09-25T03:08:37.2727466Z   CLIENT_ID=$1
-2026-09-25T03:08:37.2727635Z   PORT=$2
-2026-09-25T03:08:37.2727898Z   DOMAIN=$3
-2026-09-25T03:08:37.2728066Z   API_URL=$4
-2026-09-25T03:08:37.2728240Z   ENV_EXTRA=$5
-2026-09-25T03:08:37.2728334Z 
-2026-09-25T03:08:37.2728543Z   echo "🚀 Desplegando Frontend para: $CLIENT_ID en $DOMAIN:$PORT"
-2026-09-25T03:08:37.2728759Z 
-2026-09-25T03:08:37.2728876Z   # Crear .env con la URL del backend de este cliente
-2026-09-25T03:08:37.2729184Z   # ENV_EXTRA puede incluir variables adicionales del frontend
-2026-09-25T03:08:37.2729531Z   printf '%s\n' "$ENV_EXTRA" > /root/frontend-qhubomor/.env.$CLIENT_ID
-2026-09-25T03:08:37.2729917Z   echo "EXPO_PUBLIC_API_URL=$API_URL" >> /root/frontend-qhubomor/.env.$CLIENT_ID
-2026-09-25T03:08:37.2730337Z   echo "EXPO_PUBLIC_APP_VARIANT=$CLIENT_ID" >> /root/frontend-qhubomor/.env.$CLIENT_ID
-2026-09-25T03:08:37.2730591Z 
-2026-09-25T03:08:37.2730803Z   # Copiar el .env al directorio raíz para que Docker lo tome en el build
-2026-09-25T03:08:37.2731187Z   cp /root/frontend-qhubomor/.env.$CLIENT_ID /root/frontend-qhubomor/.env
-2026-09-25T03:08:37.2731410Z 
-2026-09-25T03:08:37.2731588Z   # Compilar imagen única para este cliente (con su API URL)
-2026-09-25T03:08:37.2731893Z   echo "Compilando imagen para $CLIENT_ID..."
-2026-09-25T03:08:37.2732143Z   cd /root/frontend-qhubomor
-2026-09-25T03:08:37.2732387Z   docker build --no-cache -t frontend-$CLIENT_ID .
-2026-09-25T03:08:37.2732560Z 
-2026-09-25T03:08:37.2732687Z   # Detener y eliminar contenedor anterior de este cliente
-2026-09-25T03:08:37.2732973Z   docker stop frontend-$CLIENT_ID || true
-2026-09-25T03:08:37.2733210Z   docker rm frontend-$CLIENT_ID || true
-2026-09-25T03:08:37.2733367Z 
-2026-09-25T03:08:37.2733561Z   # Levantar el nuevo contenedor
-2026-09-25T03:08:37.2733784Z   docker run -d \
-2026-09-25T03:08:37.2733975Z     --name frontend-$CLIENT_ID \
-2026-09-25T03:08:37.2734185Z     -p $PORT:80 \
-2026-09-25T03:08:37.2734373Z     --restart unless-stopped \
-2026-09-25T03:08:37.2734783Z     frontend-$CLIENT_ID
-2026-09-25T03:08:37.2734901Z 
-2026-09-25T03:08:37.2735160Z   # Configurar subdominio + certificado SSL automáticamente usando el script de n8n
-2026-09-25T03:08:37.2735550Z   DOMAIN=$DOMAIN PORT=$PORT EMAIL=jonnymejia62@gmail.com \
-2026-09-25T03:08:37.2735855Z     bash /root/frontend-qhubomor/scripts/setup-nginx.sh
-2026-09-25T03:08:37.2736042Z 
-2026-09-25T03:08:37.2736239Z   echo "✅ Frontend $CLIENT_ID desplegado en https://$DOMAIN"
-2026-09-25T03:08:37.2736506Z }
-2026-09-25T03:08:37.2736598Z 
-2026-09-25T03:08:37.2736708Z # ----------------------------------------------------------
-2026-09-25T03:08:37.2736963Z # LISTA DE CLIENTES ACTIVOS
-2026-09-25T03:08:37.2737359Z # Para agregar uno nuevo: copia la línea de abajo,
-2026-09-25T03:08:37.2737641Z # cambia los valores y crea el secreto en GitHub.
-2026-09-25T03:08:37.2737929Z # ----------------------------------------------------------
-2026-09-25T03:08:37.2738197Z deploy_new_client_web \
-2026-09-25T03:08:37.2738402Z   "restaurante2" \
-2026-09-25T03:08:37.2738578Z   "8072" \
-2026-09-25T03:08:37.2738788Z   "app-restaurante2.autosystemprojects.site" \
-2026-09-25T03:08:37.2739126Z   "https://api-restaurante2.autosystemprojects.site/api/v1" \
-2026-09-25T03:08:37.2739401Z   ""
-2026-09-25T03:08:37.2739574Z deploy_new_client_web \
-2026-09-25T03:08:37.2739757Z   "fogata" \
-2026-09-25T03:08:37.2739929Z   "8074" \
-2026-09-25T03:08:37.2740114Z   "app-fogata.autosystemprojects.site" \
-2026-09-25T03:08:37.2740401Z   "https://api-fogata.autosystemprojects.site/api/v1" \
-2026-09-25T03:08:37.2740787Z   "***
-2026-09-25T03:08:37.2740950Z "
-2026-09-25T03:08:37.2741035Z 
-2026-09-25T03:08:37.2741111Z ======END======
-2026-09-25T03:08:41.4400935Z out: Limpiando espacio en disco de imagenes viejas...
-2026-09-25T03:08:41.8863035Z out: Deleted Images:
-2026-09-25T03:08:41.8863440Z out: deleted: sha256:9e540bcea70a42b4a3e89a99f2f72cbc2311977bbb5025564f89afe357e13e8a
-2026-09-25T03:08:41.8863935Z out: deleted: sha256:8489a74ac539c1a968c0290ffcfd1d50a27d431899c9e3ff4bdeeb6af8d2d701
-2026-09-25T03:08:41.8864375Z out: deleted: sha256:01684b9430e0e0fdd645c56fd7e4c3dd1af28ee8b4724701ff39f116d556d1c8
-2026-09-25T03:08:41.8864942Z out: Total reclaimed space: 0B
-2026-09-25T03:08:55.7851640Z out: ID						RECLAIMABLE	SIZE		LAST ACCESSED
-2026-09-25T03:08:55.7852062Z out: 2db28srl4ztw0ucnfbrfguin2*              	true 		116.5MB   	31 minutes ago
-2026-09-25T03:08:56.3110787Z out: q4zx7dot81ks7wgbyiubs2600*              	true 	48.01MB   	42 minutes ago
-2026-09-25T03:08:56.5589925Z out: i7w4s6l2srb4y06cgn79hfdvd*              	true 	882B      	31 minutes ago
-2026-09-25T03:08:56.6446923Z out: own9qriw8ey7kg954k8ac7bli               	true 	1.422kB   	2 hours ago
-2026-09-25T03:08:56.8408377Z out: q4gretl86wk6lkrcdeefjli0k*              	true 	48.01MB   	31 minutes ago
-2026-09-25T03:08:56.8707748Z out: u4ze07rzmthz573lpmnlkmpvr               	true 	1.426kB   	2 hours ago
-2026-09-25T03:08:56.9169404Z out: lmq8lg0nogemh9l0wcs350qx8*              	true 	0B        	31 minutes ago
-2026-09-25T03:08:56.9408707Z out: 0kax69l9vravueee8ovy4py1y               	true 	1.426kB   	2 hours ago
-2026-09-25T03:08:57.0716181Z out: qpjj0jo3b51ej2t2ylzjmloyy*              	true 	48MB      	36 minutes ago
-2026-09-25T03:08:58.6063248Z out: wc322wneqi04jppglpqt4dlip               	true 	11.99MB   	2 hours ago
-2026-09-25T03:08:58.8920937Z out: 98lx2tnimh9id79mgn3932bo0               	true 	116.5MB   	31 minutes ago
-2026-09-25T03:08:59.0141119Z out: th2qdum5kxgj4aq8eu5jcrauw               	true 	11.99MB   	2 hours ago
-2026-09-25T03:08:59.0825057Z out: ykg7p6zzhe37jnkjuash778nk               	true 	116.5MB   	42 minutes ago
-2026-09-25T03:08:59.1010275Z out: f5yf5c03vfwg43if9yokgz09z               	true 	11.99MB   	2 hours ago
-2026-09-25T03:08:59.1830819Z out: 3hj191qwcl6qfj99eohd1jpif               	true 	116.5MB   	36 minutes ago
-2026-09-25T03:09:34.3652005Z out: k1wazdt7a2q2lqqr2lpyeerc5               	true 	590.2MB   	37 minutes ago
-2026-09-25T03:09:34.4047774Z out: xzdyv61206f0plt18vmczds97               	true 	2.043kB   	2 hours ago
-2026-09-25T03:09:36.0269903Z out: tkrwdwatlh3amem1kgsskys9y               	true 	590.2MB   	42 minutes ago
-2026-09-25T03:09:36.0426186Z out: msuniqat7u4vbqez9qo09w5r8               	true 	2.043kB   	2 hours ago
-2026-09-25T03:09:36.0644993Z out: a1u0lfpn3vd0byo288w749oqb               	true 	2.043kB   	2 hours ago
-2026-09-25T03:09:37.4642014Z out: mlxfqcrpi4pjyq075ch14zz6j               	true 	590.2MB   	31 minutes ago
-2026-09-25T03:09:37.5273854Z out: x6xs57xl1mtxrup5b3sm5ie0q               	true 	568kB     	42 minutes ago
-2026-09-25T03:09:37.5435752Z out: sn5upzbz6qmwujk7a057d7n8n               	true 	568kB     	37 minutes ago
-2026-09-25T03:09:37.5533858Z out: yvkhjs7zntrhdtztghbpit4bb               	true 	568kB     	31 minutes ago
-2026-09-25T03:09:37.5991971Z out: tl50pxrqwt3mb3uqxwb091u3j               	true 	0B        	31 minutes ago
-2026-09-25T03:09:37.7347939Z out: Total:	2.419GB
-2026-09-25T03:09:37.7509944Z out: Actualizando repositorio existente...
-2026-09-25T03:09:37.8042335Z out: Fetching origin
-2026-09-25T03:09:38.8780710Z err: From https://github.com/JhonnM62/apppuntodeventa
-2026-09-25T03:09:38.8781178Z err:    d575fac..6607ca5  main       -> origin/main
-2026-09-25T03:09:39.8303137Z out: HEAD is now at 6607ca5 chore: update EAS build configuration and VPS deployment logs
-2026-09-25T03:09:40.1551434Z out: Removing .env.fogata
-2026-09-25T03:09:40.1551783Z out: Removing .env.restaurante2
-2026-09-25T03:09:40.1725466Z out: Construyendo imagen Docker para web...
-2026-09-25T03:09:41.4488897Z err: #0 building with "default" instance using docker driver
-2026-09-25T03:09:41.4489331Z err: #1 [internal] load build definition from Dockerfile
-2026-09-25T03:09:41.4489650Z err: #1 transferring dockerfile: 30B
-2026-09-25T03:09:41.5852430Z err: #1 transferring dockerfile: 921B 0.0s done
-2026-09-25T03:09:41.5853065Z err: #1 DONE 0.2s
-2026-09-25T03:09:41.5853334Z err: #2 [internal] load metadata for docker.io/library/node:20-slim
-2026-09-25T03:09:43.4374621Z err: #2 DONE 1.9s
-2026-09-25T03:09:43.4375096Z err: #3 [internal] load metadata for docker.io/library/nginx:alpine
-2026-09-25T03:09:43.5752014Z err: #3 DONE 1.9s
-2026-09-25T03:09:43.5752370Z err: #4 [internal] load .dockerignore
-2026-09-25T03:09:43.5752681Z err: #4 transferring context: 2B done
-2026-09-25T03:09:43.5752927Z err: #4 DONE 0.1s
-2026-09-25T03:09:43.6873149Z err: #5 [builder 1/6] FROM docker.io/library/node:20-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0
-2026-09-25T03:09:43.6873809Z err: #5 CACHED
-2026-09-25T03:09:43.6874343Z err: #6 [stage-1 1/4] FROM docker.io/library/nginx:alpine@sha256:1ed1b0e1d7652937d6cbdaf4018c7b6fc009a7dd6c3047351e2eddda745de43f
-2026-09-25T03:09:43.6875143Z err: #6 CACHED
-2026-09-25T03:09:43.6875387Z err: #7 [internal] load build context
-2026-09-25T03:09:43.9937005Z err: #7 ...
-2026-09-25T03:09:43.9937438Z err: #8 [builder 2/6] WORKDIR /app
-2026-09-25T03:09:43.9937739Z err: #8 DONE 0.2s
-2026-09-25T03:09:43.9937999Z err: #7 [internal] load build context
-2026-09-25T03:09:46.1336465Z err: #7 transferring context: 116.67MB 2.4s done
-2026-09-25T03:09:46.3823832Z err: #7 DONE 2.6s
-2026-09-25T03:09:46.3824201Z err: #9 [stage-1 2/4] COPY nginx.conf /etc/nginx/conf.d/default.conf
-2026-09-25T03:09:46.5733858Z err: #9 DONE 0.3s
-2026-09-25T03:09:46.7684201Z err: #10 [builder 3/6] COPY package*.json ./
-2026-09-25T03:09:46.8948921Z err: #10 DONE 0.3s
-2026-09-25T03:09:47.0643953Z err: #11 [builder 4/6] RUN npm install --legacy-peer-deps --ignore-scripts
-2026-09-25T03:10:20.1632441Z err: #11 33.26 npm warn deprecated whatwg-encoding@2.0.0: Use @exodus/bytes instead for a more spec-conformant and faster implementation
-2026-09-25T03:10:35.0930779Z err: #11 48.19 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
-2026-09-25T03:10:43.5263953Z err: #11 56.62 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
-2026-09-25T03:10:54.4978847Z err: #11 67.58 npm warn deprecated domexception@4.0.0: Use your platform's native DOMException instead
-2026-09-25T03:11:00.6997541Z err: #11 73.78 npm warn deprecated abab@2.0.6: Use your platform's native atob() and btoa() methods instead
-2026-09-25T03:11:00.8757530Z err: #11 73.82 npm warn deprecated uuid@7.0.3: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
-2026-09-25T03:11:11.8407422Z err: #11 84.93 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:11:12.3615858Z err: #11 85.45 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:11:12.3617392Z err: #11 85.45 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:11:14.3552534Z err: #11 87.45 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:11:14.6549914Z err: #11 87.75 npm warn deprecated @testing-library/jest-native@5.4.3: DEPRECATED: This package is no longer maintained.
-2026-09-25T03:11:14.7711655Z err: #11 87.75 npm warn deprecated Please use the built-in Jest matchers available in @testing-library/react-native v12.4+.
-2026-09-25T03:11:14.7712155Z err: #11 87.75 npm warn deprecated
-2026-09-25T03:11:14.7712771Z err: #11 87.75 npm warn deprecated See migration guide: https://callstack.github.io/react-native-testing-library/docs/migration/jest-matchers
-2026-09-25T03:11:19.3554746Z err: #11 92.45 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:11:22.1575919Z err: #11 95.25 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:11:22.7268102Z err: #11 95.82 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:12:50.8381906Z err: #11 183.9 
-2026-09-25T03:12:50.8461350Z err: #11 183.9 added 1198 packages, and audited 1199 packages in 3m
-2026-09-25T03:12:50.8461788Z err: #11 183.9 
-2026-09-25T03:12:50.8462073Z err: #11 183.9 120 packages are looking for funding
-2026-09-25T03:12:50.8462382Z err: #11 183.9   run `npm fund` for details
-2026-09-25T03:12:51.6511628Z err: #11 184.7 
-2026-09-25T03:12:51.6511983Z err: #11 184.7 38 vulnerabilities (2 low, 21 moderate, 13 high, 2 critical)
-2026-09-25T03:12:51.6512647Z err: #11 184.7 
-2026-09-25T03:12:51.6512887Z err: #11 184.7 To address issues that do not require attention, run:
-2026-09-25T03:12:51.6513178Z err: #11 184.7   npm audit fix
-2026-09-25T03:12:51.6513377Z err: #11 184.7 
-2026-09-25T03:12:51.6513609Z err: #11 184.7 To address all issues (including breaking changes), run:
-2026-09-25T03:12:51.6513911Z err: #11 184.7   npm audit fix --force
-2026-09-25T03:12:51.6514119Z err: #11 184.7 
-2026-09-25T03:12:51.6514306Z err: #11 184.7 Run `npm audit` for details.
-2026-09-25T03:12:51.8339257Z err: #11 184.7 npm notice
-2026-09-25T03:12:51.8339656Z err: #11 184.7 npm notice New major version of npm available! 10.8.2 -> 12.1.0
-2026-09-25T03:12:51.8340098Z err: #11 184.7 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.1.0
-2026-09-25T03:12:51.8340506Z err: #11 184.7 npm notice To update run: npm install -g npm@12.1.0
-2026-09-25T03:12:51.8340798Z err: #11 184.7 npm notice
-2026-09-25T03:12:53.3838363Z err: #11 DONE 186.5s
-2026-09-25T03:12:53.5428281Z err: #12 [builder 5/6] COPY . .
-2026-09-25T03:12:55.7221325Z err: #12 DONE 2.3s
-2026-09-25T03:12:55.8751743Z err: #13 [builder 6/6] RUN NODE_OPTIONS=--max-old-space-size=4096 npx expo export -p web
-2026-09-25T03:12:57.5791961Z err: #13 1.754 env: load .env
-2026-09-25T03:12:58.2866826Z err: #13 2.464 env: export EXPO_PUBLIC_API_URL
-2026-09-25T03:12:58.6974406Z err: #13 2.877 Starting Metro Bundler
-2026-09-25T03:13:01.9300709Z err: #13 6.082 Web ./index.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
-2026-09-25T03:13:05.4325555Z err: #13 9.602 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (32/69)
-2026-09-25T03:13:08.9365570Z err: #13 13.11 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 99/261)
-2026-09-25T03:13:12.6903319Z err: #13 16.74 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (110/335)
-2026-09-25T03:13:16.3832382Z err: #13 20.56 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (113/348)
-2026-09-25T03:13:19.8768808Z err: #13 24.06 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (116/348)
-2026-09-25T03:13:23.3939688Z err: #13 27.57 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (127/360)
-2026-09-25T03:13:26.8793013Z err: #13 31.06 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (133/374)
-2026-09-25T03:13:30.7163572Z err: #13 34.77 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (146/396)
-2026-09-25T03:13:34.0231315Z err: #13 38.20 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (196/476)
-2026-09-25T03:13:37.5773400Z err: #13 41.74 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (309/618)
-2026-09-25T03:13:41.1668685Z err: #13 45.34 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (311/619)
-2026-09-25T03:13:42.5128641Z err: #13 46.67 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (312/619)
-2026-09-25T03:13:45.9881208Z err: #13 50.16 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (365/668)
-2026-09-25T03:13:49.5265239Z err: #13 53.71 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 405/2755)
-2026-09-25T03:13:53.0379781Z err: #13 57.22 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 543/2896)
-2026-09-25T03:13:56.6576466Z err: #13 60.83 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 636/2954)
-2026-09-25T03:14:00.2005407Z err: #13 64.37 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% ( 918/2967)
-2026-09-25T03:14:03.9776595Z err: #13 67.96 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (1045/2967)
-2026-09-25T03:14:07.2137625Z err: #13 71.39 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 32.7% (1379/2967)
-2026-09-25T03:14:10.7159905Z err: #13 74.89 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% (1730/2967)
-2026-09-25T03:14:14.6570167Z err: #13 78.73 Web ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 46.2% (2016/2967)
-2026-09-25T03:14:17.9735119Z err: #13 82.16 Web ./index.js ▓▓▓▓▓▓▓▓░░░░░░░░ 53.6% (2172/2967)
-2026-09-25T03:14:21.6341188Z err: #13 85.80 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.8% (2437/3237)
-2026-09-25T03:14:25.1118820Z err: #13 89.29 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.8% (2591/3413)
-2026-09-25T03:14:28.6114706Z err: #13 92.79 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.8% (2739/3452)
-2026-09-25T03:14:32.3242962Z err: #13 96.47 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.8% (2794/3518)
-2026-09-25T03:14:35.8306807Z err: #13 99.99 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.5% (2865/3539)
-2026-09-25T03:14:39.3103626Z err: #13 103.5 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 67.1% (2949/3599)
-2026-09-25T03:14:42.9516409Z err: #13 107.0 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 69.7% (3039/3641)
-2026-09-25T03:14:46.3230029Z err: #13 110.5 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 80.2% (3261/3641)
-2026-09-25T03:14:50.0445556Z err: #13 114.2 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 87.9% (3421/3677)
-2026-09-25T03:14:53.5139447Z err: #13 117.7 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 87.9% (3438/3682)
-2026-09-25T03:14:57.1831842Z err: #13 121.4 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 91.6% (3590/3884)
-2026-09-25T03:15:01.2903136Z err: #13 125.5 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 91.6% (3729/3966)
-2026-09-25T03:15:04.7879920Z err: #13 129.0 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 94.1% (3865/3984)
-2026-09-25T03:15:08.2888356Z err: #13 132.5 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.1% (4054/4092)
-2026-09-25T03:15:11.8328569Z err: #13 136.0 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (4103/4105)
-2026-09-25T03:15:15.5456839Z err: #13 139.7 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (4105/4105)
-2026-09-25T03:15:18.1916367Z err: #13 142.3 Web Bundled 136901ms index.js (4105 modules)
-2026-09-25T03:15:18.3450223Z err: #13 142.4 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (4105/4105)
-2026-09-25T03:15:20.3555912Z err: #13 144.5 Could not parse Expo config: android.googleServicesFile: "./google-services.json"
-2026-09-25T03:15:20.6118712Z err: #13 144.6 
-2026-09-25T03:15:20.6119549Z err: #13 144.6 › Assets (30):
-2026-09-25T03:15:20.6120222Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.3f78af31cca60105799838a1a7a59fbd.ttf (130 kB)
-2026-09-25T03:15:20.6121123Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Entypo.31b5ffea3daddc69dd01a1f3d6cf63c5.ttf (66.2 kB)
-2026-09-25T03:15:20.6121887Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/EvilIcons.140c53a7643ea949007aa9a282153849.ttf (13.5 kB)
-2026-09-25T03:15:20.6122693Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ca4b48e04dc1ce10bfbddb262c8b835f.ttf (55.6 kB)
-2026-09-25T03:15:20.6123467Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome.b06871f281fee6b241d60582ae9369b9.ttf (166 kB)
-2026-09-25T03:15:20.6124259Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Brands.3b89dd103490708d19a95adcae52210e.ttf (134 kB)
-2026-09-25T03:15:20.6125333Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Regular.1f77739ca9ff2188b539c36f30ffa2be.ttf (33.7 kB)
-2026-09-25T03:15:20.6126121Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Solid.605ed7926cf39a2ad5ec2d1f9d391d3d.ttf (203 kB)
-2026-09-25T03:15:20.6126889Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Brands.56c8d80832e37783f12c05db7c8849e2.ttf (209 kB)
-2026-09-25T03:15:20.6127924Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Regular.370dd5af19f8364907b6e2c41f45dbbf.ttf (68 kB)
-2026-09-25T03:15:20.6128714Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Solid.adec7d6f310bc577f05e8fe06a5daccf.ttf (424 kB)
-2026-09-25T03:15:20.6129468Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Fontisto.b49ae8ab2dbccb02c4d11caaacf09eab.ttf (314 kB)
-2026-09-25T03:15:20.6130202Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Foundation.e20945d7c929279ef7a6f1db184a4470.ttf (57 kB)
-2026-09-25T03:15:20.6130923Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.b4eb097d35f44ed943676fd56f6bdc51.ttf (390 kB)
-2026-09-25T03:15:20.6131713Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.6e435534bd35da5fef04168860a9b8fa.ttf (1.31 MB)
-2026-09-25T03:15:20.6132667Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.4e85bc9ebe07e0340c9c4fc2f6c38908.ttf (357 kB)
-2026-09-25T03:15:20.6133419Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Octicons.871378c6eab492a3e689a9385dc45a12.ttf (69.4 kB)
-2026-09-25T03:15:20.6134171Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/SimpleLineIcons.d2285965fe34b05465047401b8595dd0.ttf (54.1 kB)
-2026-09-25T03:15:20.6135070Z err: #13 144.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Zocial.1681f34aaca71b8dfb70756bca331eb2.ttf (25.8 kB)
-2026-09-25T03:15:20.6135805Z err: #13 144.6 node_modules/@react-navigation/elements/lib/module/assets/back-icon-mask.0a328cd9c1afd0afe8e3b1ec5165b1b4.png (653 B)
-2026-09-25T03:15:20.6136483Z err: #13 144.6 node_modules/@react-navigation/elements/lib/module/assets/back-icon.35ba0eaec5a4f5ed12ca16fabeae451d.png (207 B)
-2026-09-25T03:15:20.6137173Z err: #13 144.6 node_modules/@react-navigation/elements/lib/module/assets/clear-icon.c94f6478e7ae0cdd9f15de1fcb9e5e55.png (4 variations | 425 B)
-2026-09-25T03:15:20.6137883Z err: #13 144.6 node_modules/@react-navigation/elements/lib/module/assets/close-icon.808e1b1b9b53114ec2838071a7e6daa7.png (4 variations | 235 B)
-2026-09-25T03:15:20.6138558Z err: #13 144.6 node_modules/@react-navigation/elements/lib/module/assets/search-icon.286d67d3f74808a60a78d3ebf1a5fb57.png (928 B)
-2026-09-25T03:15:20.6138983Z err: #13 144.6 
-2026-09-25T03:15:20.6139232Z err: #13 144.6 › web bundles (2):
-2026-09-25T03:15:20.6139545Z err: #13 144.6 _expo/static/css/global-911c95f0885ae5e30ca43ca4f10504c1.css (63.5 kB)
-2026-09-25T03:15:20.6139953Z err: #13 144.6 _expo/static/js/web/index-07e01ec67f07ee58907c7739cf4b68a0.js (7.83 MB)
-2026-09-25T03:15:20.6140258Z err: #13 144.6 
-2026-09-25T03:15:20.6140462Z err: #13 144.6 › Files (3):
-2026-09-25T03:15:20.6140673Z err: #13 144.6 favicon.ico (14.5 kB)
-2026-09-25T03:15:20.6140888Z err: #13 144.6 index.html (1.41 kB)
-2026-09-25T03:15:20.6141097Z err: #13 144.6 metadata.json (49 B)
-2026-09-25T03:15:20.6175067Z err: #13 144.8 
-2026-09-25T03:15:20.7754842Z err: #13 144.8 Exported: dist
-2026-09-25T03:15:25.1331962Z err: #13 DONE 149.3s
-2026-09-25T03:15:41.8694851Z err: #14 [stage-1 3/4] COPY --from=builder /app/dist /usr/share/nginx/html
-2026-09-25T03:15:44.7321000Z err: #14 DONE 2.8s
-2026-09-25T03:15:44.9541833Z err: #15 [stage-1 4/4] RUN sed -i 's/<script src=/<script type="module" src=/g' /usr/share/nginx/html/index.html
-2026-09-25T03:15:47.1364947Z err: #15 DONE 2.2s
-2026-09-25T03:15:47.3142511Z err: #16 exporting to image
-2026-09-25T03:15:47.3298439Z err: #16 exporting layers 0.1s done
-2026-09-25T03:15:47.3401054Z err: #16 writing image sha256:8ba73f35df34b88ec1a09f8ad739f6f06cbf9524f701cd725aba9cd4ce415769 done
-2026-09-25T03:15:47.3401646Z err: #16 naming to docker.io/library/qhubomor-frontend done
-2026-09-25T03:15:47.3401961Z err: #16 DONE 0.1s
-2026-09-25T03:15:47.3496623Z out: Deteniendo contenedor anterior...
-2026-09-25T03:15:50.3111803Z out: qhubomor-frontend-app
-2026-09-25T03:15:50.9371540Z out: qhubomor-frontend-app
-2026-09-25T03:15:51.1312489Z out: Levantando nuevo contenedor...
-2026-09-25T03:15:52.0327669Z out: 7f0478451fe809ad2014461743db7634f62beb1fa3e857d923b0ad572cbf5119
-2026-09-25T03:15:53.8731627Z out: ¡Despliegue del Frontend completado exitosamente!
-2026-09-25T03:15:53.8732247Z out: 🚀 Desplegando Frontend para: restaurante2 en app-restaurante2.autosystemprojects.site:8072
-2026-09-25T03:15:54.2021639Z out: Compilando imagen para restaurante2...
-2026-09-25T03:15:55.5269727Z err: #0 building with "default" instance using docker driver
-2026-09-25T03:15:55.5559088Z err: #1 [internal] load build definition from Dockerfile
-2026-09-25T03:15:55.7349992Z err: #1 transferring dockerfile:
-2026-09-25T03:15:56.1184018Z err: #1 transferring dockerfile: 921B 0.4s done
-2026-09-25T03:15:56.6502981Z err: #1 DONE 1.3s
-2026-09-25T03:15:56.8969927Z err: #2 [internal] load metadata for docker.io/library/node:20-slim
-2026-09-25T03:15:57.4675702Z err: #2 ...
-2026-09-25T03:15:57.4676141Z err: #3 [internal] load metadata for docker.io/library/nginx:alpine
-2026-09-25T03:15:57.4676482Z err: #3 DONE 0.7s
-2026-09-25T03:15:57.5765241Z err: #2 [internal] load metadata for docker.io/library/node:20-slim
-2026-09-25T03:15:57.5765664Z err: #2 DONE 0.7s
-2026-09-25T03:15:57.5765867Z err: #4 [internal] load .dockerignore
-2026-09-25T03:15:57.5766101Z err: #4 transferring context: 2B done
-2026-09-25T03:15:57.5766306Z err: #4 DONE 0.1s
-2026-09-25T03:15:58.0005339Z err: #5 [builder 1/6] FROM docker.io/library/node:20-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0
-2026-09-25T03:15:58.0005833Z err: #5 DONE 0.0s
-2026-09-25T03:15:58.0006257Z err: #6 [stage-1 1/4] FROM docker.io/library/nginx:alpine@sha256:1ed1b0e1d7652937d6cbdaf4018c7b6fc009a7dd6c3047351e2eddda745de43f
-2026-09-25T03:15:58.0006743Z err: #6 CACHED
-2026-09-25T03:15:58.0006936Z err: #7 [internal] load build context
-2026-09-25T03:15:58.0007148Z err: #7 ...
-2026-09-25T03:15:58.0007322Z err: #8 [builder 2/6] WORKDIR /app
-2026-09-25T03:15:58.0007527Z err: #8 CACHED
-2026-09-25T03:15:58.0007704Z err: #7 [internal] load build context
-2026-09-25T03:15:58.6355827Z err: #7 transferring context: 260.21kB 0.5s done
-2026-09-25T03:15:58.6356232Z err: #7 DONE 0.7s
-2026-09-25T03:15:58.6431654Z err: #9 [builder 3/6] COPY package*.json ./
-2026-09-25T03:15:58.7052180Z err: #9 ...
-2026-09-25T03:15:58.7052594Z err: #10 [stage-1 2/4] COPY nginx.conf /etc/nginx/conf.d/default.conf
-2026-09-25T03:15:58.7052913Z err: #10 DONE 0.3s
-2026-09-25T03:15:58.9361974Z err: #9 [builder 3/6] COPY package*.json ./
-2026-09-25T03:15:58.9362402Z err: #9 DONE 0.3s
-2026-09-25T03:15:58.9362700Z err: #11 [builder 4/6] RUN npm install --legacy-peer-deps --ignore-scripts
-2026-09-25T03:16:30.4135593Z err: #11 31.63 npm warn deprecated whatwg-encoding@2.0.0: Use @exodus/bytes instead for a more spec-conformant and faster implementation
-2026-09-25T03:16:36.0935564Z err: #11 37.07 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
-2026-09-25T03:16:54.0037975Z err: #11 55.22 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
-2026-09-25T03:17:08.3218717Z err: #11 69.54 npm warn deprecated domexception@4.0.0: Use your platform's native DOMException instead
-2026-09-25T03:17:14.7397457Z err: #11 75.96 npm warn deprecated uuid@7.0.3: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
-2026-09-25T03:17:14.9954658Z err: #11 76.21 npm warn deprecated abab@2.0.6: Use your platform's native atob() and btoa() methods instead
-2026-09-25T03:17:25.2077841Z err: #11 86.42 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:17:28.7048255Z err: #11 89.92 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:17:28.9220567Z err: #11 89.92 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:17:31.7601386Z err: #11 92.98 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:17:33.0590586Z err: #11 94.28 npm warn deprecated @testing-library/jest-native@5.4.3: DEPRECATED: This package is no longer maintained.
-2026-09-25T03:17:33.0591278Z err: #11 94.28 npm warn deprecated Please use the built-in Jest matchers available in @testing-library/react-native v12.4+.
-2026-09-25T03:17:33.0591739Z err: #11 94.28 npm warn deprecated
-2026-09-25T03:17:33.0592260Z err: #11 94.28 npm warn deprecated See migration guide: https://callstack.github.io/react-native-testing-library/docs/migration/jest-matchers
-2026-09-25T03:17:34.4213311Z err: #11 95.64 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:17:42.4912153Z err: #11 103.7 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:17:42.6475634Z err: #11 103.9 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:19:13.8819271Z err: #11 195.1 
-2026-09-25T03:19:13.8819677Z err: #11 195.1 added 1198 packages, and audited 1199 packages in 3m
-2026-09-25T03:19:13.8819987Z err: #11 195.1 
-2026-09-25T03:19:13.8820197Z err: #11 195.1 120 packages are looking for funding
-2026-09-25T03:19:13.8820501Z err: #11 195.1   run `npm fund` for details
-2026-09-25T03:19:14.1250934Z err: #11 195.3 
-2026-09-25T03:19:14.1251491Z err: #11 195.3 38 vulnerabilities (2 low, 21 moderate, 13 high, 2 critical)
-2026-09-25T03:19:14.1254387Z err: #11 195.3 
-2026-09-25T03:19:14.1254914Z err: #11 195.3 To address issues that do not require attention, run:
-2026-09-25T03:19:14.1255365Z err: #11 195.3   npm audit fix
-2026-09-25T03:19:14.1255649Z err: #11 195.3 
-2026-09-25T03:19:14.1255968Z err: #11 195.3 To address all issues (including breaking changes), run:
-2026-09-25T03:19:14.1256282Z err: #11 195.3   npm audit fix --force
-2026-09-25T03:19:14.1256505Z err: #11 195.3 
-2026-09-25T03:19:14.1256691Z err: #11 195.3 Run `npm audit` for details.
-2026-09-25T03:19:14.3023923Z err: #11 195.3 npm notice
-2026-09-25T03:19:14.3024398Z err: #11 195.3 npm notice New major version of npm available! 10.8.2 -> 12.1.0
-2026-09-25T03:19:14.3025061Z err: #11 195.3 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.1.0
-2026-09-25T03:19:14.3025508Z err: #11 195.3 npm notice To update run: npm install -g npm@12.1.0
-2026-09-25T03:19:14.3026139Z err: #11 195.3 npm notice
-2026-09-25T03:19:14.7345595Z err: #11 DONE 196.0s
-2026-09-25T03:19:14.9293871Z err: #12 [builder 5/6] COPY . .
-2026-09-25T03:19:19.5283732Z err: #12 DONE 4.8s
-2026-09-25T03:19:19.7603567Z err: #13 [builder 6/6] RUN NODE_OPTIONS=--max-old-space-size=4096 npx expo export -p web
-2026-09-25T03:19:22.4000948Z err: #13 2.782 env: load .env
-2026-09-25T03:19:23.2563334Z err: #13 3.651 env: export EXPO_PUBLIC_API_URL EXPO_PUBLIC_APP_VARIANT
-2026-09-25T03:19:23.5990339Z err: #13 3.993 Starting Metro Bundler
-2026-09-25T03:19:26.7739267Z err: #13 7.158 Web ./index.js ░░░░░░░░░░░░░░░░  4.0% (2/3)
-2026-09-25T03:19:30.2640862Z err: #13 10.66 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% ( 67/178)
-2026-09-25T03:19:33.7638987Z err: #13 14.16 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% (118/344)
-2026-09-25T03:19:37.2701827Z err: #13 17.67 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% (130/367)
-2026-09-25T03:19:40.7657465Z err: #13 21.16 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% (141/383)
-2026-09-25T03:19:44.2690840Z err: #13 24.66 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% (168/451)
-2026-09-25T03:19:47.8714312Z err: #13 28.24 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% (215/487)
-2026-09-25T03:19:51.5106850Z err: #13 31.90 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% (273/537)
-2026-09-25T03:19:54.9516285Z err: #13 35.35 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% (323/627)
-2026-09-25T03:19:58.4556426Z err: #13 38.85 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% ( 376/2382)
-2026-09-25T03:20:01.9646237Z err: #13 42.35 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% ( 438/2769)
-2026-09-25T03:20:05.4799017Z err: #13 45.87 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% ( 514/2846)
-2026-09-25T03:20:08.9634627Z err: #13 49.36 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% ( 571/2902)
-2026-09-25T03:20:12.7345442Z err: #13 53.10 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% ( 628/2967)
-2026-09-25T03:20:16.4528122Z err: #13 56.79 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% ( 651/2979)
-2026-09-25T03:20:19.9468918Z err: #13 60.34 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% ( 779/2980)
-2026-09-25T03:20:23.4483138Z err: #13 63.85 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% (1096/2980)
-2026-09-25T03:20:26.9517324Z err: #13 67.35 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% (1327/2980)
-2026-09-25T03:20:30.4985997Z err: #13 70.90 Web ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.0% (1678/2980)
-2026-09-25T03:20:34.0023310Z err: #13 74.40 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 41.6% (1922/2980)
-2026-09-25T03:20:37.5149937Z err: #13 77.91 Web ./index.js ▓▓▓▓▓▓▓▓░░░░░░░░ 52.8% (2166/2980)
-2026-09-25T03:20:41.0964997Z err: #13 81.49 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.4% (2424/3155)
-2026-09-25T03:20:44.6613270Z err: #13 85.06 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.4% (2696/3442)
-2026-09-25T03:20:48.1855672Z err: #13 88.58 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.5% (2783/3492)
-2026-09-25T03:20:51.7530754Z err: #13 92.15 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.6% (2902/3586)
-2026-09-25T03:20:55.3353994Z err: #13 95.71 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 66.6% (2931/3591)
-2026-09-25T03:20:58.7906520Z err: #13 99.18 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 68.3% (3025/3660)
-2026-09-25T03:21:02.2828715Z err: #13 102.7 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 76.4% (3200/3660)
-2026-09-25T03:21:05.8765053Z err: #13 106.3 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 88.2% (3450/3698)
-2026-09-25T03:21:09.3948680Z err: #13 109.8 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 88.2% (3470/3702)
-2026-09-25T03:21:12.9296540Z err: #13 113.3 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 89.9% (3642/3915)
-2026-09-25T03:21:16.4292935Z err: #13 116.8 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 93.7% (3855/3982)
-2026-09-25T03:21:19.9349365Z err: #13 120.3 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.0% (4011/4031)
-2026-09-25T03:21:22.8209537Z err: #13 123.2 Web Bundled 117377ms index.js (4105 modules)
-2026-09-25T03:21:24.3655493Z err: #13 124.8 Could not parse Expo config: android.googleServicesFile: "./google-services.json"
-2026-09-25T03:21:24.4916829Z err: #13 124.8 
-2026-09-25T03:21:24.4917956Z err: #13 124.9 › Assets (30):
-2026-09-25T03:21:24.4922782Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.3f78af31cca60105799838a1a7a59fbd.ttf (130 kB)
-2026-09-25T03:21:24.4923851Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Entypo.31b5ffea3daddc69dd01a1f3d6cf63c5.ttf (66.2 kB)
-2026-09-25T03:21:24.4924895Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/EvilIcons.140c53a7643ea949007aa9a282153849.ttf (13.5 kB)
-2026-09-25T03:21:24.4925663Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ca4b48e04dc1ce10bfbddb262c8b835f.ttf (55.6 kB)
-2026-09-25T03:21:24.4926414Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome.b06871f281fee6b241d60582ae9369b9.ttf (166 kB)
-2026-09-25T03:21:24.4927195Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Brands.3b89dd103490708d19a95adcae52210e.ttf (134 kB)
-2026-09-25T03:21:24.4927995Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Regular.1f77739ca9ff2188b539c36f30ffa2be.ttf (33.7 kB)
-2026-09-25T03:21:24.4928784Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Solid.605ed7926cf39a2ad5ec2d1f9d391d3d.ttf (203 kB)
-2026-09-25T03:21:24.4929584Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Brands.56c8d80832e37783f12c05db7c8849e2.ttf (209 kB)
-2026-09-25T03:21:24.4930369Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Regular.370dd5af19f8364907b6e2c41f45dbbf.ttf (68 kB)
-2026-09-25T03:21:24.4931153Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Solid.adec7d6f310bc577f05e8fe06a5daccf.ttf (424 kB)
-2026-09-25T03:21:24.4931910Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Fontisto.b49ae8ab2dbccb02c4d11caaacf09eab.ttf (314 kB)
-2026-09-25T03:21:24.4932654Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Foundation.e20945d7c929279ef7a6f1db184a4470.ttf (57 kB)
-2026-09-25T03:21:24.4933381Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.b4eb097d35f44ed943676fd56f6bdc51.ttf (390 kB)
-2026-09-25T03:21:24.4934158Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.6e435534bd35da5fef04168860a9b8fa.ttf (1.31 MB)
-2026-09-25T03:21:24.4935143Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.4e85bc9ebe07e0340c9c4fc2f6c38908.ttf (357 kB)
-2026-09-25T03:21:24.4935890Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Octicons.871378c6eab492a3e689a9385dc45a12.ttf (69.4 kB)
-2026-09-25T03:21:24.4936791Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/SimpleLineIcons.d2285965fe34b05465047401b8595dd0.ttf (54.1 kB)
-2026-09-25T03:21:24.4937562Z err: #13 124.9 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Zocial.1681f34aaca71b8dfb70756bca331eb2.ttf (25.8 kB)
-2026-09-25T03:21:24.4938271Z err: #13 124.9 node_modules/@react-navigation/elements/lib/module/assets/back-icon-mask.0a328cd9c1afd0afe8e3b1ec5165b1b4.png (653 B)
-2026-09-25T03:21:24.4938988Z err: #13 124.9 node_modules/@react-navigation/elements/lib/module/assets/back-icon.35ba0eaec5a4f5ed12ca16fabeae451d.png (207 B)
-2026-09-25T03:21:24.4939709Z err: #13 124.9 node_modules/@react-navigation/elements/lib/module/assets/clear-icon.c94f6478e7ae0cdd9f15de1fcb9e5e55.png (4 variations | 425 B)
-2026-09-25T03:21:24.4940442Z err: #13 124.9 node_modules/@react-navigation/elements/lib/module/assets/close-icon.808e1b1b9b53114ec2838071a7e6daa7.png (4 variations | 235 B)
-2026-09-25T03:21:24.4941128Z err: #13 124.9 node_modules/@react-navigation/elements/lib/module/assets/search-icon.286d67d3f74808a60a78d3ebf1a5fb57.png (928 B)
-2026-09-25T03:21:24.4941658Z err: #13 124.9 
-2026-09-25T03:21:24.4941938Z err: #13 124.9 › web bundles (2):
-2026-09-25T03:21:24.4942279Z err: #13 124.9 _expo/static/css/global-911c95f0885ae5e30ca43ca4f10504c1.css (63.5 kB)
-2026-09-25T03:21:24.4942700Z err: #13 124.9 _expo/static/js/web/index-3305bad2d966829b4f27f232f8c5b3d8.js (7.83 MB)
-2026-09-25T03:21:24.4943011Z err: #13 124.9 
-2026-09-25T03:21:24.4943218Z err: #13 124.9 › Files (3):
-2026-09-25T03:21:24.4943424Z err: #13 124.9 favicon.ico (14.5 kB)
-2026-09-25T03:21:24.4943639Z err: #13 124.9 index.html (1.41 kB)
-2026-09-25T03:21:24.4943847Z err: #13 124.9 metadata.json (49 B)
-2026-09-25T03:21:24.7132880Z err: #13 125.0 
-2026-09-25T03:21:24.7133207Z err: #13 125.0 Exported: dist
-2026-09-25T03:21:28.5518356Z err: #13 DONE 128.9s
-2026-09-25T03:21:30.7699783Z err: #14 [stage-1 3/4] COPY --from=builder /app/dist /usr/share/nginx/html
-2026-09-25T03:21:32.4028295Z err: #14 DONE 1.6s
-2026-09-25T03:21:32.6237389Z err: #15 [stage-1 4/4] RUN sed -i 's/<script src=/<script type="module" src=/g' /usr/share/nginx/html/index.html
-2026-09-25T03:21:33.6173765Z err: #15 DONE 1.1s
-2026-09-25T03:21:33.8416199Z err: #16 exporting to image
-2026-09-25T03:21:33.8416490Z err: #16 exporting layers
-2026-09-25T03:21:35.0086323Z err: #16 exporting layers 1.4s done
-2026-09-25T03:21:35.1715162Z err: #16 writing image sha256:66c9d40919d07ecd63da7c50b6eec93ed1230b25fcb672b3759cc95260544a72 done
-2026-09-25T03:21:35.1715681Z err: #16 naming to docker.io/library/frontend-restaurante2 0.0s done
-2026-09-25T03:21:35.1715971Z err: #16 DONE 1.4s
-2026-09-25T03:21:36.7006465Z out: frontend-restaurante2
-2026-09-25T03:21:36.7810794Z out: frontend-restaurante2
-2026-09-25T03:21:36.8432491Z out: f32ed5e8b369659db7ae036214fd4e37638e08de4b6684210fbfa038bb05a8bb
-2026-09-25T03:21:37.0974336Z out: 🚀 Configurando Nginx para app-restaurante2.autosystemprojects.site en el puerto 8072...
-2026-09-25T03:21:37.0985115Z out: 📝 Archivo de configuración ya existe. Asegurando que el puerto sea el correcto...
-2026-09-25T03:21:37.5871988Z err: nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
-2026-09-25T03:21:37.5902564Z err: nginx: configuration file /etc/nginx/nginx.conf test is successful
-2026-09-25T03:21:37.7248610Z out: ✅ Nginx recargado.
-2026-09-25T03:21:37.7249094Z out: 🔄 Certificado SSL ya existe para app-restaurante2.autosystemprojects.site.
-2026-09-25T03:21:37.7302137Z out: Renovando si es necesario...
-2026-09-25T03:21:39.4865856Z out: ⏰ Configurando renovación automática de SSL...
-2026-09-25T03:21:39.5127703Z out: 🎉 ¡Configuración de Nginx y SSL completada exitosamente!
-2026-09-25T03:21:39.5128290Z out:    - Dominio: https://app-restaurante2.autosystemprojects.site
-2026-09-25T03:21:39.5128625Z out:    - Puerto interno: 8072
-2026-09-25T03:21:39.5128883Z out:    - Email de Let's Encrypt: jonnymejia62@gmail.com
-2026-09-25T03:21:39.5136922Z out: ✅ Frontend restaurante2 desplegado en https://app-restaurante2.autosystemprojects.site
-2026-09-25T03:21:39.5137895Z out: 🚀 Desplegando Frontend para: fogata en app-fogata.autosystemprojects.site:8074
-2026-09-25T03:21:39.5177255Z out: Compilando imagen para fogata...
-2026-09-25T03:21:40.2866939Z err: #0 building with "default" instance using docker driver
-2026-09-25T03:21:40.2867329Z err: #1 [internal] load build definition from Dockerfile
-2026-09-25T03:21:40.2867620Z err: #1 transferring dockerfile: 921B done
-2026-09-25T03:21:40.2867846Z err: #1 DONE 0.0s
-2026-09-25T03:21:40.2868092Z err: #2 [internal] load metadata for docker.io/library/node:20-slim
-2026-09-25T03:21:40.7846904Z err: #2 ...
-2026-09-25T03:21:40.7847304Z err: #3 [internal] load metadata for docker.io/library/nginx:alpine
-2026-09-25T03:21:40.7847613Z err: #3 DONE 0.6s
-2026-09-25T03:21:40.8883460Z err: #2 [internal] load metadata for docker.io/library/node:20-slim
-2026-09-25T03:21:40.8883957Z err: #2 DONE 0.7s
-2026-09-25T03:21:40.8884216Z err: #4 [internal] load .dockerignore
-2026-09-25T03:21:40.8884984Z err: #4 transferring context: 2B done
-2026-09-25T03:21:40.8885214Z err: #4 DONE 0.0s
-2026-09-25T03:21:40.8885627Z err: #5 [builder 1/6] FROM docker.io/library/node:20-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0
-2026-09-25T03:21:40.8886075Z err: #5 DONE 0.0s
-2026-09-25T03:21:40.8886259Z err: #6 [builder 2/6] WORKDIR /app
-2026-09-25T03:21:40.8886471Z err: #6 CACHED
-2026-09-25T03:21:40.8886866Z err: #7 [stage-1 1/4] FROM docker.io/library/nginx:alpine@sha256:1ed1b0e1d7652937d6cbdaf4018c7b6fc009a7dd6c3047351e2eddda745de43f
-2026-09-25T03:21:40.8887282Z err: #7 CACHED
-2026-09-25T03:21:40.8887469Z err: #8 [internal] load build context
-2026-09-25T03:21:43.0625086Z err: #8 transferring context: 260.36kB 2.2s done
-2026-09-25T03:21:43.2255033Z err: #8 DONE 2.2s
-2026-09-25T03:21:43.2255411Z err: #9 [builder 3/6] COPY package*.json ./
-2026-09-25T03:21:43.2255694Z err: #9 DONE 0.1s
-2026-09-25T03:21:43.2255950Z err: #10 [stage-1 2/4] COPY nginx.conf /etc/nginx/conf.d/default.conf
-2026-09-25T03:21:43.4266527Z err: #10 DONE 0.1s
-2026-09-25T03:21:43.4267050Z err: #11 [builder 4/6] RUN npm install --legacy-peer-deps --ignore-scripts
-2026-09-25T03:22:15.2758900Z err: #11 31.98 npm warn deprecated whatwg-encoding@2.0.0: Use @exodus/bytes instead for a more spec-conformant and faster implementation
-2026-09-25T03:22:18.3550940Z err: #11 35.08 npm warn deprecated rimraf@3.0.2: Rimraf versions prior to v4 are no longer supported
-2026-09-25T03:22:34.2280922Z err: #11 50.89 npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
-2026-09-25T03:22:47.0708363Z err: #11 63.79 npm warn deprecated domexception@4.0.0: Use your platform's native DOMException instead
-2026-09-25T03:22:50.1447708Z err: #11 66.86 npm warn deprecated abab@2.0.6: Use your platform's native atob() and btoa() methods instead
-2026-09-25T03:22:52.7284154Z err: #11 69.44 npm warn deprecated uuid@7.0.3: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
-2026-09-25T03:23:01.9839836Z err: #11 78.71 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:23:02.8648609Z err: #11 79.58 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:23:02.8650976Z err: #11 79.58 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:23:06.5038961Z err: #11 83.23 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:23:09.1033557Z err: #11 85.83 npm warn deprecated @testing-library/jest-native@5.4.3: DEPRECATED: This package is no longer maintained.
-2026-09-25T03:23:09.1034230Z err: #11 85.83 npm warn deprecated Please use the built-in Jest matchers available in @testing-library/react-native v12.4+.
-2026-09-25T03:23:09.1034864Z err: #11 85.83 npm warn deprecated
-2026-09-25T03:23:09.1035367Z err: #11 85.83 npm warn deprecated See migration guide: https://callstack.github.io/react-native-testing-library/docs/migration/jest-matchers
-2026-09-25T03:23:09.2606519Z err: #11 85.83 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:23:10.4280159Z err: #11 87.15 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:23:10.6193120Z err: #11 87.19 npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
-2026-09-25T03:24:22.9659935Z err: #11 159.7 
-2026-09-25T03:24:22.9660313Z err: #11 159.7 added 1198 packages, and audited 1199 packages in 3m
-2026-09-25T03:24:22.9660610Z err: #11 159.7 
-2026-09-25T03:24:22.9660808Z err: #11 159.7 120 packages are looking for funding
-2026-09-25T03:24:22.9661077Z err: #11 159.7   run `npm fund` for details
-2026-09-25T03:24:23.3457450Z err: #11 160.1 
-2026-09-25T03:24:23.3466479Z err: #11 160.1 38 vulnerabilities (2 low, 21 moderate, 13 high, 2 critical)
-2026-09-25T03:24:23.3466929Z err: #11 160.1 
-2026-09-25T03:24:23.3467178Z err: #11 160.1 To address issues that do not require attention, run:
-2026-09-25T03:24:23.3467472Z err: #11 160.1   npm audit fix
-2026-09-25T03:24:23.3467667Z err: #11 160.1 
-2026-09-25T03:24:23.3467976Z err: #11 160.1 To address all issues (including breaking changes), run:
-2026-09-25T03:24:23.3468419Z err: #11 160.1   npm audit fix --force
-2026-09-25T03:24:23.3468736Z err: #11 160.1 
-2026-09-25T03:24:23.3469013Z err: #11 160.1 Run `npm audit` for details.
-2026-09-25T03:24:23.4968826Z err: #11 160.1 npm notice
-2026-09-25T03:24:23.4971017Z err: #11 160.1 npm notice New major version of npm available! 10.8.2 -> 12.1.0
-2026-09-25T03:24:23.4971667Z err: #11 160.1 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.1.0
-2026-09-25T03:24:23.4972111Z err: #11 160.1 npm notice To update run: npm install -g npm@12.1.0
-2026-09-25T03:24:23.4972400Z err: #11 160.1 npm notice
-2026-09-25T03:24:23.9950806Z err: #11 DONE 160.7s
-2026-09-25T03:24:24.1410386Z err: #12 [builder 5/6] COPY . .
-2026-09-25T03:24:27.5294935Z err: #12 DONE 3.4s
-2026-09-25T03:24:27.7692793Z err: #13 [builder 6/6] RUN NODE_OPTIONS=--max-old-space-size=4096 npx expo export -p web
-2026-09-25T03:24:31.4932025Z err: #13 3.946 env: load .env
-2026-09-25T03:24:33.7294304Z err: #13 6.180 env: export EXPO_PUBLIC_API_URL EXPO_PUBLIC_APP_VARIANT
-2026-09-25T03:24:35.3211736Z err: #13 7.754 Starting Metro Bundler
-2026-09-25T03:24:39.6082220Z err: #13 12.06 Web ./index.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
-2026-09-25T03:24:43.1146211Z err: #13 15.57 Web ./index.js ▓▓▓▓░░░░░░░░░░░░ 27.1% (25/48)
-2026-09-25T03:24:46.6897661Z err: #13 19.15 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% (53/94)
-2026-09-25T03:24:50.2669521Z err: #13 22.72 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% (104/309)
-2026-09-25T03:24:53.7851447Z err: #13 26.24 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% (110/335)
-2026-09-25T03:24:57.2998880Z err: #13 29.76 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% (121/355)
-2026-09-25T03:25:01.1735092Z err: #13 33.63 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% (128/362)
-2026-09-25T03:25:04.6783482Z err: #13 37.13 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% (144/395)
-2026-09-25T03:25:08.2255474Z err: #13 40.67 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% (184/463)
-2026-09-25T03:25:11.7784155Z err: #13 44.17 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% (240/512)
-2026-09-25T03:25:15.2042155Z err: #13 47.66 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% (311/619)
-2026-09-25T03:25:18.7056138Z err: #13 51.16 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% (350/658)
-2026-09-25T03:25:22.2316687Z err: #13 54.69 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% ( 394/2744)
-2026-09-25T03:25:25.7402491Z err: #13 58.20 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% ( 494/2819)
-2026-09-25T03:25:29.2424163Z err: #13 61.70 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% ( 578/2936)
-2026-09-25T03:25:32.8096215Z err: #13 65.26 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% ( 641/2948)
-2026-09-25T03:25:36.2773138Z err: #13 68.73 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% ( 910/2967)
-2026-09-25T03:25:39.7773186Z err: #13 72.23 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% (1141/2967)
-2026-09-25T03:25:43.3287320Z err: #13 75.78 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% (1486/2967)
-2026-09-25T03:25:46.8297211Z err: #13 79.29 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.0% (1670/2967)
-2026-09-25T03:25:50.3197284Z err: #13 82.78 Web ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.5% (1888/2967)
-2026-09-25T03:25:53.8827456Z err: #13 86.34 Web ./index.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 60.3% (2304/2967)
-2026-09-25T03:25:57.4242534Z err: #13 89.88 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.9% (2567/3413)
-2026-09-25T03:26:00.9978274Z err: #13 93.41 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.9% (2725/3427)
-2026-09-25T03:26:04.4641081Z err: #13 96.91 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.9% (2760/3486)
-2026-09-25T03:26:08.0188974Z err: #13 100.5 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.5% (2889/3569)
-2026-09-25T03:26:11.5159494Z err: #13 104.0 Web ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 68.3% (3009/3641)
-2026-09-25T03:26:15.0213721Z err: #13 107.5 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 76.6% (3186/3641)
-2026-09-25T03:26:18.5634276Z err: #13 111.0 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 87.9% (3423/3677)
-2026-09-25T03:26:22.1234777Z err: #13 114.6 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 89.1% (3504/3713)
-2026-09-25T03:26:25.6221953Z err: #13 118.1 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.1% (3647/3916)
-2026-09-25T03:26:29.2066709Z err: #13 121.6 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 90.1% (3757/3968)
-2026-09-25T03:26:32.8828630Z err: #13 125.3 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 91.7% (3803/3972)
-2026-09-25T03:26:36.3701338Z err: #13 128.8 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.7% (4092/4099)
-2026-09-25T03:26:39.9164270Z err: #13 132.3 Web ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (4105/4105)
-2026-09-25T03:26:40.8464208Z err: #13 133.3 Web Bundled 121265ms index.js (4105 modules)
-2026-09-25T03:26:46.9018656Z err: #13 139.3 Could not parse Expo config: android.googleServicesFile: "./google-services.json"
-2026-09-25T03:26:46.9913621Z err: #13 139.4 
-2026-09-25T03:26:47.1453118Z err: #13 139.6 › Assets (30):
-2026-09-25T03:26:47.1453759Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/AntDesign.3f78af31cca60105799838a1a7a59fbd.ttf (130 kB)
-2026-09-25T03:26:47.1454766Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Entypo.31b5ffea3daddc69dd01a1f3d6cf63c5.ttf (66.2 kB)
-2026-09-25T03:26:47.1455559Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/EvilIcons.140c53a7643ea949007aa9a282153849.ttf (13.5 kB)
-2026-09-25T03:26:47.1456325Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Feather.ca4b48e04dc1ce10bfbddb262c8b835f.ttf (55.6 kB)
-2026-09-25T03:26:47.1457376Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome.b06871f281fee6b241d60582ae9369b9.ttf (166 kB)
-2026-09-25T03:26:47.1458138Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Brands.3b89dd103490708d19a95adcae52210e.ttf (134 kB)
-2026-09-25T03:26:47.1458941Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Regular.1f77739ca9ff2188b539c36f30ffa2be.ttf (33.7 kB)
-2026-09-25T03:26:47.1459763Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome5_Solid.605ed7926cf39a2ad5ec2d1f9d391d3d.ttf (203 kB)
-2026-09-25T03:26:47.1460575Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Brands.56c8d80832e37783f12c05db7c8849e2.ttf (209 kB)
-2026-09-25T03:26:47.1461445Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Regular.370dd5af19f8364907b6e2c41f45dbbf.ttf (68 kB)
-2026-09-25T03:26:47.1462245Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/FontAwesome6_Solid.adec7d6f310bc577f05e8fe06a5daccf.ttf (424 kB)
-2026-09-25T03:26:47.1463005Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Fontisto.b49ae8ab2dbccb02c4d11caaacf09eab.ttf (314 kB)
-2026-09-25T03:26:47.1463739Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Foundation.e20945d7c929279ef7a6f1db184a4470.ttf (57 kB)
-2026-09-25T03:26:47.1464596Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Ionicons.b4eb097d35f44ed943676fd56f6bdc51.ttf (390 kB)
-2026-09-25T03:26:47.1465395Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialCommunityIcons.6e435534bd35da5fef04168860a9b8fa.ttf (1.31 MB)
-2026-09-25T03:26:47.1466210Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/MaterialIcons.4e85bc9ebe07e0340c9c4fc2f6c38908.ttf (357 kB)
-2026-09-25T03:26:47.1466952Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Octicons.871378c6eab492a3e689a9385dc45a12.ttf (69.4 kB)
-2026-09-25T03:26:47.1467700Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/SimpleLineIcons.d2285965fe34b05465047401b8595dd0.ttf (54.1 kB)
-2026-09-25T03:26:47.1468444Z err: #13 139.6 node_modules/@expo/vector-icons/build/vendor/react-native-vector-icons/Fonts/Zocial.1681f34aaca71b8dfb70756bca331eb2.ttf (25.8 kB)
-2026-09-25T03:26:47.1469148Z err: #13 139.6 node_modules/@react-navigation/elements/lib/module/assets/back-icon-mask.0a328cd9c1afd0afe8e3b1ec5165b1b4.png (653 B)
-2026-09-25T03:26:47.1469816Z err: #13 139.6 node_modules/@react-navigation/elements/lib/module/assets/back-icon.35ba0eaec5a4f5ed12ca16fabeae451d.png (207 B)
-2026-09-25T03:26:47.1470658Z err: #13 139.6 node_modules/@react-navigation/elements/lib/module/assets/clear-icon.c94f6478e7ae0cdd9f15de1fcb9e5e55.png (4 variations | 425 B)
-2026-09-25T03:26:47.1471388Z err: #13 139.6 node_modules/@react-navigation/elements/lib/module/assets/close-icon.808e1b1b9b53114ec2838071a7e6daa7.png (4 variations | 235 B)
-2026-09-25T03:26:47.1472094Z err: #13 139.6 node_modules/@react-navigation/elements/lib/module/assets/search-icon.286d67d3f74808a60a78d3ebf1a5fb57.png (928 B)
-2026-09-25T03:26:47.1472523Z err: #13 139.6 
-2026-09-25T03:26:47.1472767Z err: #13 139.6 › web bundles (2):
-2026-09-25T03:26:47.1473090Z err: #13 139.6 _expo/static/css/global-911c95f0885ae5e30ca43ca4f10504c1.css (63.5 kB)
-2026-09-25T03:26:47.1473503Z err: #13 139.6 _expo/static/js/web/index-172e4c0c8c7302812441e3d4ca866978.js (7.83 MB)
-2026-09-25T03:26:47.1473808Z err: #13 139.6 
-2026-09-25T03:26:47.1474011Z err: #13 139.6 › Files (3):
-2026-09-25T03:26:47.1474212Z err: #13 139.6 favicon.ico (14.5 kB)
-2026-09-25T03:26:47.1474622Z err: #13 139.6 index.html (1.41 kB)
-2026-09-25T03:26:47.1474838Z err: #13 139.6 metadata.json (49 B)
-2026-09-25T03:26:47.3533591Z err: #13 139.7 
-2026-09-25T03:26:47.3533926Z err: #13 139.7 Exported: dist
-2026-09-25T03:26:52.3209684Z err: #13 DONE 144.8s
-2026-09-25T03:26:53.5410715Z err: #14 [stage-1 3/4] COPY --from=builder /app/dist /usr/share/nginx/html
-2026-09-25T03:26:53.9677018Z err: #14 DONE 0.4s
-2026-09-25T03:26:54.1577462Z err: #15 [stage-1 4/4] RUN sed -i 's/<script src=/<script type="module" src=/g' /usr/share/nginx/html/index.html
-2026-09-25T03:26:54.7881353Z err: #15 DONE 0.8s
-2026-09-25T03:26:54.9505529Z err: #16 exporting to image
-2026-09-25T03:26:54.9505821Z err: #16 exporting layers
-2026-09-25T03:26:55.0022885Z err: #16 exporting layers 0.2s done
-2026-09-25T03:26:55.1436210Z err: #16 writing image sha256:9609737d58e91fda6dddcd0dad32a955132291b003ba4b1c5fbdd02f14d254d7 done
-2026-09-25T03:26:55.1436702Z err: #16 naming to docker.io/library/frontend-fogata 0.1s done
-2026-09-25T03:26:55.3880819Z err: #16 DONE 0.6s
-2026-09-25T03:26:57.0581962Z out: frontend-fogata
-2026-09-25T03:26:57.1163775Z out: frontend-fogata
-2026-09-25T03:26:57.1984608Z out: 209cb64023854b2faaeeb6c8f178ec7bf003a01bd2a004779f59e8e6d9dff504
-2026-09-25T03:26:57.6549421Z out: 🚀 Configurando Nginx para app-fogata.autosystemprojects.site en el puerto 8074...
-2026-09-25T03:26:57.6550045Z out: 📝 Archivo de configuración ya existe. Asegurando que el puerto sea el correcto...
-2026-09-25T03:26:57.8871679Z err: nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
-2026-09-25T03:26:57.8914729Z err: nginx: configuration file /etc/nginx/nginx.conf test is successful
-2026-09-25T03:26:57.9967904Z out: ✅ Nginx recargado.
-2026-09-25T03:26:57.9969943Z out: 🔄 Certificado SSL ya existe para app-fogata.autosystemprojects.site.
-2026-09-25T03:26:57.9982260Z out: Renovando si es necesario...
-2026-09-25T03:27:00.9062892Z out: ⏰ Configurando renovación automática de SSL...
-2026-09-25T03:27:00.9353893Z out: 🎉 ¡Configuración de Nginx y SSL completada exitosamente!
-2026-09-25T03:27:00.9354721Z out:    - Dominio: https://app-fogata.autosystemprojects.site
-2026-09-25T03:27:00.9355125Z out:    - Puerto interno: 8074
-2026-09-25T03:27:00.9355450Z out:    - Email de Let's Encrypt: jonnymejia62@gmail.com
-2026-09-25T03:27:00.9370075Z out: ✅ Frontend fogata desplegado en https://app-fogata.autosystemprojects.site
-2026-09-25T03:27:00.9513242Z ==============================================
-2026-09-25T03:27:00.9513828Z ✅ Successfully executed commands to all host.
-2026-09-25T03:27:00.9514222Z ==============================================
-2026-09-25T03:27:01.1086713Z Cleaning up orphan processes
+> Task :app:compileReleaseKotlin
+w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymous/qhubomorposapp/MainApplication.kt:9:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymous/qhubomorposapp/MainApplication.kt:21:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymous/qhubomorposapp/MainApplication.kt:21:33 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+
+> Task :app:compileReleaseJavaWithJavac
+> Task :expo:lintVitalAnalyzeRelease
+> Task :app:dexBuilderRelease
+> Task :app:mergeReleaseGlobalSynthetics UP-TO-DATE
+> Task :app:generateReleaseLintVitalReportModel
+> Task :app:processReleaseJavaRes
+> Task :expo-dev-launcher:lintVitalAnalyzeRelease
+> Task :app:mergeReleaseJavaResource
+> Task :expo-dev-menu-interface:lintVitalAnalyzeRelease
+> Task :expo-json-utils:lintVitalAnalyzeRelease
+> Task :expo-manifests:lintVitalAnalyzeRelease
+> Task :expo-modules-core:lintVitalAnalyzeRelease UP-TO-DATE
+> Task :app:mergeDexRelease
+> Task :app:compileReleaseArtProfile
+> Task :expo-speech-recognition:lintVitalAnalyzeRelease
+> Task :expo-updates-interface:lintVitalAnalyzeRelease
+> Task :expo-dev-menu:lintVitalAnalyzeRelease
+> Task :react-native-community_datetimepicker:lintVitalAnalyzeRelease
+> Task :react-native-community_netinfo:lintVitalAnalyzeRelease
+> Task :react-native-linear-gradient:lintVitalAnalyzeRelease
+> Task :react-native-picker_picker:lintVitalAnalyzeRelease
+> Task :react-native-ping:lintVitalAnalyzeRelease
+> Task :react-native-async-storage_async-storage:lintVitalAnalyzeRelease
+> Task :react-native-safe-area-context:lintVitalAnalyzeRelease
+> Task :react-native-svg:lintVitalAnalyzeRelease
+> Task :react-native-thermal-receipt-printer-image-qr:lintVitalAnalyzeRelease
+> Task :react-native-view-shot:lintVitalAnalyzeRelease
+> Task :react-native-webview:lintVitalAnalyzeRelease
+> Task :react-native-screens:lintVitalAnalyzeRelease
+> Task :app:lintVitalAnalyzeRelease
+> Task :app:lintVitalReportRelease
+> Task :app:lintVitalRelease
+> Task :app:packageRelease
+> Task :app:createReleaseApkListingFileRedirect
+> Task :app:assembleRelease
+
+[Incubating] Problems report is available at: file:///opt/build-farm/apppuntodeventa/android/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 6m 54s
+1050 actionable tasks: 62 executed, 988 up-to-date
+=================================================
+Perfil 'preview' guardado para la proxima compilacion.
+COMPILACION FINALIZADA EXITOSAMENTE
+APK: QHuboMorPOS_v1.0.221_preview_fast.apk
+=================================================
+
+[TRAP] Ejecutando limpieza garantizada (codigo de salida: 0)...
+[TRAP] Limpieza post-compilacion exitosa.
+Descargando el APK a tu computadora local...
+QHuboMorPOS_v1.0.221_preview_fast.apk                                            100%   66MB   3.0MB/s   00:21
+=============================================
+¡EXITO! Tu APK de despliegue rapido esta listo en:
+C:\Users\Administrador\Documents\apk's\QHuboMorPOS_v1.0.221_preview_fast.apk
+=============================================

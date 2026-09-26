@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 # Script FAST para ejecutar en el VPS que compila el APK reutilizando cache (Docker-style)
 # v2: Soporta multiples perfiles sin conflicto mediante cache por perfil
 # ANTI-COLAPSO: usa trap para garantizar limpieza incluso si el build falla/OOM
