@@ -624,7 +624,7 @@ const PedidosScreen = () => {
 
     try {
       // Pedimos datos frescos de ventas
-      const data = await getSales({ limit: 20, page: pageNumber });
+      const data = await getSales({ limit: 500, page: pageNumber });
       if (fetchIdRef.current !== currentFetchId && !isLoadMore) {
         console.log('[Pedidos] Ignorando respuesta stale de getSales');
         return;
@@ -742,7 +742,7 @@ const PedidosScreen = () => {
     if (isLoadMore) setLoadingMore(true);
 
     try {
-      const query: any = { limit: 20, page: pageNumber };
+      const query: any = { limit: 500, page: pageNumber };
       if (filters.searchText) query.search = filters.searchText;
       if (filters.estados && filters.estados.length > 0) query.estado = filters.estados.join(',');
       if (filters.mediosDePago && filters.mediosDePago.length > 0) query.medioDePago = filters.mediosDePago.join(',');
