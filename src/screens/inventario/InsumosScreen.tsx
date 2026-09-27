@@ -1003,18 +1003,18 @@ if (status !== 'granted') {
         <StatusBar style="dark" backgroundColor="transparent" translucent />
         <SafeAreaView style={{ backgroundColor: '#ffffff' }} edges={['top']}>
           <View className="bg-white px-4 py-3 flex-row items-center justify-between border-b border-gray-200">
-            <View className="flex-row items-center">
-              <TouchableOpacity className="mr-3" onPress={() => navigation.goBack()}>
+            <View className="flex-row items-center flex-1 pr-2">
+              <TouchableOpacity className="mr-2" onPress={() => navigation.goBack()}>
                 <Ionicons name="arrow-back" size={24} color="#111827" />
               </TouchableOpacity>
-              <View>
-                <RNText className="text-xl font-bold text-gray-900">Insumos</RNText>
-                <Animated.View style={{ height: 14, width: 100, backgroundColor: '#e5e7eb', borderRadius: 4, opacity: skeletonAnim, marginTop: 4 }} />
+              <View className="flex-1">
+                <RNText className="text-xl font-bold text-gray-900" numberOfLines={1}>Insumos</RNText>
+                <Animated.View style={{ height: 14, width: 80, backgroundColor: '#e5e7eb', borderRadius: 4, opacity: skeletonAnim, marginTop: 4 }} />
               </View>
             </View>
             <View className="flex-row items-center">
-              <Animated.View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#e5e7eb', opacity: skeletonAnim, marginRight: 8 }} />
-              <Animated.View style={{ width: 44, height: 44, borderRadius: 12, backgroundColor: '#e5e7eb', opacity: skeletonAnim }} />
+              <Animated.View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: '#e5e7eb', opacity: skeletonAnim, marginRight: 6 }} />
+              <Animated.View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: '#e5e7eb', opacity: skeletonAnim }} />
             </View>
           </View>
         </SafeAreaView>
@@ -1050,50 +1050,50 @@ if (status !== 'granted') {
     <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>
       <StatusBar style="dark" backgroundColor="transparent" translucent />
       <SafeAreaView style={{ backgroundColor: '#ffffff' }} edges={['top']}>
-        <View className="bg-white px-4 py-3 flex-row items-center justify-between border-b border-gray-200">
-          <View className="flex-row items-center">
-            <TouchableOpacity className="mr-3" onPress={() => navigation.goBack()}>
+        <View className="bg-white px-3 py-3 flex-row items-center justify-between border-b border-gray-200">
+          <View className="flex-row items-center flex-1 pr-2">
+            <TouchableOpacity className="mr-2" onPress={() => navigation.goBack()}>
               <Ionicons name="arrow-back" size={24} color="#111827" />
             </TouchableOpacity>
-            <View>
-              <RNText className="text-xl font-bold text-gray-900">Insumos</RNText>
-              <RNText className="text-sm text-gray-500">{filteredInsumos.length} de {insumos.length} registros</RNText>
+            <View className="flex-1">
+              <RNText className="text-xl font-bold text-gray-900" numberOfLines={1}>Insumos</RNText>
+              <RNText className="text-sm text-gray-500" numberOfLines={1}>{filteredInsumos.length} de {insumos.length} regs</RNText>
             </View>
           </View>
           <View className="flex-row items-center">
             {alertas.length > 0 && (
               <TouchableOpacity
-                className="w-11 h-11 rounded-xl bg-red-50 items-center justify-center mr-2"
+                className="w-10 h-10 rounded-xl bg-red-50 items-center justify-center mr-1.5"
                 onPress={() => setShowAlerts(true)}
               >
-                <Ionicons name="alert-circle" size={24} color="#ef4444" />
-                <View style={{ position: 'absolute', top: -4, right: -4, minWidth: 20, height: 20, borderRadius: 10, backgroundColor: '#ef4444', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
-                  <RNText className="text-white text-xs font-bold">{alertas.length}</RNText>
+                <Ionicons name="alert-circle" size={22} color="#ef4444" />
+                <View style={{ position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, borderRadius: 9, backgroundColor: '#ef4444', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 }}>
+                  <RNText className="text-white text-[10px] font-bold">{alertas.length}</RNText>
                 </View>
               </TouchableOpacity>
             )}
             
             <TouchableOpacity
-              className="w-11 h-11 rounded-xl bg-blue-500 items-center justify-center mr-2"
+              className="w-10 h-10 rounded-xl bg-blue-500 items-center justify-center mr-1.5"
               onPress={() => setShowMovimientosModal(true)}
             >
-              <Ionicons name="receipt-outline" size={22} color="#fff" />
+              <Ionicons name="receipt-outline" size={20} color="#fff" />
             </TouchableOpacity>
 
             {canCreate && (
               <>
                 <TouchableOpacity
-                  className="w-11 h-11 rounded-xl bg-gray-500 items-center justify-center mr-2"
+                  className="w-10 h-10 rounded-xl bg-gray-500 items-center justify-center mr-1.5"
                   onPress={() => navigation.navigate('AuditoriaConteo' as never)}
                 >
-                  <Ionicons name="reader-outline" size={22} color="#fff" />
+                  <Ionicons name="reader-outline" size={20} color="#fff" />
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  className="w-11 h-11 rounded-xl bg-green-500 items-center justify-center"
+                  className="w-10 h-10 rounded-xl bg-green-500 items-center justify-center"
                   onPress={openCreateModal}
                 >
-                  <Ionicons name="add" size={24} color="#fff" />
+                  <Ionicons name="add" size={22} color="#fff" />
                 </TouchableOpacity>
               </>
             )}

@@ -209,7 +209,14 @@ cd android
 ./gradlew assembleRelease
 cd ..
 
-LATEST_APK=$(ls -t android/app/build/outputs/apk/release/*.apk 2>/dev/null | head -n 1 || echo "")
+APK_DIR="android/app/build/outputs/apk/release"
+if ls $APK_DIR/*universal*.apk 1> /dev/null 2>&1; then
+  LATEST_APK=$(ls -t $APK_DIR/*universal*.apk | head -n 1)
+elif ls $APK_DIR/app-release.apk 1> /dev/null 2>&1; then
+  LATEST_APK="$APK_DIR/app-release.apk"
+else
+  LATEST_APK=$(ls -t $APK_DIR/*.apk 2>/dev/null | head -n 1 || echo "")
+fi
 
 echo "================================================="
 if [ -n "$LATEST_APK" ]; then

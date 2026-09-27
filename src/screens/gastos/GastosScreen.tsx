@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, FlatList, SectionList, TouchableOpacity, ActivityIndicator, TextInput, Modal, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components/ui/text';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -152,8 +153,10 @@ export default function GastosScreen({ navigation }: any) {
   }, []);
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={['top', 'bottom']}>
-      <View className="bg-primary px-4 py-4 flex-row items-center justify-between shadow-sm z-10">
+    <SafeAreaView className="flex-1 bg-gray-50" edges={['bottom']}>
+      <StatusBar style="light" />
+      <SafeAreaView className="bg-primary z-10" edges={['top']}>
+        <View className="px-4 py-4 flex-row items-center justify-between shadow-sm">
         <View className="flex-row items-center flex-1">
           <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3 p-1">
             <Ionicons name="arrow-back" size={24} color="white" />
@@ -193,6 +196,7 @@ export default function GastosScreen({ navigation }: any) {
           </View>
         )}
       </View>
+      </SafeAreaView>
 
       {/* Tabs Modernos (Segmented Control) */}
       <View className="px-4 pt-4 pb-2 z-0">
