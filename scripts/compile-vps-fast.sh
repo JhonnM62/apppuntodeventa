@@ -205,7 +205,13 @@ fi
 echo "[6/6] Construyendo APK (Gradle Assemble) con cache..."
 rm -f *.apk
 cd android
-./gradlew assembleRelease --max-workers=2
+
+# Habilitar Build Cache global para acelerar cambios entre perfiles
+if ! grep -q "org.gradle.caching=true" gradle.properties; then
+  echo "org.gradle.caching=true" >> gradle.properties
+fi
+
+./gradlew assembleRelease --max-workers=2 --build-cache
 cd ..
 
 APK_DIR="android/app/build/outputs/apk/release"
