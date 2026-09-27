@@ -187,9 +187,21 @@ else
   fi
 fi
 
-echo "   Ejecutando: npx expo prebuild --platform android $PREBUILD_FLAG"
-npx expo prebuild --platform android $PREBUILD_FLAG
-echo "Proyecto nativo listo."
+if [ -n "$PREBUILD_FLAG" ]; then
+  echo "   Ejecutando: npx expo prebuild --platform android $PREBUILD_FLAG"
+  npx expo prebuild --platform android $PREBUILD_FLAG
+  echo "Proyecto nativo generado."
+else
+  echo "   Saltando prebuild para no corromper la cache nativa."
+  echo "   Inyectando version desde app.json directamente en build.gradle..."
+  APP_VERSION=$(node -e "console.log(require('./app.json').expo.version)")
+  APP_VERSION_CODE=$(node -e "console.log(require('./app.json').expo.android.versionCode || 1)")
+  if [ -f "android/app/build.gradle" ]; then
+    sed -i -E "s/versionCode [0-9]+/versionCode $APP_VERSION_CODE/" android/app/build.gradle
+    sed -i -E "s/versionName \"[^\"]+\"/versionName \"$APP_VERSION\"/" android/app/build.gradle
+    echo "   ✔ Version actualizada a: $APP_VERSION (Código: $APP_VERSION_CODE)"
+  fi
+fi
 
 echo "[6/6] Construyendo APK (Gradle Assemble) con cache..."
 rm -f *.apk
