@@ -105,9 +105,8 @@ source .eas_env.sh
 rm -f .eas_env.sh
 
 # Asegurar limites de memoria y workers si no fueron definidos en eas.json
-export GRADLE_OPTS="${GRADLE_OPTS:-"-Xmx2048m -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs='-Xmx2048m -XX:MaxMetaspaceSize=512m'"}"
+export GRADLE_OPTS="${GRADLE_OPTS:-"-Xmx2560m -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs='-Xmx2560m -XX:MaxMetaspaceSize=512m'"}"
 export NODE_OPTIONS="--max-old-space-size=4096"
-export EAS_BUILD_MAX_WORKERS="${EAS_BUILD_MAX_WORKERS:-2}"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # [5/6] GESTION DE CACHE POR PERFIL
@@ -206,7 +205,7 @@ fi
 echo "[6/6] Construyendo APK (Gradle Assemble) con cache..."
 rm -f *.apk
 cd android
-./gradlew assembleRelease
+./gradlew assembleRelease --max-workers=2
 cd ..
 
 APK_DIR="android/app/build/outputs/apk/release"

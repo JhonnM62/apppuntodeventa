@@ -1013,10 +1013,13 @@ const InventarioScreen = ({ navigation }: any) => {
 
   const handleSelectAll = () => {
     if (selectedInventario?.tipo?.toLowerCase() !== 'entradas' && selectedInventario?.tipo?.toLowerCase() !== 'entrada') return;
-    if (selectedOrdenes.size === ordenes.length) {
+    
+    const pendingItems = ordenes.filter(o => !(o.seCompro === 'Si' || o.seCompro === 'si'));
+
+    if (selectedOrdenes.size === pendingItems.length) {
       setSelectedOrdenes(new Set());
     } else {
-      setSelectedOrdenes(new Set(ordenes.map(o => o.IDorderinventario)));
+      setSelectedOrdenes(new Set(pendingItems.map(o => o.IDorderinventario)));
     }
   };
 
@@ -1611,22 +1614,38 @@ const InventarioScreen = ({ navigation }: any) => {
           }}
         >
         {isEntrada && selectionMode && canEditEntradas && (
-          <TouchableOpacity 
-            style={{
-              width: 24,
-              height: 24,
-              borderRadius: 6,
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: 8,
-              backgroundColor: isSelected ? '#3b82f6' : 'transparent',
-              borderWidth: 2,
-              borderColor: isSelected ? '#3b82f6' : '#d1d5db',
-            }}
-            onPress={() => handleToggleOrdenSelection(item.IDorderinventario)}
-          >
-            {isSelected && <Ionicons name="checkmark" size={16} color="#fff" />}
-          </TouchableOpacity>
+          <View style={{ marginRight: 8, justifyContent: 'center', alignItems: 'center' }}>
+            {isComprado ? (
+              <View style={{
+                width: 24,
+                height: 24,
+                borderRadius: 6,
+                backgroundColor: '#dcfce7',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderWidth: 2,
+                borderColor: '#22c55e',
+              }}>
+                <Ionicons name="checkmark" size={16} color="#16a34a" />
+              </View>
+            ) : (
+              <TouchableOpacity 
+                style={{
+                  width: 24,
+                  height: 24,
+                  borderRadius: 6,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: isSelected ? '#3b82f6' : 'transparent',
+                  borderWidth: 2,
+                  borderColor: isSelected ? '#3b82f6' : '#d1d5db',
+                }}
+                onPress={() => handleToggleOrdenSelection(item.IDorderinventario)}
+              >
+                {isSelected && <Ionicons name="checkmark" size={16} color="#fff" />}
+              </TouchableOpacity>
+            )}
+          </View>
         )}
 
         {isEntrada && !selectionMode && (
