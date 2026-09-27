@@ -106,7 +106,7 @@ rm -f .eas_env.sh
 
 # Asegurar limites de memoria y workers si no fueron definidos en eas.json
 export GRADLE_OPTS="${GRADLE_OPTS:-"-Xmx2560m -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs='-Xmx2560m -XX:MaxMetaspaceSize=512m'"}"
-export NODE_OPTIONS="--max-old-space-size=4096"
+export NODE_OPTIONS="--max-old-space-size=1024"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # [5/6] GESTION DE CACHE POR PERFIL

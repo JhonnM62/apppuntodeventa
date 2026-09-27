@@ -33,7 +33,7 @@ export default function GastosScreen({ navigation }: any) {
   const [filterFechaDesde, setFilterFechaDesde] = useState('');
   const [filterFechaHasta, setFilterFechaHasta] = useState('');
   const [filterMedioDePago, setFilterMedioDePago] = useState('Todos');
-  const [showDatePicker, setShowDatePicker] = useState<{show: boolean, type: 'desde' | 'hasta'}>({show: false, type: 'desde'});
+  const [showDatePicker, setShowDatePicker] = useState<{ show: boolean, type: 'desde' | 'hasta' }>({ show: false, type: 'desde' });
 
   const activeFiltersCount = (filterFechaDesde ? 1 : 0) + (filterFechaHasta ? 1 : 0) + (filterMedioDePago !== 'Todos' ? 1 : 0);
 
@@ -66,7 +66,7 @@ export default function GastosScreen({ navigation }: any) {
       message: '¿Estás seguro de eliminar este gasto?',
       confirmText: 'Eliminar',
       onConfirm: () => removeGasto(id),
-      onCancel: () => {},
+      onCancel: () => { },
     });
   };
 
@@ -92,7 +92,7 @@ export default function GastosScreen({ navigation }: any) {
           <Text className="text-xs text-gray-500">Medio: {item.medioDePago}</Text>
         )}
       </View>
-      
+
       <View className="items-end ml-2">
         <Text className="text-lg font-bold text-red-500">
           - {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(item.valor || 0)}
@@ -120,28 +120,28 @@ export default function GastosScreen({ navigation }: any) {
   const filteredGastos = gastos.filter(g => {
     const matchesTipo = filterTipo === 'TODOS' ? true : g.tipo === filterTipo;
     const query = searchQuery.toLowerCase();
-    const matchesSearch = query === '' || 
+    const matchesSearch = query === '' ||
       (g.concepto && g.concepto.toLowerCase().includes(query)) ||
       (g.medioDePago && g.medioDePago.toLowerCase().includes(query)) ||
       (g.tipo && g.tipo.toLowerCase().includes(query)) ||
       (g.valor && g.valor.toString().includes(query));
-      
+
     return matchesTipo && matchesSearch;
   });
-  
+
   const sortedGastos = [...filteredGastos].sort((a, b) => {
     const dateA = a.fechaYHora ? new Date(a.fechaYHora).getTime() : 0;
     const dateB = b.fechaYHora ? new Date(b.fechaYHora).getTime() : 0;
     return dateB - dateA;
   });
 
-  const groupedGastos = sortedGastos.reduce((acc: {title: string, data: Gasto[], total: number}[], gasto) => {
+  const groupedGastos = sortedGastos.reduce((acc: { title: string, data: Gasto[], total: number }[], gasto) => {
     const date = gasto.fechaYHora ? new Date(gasto.fechaYHora) : new Date();
     const monthYear = format(date, "MMMM yyyy", { locale: es });
     const title = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
-    
+
     const valorGasto = Number(gasto.valor) || 0;
-    
+
     const existingSection = acc.find(section => section.title === title);
     if (existingSection) {
       existingSection.data.push(gasto);
@@ -157,45 +157,45 @@ export default function GastosScreen({ navigation }: any) {
       <StatusBar style="light" />
       <SafeAreaView className="bg-primary z-10" edges={['top']}>
         <View className="px-4 py-4 flex-row items-center justify-between shadow-sm">
-        <View className="flex-row items-center flex-1">
-          <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3 p-1">
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          
-          <View className="flex-1 bg-white/20 rounded-full flex-row items-center px-3 py-1.5 mr-3">
-            <Ionicons name="search" size={18} color="white" />
-            <TextInput 
-              placeholder="Buscar gasto..."
-              placeholderTextColor="rgba(255,255,255,0.7)"
-              className="flex-1 ml-2 text-white py-1"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-            />
-            <TouchableOpacity onPress={() => setShowFilterSheet(true)} className="relative">
-              <Ionicons name="options-outline" size={22} color="white" />
-              {activeFiltersCount > 0 && (
-                <View className="absolute -top-1 -right-1 bg-red-500 w-3 h-3 rounded-full border-2 border-green-600" />
-              )}
+          <View className="flex-row items-center flex-1">
+            <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3 p-1">
+              <Ionicons name="arrow-back" size={24} color="white" />
             </TouchableOpacity>
+
+            <View className="flex-1 bg-white/20 rounded-full flex-row items-center px-3 py-1.5 mr-3">
+              <Ionicons name="search" size={18} color="white" />
+              <TextInput
+                placeholder="Buscar gasto..."
+                placeholderTextColor="rgba(255,255,255,0.7)"
+                className="flex-1 ml-2 text-white py-1"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+              />
+              <TouchableOpacity onPress={() => setShowFilterSheet(true)} className="relative">
+                <Ionicons name="options-outline" size={22} color="white" />
+                {activeFiltersCount > 0 && (
+                  <View className="absolute -top-1 -right-1 bg-red-500 w-3 h-3 rounded-full border-2 border-green-600" />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
+          {canCreate && (
+            <View className="flex-row items-center">
+              <TouchableOpacity
+                onPress={() => setBulkModalVisible(true)}
+                className="bg-white/20 p-2 rounded-full mr-2"
+              >
+                <Ionicons name="layers-outline" size={24} color="white" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleAdd}
+                className="bg-white/20 p-2 rounded-full"
+              >
+                <Ionicons name="add" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
-        {canCreate && (
-          <View className="flex-row items-center">
-            <TouchableOpacity 
-              onPress={() => setBulkModalVisible(true)}
-              className="bg-white/20 p-2 rounded-full mr-2"
-            >
-              <Ionicons name="layers-outline" size={24} color="white" />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={handleAdd}
-              className="bg-white/20 p-2 rounded-full"
-            >
-              <Ionicons name="add" size={24} color="white" />
-            </TouchableOpacity>
-          </View>
-        )}
-      </View>
       </SafeAreaView>
 
       {/* Tabs Modernos (Segmented Control) */}
@@ -206,7 +206,7 @@ export default function GastosScreen({ navigation }: any) {
             let activeTextColor = 'text-green-600';
             if (tab === 'NEGOCIO') activeTextColor = 'text-blue-600';
             if (tab === 'PERSONAL') activeTextColor = 'text-purple-600';
-            
+
             return (
               <TouchableOpacity
                 key={tab}
@@ -265,104 +265,104 @@ export default function GastosScreen({ navigation }: any) {
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={{ flex: 1 }}>
           <TouchableOpacity
             style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}
-          activeOpacity={1}
-          onPress={() => setShowFilterSheet(false)}
-        >
-          <TouchableOpacity
             activeOpacity={1}
-            style={{ backgroundColor: 'white', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 }}
+            onPress={() => setShowFilterSheet(false)}
           >
-            <View className="flex-row justify-between items-center mb-6">
-              <Text className="text-xl font-bold text-gray-800">Filtros</Text>
-              <TouchableOpacity onPress={() => setShowFilterSheet(false)} className="bg-gray-100 p-2 rounded-full">
-                <Ionicons name="close" size={20} color="#6b7280" />
-              </TouchableOpacity>
-            </View>
-
-            <View className="mb-4">
-              <Text className="text-sm font-bold text-gray-600 mb-2">Rango de fechas</Text>
-              <View className="flex-row items-center justify-between">
-                <TouchableOpacity
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mr-2 flex-row items-center"
-                  onPress={() => setShowDatePicker({ show: true, type: 'desde' })}
-                >
-                  <Ionicons name="calendar-outline" size={16} color="#6b7280" style={{ marginRight: 6 }} />
-                  <Text className={filterFechaDesde ? 'text-gray-800' : 'text-gray-400'}>
-                    {filterFechaDesde || 'Desde (YYYY-MM-DD)'}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 ml-2 flex-row items-center"
-                  onPress={() => setShowDatePicker({ show: true, type: 'hasta' })}
-                >
-                  <Ionicons name="calendar-outline" size={16} color="#6b7280" style={{ marginRight: 6 }} />
-                  <Text className={filterFechaHasta ? 'text-gray-800' : 'text-gray-400'}>
-                    {filterFechaHasta || 'Hasta (YYYY-MM-DD)'}
-                  </Text>
+            <TouchableOpacity
+              activeOpacity={1}
+              style={{ backgroundColor: 'white', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 }}
+            >
+              <View className="flex-row justify-between items-center mb-6">
+                <Text className="text-xl font-bold text-gray-800">Filtros</Text>
+                <TouchableOpacity onPress={() => setShowFilterSheet(false)} className="bg-gray-100 p-2 rounded-full">
+                  <Ionicons name="close" size={20} color="#6b7280" />
                 </TouchableOpacity>
               </View>
 
-              {showDatePicker.show && (
-                <DateTimePicker
-                  value={
-                    showDatePicker.type === 'desde' && filterFechaDesde 
-                      ? new Date(filterFechaDesde + 'T12:00:00') 
-                      : showDatePicker.type === 'hasta' && filterFechaHasta 
-                        ? new Date(filterFechaHasta + 'T12:00:00') 
-                        : new Date()
-                  }
-                  mode="date"
-                  display="default"
-                  onChange={(event, selectedDate) => {
-                    setShowDatePicker({ show: false, type: 'desde' });
-                    if (event.type === 'set' && selectedDate) {
-                      const dateString = selectedDate.toISOString().split('T')[0];
-                      if (showDatePicker.type === 'desde') {
-                        setFilterFechaDesde(dateString);
-                      } else {
-                        setFilterFechaHasta(dateString);
-                      }
-                    }
-                  }}
-                />
-              )}
-            </View>
-
-            <View className="mb-6">
-              <Text className="text-sm font-bold text-gray-600 mb-2">Medio de Pago</Text>
-              <View className="flex-row flex-wrap">
-                {['Todos', 'Efectivo', 'Transferencia', 'Nequi', 'Bancolombia'].map((medio) => (
+              <View className="mb-4">
+                <Text className="text-sm font-bold text-gray-600 mb-2">Rango de fechas</Text>
+                <View className="flex-row items-center justify-between">
                   <TouchableOpacity
-                    key={medio}
-                    onPress={() => setFilterMedioDePago(medio)}
-                    className={`px-4 py-2 rounded-full mr-2 mb-2 border ${filterMedioDePago === medio ? 'bg-green-100 border-green-500' : 'bg-gray-50 border-gray-200'}`}
+                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 mr-2 flex-row items-center"
+                    onPress={() => setShowDatePicker({ show: true, type: 'desde' })}
                   >
-                    <Text className={`font-bold ${filterMedioDePago === medio ? 'text-green-700' : 'text-gray-500'}`}>{medio}</Text>
+                    <Ionicons name="calendar-outline" size={16} color="#6b7280" style={{ marginRight: 6 }} />
+                    <Text className={filterFechaDesde ? 'text-gray-800' : 'text-gray-400'}>
+                      {filterFechaDesde || 'Desde (YYYY-MM-DD)'}
+                    </Text>
                   </TouchableOpacity>
-                ))}
-              </View>
-            </View>
+                  <TouchableOpacity
+                    className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 ml-2 flex-row items-center"
+                    onPress={() => setShowDatePicker({ show: true, type: 'hasta' })}
+                  >
+                    <Ionicons name="calendar-outline" size={16} color="#6b7280" style={{ marginRight: 6 }} />
+                    <Text className={filterFechaHasta ? 'text-gray-800' : 'text-gray-400'}>
+                      {filterFechaHasta || 'Hasta (YYYY-MM-DD)'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
 
-            <View className="flex-row justify-between mt-2">
-              <TouchableOpacity
-                className="flex-1 py-4 border border-gray-200 rounded-xl mr-2 items-center"
-                onPress={() => {
-                  setFilterFechaDesde('');
-                  setFilterFechaHasta('');
-                  setFilterMedioDePago('Todos');
-                }}
-              >
-                <Text className="text-gray-600 font-bold">Limpiar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                className="flex-1 py-4 bg-green-600 rounded-xl ml-2 items-center"
-                onPress={() => setShowFilterSheet(false)}
-              >
-                <Text className="text-white font-bold">Aplicar Filtros</Text>
-              </TouchableOpacity>
-            </View>
+                {showDatePicker.show && (
+                  <DateTimePicker
+                    value={
+                      showDatePicker.type === 'desde' && filterFechaDesde
+                        ? new Date(filterFechaDesde + 'T12:00:00')
+                        : showDatePicker.type === 'hasta' && filterFechaHasta
+                          ? new Date(filterFechaHasta + 'T12:00:00')
+                          : new Date()
+                    }
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setShowDatePicker({ show: false, type: 'desde' });
+                      if (event.type === 'set' && selectedDate) {
+                        const dateString = selectedDate.toISOString().split('T')[0];
+                        if (showDatePicker.type === 'desde') {
+                          setFilterFechaDesde(dateString);
+                        } else {
+                          setFilterFechaHasta(dateString);
+                        }
+                      }
+                    }}
+                  />
+                )}
+              </View>
+
+              <View className="mb-6">
+                <Text className="text-sm font-bold text-gray-600 mb-2">Medio de Pago</Text>
+                <View className="flex-row flex-wrap">
+                  {['Todos', 'Efectivo', 'Transferencia', 'Nequi', 'Bancolombia'].map((medio) => (
+                    <TouchableOpacity
+                      key={medio}
+                      onPress={() => setFilterMedioDePago(medio)}
+                      className={`px-4 py-2 rounded-full mr-2 mb-2 border ${filterMedioDePago === medio ? 'bg-green-100 border-green-500' : 'bg-gray-50 border-gray-200'}`}
+                    >
+                      <Text className={`font-bold ${filterMedioDePago === medio ? 'text-green-700' : 'text-gray-500'}`}>{medio}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <View className="flex-row justify-between mt-2">
+                <TouchableOpacity
+                  className="flex-1 py-4 border border-gray-200 rounded-xl mr-2 items-center"
+                  onPress={() => {
+                    setFilterFechaDesde('');
+                    setFilterFechaHasta('');
+                    setFilterMedioDePago('Todos');
+                  }}
+                >
+                  <Text className="text-gray-600 font-bold">Limpiar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  className="flex-1 py-4 bg-green-600 rounded-xl ml-2 items-center"
+                  onPress={() => setShowFilterSheet(false)}
+                >
+                  <Text className="text-white font-bold">Aplicar Filtros</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
           </TouchableOpacity>
-        </TouchableOpacity>
         </KeyboardAvoidingView>
       </Modal>
 
