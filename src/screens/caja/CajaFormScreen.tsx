@@ -585,7 +585,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
       console.error(error);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cargar la información' });
     } finally {
-      if (shouldShowLoader) setLoading(false);
+      setLoading(false);
     }
   }, [cajaId, isNew, reset, user]);
 
