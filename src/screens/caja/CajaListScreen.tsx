@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { View, TouchableOpacity, ActivityIndicator, Keyboard, TextInput, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,7 +7,7 @@ const FlashList = OriginalFlashList as any;
 import { useFocusEffect } from '@react-navigation/native';
 
 import { Text } from '../../components/ui/text';
-import { checkCajaActiva, getCajas } from '../../services/caja';
+import { checkCajaActiva, getCajasPaginated, reabrirCaja } from '../../services/caja';
 import { formatTime12h, formatDateToReadable, formatCurrency } from '../../utils/formatters';
 import useSocketEvent from '../../hooks/useSocketEvent';
 import { useSocket } from '../../context/SocketContext';
@@ -16,10 +16,10 @@ import { usePermissions } from '../../hooks/usePermissions';
 import useAuthStore from '../../store/useAuthStore';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import Toast from 'react-native-toast-message';
-import { reabrirCaja } from '../../services/caja';
 import { useSettingsStore } from '../../store/useSettingsStore';
-
 import { useCajaCacheStore } from '../../store/useCajaCacheStore';
+
+const PAGE_SIZE = 25;
 
 export default function CajaListScreen({ navigation }: any) {
   const { canCreate } = usePermissions('caja');
@@ -27,45 +27,75 @@ export default function CajaListScreen({ navigation }: any) {
   const { showAlert } = useCustomAlert();
   const { primaryColor } = useSettingsStore();
 
-  // Use global cache store for SWR (Stale-While-Revalidate) pattern
-  const { cajas, cajaActiva, lastFetch } = useCajaCacheStore();
-  
-  // Only show loader if we have absolutely no cache
+  const {
+    cajas,
+    cajaActiva,
+    lastFetch,
+    currentPage,
+    hasMore,
+    isFetchingMore,
+    setCajas,
+    appendCajas,
+    setCajaActiva,
+    setIsFetchingMore,
+  } = useCajaCacheStore();
+
   const [loading, setLoading] = useState(lastFetch === 0);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'activos' | 'cerrados'>('activos');
 
+  const isFetchingRef = useRef(false);
+
   const handleScroll = useScrollDirection();
 
+  // ─── Initial / refresh load (page 0) ───────────────────────────────────────
   const fetchCajas = useCallback(async (silent = false) => {
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
     if (!silent) setLoading(true);
     try {
-      const [activa, allCajas] = await Promise.all([
+      const [activa, result] = await Promise.all([
         checkCajaActiva(),
-        getCajas()
+        getCajasPaginated(0, PAGE_SIZE),
       ]);
-      // Update global cache (this triggers re-renders automatically because we consume the store)
-      useCajaCacheStore.getState().setCajas(allCajas || [], activa);
+      setCajas(result.data || [], activa, result.total, result.hasMore);
     } catch (error) {
       console.error('Error fetching cajas:', error);
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
-  }, []);
+  }, [setCajas]);
+
+  // ─── Load next page (infinite scroll) ──────────────────────────────────────
+  const fetchNextPage = useCallback(async () => {
+    if (isFetchingRef.current || !hasMore || isFetchingMore) return;
+    isFetchingRef.current = true;
+    setIsFetchingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      const result = await getCajasPaginated(nextPage, PAGE_SIZE);
+      appendCajas(result.data || [], nextPage, result.total, result.hasMore);
+    } catch (error) {
+      console.error('Error fetching more cajas:', error);
+      setIsFetchingMore(false);
+    } finally {
+      isFetchingRef.current = false;
+    }
+  }, [hasMore, isFetchingMore, currentPage, appendCajas, setIsFetchingMore]);
 
   const { joinRoom } = useSocket();
 
-  useEffect(() => {
+  React.useEffect(() => {
     joinRoom('caja');
   }, [joinRoom]);
 
-  useSocketEvent('refreshCaja', (data: any) => {
-    fetchCajas(true); // Silent refresh on background updates
+  useSocketEvent('refreshCaja', (_data: any) => {
+    fetchCajas(true); // Reload from page 0 silently
   });
 
   useFocusEffect(
     useCallback(() => {
-      // If we already have cache, we fetch silently in background
       const hasCache = useCajaCacheStore.getState().lastFetch > 0;
       fetchCajas(hasCache);
     }, [fetchCajas])
@@ -78,26 +108,24 @@ export default function CajaListScreen({ navigation }: any) {
   const processedData = useMemo(() => {
     if (!cajas.length) return [];
 
-    // Filter
+    // Filter by tab
     let filtered = cajas;
-    
-    if (activeTab === 'activos') {
-      filtered = filtered.filter(c => c.cierre === 'abierta' || (!c.cierre && !c.fechaDeCierre && !c.horaDeCierre));
-    } else {
-      filtered = filtered.filter(c => c.cierre && c.cierre !== 'abierta');
-    }
-
     if (searchQuery.trim().length > 0) {
+      // When searching, ignore tab and search across all cajas
       const lowerQ = searchQuery.toLowerCase();
-      filtered = cajas.filter(c => 
+      filtered = cajas.filter(c =>
         c.nombre?.toLowerCase().includes(lowerQ) ||
         (c.cierre === 'abierta' ? 'activa abierta curso' : 'cerrada').includes(lowerQ) ||
         (c.cuadroCaja?.toLowerCase() === 'no cuadro caja' && 'descuadrada'.includes(lowerQ)) ||
         (c.cuadroCaja?.toLowerCase() === 'no se ha revisado' && 'pendiente revisado'.includes(lowerQ))
       );
+    } else if (activeTab === 'activos') {
+      filtered = filtered.filter(c => c.cierre === 'abierta' || (!c.cierre && !c.fechaDeCierre && !c.horaDeCierre));
+    } else {
+      filtered = filtered.filter(c => c.cierre && c.cierre !== 'abierta');
     }
 
-    // Group
+    // Group by month-year
     const groups: Record<string, any[]> = {};
     filtered.forEach(c => {
       let d = new Date(c.fechaDeApertura);
@@ -106,15 +134,15 @@ export default function CajaListScreen({ navigation }: any) {
         const [year, month, day] = datePart.split('-');
         d = new Date(Number(year), Number(month) - 1, Number(day), 12, 0, 0);
       }
-      
+
       let monthYear = 'Sin fecha';
       if (!isNaN(d.getTime())) {
         const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
         monthYear = `${months[d.getMonth()]} ${d.getFullYear()}`;
       }
-      
+
       if (!groups[monthYear]) {
-         groups[monthYear] = [];
+        groups[monthYear] = [];
       }
       groups[monthYear].push(c);
     });
@@ -150,8 +178,8 @@ export default function CajaListScreen({ navigation }: any) {
     const isFaltante = item.valorFaltante > 0;
 
     const containerClass = `p-4 rounded-2xl mb-3 shadow-md border ${
-      isActiva 
-        ? 'bg-green-50 border-green-300 shadow-green-100' 
+      isActiva
+        ? 'bg-green-50 border-green-300 shadow-green-100'
         : isDescuadrada
         ? 'bg-red-50 border-red-300 shadow-red-100'
         : isSinRevisar
@@ -160,7 +188,7 @@ export default function CajaListScreen({ navigation }: any) {
     }`;
 
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={() => handlePressCaja(item)}
         onLongPress={() => {
           if (!isActiva && user?.rol === 'Admin app') {
@@ -253,6 +281,16 @@ export default function CajaListScreen({ navigation }: any) {
     );
   };
 
+  // Footer: loading spinner for next page
+  const ListFooter = () => (
+    <View style={{ paddingVertical: 16, alignItems: 'center' }}>
+      {isFetchingMore && (
+        <ActivityIndicator size="small" color={primaryColor || '#22c55e'} />
+      )}
+      <View style={{ height: 80 }} />
+    </View>
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
       <SafeAreaView style={{ backgroundColor: primaryColor || '#10b981' }} edges={['top']}>
@@ -263,8 +301,14 @@ export default function CajaListScreen({ navigation }: any) {
               <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
             <Text className="text-white text-xl font-bold">Registros de Caja</Text>
+            {/* Total counter */}
+            {!loading && useCajaCacheStore.getState().total > 0 && (
+              <View className="ml-2 bg-white/20 px-2 py-0.5 rounded-full">
+                <Text className="text-white text-xs font-bold">{useCajaCacheStore.getState().total}</Text>
+              </View>
+            )}
           </View>
-          
+
           {/* Header Action Button */}
           {!loading && canCreate && (
             <TouchableOpacity
@@ -328,11 +372,19 @@ export default function CajaListScreen({ navigation }: any) {
           <FlashList
             data={processedData}
             renderItem={renderItem}
-            getItemType={(item) => typeof item === 'string' ? 'string' : item.isHeader ? 'sectionHeader' : 'row'}
+            getItemType={(item: any) => typeof item === 'string' ? 'string' : item.isHeader ? 'sectionHeader' : 'row'}
             estimatedItemSize={160}
             onScroll={handleScroll}
-            keyExtractor={(item, index) => item.IDcaja ? item.IDcaja : `key-${index}`}
-            ListFooterComponent={<View style={{ height: 100 }} />}
+            keyExtractor={(item: any, index: number) => item.IDcaja ? item.IDcaja : `key-${index}`}
+            // ─── Infinite scroll ──────────────────────────
+            onEndReachedThreshold={0.3}
+            onEndReached={() => {
+              // Only paginate in 'cerrados' tab (activos are always few)
+              if (activeTab === 'cerrados' && !searchQuery && hasMore) {
+                fetchNextPage();
+              }
+            }}
+            ListFooterComponent={<ListFooter />}
             ListEmptyComponent={
               <View className="items-center justify-center mt-10">
                 <Ionicons name="cash-outline" size={64} color="#d1d5db" />

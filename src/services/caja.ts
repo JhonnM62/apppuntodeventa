@@ -39,6 +39,30 @@ export const getCajas = async () => {
   return response.data;
 };
 
+export interface CajasPaginatedResponse {
+  data: any[];
+  total: number;
+  page: number;
+  limit: number;
+  hasMore: boolean;
+}
+
+export const getCajasPaginated = async (
+  page: number = 0,
+  limit: number = 25,
+  params?: { nombre?: string; fechaDesde?: string; fechaHasta?: string }
+): Promise<CajasPaginatedResponse> => {
+  const response = await api.get('/caja', {
+    params: { page, limit, ...params },
+  });
+  // Support both paginated and legacy flat-array responses
+  if (Array.isArray(response.data)) {
+    return { data: response.data, total: response.data.length, page, limit, hasMore: false };
+  }
+  return response.data as CajasPaginatedResponse;
+};
+
+
 export const abrirCaja = async (data: AperturaCajaPayload) => {
   const response = await api.post('/caja/abrir', data);
   return response.data;

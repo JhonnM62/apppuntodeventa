@@ -30,6 +30,7 @@ import VerifyInsumosModal from '../../components/caja/VerifyInsumosModal';
 import AutoCuadrePreviewModal from '../../components/caja/AutoCuadrePreviewModal';
 import { cn } from '../../lib/utils';
 import AdminSaleFormModal from '../orders/AdminSaleFormModal';
+import { useInsumosCacheStore } from '../../store/useInsumosCacheStore';
 
 const { width } = Dimensions.get('window');
 
@@ -435,24 +436,50 @@ export default function CajaFormScreen({ route, navigation }: any) {
   };
 
   const fetchInitialData = useCallback(async (showLoader = true, isSocketRefresh = false) => {
-    if (showLoader) setLoading(true);
+    const insumosCache = useInsumosCacheStore.getState();
+    const cacheIsFresh = !insumosCache.isStale();
+
+    // If cache is fresh, seed UI immediately and skip the full-screen loader
+    let shouldShowLoader = showLoader;
+    if (cacheIsFresh && insumosCache.insumos.length > 0) {
+      setAllInsumos(insumosCache.insumos);
+      setAllProductos(insumosCache.productos);
+      shouldShowLoader = false; // resumen will load quietly
+    }
+
+    if (shouldShowLoader) setLoading(true);
+
     try {
-      const [insumosRes, prodRes, configRes] = await Promise.all([
-        insumosService.getAll({ limit: 1000 }),
-        getProducts({ limit: 1000 }),
-        getConfiguracion()
+      // Run all fetches in parallel — resumen runs simultaneously with insumos/products/config
+      // If cache was fresh we skip re-fetching insumos/products to save bandwidth
+      const [insumosRes, prodRes, configRes, resumen] = await Promise.all([
+        cacheIsFresh && insumosCache.insumos.length > 0
+          ? Promise.resolve(insumosCache.insumos)
+          : insumosService.getAll({ limit: 1000 }),
+        cacheIsFresh && insumosCache.productos.length > 0
+          ? Promise.resolve(insumosCache.productos)
+          : getProducts({ limit: 1000 }),
+        getConfiguracion(),
+        isNew ? Promise.resolve(null) : getResumenCaja(cajaId),
       ]);
 
-      const insumosData = insumosRes || [];
-      const productosData = prodRes?.data || prodRes?.productos || prodRes || [];
+      const insumosData = Array.isArray(insumosRes) ? insumosRes : (insumosRes || []);
+      const productosData = Array.isArray(prodRes)
+        ? prodRes
+        : (prodRes?.data || prodRes?.productos || prodRes || []);
       const configData = configRes?.data || configRes;
-      
+
       if (configData?.modoOperacion) {
         setModoOperacion(configData.modoOperacion);
       }
 
       setAllInsumos(insumosData);
       setAllProductos(productosData);
+
+      // Update cache if we fetched fresh data
+      if (!cacheIsFresh || insumosCache.insumos.length === 0) {
+        useInsumosCacheStore.getState().setAll(insumosData, productosData);
+      }
 
       if (isNew) {
         const defaultInsumos = insumosData
@@ -486,7 +513,6 @@ export default function CajaFormScreen({ route, navigation }: any) {
           insumos: []
         });
       } else {
-          const resumen = await getResumenCaja(cajaId);
           setResumenData(resumen);
 
           if (resumen.caja && resumen.caja.horaCongelada) {
@@ -554,7 +580,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
       console.error(error);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cargar la información' });
     } finally {
-      if (showLoader) setLoading(false);
+      if (shouldShowLoader) setLoading(false);
     }
   }, [cajaId, isNew, reset, user]);
 
