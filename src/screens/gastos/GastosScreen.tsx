@@ -15,6 +15,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { useSocketEvent } from '../../hooks/useSocketEvent';
 import { SocketEvent } from '../../types/socket.types';
 import { useCustomAlert } from '../../context/CustomAlertContext';
+import { useSettingsStore } from '../../store/useSettingsStore';
 
 export default function GastosScreen({ navigation }: any) {
   const { showAlert } = useCustomAlert();
@@ -24,6 +25,7 @@ export default function GastosScreen({ navigation }: any) {
   const [selectedGasto, setSelectedGasto] = useState<Gasto | null>(null);
   const [filterTipo, setFilterTipo] = useState<'TODOS' | 'NEGOCIO' | 'PERSONAL'>('TODOS');
   const [searchQuery, setSearchQuery] = useState('');
+  const { primaryColor } = useSettingsStore();
 
   // Bulk IA state
   const [bulkModalVisible, setBulkModalVisible] = useState(false);
@@ -155,7 +157,7 @@ export default function GastosScreen({ navigation }: any) {
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={['bottom']}>
       <StatusBar style="light" />
-      <SafeAreaView style={{ backgroundColor: '#22c55e', zIndex: 10 }} edges={['top']}>
+      <SafeAreaView style={{ backgroundColor: primaryColor || '#10b981', zIndex: 10 }} edges={['top']}>
         <View className="px-4 py-4 flex-row items-center justify-between shadow-sm">
           <View className="flex-row items-center flex-1">
             <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3 p-1">
