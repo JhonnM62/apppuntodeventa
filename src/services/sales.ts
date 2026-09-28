@@ -95,6 +95,7 @@ export const getSales = async (params?: {
   fechaHasta?: string; 
   usuario?: string; 
   medioDePago?: string; 
+  banco?: string;
   search?: string;
   totalMin?: string;
   totalMax?: string;

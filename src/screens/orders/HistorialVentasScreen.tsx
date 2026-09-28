@@ -1636,7 +1636,7 @@ function HistorialVentasScreenInner({ navigation }: any) {
               {/* Medio de Pago */}
               <Text className="text-gray-800 font-bold mb-2">Medio de Pago</Text>
               <View className="flex-row flex-wrap gap-2 mb-5">
-                {['EFECTIVO', 'TRANSFERENCIA', 'NEQUI', 'DAVIPLATA', 'BANCOLOMBIA', 'EFECTIVO Y OTROS', 'PENDIENTE'].map(medio => (
+                {['EFECTIVO', 'TRANSFERENCIA', 'EFECTIVO Y OTROS', 'PENDIENTE'].map(medio => (
                   <TouchableOpacity
                     key={medio}
                     onPress={() => setTempFilters(prev => {
