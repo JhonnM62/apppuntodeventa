@@ -520,7 +520,7 @@ export default function CajaListScreen({ navigation }: any) {
         showDown={showScrollDown}
         onUp={scrollToTop}
         onDown={scrollToBottom}
-        bottomOffset={140}
+        bottomOffset={160}
       />
     </View>
   );

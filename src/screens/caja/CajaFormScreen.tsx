@@ -281,6 +281,11 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [directSumModalVisible, setDirectSumModalVisible] = useState(false);
   const [directSumIndex, setDirectSumIndex] = useState<number | null>(null);
   const [directSumAmount, setDirectSumAmount] = useState('');
+  
+  // NEW STATES FOR GENERAL MODE DIRECT SUB
+  const [directSubModalVisible, setDirectSubModalVisible] = useState(false);
+  const [directSubIndex, setDirectSubIndex] = useState<number | null>(null);
+  const [directSubAmount, setDirectSubAmount] = useState('');
 
   const [subQtyAmount, setSubQtyAmount] = useState('');
   const [subQtyReason, setSubQtyReason] = useState('');
@@ -1808,14 +1813,20 @@ setSaving(false);
                                     <Ionicons name="add" size={16} color="white" />
                                   </TouchableOpacity>
                                 )}
-                                {!isReadOnly && isAdmin && modoOperacion === 'RESTAURANTE' && (
+                                {!isReadOnly && isAdmin && (
                                   <TouchableOpacity 
                                     className="bg-red-500 rounded w-6 h-6 items-center justify-center"
                                     onPress={() => {
-                                      setAddQtyIndex(index);
-                                      setSubQtyAmount('');
-                                      setSubQtyReason('');
-                                      setSubQtyModalVisible(true);
+                                      if (modoOperacion === 'GENERAL') {
+                                        setDirectSubIndex(index);
+                                        setDirectSubAmount('');
+                                        setDirectSubModalVisible(true);
+                                      } else {
+                                        setAddQtyIndex(index);
+                                        setSubQtyAmount('');
+                                        setSubQtyReason('');
+                                        setSubQtyModalVisible(true);
+                                      }
                                     }}
                                   >
                                     <Ionicons name="remove" size={16} color="white" />
@@ -3070,6 +3081,64 @@ setSaving(false);
                   }}
                 >
                   <Text className="text-white font-bold">Añadir</Text>
+                </TouchableOpacity>
+              </View>
+              </View>
+            </View>
+          </KeyboardAwareScrollView>
+        </Modal>
+
+        {/* Direct Sub Modal (General Mode) */}
+        <Modal
+          visible={directSubModalVisible}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setDirectSubModalVisible(false)}
+        >
+          <KeyboardAwareScrollView 
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            enableOnAndroid={true}
+          >
+            <View className="flex-1 bg-black/50 justify-center items-center px-4 py-10">
+              <View className="bg-white rounded-2xl p-5 w-full max-w-sm">
+              <Text className="text-lg font-bold text-gray-800 mb-2">Restar a Cantidad Apertura</Text>
+              <Text className="text-sm text-gray-500 mb-4">
+                Esta cantidad se restará directamente al valor de apertura de este insumo en la caja actual y se guardará al presionar el botón Guardar principal. No afecta al stock global de bodega.
+              </Text>
+              
+              <Text className="text-xs font-semibold text-gray-600 mb-1 ml-1 uppercase">Cantidad a restar</Text>
+              <TextInput
+                className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 text-lg font-bold text-gray-900 mb-5"
+                keyboardType="numeric"
+                value={directSubAmount}
+                onChangeText={setDirectSubAmount}
+                placeholder="Ej. 5"
+                placeholderTextColor="#9ca3af"
+                autoFocus
+              />
+
+              <View className="flex-row space-x-3">
+                <TouchableOpacity 
+                  className="flex-1 py-3 rounded-xl bg-gray-100 items-center border border-gray-200"
+                  onPress={() => setDirectSubModalVisible(false)}
+                >
+                  <Text className="text-gray-700 font-bold">Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  className="flex-1 py-3 rounded-xl bg-red-600 items-center"
+                  onPress={() => {
+                    if (directSubIndex !== null && directSubAmount && !isNaN(Number(directSubAmount))) {
+                      const amountToSub = Number(directSubAmount);
+                      const currentVal = Number(getValues(`insumos.${directSubIndex}.cantApertura`)) || 0;
+                      const newVal = Math.max(0, currentVal - amountToSub);
+                      setValue(`insumos.${directSubIndex}.cantApertura`, newVal, { shouldDirty: true });
+                      setModifiedInsumoIndexes(prev => new Set(prev).add(directSubIndex));
+                      setDirectSubModalVisible(false);
+                    }
+                  }}
+                >
+                  <Text className="text-white font-bold">Restar</Text>
                 </TouchableOpacity>
               </View>
               </View>

@@ -114,6 +114,7 @@ interface FilterState {
   pedidoNumero: string;
   cliente: string;
   categoriaProducto: string[];
+  banco?: string[];
 }
 
 type SectionData = {
@@ -555,6 +556,7 @@ const PedidosScreen = () => {
     pedidoNumero: '',
     cliente: '',
     categoriaProducto: [],
+    banco: [],
   });
 
   const { joinRoom, isConnected } = useSocket();
@@ -763,6 +765,7 @@ const PedidosScreen = () => {
     if (filters.minTotal || filters.maxTotal) count++;
     if (filters.pedidoNumero) count++;
     if (filters.cliente) count++;
+    if (filters.banco && filters.banco.length > 0) count++;
     return count;
   }, [filters]);
 
@@ -781,6 +784,7 @@ const PedidosScreen = () => {
       if (filters.minTotal) query.totalMin = filters.minTotal;
       if (filters.maxTotal) query.totalMax = filters.maxTotal;
       if (filters.categoriaProducto && filters.categoriaProducto.length > 0) query.categoriaProducto = filters.categoriaProducto.join(',');
+      if (filters.banco && filters.banco.length > 0) query.banco = filters.banco.join(',');
       if (filters.cliente) query.search = query.search ? `${query.search} ${filters.cliente}` : filters.cliente;
       if (filters.pedidoNumero) query.search = query.search ? `${query.search} ${filters.pedidoNumero}` : filters.pedidoNumero;
 
@@ -892,7 +896,17 @@ const PedidosScreen = () => {
     }
 
     if (filters.mediosDePago.length > 0) {
-      filtered = filtered.filter(v => filters.mediosDePago.includes(v.medioDePago || ''));
+      filtered = filtered.filter(v => {
+        const combined = `${v.medioDePago || ''} ${v.banco || ''}`.toLowerCase();
+        return filters.mediosDePago.some(m => combined.includes(m.toLowerCase()));
+      });
+    }
+
+    if (filters.banco && filters.banco.length > 0) {
+      filtered = filtered.filter(v => {
+        const bancoLower = (v.banco || '').toLowerCase();
+        return filters.banco!.some(b => bancoLower.includes(b.toLowerCase()));
+      });
     }
 
     if (filters.fechaDesde) {
@@ -2278,7 +2292,28 @@ showAlert({
             </View>
           </View>
 
-
+          <View style={styles.filterSection}>
+            <RNText style={styles.filterSectionTitle}>BANCO</RNText>
+            <View style={styles.chipsContainer}>
+              {['NEQUI', 'DAVIPLATA', 'BANCOLOMBIA', 'OTROS'].map(banco => (
+                <TouchableOpacity
+                  key={banco}
+                  style={[styles.chip, filters.banco?.includes(banco) && styles.chipActive]}
+                  onPress={() => setFilters(prev => {
+                    const current = prev.banco || [];
+                    return {
+                      ...prev,
+                      banco: current.includes(banco) ? current.filter(b => b !== banco) : [...current, banco]
+                    };
+                  })}
+                >
+                  <RNText style={[styles.chipText, filters.banco?.includes(banco) && styles.chipTextActive]}>
+                    {banco}
+                  </RNText>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
 
           <View style={styles.filterSection}>
             <RNText style={styles.filterSectionTitle}>CATEGORÍA DE PRODUCTO</RNText>
@@ -2786,6 +2821,17 @@ showAlert({
                 </TouchableOpacity>
               </View>
             ))}
+            {filters.banco && filters.banco.map(b => (
+              <View key={b} style={styles.activeFilterChip}>
+                <RNText style={styles.activeFilterChipText}>{b}</RNText>
+                <TouchableOpacity onPress={() => setFilters(prev => ({
+                  ...prev,
+                  banco: prev.banco?.filter(item => item !== b)
+                }))}>
+                  <Ionicons name="close-circle" size={16} color="#6b7280" />
+                </TouchableOpacity>
+              </View>
+            ))}
             {filters.fechaDesde && (
               <View style={styles.activeFilterChip}>
                 <RNText style={styles.activeFilterChipText}>Desde: {filters.fechaDesde}</RNText>
@@ -2884,7 +2930,7 @@ showAlert({
         showDown={showScrollDown}
         onUp={scrollToTop}
         onDown={scrollToBottom}
-        bottomOffset={isSelectionMode && selectedToDelete.length > 0 ? 190 : 140}
+        bottomOffset={isSelectionMode && selectedToDelete.length > 0 ? 210 : 160}
       />
 
       {isSelectionMode && selectedToDelete.length > 0 && (

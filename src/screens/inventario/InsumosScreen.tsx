@@ -1161,7 +1161,7 @@ if (status !== 'granted') {
         isScrollingDown={isScrollingDown}
         isAtTop={isAtTop}
         isAtBottom={isAtBottom}
-        bottomOffset={140} // For floating dock
+        bottomOffset={160} // For floating dock
       />
 
       <Modal visible={showModal} animationType="slide" onRequestClose={() => setShowModal(false)} presentationStyle="pageSheet">

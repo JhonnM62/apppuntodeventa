@@ -68,6 +68,7 @@ function HistorialVentasScreenInner({ navigation }: any) {
     totalMin?: string;
     totalMax?: string;
     categoriaProducto?: string[];
+    banco?: string[];
   }>({});
   const [tempFilters, setTempFilters] = useState(activeFilters);
   const [showDatePicker, setShowDatePicker] = useState<{show: boolean, type: 'desde' | 'hasta'}>({show: false, type: 'desde'});
@@ -291,6 +292,7 @@ function HistorialVentasScreenInner({ navigation }: any) {
         ...currentFilters,
         estado: Array.isArray(currentFilters.estado) ? currentFilters.estado.join(',') : currentFilters.estado,
         medioDePago: Array.isArray(currentFilters.medioDePago) ? currentFilters.medioDePago.join(',') : currentFilters.medioDePago,
+        banco: Array.isArray(currentFilters.banco) ? currentFilters.banco.join(',') : currentFilters.banco,
         categoriaProducto: Array.isArray(currentFilters.categoriaProducto) ? currentFilters.categoriaProducto.join(',') : currentFilters.categoriaProducto
       });
 
@@ -1203,7 +1205,7 @@ function HistorialVentasScreenInner({ navigation }: any) {
           showDown={showScrollDown}
           onUp={scrollToTop}
           onDown={scrollToBottom}
-          bottomOffset={isSelectionMode && selectedToDelete.length > 0 ? 190 : 140}
+          bottomOffset={isSelectionMode && selectedToDelete.length > 0 ? 210 : 160}
         />
       </View>
 
@@ -1645,6 +1647,25 @@ function HistorialVentasScreenInner({ navigation }: any) {
                   >
                     <Text className={`text-xs font-bold ${tempFilters.medioDePago?.includes(medio) ? 'text-indigo-700' : 'text-gray-600'}`}>
                       {medio}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Banco */}
+              <Text className="text-gray-800 font-bold mb-2">Banco</Text>
+              <View className="flex-row flex-wrap gap-2 mb-5">
+                {['NEQUI', 'DAVIPLATA', 'BANCOLOMBIA', 'OTROS'].map(banco => (
+                  <TouchableOpacity
+                    key={banco}
+                    onPress={() => setTempFilters(prev => {
+                      const current = prev.banco || [];
+                      return { ...prev, banco: current.includes(banco) ? current.filter(b => b !== banco) : [...current, banco] };
+                    })}
+                    className={`px-3 py-2 rounded-lg border ${tempFilters.banco?.includes(banco) ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-300'}`}
+                  >
+                    <Text className={`text-xs font-bold ${tempFilters.banco?.includes(banco) ? 'text-indigo-700' : 'text-gray-600'}`}>
+                      {banco}
                     </Text>
                   </TouchableOpacity>
                 ))}
