@@ -1,29 +1,50 @@
- DESKTOP-HATI3ID    C:\APIS_v2.3\puntodeventafront\scripts  ➜ (   main)   0ms   5:30 PM  
+ DESKTOP-HATI3ID    C:\APIS_v2.3\puntodeventafront\scripts  ➜ (   main)   8m 37.202s   6:55 PM  
   ⚡Administrador ❯❯ .\auto-deploy-windows-fast.ps1 -Profile preview
 =============================================
 🔥 MODO FAST: Compilación con Caché Nativo 🔥
 =============================================
 Sincronizando el codigo fuente en el VPS...
-HEAD is now at e45101a feat: add GastosScreen for managing expenses and fast VPS compilation script
-Already up to date.
+HEAD is now at f2262ea chore: sync bumped versions
+From https://github.com/JhonnM62/apppuntodeventa
+   f2262ea..08b7a29  main       -> origin/main
+Updating f2262ea..08b7a29
+Fast-forward
+ app.json                                     |    4 +-
+ logsvps.txt                                  | 2036 ++++++++++++++------------
+ package.json                                 |    2 +-
+ src/components/ui/FloatingScrollButtons.tsx  |  100 ++
+ src/components/ui/PaymentModal.tsx           |    7 +-
+ src/screens/caja/CajaFormScreen.tsx          |  161 +-
+ src/screens/caja/CajaListScreen.tsx          |  500 +++++--
+ src/screens/gastos/GastosScreen.tsx          |    4 +-
+ src/screens/inventario/InsumosScreen.tsx     |   11 +-
+ src/screens/inventario/InventarioScreen.tsx  |   11 +-
+ src/screens/orders/HistorialVentasScreen.tsx |  104 +-
+ src/screens/orders/PedidosScreen.tsx         |  141 +-
+ src/services/caja.ts                         |   24 +
+ src/store/useCajaCacheStore.ts               |   31 +-
+ src/store/useInsumosCacheStore.ts            |   37 +
+ 15 files changed, 2041 insertions(+), 1132 deletions(-)
+ create mode 100644 src/components/ui/FloatingScrollButtons.tsx
+ create mode 100644 src/store/useInsumosCacheStore.ts
 Iniciando compilacion remota rapida en el VPS (100.42.185.2) con perfil: preview...
 =================================================
    INICIANDO GRANJA DE COMPILACION (FAST MODE v2)
    Perfil: preview
 =================================================
-   RAM disponible antes del build: 3673 MB
+   RAM disponible antes del build: 2753 MB
 [1/6] Verificando entorno basico...
 [2/6] Actualizando codigo fuente...
-HEAD is now at e45101a feat: add GastosScreen for managing expenses and fast VPS compilation script
+HEAD is now at 08b7a29 feat: add new screens for inventory, sales history, orders, and cash register management
 Already up to date.
 Codigo actualizado.
 [3/6] Instalando dependencias NPM...
 
-> qhubomor-pos-app@1.0.227 prepare
+> qhubomor-pos-app@1.0.239 prepare
 > husky
 
 
-up to date, audited 1199 packages in 14s
+up to date, audited 1199 packages in 16s
 
 120 packages are looking for funding
   run `npm fund` for details
@@ -40,53 +61,49 @@ Run `npm audit` for details.
 Dependencias instaladas.
 [4/6] Inyectando variables de entorno desde eas.json para preview...
 [5/6] Gestionando cache de proyecto nativo para perfil 'preview'...
-   Ultimo perfil compilado: restaurante2
+   Ultimo perfil compilado: preview
    Perfil solicitado: preview
-CAMBIO DE PERFIL: 'restaurante2' -> 'preview'
-   Guardando cache de 'restaurante2' -> .android_cache_restaurante2/ ...
-   Cache de 'restaurante2' guardado.
-   Restaurando cache de 'preview' desde .android_cache_preview/ ...
-   Cache de 'preview' restaurado. El build sera rapido (~2 min).
+Mismo perfil 'preview'. Reutilizando android/ existente -> build rapido (~2 min).
    Saltando prebuild para no corromper la cache nativa.
    Inyectando version desde app.json directamente en build.gradle...
-   ✔ Version actualizada a: 1.0.227 (Código: 228)
+   ✔ Version actualizada a: 1.0.239 (Código: 240)
 [6/6] Construyendo APK (Gradle Assemble) con cache...
 To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
 Daemon will be stopped at the end of the build
-> Task :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :expo-gradle-plugin:expo-autolinking-plugin-shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :gradle-plugin:shared:compileKotlin UP-TO-DATE
 > Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileKotlin UP-TO-DATE
-> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava NO-SOURCE
+> Task :gradle-plugin:shared:compileKotlin UP-TO-DATE
 > Task :gradle-plugin:shared:compileJava NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:compileJava NO-SOURCE
 > Task :expo-gradle-plugin:expo-autolinking-plugin-shared:processResources NO-SOURCE
-> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:classes UP-TO-DATE
 > Task :gradle-plugin:shared:processResources NO-SOURCE
+> Task :expo-gradle-plugin:expo-autolinking-plugin-shared:classes UP-TO-DATE
 > Task :gradle-plugin:shared:classes UP-TO-DATE
+> Task :gradle-plugin:shared:jar UP-TO-DATE
 > Task :expo-gradle-plugin:expo-autolinking-plugin-shared:jar UP-TO-DATE
 > Task :expo-gradle-plugin:expo-autolinking-settings-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :gradle-plugin:shared:jar UP-TO-DATE
 > Task :gradle-plugin:settings-plugin:compileKotlin UP-TO-DATE
 > Task :gradle-plugin:settings-plugin:compileJava NO-SOURCE
-> Task :gradle-plugin:settings-plugin:pluginDescriptors UP-TO-DATE
-> Task :gradle-plugin:settings-plugin:processResources UP-TO-DATE
-> Task :gradle-plugin:settings-plugin:classes UP-TO-DATE
-> Task :gradle-plugin:settings-plugin:jar UP-TO-DATE
 > Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileKotlin UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:pluginDescriptors UP-TO-DATE
 > Task :expo-gradle-plugin:expo-autolinking-settings-plugin:compileJava NO-SOURCE
 > Task :expo-gradle-plugin:expo-autolinking-settings-plugin:pluginDescriptors UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:processResources UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:classes UP-TO-DATE
 > Task :expo-gradle-plugin:expo-autolinking-settings-plugin:processResources UP-TO-DATE
 > Task :expo-gradle-plugin:expo-autolinking-settings-plugin:classes UP-TO-DATE
+> Task :gradle-plugin:settings-plugin:jar UP-TO-DATE
 > Task :expo-gradle-plugin:expo-autolinking-settings-plugin:jar UP-TO-DATE
-> Task :expo-gradle-plugin:expo-autolinking-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :expo-dev-launcher-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
-> Task :expo-dev-launcher-gradle-plugin:pluginDescriptors UP-TO-DATE
-> Task :expo-dev-launcher-gradle-plugin:processResources UP-TO-DATE
 > Task :expo-module-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :expo-module-gradle-plugin:pluginDescriptors UP-TO-DATE
+> Task :expo-dev-launcher-gradle-plugin:pluginDescriptors UP-TO-DATE
 > Task :expo-module-gradle-plugin:processResources UP-TO-DATE
 > Task :gradle-plugin:react-native-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :expo-dev-launcher-gradle-plugin:processResources UP-TO-DATE
+> Task :expo-gradle-plugin:expo-autolinking-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :expo-gradle-plugin:expo-autolinking-plugin:compileKotlin UP-TO-DATE
 > Task :expo-gradle-plugin:expo-autolinking-plugin:compileJava NO-SOURCE
 > Task :expo-gradle-plugin:expo-autolinking-plugin:pluginDescriptors UP-TO-DATE
@@ -100,13 +117,13 @@ Daemon will be stopped at the end of the build
 > Task :gradle-plugin:react-native-gradle-plugin:classes UP-TO-DATE
 > Task :gradle-plugin:react-native-gradle-plugin:jar UP-TO-DATE
 > Task :expo-dev-launcher-gradle-plugin:compileKotlin UP-TO-DATE
+> Task :expo-dev-launcher-gradle-plugin:compileJava NO-SOURCE
+> Task :expo-dev-launcher-gradle-plugin:classes UP-TO-DATE
+> Task :expo-dev-launcher-gradle-plugin:jar UP-TO-DATE
 > Task :expo-module-gradle-plugin:compileKotlin UP-TO-DATE
 > Task :expo-module-gradle-plugin:compileJava NO-SOURCE
 > Task :expo-module-gradle-plugin:classes UP-TO-DATE
-> Task :expo-dev-launcher-gradle-plugin:compileJava NO-SOURCE
-> Task :expo-dev-launcher-gradle-plugin:classes UP-TO-DATE
 > Task :expo-module-gradle-plugin:jar UP-TO-DATE
-> Task :expo-dev-launcher-gradle-plugin:jar UP-TO-DATE
 
 > Configure project :
 [ExpoRootProject] Using the following versions:
@@ -166,6 +183,7 @@ To suppress this warning, remove "buildToolsVersion '32.0.0'" from your build.gr
 > Task :expo:preBuild UP-TO-DATE
 
 > Task :expo-constants:createExpoConfig
+The NODE_ENV environment variable is required but was not specified. Ensure the project is bundled with Expo CLI or NODE_ENV is set. Using only .env.local and .env
 
 > Task :expo-constants:preBuild
 > Task :expo-dev-client:preBuild UP-TO-DATE
@@ -177,8 +195,7 @@ To suppress this warning, remove "buildToolsVersion '32.0.0'" from your build.gr
 > Task :expo-modules-core:preBuild UP-TO-DATE
 > Task :expo-speech-recognition:preBuild UP-TO-DATE
 > Task :expo-updates-interface:preBuild UP-TO-DATE
-> Task :react-native-async-storage_async-storage:generateCodegenSchemaFromJavaScriptThe NODE_ENV environment variable is required but was not specified. Ensure the project is bundled with Expo CLI or NODE_ENV is set. Using only .env.local and .env
- UP-TO-DATE
+> Task :react-native-async-storage_async-storage:generateCodegenSchemaFromJavaScript UP-TO-DATE
 > Task :react-native-async-storage_async-storage:generateCodegenArtifactsFromSchema UP-TO-DATE
 > Task :react-native-async-storage_async-storage:preBuild UP-TO-DATE
 > Task :react-native-community_datetimepicker:generateCodegenSchemaFromJavaScript UP-TO-DATE
@@ -251,12 +268,13 @@ To suppress this warning, remove "buildToolsVersion '32.0.0'" from your build.gr
 > Task :expo-modules-core:configureCMakeRelWithDebInfo[armeabi-v7a]
 > Task :expo-modules-core:buildCMakeRelWithDebInfo[armeabi-v7a]
 > Task :expo-modules-core:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :expo-modules-core:mergeReleaseNativeLibs UP-TO-DATE
+> Task :expo-modules-core:copyReleaseJniLibsProjectOnly UP-TO-DATE
 > Task :expo-speech-recognition:preReleaseBuild UP-TO-DATE
 > Task :expo-speech-recognition:mergeReleaseJniLibFolders UP-TO-DATE
 > Task :expo-speech-recognition:mergeReleaseNativeLibs NO-SOURCE
 > Task :expo-speech-recognition:copyReleaseJniLibsProjectOnly UP-TO-DATE
 > Task :expo-updates-interface:preReleaseBuild UP-TO-DATE
-> Task :expo-modules-core:mergeReleaseNativeLibs
 > Task :expo-updates-interface:mergeReleaseJniLibFolders UP-TO-DATE
 > Task :expo-updates-interface:mergeReleaseNativeLibs NO-SOURCE
 > Task :expo-updates-interface:copyReleaseJniLibsProjectOnly UP-TO-DATE
@@ -269,7 +287,6 @@ To suppress this warning, remove "buildToolsVersion '32.0.0'" from your build.gr
 > Task :react-native-community_datetimepicker:mergeReleaseNativeLibs NO-SOURCE
 > Task :react-native-community_datetimepicker:copyReleaseJniLibsProjectOnly UP-TO-DATE
 > Task :react-native-community_netinfo:preReleaseBuild UP-TO-DATE
-> Task :expo-modules-core:copyReleaseJniLibsProjectOnly
 > Task :react-native-community_netinfo:mergeReleaseJniLibFolders UP-TO-DATE
 > Task :react-native-community_netinfo:mergeReleaseNativeLibs NO-SOURCE
 > Task :react-native-community_netinfo:copyReleaseJniLibsProjectOnly UP-TO-DATE
@@ -295,14 +312,14 @@ To suppress this warning, remove "buildToolsVersion '32.0.0'" from your build.gr
 > Task :react-native-screens:configureCMakeRelWithDebInfo[armeabi-v7a]
 > Task :react-native-screens:buildCMakeRelWithDebInfo[armeabi-v7a]
 > Task :react-native-screens:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :react-native-screens:mergeReleaseNativeLibs UP-TO-DATE
+> Task :react-native-screens:copyReleaseJniLibsProjectOnly UP-TO-DATE
 > Task :react-native-svg:preReleaseBuild UP-TO-DATE
 > Task :react-native-svg:mergeReleaseJniLibFolders UP-TO-DATE
-> Task :react-native-screens:mergeReleaseNativeLibs
 > Task :react-native-svg:mergeReleaseNativeLibs NO-SOURCE
 > Task :react-native-svg:copyReleaseJniLibsProjectOnly UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:preReleaseBuild UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:mergeReleaseJniLibFolders UP-TO-DATE
-> Task :react-native-screens:copyReleaseJniLibsProjectOnly
 > Task :react-native-thermal-receipt-printer-image-qr:mergeReleaseNativeLibs NO-SOURCE
 > Task :react-native-thermal-receipt-printer-image-qr:copyReleaseJniLibsProjectOnly UP-TO-DATE
 > Task :react-native-view-shot:preReleaseBuild UP-TO-DATE
@@ -313,43 +330,29 @@ To suppress this warning, remove "buildToolsVersion '32.0.0'" from your build.gr
 > Task :react-native-webview:mergeReleaseJniLibFolders UP-TO-DATE
 > Task :react-native-webview:mergeReleaseNativeLibs NO-SOURCE
 > Task :react-native-webview:copyReleaseJniLibsProjectOnly UP-TO-DATE
+> Task :app:mergeReleaseNativeLibs UP-TO-DATE
+> Task :app:stripReleaseDebugSymbols UP-TO-DATE
+> Task :app:extractReleaseNativeSymbolTables UP-TO-DATE
+> Task :app:mergeReleaseNativeDebugMetadata UP-TO-DATE
 > Task :react-native-community_datetimepicker:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :react-native-community_datetimepicker:generateReleaseBuildConfig UP-TO-DATE
 > Task :react-native-community_datetimepicker:generateReleaseResValues UP-TO-DATE
 > Task :react-native-community_datetimepicker:generateReleaseResources UP-TO-DATE
-> Task :react-native-community_datetimepicker:packageReleaseResources
+> Task :react-native-community_datetimepicker:packageReleaseResources UP-TO-DATE
 > Task :react-native-community_datetimepicker:parseReleaseLocalResources UP-TO-DATE
 > Task :react-native-community_datetimepicker:generateReleaseRFile UP-TO-DATE
-> Task :app:mergeReleaseNativeLibs
-> Task :app:stripReleaseDebugSymbols
-> Task :app:extractReleaseNativeSymbolTables
-> Task :app:mergeReleaseNativeDebugMetadata
+> Task :react-native-community_datetimepicker:compileReleaseKotlin UP-TO-DATE
 > Task :react-native-community_datetimepicker:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-community_datetimepicker:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-community_datetimepicker:bundleLibRuntimeToDirRelease UP-TO-DATE
 > Task :react-native-safe-area-context:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :react-native-safe-area-context:generateReleaseBuildConfig UP-TO-DATE
 > Task :react-native-safe-area-context:generateReleaseResValues UP-TO-DATE
 > Task :react-native-safe-area-context:generateReleaseResources UP-TO-DATE
-> Task :react-native-safe-area-context:packageReleaseResources
+> Task :react-native-safe-area-context:packageReleaseResources UP-TO-DATE
 > Task :react-native-safe-area-context:parseReleaseLocalResources UP-TO-DATE
 > Task :react-native-safe-area-context:generateReleaseRFile UP-TO-DATE
-> Task :react-native-community_datetimepicker:compileReleaseKotlin
-w: file:///opt/build-farm/apppuntodeventa/node_modules/@react-native-community/datetimepicker/android/src/main/java/com/reactcommunity/rndatetimepicker/MaterialDatePickerModule.kt:21:20 'val currentActivity: Activity?' is deprecated. Deprecated in 0.80.0. Use getReactApplicationContext.getCurrentActivity() instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/@react-native-community/datetimepicker/android/src/main/java/com/reactcommunity/rndatetimepicker/MaterialDatePickerModule.kt:21:20 This synthetic property is based on the getter function 'fun getCurrentActivity(): Activity?' from Kotlin. In the future, synthetic properties will be available only if the base getter function came from Java. Consider replacing this property access with a 'getCurrentActivity()' function call.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/@react-native-community/datetimepicker/android/src/main/java/com/reactcommunity/rndatetimepicker/MaterialDatePickerModule.kt:26:20 'val currentActivity: Activity?' is deprecated. Deprecated in 0.80.0. Use getReactApplicationContext.getCurrentActivity() instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/@react-native-community/datetimepicker/android/src/main/java/com/reactcommunity/rndatetimepicker/MaterialDatePickerModule.kt:26:20 This synthetic property is based on the getter function 'fun getCurrentActivity(): Activity?' from Kotlin. In the future, synthetic properties will be available only if the base getter function came from Java. Consider replacing this property access with a 'getCurrentActivity()' function call.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/@react-native-community/datetimepicker/android/src/main/java/com/reactcommunity/rndatetimepicker/MaterialTimePickerModule.kt:22:20 'val currentActivity: Activity?' is deprecated. Deprecated in 0.80.0. Use getReactApplicationContext.getCurrentActivity() instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/@react-native-community/datetimepicker/android/src/main/java/com/reactcommunity/rndatetimepicker/MaterialTimePickerModule.kt:22:20 This synthetic property is based on the getter function 'fun getCurrentActivity(): Activity?' from Kotlin. In the future, synthetic properties will be available only if the base getter function came from Java. Consider replacing this property access with a 'getCurrentActivity()' function call.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/@react-native-community/datetimepicker/android/src/main/java/com/reactcommunity/rndatetimepicker/MaterialTimePickerModule.kt:27:20 'val currentActivity: Activity?' is deprecated. Deprecated in 0.80.0. Use getReactApplicationContext.getCurrentActivity() instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/@react-native-community/datetimepicker/android/src/main/java/com/reactcommunity/rndatetimepicker/MaterialTimePickerModule.kt:27:20 This synthetic property is based on the getter function 'fun getCurrentActivity(): Activity?' from Kotlin. In the future, synthetic properties will be available only if the base getter function came from Java. Consider replacing this property access with a 'getCurrentActivity()' function call.
-
-> Task :react-native-safe-area-context:compileReleaseKotlin
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-safe-area-context/android/src/main/java/com/th3rdwave/safeareacontext/SafeAreaView.kt:59:23 'val uiImplementation: UIImplementation!' is deprecated. Deprecated in Java.
-
-> Task :react-native-community_datetimepicker:compileReleaseJavaWithJavac
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-
-> Task :react-native-community_datetimepicker:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :react-native-safe-area-context:compileReleaseKotlin UP-TO-DATE
 > Task :react-native-safe-area-context:javaPreCompileRelease UP-TO-DATE
 > Task :react-native-safe-area-context:compileReleaseJavaWithJavac UP-TO-DATE
 > Task :react-native-safe-area-context:bundleLibRuntimeToDirRelease UP-TO-DATE
@@ -357,264 +360,122 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :react-native-screens:generateReleaseBuildConfig UP-TO-DATE
 > Task :react-native-screens:generateReleaseResValues UP-TO-DATE
 > Task :react-native-screens:generateReleaseResources UP-TO-DATE
-> Task :react-native-screens:packageReleaseResources
+> Task :react-native-screens:packageReleaseResources UP-TO-DATE
 > Task :react-native-screens:parseReleaseLocalResources UP-TO-DATE
 > Task :react-native-screens:generateReleaseRFile UP-TO-DATE
+> Task :react-native-screens:compileReleaseKotlin UP-TO-DATE
 > Task :react-native-screens:javaPreCompileRelease UP-TO-DATE
+> Task :react-native-screens:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-screens:bundleLibRuntimeToDirRelease UP-TO-DATE
 > Task :react-native-webview:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :react-native-webview:generateReleaseBuildConfig UP-TO-DATE
 > Task :react-native-webview:generateReleaseResValues UP-TO-DATE
 > Task :react-native-webview:generateReleaseResources UP-TO-DATE
-> Task :react-native-webview:packageReleaseResources
+> Task :react-native-webview:packageReleaseResources UP-TO-DATE
 > Task :react-native-webview:parseReleaseLocalResources UP-TO-DATE
 > Task :react-native-webview:generateReleaseRFile UP-TO-DATE
-
-> Task :react-native-webview:compileReleaseKotlin
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:22:8 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:82:18 'var allowFileAccessFromFileURLs: Boolean' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:83:18 'var allowUniversalAccessFromFileURLs: Boolean' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:125:21 'fun allowScanningByMediaScanner(): Unit' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:162:36 'var systemUiVisibility: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:301:14 'object MapBuilder : Any' is deprecated. Use Kotlin's built-in collections extensions.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:351:34 Condition is always 'true'.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:370:38 'var allowUniversalAccessFromFileURLs: Boolean' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:431:51 Unchecked cast of 'Any?' to 'HashMap<String, String>'.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:487:23 'var savePassword: Boolean' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:488:23 'var saveFormData: Boolean' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:558:23 'var allowFileAccessFromFileURLs: Boolean' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:603:52 'static field FORCE_DARK_ON: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:603:89 'static field FORCE_DARK_OFF: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:604:35 'static fun setForceDark(p0: @NonNull() WebSettings, p1: Int): Unit' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:613:35 'static fun setForceDarkStrategy(p0: @NonNull() WebSettings, p1: Int): Unit' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:615:39 'static field DARK_STRATEGY_PREFER_WEB_THEME_OVER_USER_AGENT_DARKENING: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:659:65 Unchecked cast of 'ArrayList<Any?>' to 'List<Map<String, String>>'.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/RNCWebViewManagerImpl.kt:680:23 'var saveFormData: Boolean' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopCustomMenuSelectionEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopCustomMenuSelectionEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopCustomMenuSelectionEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopCustomMenuSelectionEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopCustomMenuSelectionEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopHttpErrorEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopHttpErrorEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopHttpErrorEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopHttpErrorEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopHttpErrorEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingErrorEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingErrorEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingErrorEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingErrorEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingErrorEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingFinishEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingFinishEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingFinishEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingFinishEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingFinishEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingProgressEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingProgressEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingProgressEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingProgressEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingProgressEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingStartEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingStartEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingStartEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingStartEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopLoadingStartEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopMessageEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopMessageEvent.kt:10:75 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopMessageEvent.kt:21:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopMessageEvent.kt:21:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopMessageEvent.kt:22:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopNewWindowEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopNewWindowEvent.kt:11:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopNewWindowEvent.kt:22:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopNewWindowEvent.kt:22:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopNewWindowEvent.kt:23:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopRenderProcessGoneEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopRenderProcessGoneEvent.kt:12:3 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopRenderProcessGoneEvent.kt:23:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopRenderProcessGoneEvent.kt:23:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopRenderProcessGoneEvent.kt:24:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopShouldStartLoadWithRequestEvent.kt:5:8 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopShouldStartLoadWithRequestEvent.kt:10:89 'constructor<T : Event<T>>(viewTag: Int): Event<T>' is deprecated. Use constructor with explicit surfaceId instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopShouldStartLoadWithRequestEvent.kt:27:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopShouldStartLoadWithRequestEvent.kt:27:42 'interface RCTEventEmitter : JavaScriptModule' is deprecated. Use [RCTModernEventEmitter] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-webview/android/src/main/java/com/reactnativecommunity/webview/events/TopShouldStartLoadWithRequestEvent.kt:28:21 'fun receiveEvent(targetTag: Int, eventName: String, params: WritableMap?): Unit' is deprecated. Use [RCTModernEventEmitter.receiveEvent] instead.
-
+> Task :react-native-webview:compileReleaseKotlin UP-TO-DATE
 > Task :react-native-webview:javaPreCompileRelease UP-TO-DATE
-
-> Task :react-native-webview:compileReleaseJavaWithJavac
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-
+> Task :react-native-webview:compileReleaseJavaWithJavac UP-TO-DATE
 > Task :react-native-webview:bundleLibRuntimeToDirRelease UP-TO-DATE
-> Task :react-native-async-storage_async-storage:generateReleaseBuildConfig
+> Task :react-native-async-storage_async-storage:generateReleaseBuildConfig UP-TO-DATE
 > Task :react-native-async-storage_async-storage:generateReleaseResValues UP-TO-DATE
 > Task :react-native-async-storage_async-storage:generateReleaseResources UP-TO-DATE
-> Task :react-native-async-storage_async-storage:packageReleaseResources
+> Task :react-native-async-storage_async-storage:packageReleaseResources UP-TO-DATE
 > Task :react-native-async-storage_async-storage:parseReleaseLocalResources UP-TO-DATE
 > Task :react-native-async-storage_async-storage:generateReleaseRFile UP-TO-DATE
 > Task :react-native-async-storage_async-storage:javaPreCompileRelease UP-TO-DATE
-
-> Task :react-native-async-storage_async-storage:compileReleaseJavaWithJavac
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-Note: /opt/build-farm/apppuntodeventa/node_modules/@react-native-async-storage/async-storage/android/src/javaPackage/java/com/reactnativecommunity/asyncstorage/AsyncStoragePackage.java uses unchecked or unsafe operations.
-Note: Recompile with -Xlint:unchecked for details.
-
-> Task :react-native-async-storage_async-storage:bundleLibRuntimeToDirRelease
+> Task :react-native-async-storage_async-storage:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :react-native-async-storage_async-storage:bundleLibRuntimeToDirRelease UP-TO-DATE
 > Task :react-native-community_netinfo:generateReleaseBuildConfig UP-TO-DATE
 > Task :react-native-community_netinfo:generateReleaseResValues UP-TO-DATE
 > Task :react-native-community_netinfo:generateReleaseResources UP-TO-DATE
-> Task :react-native-community_netinfo:packageReleaseResources
+> Task :react-native-community_netinfo:packageReleaseResources UP-TO-DATE
 > Task :react-native-community_netinfo:parseReleaseLocalResources UP-TO-DATE
 > Task :react-native-community_netinfo:generateReleaseRFile UP-TO-DATE
 > Task :react-native-community_netinfo:javaPreCompileRelease UP-TO-DATE
-
-> Task :react-native-community_netinfo:compileReleaseJavaWithJavac
-
+> Task :react-native-community_netinfo:compileReleaseJavaWithJavac UP-TO-DATE
 > Task :react-native-community_netinfo:bundleLibRuntimeToDirRelease UP-TO-DATE
-/opt/build-farm/apppuntodeventa/node_modules/@react-native-community/netinfo/android/src/main/java/com/reactnativecommunity/netinfo/NetInfoModule.java:47: warning: [removal] onCatalystInstanceDestroy() in NativeModule has been deprecated and marked for removal
-    public void onCatalystInstanceDestroy() {
-                ^
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-1 warning
 > Task :react-native-picker_picker:generateReleaseBuildConfig UP-TO-DATE
 > Task :react-native-picker_picker:generateReleaseResValues UP-TO-DATE
 > Task :react-native-picker_picker:generateReleaseResources UP-TO-DATE
-> Task :react-native-picker_picker:packageReleaseResources
+> Task :react-native-picker_picker:packageReleaseResources UP-TO-DATE
 > Task :react-native-picker_picker:parseReleaseLocalResources UP-TO-DATE
 > Task :react-native-picker_picker:generateReleaseRFile UP-TO-DATE
 > Task :react-native-picker_picker:javaPreCompileRelease UP-TO-DATE
-
-> Task :react-native-picker_picker:compileReleaseJavaWithJavac
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-
+> Task :react-native-picker_picker:compileReleaseJavaWithJavac UP-TO-DATE
 > Task :react-native-picker_picker:bundleLibRuntimeToDirRelease UP-TO-DATE
 > Task :expo:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :expo:generateReleaseBuildConfig UP-TO-DATE
 > Task :expo:generateReleaseResValues UP-TO-DATE
 > Task :expo:generateReleaseResources UP-TO-DATE
-> Task :expo:packageReleaseResources
+> Task :expo:packageReleaseResources UP-TO-DATE
 > Task :expo:parseReleaseLocalResources UP-TO-DATE
 > Task :expo:generateReleaseRFile UP-TO-DATE
 > Task :expo-constants:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :expo-constants:generateReleaseBuildConfig UP-TO-DATE
 > Task :expo-constants:generateReleaseResValues UP-TO-DATE
 > Task :expo-constants:generateReleaseResources UP-TO-DATE
-> Task :expo-constants:packageReleaseResources
+> Task :expo-constants:packageReleaseResources UP-TO-DATE
 > Task :expo-constants:parseReleaseLocalResources UP-TO-DATE
 > Task :expo-constants:generateReleaseRFile UP-TO-DATE
 > Task :expo-modules-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :expo-modules-core:generateReleaseBuildConfig UP-TO-DATE
 > Task :expo-modules-core:generateReleaseResValues UP-TO-DATE
 > Task :expo-modules-core:generateReleaseResources UP-TO-DATE
-> Task :expo-modules-core:packageReleaseResources
+> Task :expo-modules-core:packageReleaseResources UP-TO-DATE
 > Task :expo-modules-core:parseReleaseLocalResources UP-TO-DATE
 > Task :expo-modules-core:generateReleaseRFile UP-TO-DATE
-> Task :react-native-screens:compileReleaseKotlin
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:56:9 The corresponding parameter in the supertype 'BaseReactPackage' is named 'name'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:57:9 The corresponding parameter in the supertype 'BaseReactPackage' is named 'reactContext'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/RNScreensPackage.kt:70:17 'constructor(name: String, className: String, canOverrideExistingModule: Boolean, needsEagerInit: Boolean, hasConstants: Boolean, isCxxModule: Boolean, isTurboModule: Boolean): ReactModuleInfo' is deprecated. This constructor is deprecated and will be removed in the future. Use ReactModuleInfo(String, String, boolean, boolean, boolean, boolean)].
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:48:77 Unchecked cast of '(CoordinatorLayout.Behavior<View!>?..CoordinatorLayout.Behavior<*>?)' to 'BottomSheetBehavior<Screen>'.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:383:36 'fun setTranslucent(screen: Screen, activity: Activity?, context: ReactContext?): Unit' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:402:36 'fun setColor(screen: Screen, activity: Activity?, context: ReactContext?): Unit' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:420:36 'fun setNavigationBarColor(screen: Screen, activity: Activity?): Unit' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/Screen.kt:437:36 'fun setNavigationBarTranslucent(screen: Screen, activity: Activity?): Unit' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:217:31 'var targetElevation: Float' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:220:13 'fun setHasOptionsMenu(p0: Boolean): Unit' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:397:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:404:22 'fun onPrepareOptionsMenu(p0: Menu): Unit' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:407:18 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackFragment.kt:412:22 'fun onCreateOptionsMenu(p0: Menu, p1: MenuInflater): Unit' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenStackHeaderConfig.kt:435:18 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:203:14 'var statusBarColor: Int?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:220:14 'var isStatusBarTranslucent: Boolean?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:237:14 'var navigationBarColor: Int?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenViewManager.kt:246:14 'var isNavigationBarTranslucent: Boolean?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:55:42 'fun replaceSystemWindowInsets(p0: Int, p1: Int, p2: Int, p3: Int): WindowInsetsCompat' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:56:39 'val systemWindowInsetLeft: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:58:39 'val systemWindowInsetRight: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:59:39 'val systemWindowInsetBottom: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:102:53 'var statusBarColor: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:106:37 'var statusBarColor: Int?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:113:48 'var statusBarColor: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:116:32 'var statusBarColor: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:162:49 'var isStatusBarTranslucent: Boolean?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:218:43 'var navigationBarColor: Int?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:218:72 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:224:16 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:241:55 'var isNavigationBarTranslucent: Boolean?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:283:13 'fun setColor(screen: Screen, activity: Activity?, context: ReactContext?): Unit' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:285:13 'fun setTranslucent(screen: Screen, activity: Activity?, context: ReactContext?): Unit' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:289:13 'fun setNavigationBarColor(screen: Screen, activity: Activity?): Unit' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:290:13 'fun setNavigationBarTranslucent(screen: Screen, activity: Activity?): Unit' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:354:42 'var statusBarColor: Int?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:356:48 'var isStatusBarTranslucent: Boolean?' is deprecated. For apps targeting SDK 35 or above this prop has no effect because edge-to-edge is enabled by default and the status bar is always translucent.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:359:57 'var navigationBarColor: Int?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/ScreenWindowTraits.kt:360:63 'var isNavigationBarTranslucent: Boolean?' is deprecated. For all apps targeting Android SDK 35 or above edge-to-edge is enabled by default.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:7:8 'object ReactFeatureFlags : Any' is deprecated. Use com.facebook.react.internal.featureflags.ReactNativeFeatureFlags instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:25:13 'object ReactFeatureFlags : Any' is deprecated. Use com.facebook.react.internal.featureflags.ReactNativeFeatureFlags instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:32:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'left'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:33:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'top'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:34:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'right'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:35:9 The corresponding parameter in the supertype 'ReactViewGroup' is named 'bottom'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:71:9 The corresponding parameter in the supertype 'RootView' is named 'childView'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:72:9 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:79:46 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:83:9 The corresponding parameter in the supertype 'RootView' is named 'childView'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:84:9 The corresponding parameter in the supertype 'RootView' is named 'ev'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/BottomSheetDialogRootView.kt:95:34 The corresponding parameter in the supertype 'RootView' is named 't'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:63:9 The corresponding parameter in the supertype 'ReactCompoundView' is named 'touchX'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:64:9 The corresponding parameter in the supertype 'ReactCompoundView' is named 'touchY'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:68:9 The corresponding parameter in the supertype 'ReactCompoundViewGroup' is named 'touchX'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/bottomsheet/DimmingView.kt:69:9 The corresponding parameter in the supertype 'ReactCompoundViewGroup' is named 'touchY'. This may cause problems when calling this function with named arguments.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/android/src/main/java/com/swmansion/rnscreens/gamma/tabs/TabsHostViewManager.kt:37:9 The corresponding parameter in the supertype 'TabsHostViewManager' is named 'view'. This may cause problems when calling this function with named arguments.
-
-> Task :react-native-screens:compileReleaseJavaWithJavac
-> Task :react-native-screens:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-modules-core:compileReleaseKotlin UP-TO-DATE
 > Task :expo-modules-core:javaPreCompileRelease UP-TO-DATE
+> Task :expo-modules-core:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-modules-core:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :expo-constants:compileReleaseKotlin UP-TO-DATE
 > Task :expo-constants:javaPreCompileRelease UP-TO-DATE
+> Task :expo-constants:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-constants:bundleLibCompileToJarRelease UP-TO-DATE
 > Task :expo-dev-client:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :expo-dev-client:dataBindingMergeDependencyArtifactsRelease UP-TO-DATE
 > Task :expo-dev-client:generateReleaseResValues UP-TO-DATE
 > Task :expo-dev-client:generateReleaseResources UP-TO-DATE
-> Task :expo-dev-client:packageReleaseResources
+> Task :expo-dev-client:packageReleaseResources UP-TO-DATE
 > Task :expo-dev-client:parseReleaseLocalResources UP-TO-DATE
 > Task :expo-dev-client:dataBindingGenBaseClassesRelease UP-TO-DATE
 > Task :expo-dev-client:generateReleaseBuildConfig UP-TO-DATE
 > Task :expo-dev-client:generateReleaseRFile UP-TO-DATE
+> Task :expo-dev-client:compileReleaseKotlin NO-SOURCE
 > Task :expo-dev-client:javaPreCompileRelease UP-TO-DATE
+> Task :expo-dev-client:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-dev-client:bundleLibCompileToJarRelease UP-TO-DATE
 > Task :expo-dev-launcher:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :expo-dev-launcher:dataBindingMergeDependencyArtifactsRelease UP-TO-DATE
 > Task :expo-dev-launcher:generateReleaseResValues UP-TO-DATE
 > Task :expo-dev-launcher:generateReleaseResources UP-TO-DATE
-> Task :expo-dev-launcher:packageReleaseResources
+> Task :expo-dev-launcher:packageReleaseResources UP-TO-DATE
 > Task :expo-dev-launcher:parseReleaseLocalResources UP-TO-DATE
 > Task :expo-dev-menu:generateReleaseResValues UP-TO-DATE
 > Task :expo-dev-menu:generateReleaseResources UP-TO-DATE
-> Task :expo-dev-menu:packageReleaseResources
+> Task :expo-dev-menu:packageReleaseResources UP-TO-DATE
 > Task :expo-dev-menu:parseReleaseLocalResources UP-TO-DATE
 > Task :expo-dev-menu:generateReleaseRFile UP-TO-DATE
 > Task :expo-dev-menu-interface:generateReleaseResValues UP-TO-DATE
 > Task :expo-dev-menu-interface:generateReleaseResources UP-TO-DATE
-> Task :expo-dev-menu-interface:packageReleaseResources
+> Task :expo-dev-menu-interface:packageReleaseResources UP-TO-DATE
 > Task :expo-dev-menu-interface:parseReleaseLocalResources UP-TO-DATE
 > Task :expo-dev-menu-interface:generateReleaseRFile UP-TO-DATE
 > Task :expo-json-utils:generateReleaseResValues UP-TO-DATE
 > Task :expo-json-utils:generateReleaseResources UP-TO-DATE
-> Task :expo-json-utils:packageReleaseResources
+> Task :expo-json-utils:packageReleaseResources UP-TO-DATE
 > Task :expo-json-utils:parseReleaseLocalResources UP-TO-DATE
 > Task :expo-json-utils:generateReleaseRFile UP-TO-DATE
 > Task :expo-manifests:generateReleaseResValues UP-TO-DATE
 > Task :expo-manifests:generateReleaseResources UP-TO-DATE
-> Task :expo-manifests:packageReleaseResources
+> Task :expo-manifests:packageReleaseResources UP-TO-DATE
 > Task :expo-manifests:parseReleaseLocalResources UP-TO-DATE
 > Task :expo-manifests:generateReleaseRFile UP-TO-DATE
 > Task :expo-updates-interface:generateReleaseResValues UP-TO-DATE
 > Task :expo-updates-interface:generateReleaseResources UP-TO-DATE
-> Task :expo-updates-interface:packageReleaseResources
+> Task :expo-updates-interface:packageReleaseResources UP-TO-DATE
 > Task :expo-updates-interface:parseReleaseLocalResources UP-TO-DATE
 > Task :expo-updates-interface:generateReleaseRFile UP-TO-DATE
 > Task :expo-dev-launcher:dataBindingGenBaseClassesRelease UP-TO-DATE
@@ -627,95 +488,106 @@ w: file:///opt/build-farm/apppuntodeventa/node_modules/react-native-screens/andr
 > Task :expo-dev-menu:generateReleaseBuildConfig UP-TO-DATE
 > Task :expo-dev-menu-interface:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :expo-dev-menu-interface:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-dev-menu-interface:compileReleaseKotlin UP-TO-DATE
 > Task :expo-dev-menu-interface:javaPreCompileRelease UP-TO-DATE
+> Task :expo-dev-menu-interface:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-dev-menu-interface:bundleLibCompileToJarRelease UP-TO-DATE
 > Task :expo-json-utils:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :expo-json-utils:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-json-utils:compileReleaseKotlin UP-TO-DATE
 > Task :expo-json-utils:javaPreCompileRelease UP-TO-DATE
+> Task :expo-json-utils:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-json-utils:bundleLibCompileToJarRelease UP-TO-DATE
 > Task :expo-manifests:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :expo-manifests:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-manifests:compileReleaseKotlin UP-TO-DATE
 > Task :expo-manifests:javaPreCompileRelease UP-TO-DATE
+> Task :expo-manifests:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-manifests:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :expo-dev-menu:compileReleaseKotlin UP-TO-DATE
 > Task :expo-dev-menu:javaPreCompileRelease UP-TO-DATE
+> Task :expo-dev-menu:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-dev-menu:bundleLibCompileToJarRelease UP-TO-DATE
 > Task :expo-updates-interface:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :expo-updates-interface:generateReleaseBuildConfig UP-TO-DATE
+> Task :expo-updates-interface:compileReleaseKotlin UP-TO-DATE
 > Task :expo-updates-interface:javaPreCompileRelease UP-TO-DATE
+> Task :expo-updates-interface:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-updates-interface:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :expo-dev-launcher:compileReleaseKotlin UP-TO-DATE
 > Task :expo-dev-launcher:javaPreCompileRelease UP-TO-DATE
+> Task :expo-dev-launcher:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-dev-launcher:bundleLibCompileToJarRelease UP-TO-DATE
 > Task :expo-speech-recognition:checkKotlinGradlePluginConfigurationErrors SKIPPED
 > Task :expo-speech-recognition:generateReleaseBuildConfig UP-TO-DATE
 > Task :expo-speech-recognition:generateReleaseResValues UP-TO-DATE
 > Task :expo-speech-recognition:generateReleaseResources UP-TO-DATE
-> Task :expo-speech-recognition:packageReleaseResources
+> Task :expo-speech-recognition:packageReleaseResources UP-TO-DATE
 > Task :expo-speech-recognition:parseReleaseLocalResources UP-TO-DATE
 > Task :expo-speech-recognition:generateReleaseRFile UP-TO-DATE
+> Task :expo-speech-recognition:compileReleaseKotlin UP-TO-DATE
 > Task :expo-speech-recognition:javaPreCompileRelease UP-TO-DATE
+> Task :expo-speech-recognition:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo-speech-recognition:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :expo:compileReleaseKotlin UP-TO-DATE
 > Task :expo:javaPreCompileRelease UP-TO-DATE
+> Task :expo:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :expo:bundleLibRuntimeToDirRelease UP-TO-DATE
 > Task :react-native-linear-gradient:generateReleaseBuildConfig UP-TO-DATE
 > Task :react-native-linear-gradient:generateReleaseResValues UP-TO-DATE
 > Task :react-native-linear-gradient:generateReleaseResources UP-TO-DATE
-> Task :react-native-linear-gradient:packageReleaseResources
+> Task :react-native-linear-gradient:packageReleaseResources UP-TO-DATE
 > Task :react-native-linear-gradient:parseReleaseLocalResources UP-TO-DATE
 > Task :react-native-linear-gradient:generateReleaseRFile UP-TO-DATE
 > Task :react-native-linear-gradient:javaPreCompileRelease UP-TO-DATE
-
-> Task :react-native-linear-gradient:compileReleaseJavaWithJavac
-
+> Task :react-native-linear-gradient:compileReleaseJavaWithJavac UP-TO-DATE
 > Task :react-native-linear-gradient:bundleLibRuntimeToDirRelease UP-TO-DATE
-Note: /opt/build-farm/apppuntodeventa/node_modules/react-native-linear-gradient/android/src/main/java/com/BV/LinearGradient/LinearGradientPackage.java uses or overrides a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
 > Task :react-native-ping:generateReleaseBuildConfig UP-TO-DATE
 > Task :react-native-ping:generateReleaseResValues UP-TO-DATE
 > Task :react-native-ping:generateReleaseResources UP-TO-DATE
-> Task :react-native-ping:packageReleaseResources
+> Task :react-native-ping:packageReleaseResources UP-TO-DATE
 > Task :react-native-ping:parseReleaseLocalResources UP-TO-DATE
 > Task :react-native-ping:generateReleaseRFile UP-TO-DATE
 > Task :react-native-ping:javaPreCompileRelease UP-TO-DATE
-
-> Task :react-native-ping:compileReleaseJavaWithJavac
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-
+> Task :react-native-ping:compileReleaseJavaWithJavac UP-TO-DATE
 > Task :react-native-ping:bundleLibRuntimeToDirRelease UP-TO-DATE
 > Task :react-native-svg:generateReleaseBuildConfig UP-TO-DATE
 > Task :react-native-svg:generateReleaseResValues UP-TO-DATE
 > Task :react-native-svg:generateReleaseResources UP-TO-DATE
-> Task :react-native-svg:packageReleaseResources
+> Task :react-native-svg:packageReleaseResources UP-TO-DATE
 > Task :react-native-svg:parseReleaseLocalResources UP-TO-DATE
 > Task :react-native-svg:generateReleaseRFile UP-TO-DATE
 > Task :react-native-svg:javaPreCompileRelease UP-TO-DATE
-
-> Task :react-native-svg:compileReleaseJavaWithJavac
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-Note: Some input files use unchecked or unsafe operations.
-Note: Recompile with -Xlint:unchecked for details.
-
-> Task :expo-modules-core:compileReleaseKotlin
+> Task :react-native-svg:compileReleaseJavaWithJavac UP-TO-DATE
 > Task :react-native-svg:bundleLibRuntimeToDirRelease UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:generateReleaseBuildConfig UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:generateReleaseResValues UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:generateReleaseResources UP-TO-DATE
-> Task :react-native-thermal-receipt-printer-image-qr:packageReleaseResources
+> Task :react-native-thermal-receipt-printer-image-qr:packageReleaseResources UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:parseReleaseLocalResources UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:generateReleaseRFile UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:javaPreCompileRelease UP-TO-DATE
-
-> Task :react-native-thermal-receipt-printer-image-qr:compileReleaseJavaWithJavac
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-
+> Task :react-native-thermal-receipt-printer-image-qr:compileReleaseJavaWithJavac UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:bundleLibRuntimeToDirRelease UP-TO-DATE
 > Task :react-native-view-shot:generateReleaseBuildConfig UP-TO-DATE
 > Task :react-native-view-shot:generateReleaseResValues UP-TO-DATE
 > Task :react-native-view-shot:generateReleaseResources UP-TO-DATE
-> Task :react-native-view-shot:packageReleaseResources
+> Task :react-native-view-shot:packageReleaseResources UP-TO-DATE
 > Task :react-native-view-shot:parseReleaseLocalResources UP-TO-DATE
 > Task :react-native-view-shot:generateReleaseRFile UP-TO-DATE
 > Task :react-native-view-shot:javaPreCompileRelease UP-TO-DATE
-
-> Task :react-native-view-shot:compileReleaseJavaWithJavac
-
+> Task :react-native-view-shot:compileReleaseJavaWithJavac UP-TO-DATE
 > Task :react-native-view-shot:bundleLibRuntimeToDirRelease UP-TO-DATE
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
+> Task :expo-dev-launcher:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-dev-menu:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-dev-menu-interface:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-speech-recognition:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-modules-core:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-constants:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-dev-client:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-manifests:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-json-utils:bundleLibRuntimeToDirRelease UP-TO-DATE
+> Task :expo-updates-interface:bundleLibRuntimeToDirRelease UP-TO-DATE
 > Task :app:checkReleaseDuplicateClasses UP-TO-DATE
 > Task :app:buildKotlinToolingMetadata UP-TO-DATE
 > Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
@@ -748,120 +620,61 @@ Note: Recompile with -Xlint:deprecation for details.
 > Task :app:createBundleReleaseJsAndAssets
 Starting Metro Bundler
 warning: Bundler cache is empty, rebuilding (this may take a minute)
-
-> Task :expo-modules-core:compileReleaseKotlin
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt:48:87 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt:91:85 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-modules-core/android/src/main/java/expo/modules/adapters/react/apploader/RNHeadlessAppLoader.kt:120:83 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-modules-core/android/src/main/java/expo/modules/apploader/AppLoaderProvider.kt:34:52 Unchecked cast of 'Class<*>!' to 'Class<out HeadlessAppLoader>'.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/AppContext.kt:30:8 'typealias ErrorManagerModule = JSLoggerModule' is deprecated. Use JSLoggerModule instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/AppContext.kt:253:21 'typealias ErrorManagerModule = JSLoggerModule' is deprecated. Use JSLoggerModule instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/AppContext.kt:343:21 'val DEFAULT: Int' is deprecated. UIManagerType.DEFAULT will be deleted in the next release of React Native. Use [LEGACY] instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/defaultmodules/NativeModulesProxyModule.kt:16:5 'fun Constants(legacyConstantsProvider: () -> Map<String, Any?>): Unit' is deprecated. Use `Constant` or `Property` instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/jni/PromiseImpl.kt:65:51 'val errorManager: JSLoggerModule?' is deprecated. Use AppContext.jsLogger instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/jni/PromiseImpl.kt:69:22 'fun reportExceptionToLogBox(codedException: CodedException): Unit' is deprecated. Use appContext.jsLogger.error(...) instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewDefinitionBuilder.kt:464:16 'val errorManager: JSLoggerModule?' is deprecated. Use AppContext.jsLogger instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewDefinitionBuilder.kt:464:30 'fun reportExceptionToLogBox(codedException: CodedException): Unit' is deprecated. Use appContext.jsLogger.error(...) instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewManagerDefinition.kt:41:16 'val errorManager: JSLoggerModule?' is deprecated. Use AppContext.jsLogger instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-modules-core/android/src/main/java/expo/modules/kotlin/views/ViewManagerDefinition.kt:41:30 'fun reportExceptionToLogBox(codedException: CodedException): Unit' is deprecated. Use appContext.jsLogger.error(...) instead.
-
-> Task :app:createBundleReleaseJsAndAssets
 Android ./index.js ░░░░░░░░░░░░░░░░  0.0% (0/1)
-Android ./index.js ▓░░░░░░░░░░░░░░░  9.8% (13/47)
-Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 34.6% ( 80/136)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% (120/321)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% (160/364)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% (233/454)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% (248/508)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% (258/523)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% (264/529)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% (272/547)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% (285/570)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% (310/625)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% (328/638)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% ( 377/2384)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% ( 426/2449)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% ( 465/2527)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% ( 513/2590)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% ( 571/2979)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% ( 652/3036)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% ( 767/3051)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% (1256/3051)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% (1794/3051)
-Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% (1906/3051)
-Android ./index.js ▓▓▓▓▓▓▓▓░░░░░░░░ 51.8% (2196/3051)
-Android ./index.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 61.1% (2388/3056)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.7% (2549/3188)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.7% (2660/3449)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.7% (2717/3647)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.7% (2878/3657)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.7% (3018/3727)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.7% (3107/3893)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 65.7% (3124/3899)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 73.3% (3401/3972)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 84.7% (3672/4014)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 85.0% (3720/4036)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 91.4% (3911/4091)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.7% (4094/4222)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 98.1% (4234/4276)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (4389/4389)
-Android Bundled 145799ms index.js (4389 modules)
-Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (4389/4389)
+Android ./index.js ▓░░░░░░░░░░░░░░░ 12.5% ( 6/37)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% ( 95/298)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (173/393)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (239/473)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (254/521)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (262/532)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (265/536)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (266/536)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (278/555)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (308/627)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (373/671)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (405/722)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% ( 415/2442)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% ( 473/2518)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% ( 506/2572)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% ( 540/2611)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% ( 577/2986)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% ( 818/3063)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (1011/3063)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (1146/3063)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (1394/3063)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (1478/3063)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (1730/3063)
+Android ./index.js ▓▓▓▓▓░░░░░░░░░░░ 35.3% (1820/3063)
+Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 40.1% (1940/3063)
+Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 42.2% (1990/3063)
+Android ./index.js ▓▓▓▓▓▓░░░░░░░░░░ 43.6% (2023/3063)
+Android ./index.js ▓▓▓▓▓▓▓░░░░░░░░░ 48.8% (2140/3063)
+Android ./index.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 58.1% (2335/3063)
+Android ./index.js ▓▓▓▓▓▓▓▓▓░░░░░░░ 60.2% (2377/3063)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.4% (2448/3076)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓░░░░░░ 63.9% (2504/3168)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓░░░░░ 73.1% (2764/3232)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 77.9% (2971/3701)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 77.9% (3016/3729)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 77.9% (3049/3869)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 77.9% (3114/3925)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 77.9% (3211/3968)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓░░░░ 77.9% (3409/4012)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 82.1% (3636/4012)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓░░░ 87.3% (3783/4049)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓░░ 92.3% (3940/4102)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 95.1% (4019/4122)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 96.7% (4086/4221)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 98.2% (4249/4319)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (4391/4391)
+Android Bundled 172627ms index.js (4391 modules)
+Android ./index.js ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░ 99.9% (4391/4391)
 Writing bundle output to: /opt/build-farm/apppuntodeventa/android/app/build/generated/assets/createBundleReleaseJsAndAssets/index.android.bundle
 Writing sourcemap output to: /opt/build-farm/apppuntodeventa/android/app/build/intermediates/sourcemaps/react/release/index.android.bundle.packager.map
 Copying 38 asset files
 Done writing bundle output
 Done writing sourcemap output
 
-> Task :expo-modules-core:compileReleaseJavaWithJavac
-Note: Some input files use or override a deprecated API.
-Note: Recompile with -Xlint:deprecation for details.
-
-> Task :expo-modules-core:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :expo-dev-client:compileReleaseKotlin NO-SOURCE
-> Task :expo-dev-client:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :expo-dev-client:bundleLibCompileToJarRelease UP-TO-DATE
-
-> Task :expo-constants:compileReleaseKotlin
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-constants/android/src/main/java/expo/modules/constants/ConstantsModule.kt:12:5 'fun Constants(legacyConstantsProvider: () -> Map<String, Any?>): Unit' is deprecated. Use `Constant` or `Property` instead.
-
-> Task :expo-dev-menu-interface:compileReleaseKotlin
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-menu-interface/android/src/main/java/expo/interfaces/devmenu/DevMenuInterfacePackage.kt:14:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-menu-interface/android/src/main/java/expo/interfaces/devmenu/ReactHostWrapper.kt:5:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-menu-interface/android/src/main/java/expo/interfaces/devmenu/ReactHostWrapper.kt:19:41 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-menu-interface/android/src/main/java/expo/interfaces/devmenu/ReactHostWrapper.kt:20:33 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-
-> Task :expo-constants:compileReleaseJavaWithJavac
-> Task :expo-constants:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :expo-dev-menu-interface:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :expo-dev-menu-interface:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :expo-json-utils:compileReleaseKotlin
-> Task :expo-json-utils:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :expo-json-utils:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :expo-updates-interface:compileReleaseKotlin
-> Task :expo-updates-interface:compileReleaseJavaWithJavac
-> Task :expo-updates-interface:bundleLibCompileToJarRelease UP-TO-DATE
-
-> Task :expo-manifests:compileReleaseKotlin
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-manifests/android/src/main/java/expo/modules/manifests/core/EmbeddedManifest.kt:19:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-manifests/android/src/main/java/expo/modules/manifests/core/EmbeddedManifest.kt:19:86 'fun getLegacyID(): String' is deprecated. Prefer scopeKey or projectId depending on use case.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-manifests/android/src/main/java/expo/modules/manifests/core/ExpoUpdatesManifest.kt:16:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-manifests/android/src/main/java/expo/modules/manifests/core/Manifest.kt:13:3 Deprecations and opt-ins on a method overridden from 'Any' may not be reported.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-manifests/android/src/main/java/expo/modules/manifests/core/Manifest.kt:15:12 'fun getRawJson(): JSONObject' is deprecated. Prefer to use specific field getters.
-
-> Task :expo-manifests:compileReleaseJavaWithJavac
-> Task :expo-manifests:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :expo-speech-recognition:compileReleaseKotlin
-> Task :expo-speech-recognition:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :expo-speech-recognition:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :expo-dev-menu-interface:bundleLibRuntimeToDirRelease UP-TO-DATE
-> Task :expo-speech-recognition:bundleLibRuntimeToDirRelease UP-TO-DATE
-> Task :expo-modules-core:bundleLibRuntimeToDirRelease UP-TO-DATE
-> Task :expo-constants:bundleLibRuntimeToDirRelease UP-TO-DATE
-> Task :expo-dev-client:bundleLibRuntimeToDirRelease UP-TO-DATE
-> Task :expo-manifests:bundleLibRuntimeToDirRelease UP-TO-DATE
-> Task :expo-json-utils:bundleLibRuntimeToDirRelease UP-TO-DATE
-> Task :expo-updates-interface:bundleLibRuntimeToDirRelease UP-TO-DATE
 > Task :app:generateReleaseResValues UP-TO-DATE
 > Task :app:processReleaseGoogleServices UP-TO-DATE
 > Task :app:mapReleaseSourceSetPaths UP-TO-DATE
@@ -925,7 +738,6 @@ w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-manifests/android/sr
         provider#expo.modules.filesystem.FileSystemFileProvider@android:authorities was tagged at AndroidManifest.xml:0 to replace other declarations but no other declaration present
 
 > Task :app:processReleaseManifest
-> Task :app:processReleaseManifestForPackage
 > Task :expo:compileReleaseLibraryResources UP-TO-DATE
 > Task :expo-constants:compileReleaseLibraryResources UP-TO-DATE
 > Task :expo-dev-client:compileReleaseLibraryResources UP-TO-DATE
@@ -948,23 +760,10 @@ w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-manifests/android/sr
 > Task :react-native-svg:compileReleaseLibraryResources UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:compileReleaseLibraryResources UP-TO-DATE
 > Task :react-native-view-shot:compileReleaseLibraryResources UP-TO-DATE
+> Task :app:processReleaseManifestForPackage
 > Task :react-native-webview:compileReleaseLibraryResources UP-TO-DATE
-
-> Task :expo-dev-menu:compileReleaseKotlin
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-menu/android/src/main/java/com/facebook/react/devsupport/DevMenuSettingsBase.kt:6:8 'class PreferenceManager : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-menu/android/src/main/java/com/facebook/react/devsupport/DevMenuSettingsBase.kt:18:51 'class PreferenceManager : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-menu/android/src/main/java/com/facebook/react/devsupport/DevMenuSettingsBase.kt:18:69 'static fun getDefaultSharedPreferences(p0: Context!): SharedPreferences!' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-menu/android/src/main/java/com/facebook/react/devsupport/DevMenuSettingsBase.kt:51:13 This code uses error suppression for 'NOTHING_TO_OVERRIDE'. While it might compile and work, the compiler behavior is UNSPECIFIED and WILL NOT BE PRESERVED. Please report your use case to the Kotlin issue tracker instead: https://kotl.in/issue
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-menu/android/src/main/java/com/facebook/react/devsupport/DevMenuSettingsBase.kt:58:13 This code uses error suppression for 'NOTHING_TO_OVERRIDE'. While it might compile and work, the compiler behavior is UNSPECIFIED and WILL NOT BE PRESERVED. Please report your use case to the Kotlin issue tracker instead: https://kotl.in/issue
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-menu/android/src/main/java/expo/modules/devmenu/DevMenuPackage.kt:28:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-menu/android/src/main/java/expo/modules/devmenu/DevMenuPackage.kt:47:78 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-menu/android/src/release/java/expo/modules/devmenu/DevMenuManager.kt:80:43 The corresponding parameter in the supertype 'DevMenuManagerInterface' is named 'shouldAutoLaunch'. This may cause problems when calling this function with named arguments.
-
-> Task :expo-dev-menu:compileReleaseJavaWithJavac UP-TO-DATE
-> Task :expo-dev-menu:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :app:processReleaseResources
-> Task :expo-dev-menu:bundleLibRuntimeToDirRelease UP-TO-DATE
-> Task :react-native-async-storage_async-storage:bundleLibCompileToJarRelease
+> Task :expo:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:bundleLibCompileToJarRelease UP-TO-DATE
 > Task :react-native-community_datetimepicker:bundleLibCompileToJarRelease UP-TO-DATE
 > Task :react-native-community_netinfo:bundleLibCompileToJarRelease UP-TO-DATE
 > Task :react-native-linear-gradient:bundleLibCompileToJarRelease UP-TO-DATE
@@ -979,51 +778,7 @@ w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-menu/android/src
 > Task :app:javaPreCompileRelease UP-TO-DATE
 > Task :app:desugarReleaseFileDependencies UP-TO-DATE
 > Task :app:mergeReleaseStartupProfile UP-TO-DATE
-
-> Task :expo-dev-launcher:compileReleaseKotlin
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/DevLauncherPackage.kt:15:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/DevLauncherRecentlyOpenedAppsRegistry.kt:33:47 Unchecked cast of 'MutableMap<Any?, Any?>' to 'MutableMap<String, Any>'.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/DevLauncherRecentlyOpenedAppsRegistry.kt:51:27 'fun getRawJson(): JSONObject' is deprecated. Prefer to use specific field getters.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:37:23 'constructor(p0: String!, p1: Bitmap!, p2: Int): ActivityManager.TaskDescription' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:63:61 'static field FLAG_TRANSLUCENT_STATUS: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:92:45 'var systemUiVisibility: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:95:68 'static field SYSTEM_UI_FLAG_LIGHT_STATUS_BAR: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:99:67 'static field SYSTEM_UI_FLAG_LIGHT_STATUS_BAR: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:103:67 'static field SYSTEM_UI_FLAG_LIGHT_STATUS_BAR: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:107:15 'var systemUiVisibility: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:115:59 'static field FLAG_FULLSCREEN: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:116:61 'static field FLAG_FORCE_NOT_FULLSCREEN: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:118:59 'static field FLAG_FORCE_NOT_FULLSCREEN: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:119:61 'static field FLAG_FULLSCREEN: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:131:23 'fun replaceSystemWindowInsets(p0: Int, p1: Int, p2: Int, p3: Int): WindowInsets' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:132:25 'val systemWindowInsetLeft: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:134:25 'val systemWindowInsetRight: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:135:25 'val systemWindowInsetBottom: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:150:15 'var statusBarColor: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:160:63 'static field FLAG_TRANSLUCENT_NAVIGATION: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:161:25 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:171:63 'static field FLAG_TRANSLUCENT_NAVIGATION: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:175:33 'var systemUiVisibility: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:176:33 'static field SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:177:21 'var systemUiVisibility: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:190:29 'var systemUiVisibility: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:191:62 'static field SYSTEM_UI_FLAG_HIDE_NAVIGATION: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:191:101 'static field SYSTEM_UI_FLAG_FULLSCREEN: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:192:63 'static field SYSTEM_UI_FLAG_HIDE_NAVIGATION: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:192:102 'static field SYSTEM_UI_FLAG_FULLSCREEN: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:192:136 'static field SYSTEM_UI_FLAG_IMMERSIVE: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:193:70 'static field SYSTEM_UI_FLAG_HIDE_NAVIGATION: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:193:109 'static field SYSTEM_UI_FLAG_FULLSCREEN: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:193:143 'static field SYSTEM_UI_FLAG_IMMERSIVE_STICKY: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/main/java/expo/modules/devlauncher/launcher/configurators/DevLauncherExpoActivityConfigurator.kt:196:17 'var systemUiVisibility: Int' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/release/java/expo/modules/devlauncher/DevLauncherController.kt:111:81 'val reactNativeHost: ReactNativeHost' is deprecated. You should not use ReactNativeHost directly in the New Architecture. Use ReactHost instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/release/java/expo/modules/devlauncher/launcher/DevLauncherReactNativeHost.kt:4:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android/src/release/java/expo/modules/devlauncher/launcher/DevLauncherReactNativeHost.kt:8:83 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-
 > Task :app:mergeExtDexRelease UP-TO-DATE
-> Task :expo-dev-launcher:compileReleaseJavaWithJavac
-> Task :expo-dev-launcher:bundleLibCompileToJarRelease UP-TO-DATE
-> Task :expo-dev-launcher:bundleLibRuntimeToDirRelease UP-TO-DATE
 > Task :expo:prepareReleaseArtProfile UP-TO-DATE
 > Task :expo-constants:prepareReleaseArtProfile UP-TO-DATE
 > Task :expo-dev-client:prepareReleaseArtProfile UP-TO-DATE
@@ -1052,42 +807,14 @@ w: file:///opt/build-farm/apppuntodeventa/node_modules/expo-dev-launcher/android
 > Task :react-native-safe-area-context:bundleLibRuntimeToJarRelease UP-TO-DATE
 > Task :react-native-screens:bundleLibRuntimeToJarRelease UP-TO-DATE
 > Task :react-native-webview:bundleLibRuntimeToJarRelease UP-TO-DATE
-> Task :react-native-async-storage_async-storage:bundleLibRuntimeToJarRelease
-
-> Task :expo:compileReleaseKotlin
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ExpoModulesPackage.kt:34:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ExpoReactHostFactory.kt:8:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ExpoReactHostFactory.kt:80:22 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:24:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:58:33 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:105:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:105:38 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:113:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:114:21 'val reactInstanceManager: ReactInstanceManager' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:168:36 'constructor(activity: Activity, reactNativeHost: ReactNativeHost?, appKey: String?, launchOptions: Bundle?, fabricEnabled: Boolean): ReactDelegate' is deprecated. Deprecated since 0.81.0, use one of the other constructors instead.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:279:77 'val reactInstanceManager: ReactInstanceManager' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:282:22 'val reactInstanceManager: ReactInstanceManager' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactActivityDelegateWrapper.kt:286:54 'val reactInstanceManager: ReactInstanceManager' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapper.kt:6:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapper.kt:15:9 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapper.kt:47:60 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapperBase.kt:7:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapperBase.kt:16:23 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapperBase.kt:89:16 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/ReactNativeHostWrapperBase.kt:101:38 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/fetch/ExpoFetchModule.kt:30:39 'constructor(reactContext: ReactContext): ForwardingCookieHandler' is deprecated. Use the default constructor.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/fetch/NativeResponse.kt:42:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/java/expo/modules/fetch/NativeResponse.kt:44:11 'fun deallocate(): Unit' is deprecated. Use sharedObjectDidRelease() instead.
-
-> Task :expo:compileReleaseJavaWithJavac
-> Task :expo:bundleLibRuntimeToDirRelease UP-TO-DATE
-> Task :expo:bundleLibCompileToJarRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:bundleLibRuntimeToJarRelease UP-TO-DATE
 > Task :react-native-community_netinfo:bundleLibRuntimeToJarRelease UP-TO-DATE
 > Task :react-native-picker_picker:bundleLibRuntimeToJarRelease UP-TO-DATE
 > Task :expo:bundleLibRuntimeToJarRelease UP-TO-DATE
 > Task :react-native-linear-gradient:bundleLibRuntimeToJarRelease UP-TO-DATE
 > Task :react-native-ping:bundleLibRuntimeToJarRelease UP-TO-DATE
 > Task :react-native-svg:bundleLibRuntimeToJarRelease UP-TO-DATE
+> Task :app:processReleaseResources
 > Task :react-native-thermal-receipt-printer-image-qr:bundleLibRuntimeToJarRelease UP-TO-DATE
 > Task :react-native-view-shot:bundleLibRuntimeToJarRelease UP-TO-DATE
 > Task :expo-dev-launcher:bundleLibRuntimeToJarRelease UP-TO-DATE
@@ -1131,16 +858,7 @@ w: file:///opt/build-farm/apppuntodeventa/node_modules/expo/android/src/main/jav
 > Task :expo-json-utils:compileReleaseShaders NO-SOURCE
 > Task :expo-json-utils:generateReleaseAssets UP-TO-DATE
 > Task :expo-json-utils:mergeReleaseAssets UP-TO-DATE
-
-> Task :app:compileReleaseKotlin
-w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymous/qhubomorposapp/MainApplication.kt:9:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymous/qhubomorposapp/MainApplication.kt:21:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
-w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymous/qhubomorposapp/MainApplication.kt:21:33 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
-
 > Task :expo-manifests:mergeReleaseShaders UP-TO-DATE
-> Task :app:compileReleaseJavaWithJavac
-> Task :app:dexBuilderRelease
-> Task :app:mergeReleaseGlobalSynthetics UP-TO-DATE
 > Task :expo-manifests:compileReleaseShaders NO-SOURCE
 > Task :expo-manifests:generateReleaseAssets UP-TO-DATE
 > Task :expo-manifests:mergeReleaseAssets UP-TO-DATE
@@ -1208,7 +926,6 @@ w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymou
 > Task :app:compressReleaseAssets
 > Task :app:extractReleaseVersionControlInfo UP-TO-DATE
 > Task :app:extractProguardFiles UP-TO-DATE
-> Task :app:mergeDexRelease
 > Task :expo:processReleaseJavaRes UP-TO-DATE
 > Task :expo:createFullJarRelease UP-TO-DATE
 > Task :expo:extractProguardFiles UP-TO-DATE
@@ -1238,7 +955,6 @@ w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymou
 > Task :expo-dev-menu-interface:extractProguardFiles UP-TO-DATE
 > Task :expo-dev-menu-interface:generateReleaseLintModel UP-TO-DATE
 > Task :expo-dev-menu-interface:prepareLintJarForPublish UP-TO-DATE
-> Task :app:compileReleaseArtProfile
 > Task :expo-json-utils:processReleaseJavaRes UP-TO-DATE
 > Task :expo-json-utils:createFullJarRelease UP-TO-DATE
 > Task :expo-json-utils:extractProguardFiles UP-TO-DATE
@@ -1266,66 +982,65 @@ w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymou
 > Task :expo:generateReleaseLintModel UP-TO-DATE
 > Task :expo:prepareLintJarForPublish UP-TO-DATE
 > Task :react-native-async-storage_async-storage:processReleaseJavaRes NO-SOURCE
-> Task :react-native-async-storage_async-storage:createFullJarRelease
+> Task :react-native-async-storage_async-storage:createFullJarRelease UP-TO-DATE
 > Task :react-native-async-storage_async-storage:extractProguardFiles UP-TO-DATE
-> Task :react-native-async-storage_async-storage:generateReleaseLintModel
+> Task :react-native-async-storage_async-storage:generateReleaseLintModel UP-TO-DATE
 > Task :react-native-async-storage_async-storage:prepareLintJarForPublish UP-TO-DATE
 > Task :react-native-community_datetimepicker:processReleaseJavaRes UP-TO-DATE
 > Task :react-native-community_datetimepicker:createFullJarRelease UP-TO-DATE
 > Task :react-native-community_datetimepicker:extractProguardFiles UP-TO-DATE
-> Task :react-native-community_datetimepicker:generateReleaseLintModel
+> Task :react-native-community_datetimepicker:generateReleaseLintModel UP-TO-DATE
 > Task :react-native-community_datetimepicker:prepareLintJarForPublish UP-TO-DATE
 > Task :react-native-community_netinfo:processReleaseJavaRes NO-SOURCE
 > Task :react-native-community_netinfo:createFullJarRelease UP-TO-DATE
 > Task :react-native-community_netinfo:extractProguardFiles UP-TO-DATE
-> Task :react-native-community_netinfo:generateReleaseLintModel
+> Task :react-native-community_netinfo:generateReleaseLintModel UP-TO-DATE
 > Task :react-native-community_netinfo:prepareLintJarForPublish UP-TO-DATE
 > Task :react-native-linear-gradient:processReleaseJavaRes NO-SOURCE
 > Task :react-native-linear-gradient:createFullJarRelease UP-TO-DATE
 > Task :react-native-linear-gradient:extractProguardFiles UP-TO-DATE
-> Task :react-native-linear-gradient:generateReleaseLintModel
+> Task :react-native-linear-gradient:generateReleaseLintModel UP-TO-DATE
 > Task :react-native-linear-gradient:prepareLintJarForPublish UP-TO-DATE
 > Task :react-native-picker_picker:processReleaseJavaRes NO-SOURCE
 > Task :react-native-picker_picker:createFullJarRelease UP-TO-DATE
 > Task :react-native-picker_picker:extractProguardFiles UP-TO-DATE
-> Task :react-native-picker_picker:generateReleaseLintModel
+> Task :react-native-picker_picker:generateReleaseLintModel UP-TO-DATE
 > Task :react-native-picker_picker:prepareLintJarForPublish UP-TO-DATE
 > Task :react-native-ping:processReleaseJavaRes NO-SOURCE
 > Task :react-native-ping:createFullJarRelease UP-TO-DATE
 > Task :react-native-ping:extractProguardFiles UP-TO-DATE
-> Task :react-native-ping:generateReleaseLintModel
+> Task :react-native-ping:generateReleaseLintModel UP-TO-DATE
 > Task :react-native-ping:prepareLintJarForPublish UP-TO-DATE
 > Task :react-native-safe-area-context:processReleaseJavaRes UP-TO-DATE
 > Task :react-native-safe-area-context:createFullJarRelease UP-TO-DATE
 > Task :react-native-safe-area-context:extractProguardFiles UP-TO-DATE
-> Task :react-native-safe-area-context:generateReleaseLintModel
+> Task :react-native-safe-area-context:generateReleaseLintModel UP-TO-DATE
 > Task :react-native-safe-area-context:prepareLintJarForPublish UP-TO-DATE
 > Task :react-native-screens:processReleaseJavaRes UP-TO-DATE
 > Task :react-native-screens:createFullJarRelease UP-TO-DATE
 > Task :react-native-screens:extractProguardFiles UP-TO-DATE
-> Task :react-native-screens:generateReleaseLintModel
+> Task :react-native-screens:generateReleaseLintModel UP-TO-DATE
 > Task :react-native-screens:prepareLintJarForPublish UP-TO-DATE
 > Task :react-native-svg:processReleaseJavaRes NO-SOURCE
 > Task :react-native-svg:createFullJarRelease UP-TO-DATE
 > Task :react-native-svg:extractProguardFiles UP-TO-DATE
-> Task :react-native-svg:generateReleaseLintModel
+> Task :react-native-svg:generateReleaseLintModel UP-TO-DATE
 > Task :react-native-svg:prepareLintJarForPublish UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:processReleaseJavaRes NO-SOURCE
 > Task :react-native-thermal-receipt-printer-image-qr:createFullJarRelease UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:extractProguardFiles UP-TO-DATE
-> Task :react-native-thermal-receipt-printer-image-qr:generateReleaseLintModel
+> Task :react-native-thermal-receipt-printer-image-qr:generateReleaseLintModel UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:prepareLintJarForPublish UP-TO-DATE
 > Task :react-native-view-shot:processReleaseJavaRes NO-SOURCE
 > Task :react-native-view-shot:createFullJarRelease UP-TO-DATE
 > Task :react-native-view-shot:extractProguardFiles UP-TO-DATE
-> Task :react-native-view-shot:generateReleaseLintModel
+> Task :react-native-view-shot:generateReleaseLintModel UP-TO-DATE
 > Task :react-native-view-shot:prepareLintJarForPublish UP-TO-DATE
 > Task :react-native-webview:processReleaseJavaRes UP-TO-DATE
 > Task :react-native-webview:createFullJarRelease UP-TO-DATE
 > Task :react-native-webview:extractProguardFiles UP-TO-DATE
-> Task :react-native-webview:generateReleaseLintModel
+> Task :react-native-webview:generateReleaseLintModel UP-TO-DATE
 > Task :react-native-webview:prepareLintJarForPublish UP-TO-DATE
-> Task :app:generateReleaseLintVitalReportModel
 > Task :react-native-community_datetimepicker:stripReleaseDebugSymbols NO-SOURCE
 > Task :react-native-community_datetimepicker:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
 > Task :react-native-community_datetimepicker:extractDeepLinksForAarRelease UP-TO-DATE
@@ -1344,15 +1059,15 @@ w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymou
 > Task :react-native-safe-area-context:mergeReleaseJavaResource UP-TO-DATE
 > Task :react-native-safe-area-context:syncReleaseLibJars UP-TO-DATE
 > Task :react-native-safe-area-context:bundleReleaseLocalLintAar UP-TO-DATE
-> Task :react-native-screens:stripReleaseDebugSymbols
+> Task :react-native-screens:stripReleaseDebugSymbols UP-TO-DATE
+> Task :react-native-screens:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
 > Task :react-native-screens:extractDeepLinksForAarRelease UP-TO-DATE
-> Task :react-native-screens:copyReleaseJniLibsProjectAndLocalJars
 > Task :react-native-screens:extractReleaseAnnotations UP-TO-DATE
 > Task :react-native-screens:mergeReleaseGeneratedProguardFiles UP-TO-DATE
 > Task :react-native-screens:mergeReleaseConsumerProguardFiles UP-TO-DATE
 > Task :react-native-screens:mergeReleaseJavaResource UP-TO-DATE
 > Task :react-native-screens:syncReleaseLibJars UP-TO-DATE
-> Task :react-native-screens:bundleReleaseLocalLintAar
+> Task :react-native-screens:bundleReleaseLocalLintAar UP-TO-DATE
 > Task :react-native-webview:stripReleaseDebugSymbols NO-SOURCE
 > Task :react-native-webview:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
 > Task :react-native-webview:extractDeepLinksForAarRelease UP-TO-DATE
@@ -1365,12 +1080,12 @@ w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymou
 > Task :react-native-async-storage_async-storage:stripReleaseDebugSymbols NO-SOURCE
 > Task :react-native-async-storage_async-storage:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
 > Task :react-native-async-storage_async-storage:extractDeepLinksForAarRelease UP-TO-DATE
-> Task :react-native-async-storage_async-storage:extractReleaseAnnotations
+> Task :react-native-async-storage_async-storage:extractReleaseAnnotations UP-TO-DATE
 > Task :react-native-async-storage_async-storage:mergeReleaseGeneratedProguardFiles UP-TO-DATE
 > Task :react-native-async-storage_async-storage:mergeReleaseConsumerProguardFiles UP-TO-DATE
 > Task :react-native-async-storage_async-storage:mergeReleaseJavaResource UP-TO-DATE
-> Task :react-native-async-storage_async-storage:syncReleaseLibJars
-> Task :react-native-async-storage_async-storage:bundleReleaseLocalLintAar
+> Task :react-native-async-storage_async-storage:syncReleaseLibJars UP-TO-DATE
+> Task :react-native-async-storage_async-storage:bundleReleaseLocalLintAar UP-TO-DATE
 > Task :react-native-community_netinfo:stripReleaseDebugSymbols NO-SOURCE
 > Task :react-native-community_netinfo:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
 > Task :react-native-community_netinfo:extractDeepLinksForAarRelease UP-TO-DATE
@@ -1479,15 +1194,15 @@ w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymou
 > Task :expo-speech-recognition:mergeReleaseJavaResource UP-TO-DATE
 > Task :expo-speech-recognition:syncReleaseLibJars UP-TO-DATE
 > Task :expo-speech-recognition:bundleReleaseLocalLintAar UP-TO-DATE
-> Task :expo-modules-core:stripReleaseDebugSymbols
+> Task :expo-modules-core:stripReleaseDebugSymbols UP-TO-DATE
+> Task :expo-modules-core:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
 > Task :expo-modules-core:extractDeepLinksForAarRelease UP-TO-DATE
-> Task :expo-modules-core:copyReleaseJniLibsProjectAndLocalJars
 > Task :expo-modules-core:extractReleaseAnnotations UP-TO-DATE
 > Task :expo-modules-core:mergeReleaseGeneratedProguardFiles UP-TO-DATE
 > Task :expo-modules-core:mergeReleaseConsumerProguardFiles UP-TO-DATE
 > Task :expo-modules-core:mergeReleaseJavaResource UP-TO-DATE
 > Task :expo-modules-core:syncReleaseLibJars UP-TO-DATE
-> Task :expo-modules-core:bundleReleaseLocalLintAar
+> Task :expo-modules-core:bundleReleaseLocalLintAar UP-TO-DATE
 > Task :expo-constants:stripReleaseDebugSymbols NO-SOURCE
 > Task :expo-constants:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
 > Task :expo-constants:extractDeepLinksForAarRelease UP-TO-DATE
@@ -1543,41 +1258,54 @@ w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymou
 > Task :expo-modules-core:writeReleaseLintModelMetadata UP-TO-DATE
 > Task :expo-speech-recognition:writeReleaseLintModelMetadata UP-TO-DATE
 > Task :expo-updates-interface:writeReleaseLintModelMetadata UP-TO-DATE
-> Task :expo:writeReleaseLintModelMetadata UP-TO-DATE
+
+> Task :app:compileReleaseKotlin
+w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymous/qhubomorposapp/MainApplication.kt:9:8 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymous/qhubomorposapp/MainApplication.kt:21:16 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymous/qhubomorposapp/MainApplication.kt:21:33 'class ReactNativeHost : Any' is deprecated. Deprecated in Java.
+
+> Task :app:compileReleaseJavaWithJavac
 > Task :expo:lintVitalAnalyzeRelease
-> Task :expo-constants:lintVitalAnalyzeRelease
-> Task :expo-dev-client:lintVitalAnalyzeRelease
-> Task :expo-dev-launcher:lintVitalAnalyzeRelease
-> Task :expo-dev-menu-interface:lintVitalAnalyzeRelease
-> Task :expo-json-utils:lintVitalAnalyzeRelease
-> Task :expo-manifests:lintVitalAnalyzeRelease
+> Task :app:dexBuilderRelease
+> Task :app:mergeDexRelease
+> Task :app:mergeReleaseGlobalSynthetics UP-TO-DATE
+> Task :app:generateReleaseLintVitalReportModel
+> Task :expo:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :expo-constants:lintVitalAnalyzeRelease UP-TO-DATE
+> Task :expo-dev-client:lintVitalAnalyzeRelease UP-TO-DATE
+> Task :expo-dev-launcher:lintVitalAnalyzeRelease UP-TO-DATE
+> Task :expo-dev-menu:lintVitalAnalyzeRelease UP-TO-DATE
+> Task :expo-dev-menu-interface:lintVitalAnalyzeRelease UP-TO-DATE
+> Task :expo-json-utils:lintVitalAnalyzeRelease UP-TO-DATE
+> Task :expo-manifests:lintVitalAnalyzeRelease UP-TO-DATE
 > Task :expo-modules-core:lintVitalAnalyzeRelease UP-TO-DATE
-> Task :expo-dev-menu:lintVitalAnalyzeRelease
-> Task :expo-speech-recognition:lintVitalAnalyzeRelease
-> Task :expo-updates-interface:lintVitalAnalyzeRelease
-> Task :react-native-async-storage_async-storage:writeReleaseLintModelMetadata
+> Task :expo-speech-recognition:lintVitalAnalyzeRelease UP-TO-DATE
+> Task :expo-updates-interface:lintVitalAnalyzeRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:lintVitalAnalyzeRelease UP-TO-DATE
+> Task :react-native-async-storage_async-storage:writeReleaseLintModelMetadata UP-TO-DATE
 > Task :react-native-community_datetimepicker:lintVitalAnalyzeRelease UP-TO-DATE
-> Task :react-native-community_datetimepicker:writeReleaseLintModelMetadata
+> Task :react-native-community_datetimepicker:writeReleaseLintModelMetadata UP-TO-DATE
 > Task :react-native-community_netinfo:lintVitalAnalyzeRelease UP-TO-DATE
-> Task :react-native-community_netinfo:writeReleaseLintModelMetadata
+> Task :react-native-community_netinfo:writeReleaseLintModelMetadata UP-TO-DATE
 > Task :react-native-linear-gradient:lintVitalAnalyzeRelease UP-TO-DATE
-> Task :react-native-linear-gradient:writeReleaseLintModelMetadata
+> Task :react-native-linear-gradient:writeReleaseLintModelMetadata UP-TO-DATE
 > Task :react-native-picker_picker:lintVitalAnalyzeRelease UP-TO-DATE
-> Task :react-native-picker_picker:writeReleaseLintModelMetadata
+> Task :react-native-picker_picker:writeReleaseLintModelMetadata UP-TO-DATE
+> Task :app:compileReleaseArtProfile
 > Task :react-native-ping:lintVitalAnalyzeRelease UP-TO-DATE
-> Task :react-native-ping:writeReleaseLintModelMetadata
+> Task :react-native-ping:writeReleaseLintModelMetadata UP-TO-DATE
 > Task :react-native-safe-area-context:lintVitalAnalyzeRelease UP-TO-DATE
-> Task :react-native-safe-area-context:writeReleaseLintModelMetadata
+> Task :react-native-safe-area-context:writeReleaseLintModelMetadata UP-TO-DATE
 > Task :react-native-screens:lintVitalAnalyzeRelease UP-TO-DATE
-> Task :react-native-screens:writeReleaseLintModelMetadata
+> Task :react-native-screens:writeReleaseLintModelMetadata UP-TO-DATE
 > Task :react-native-svg:lintVitalAnalyzeRelease UP-TO-DATE
-> Task :react-native-svg:writeReleaseLintModelMetadata
+> Task :react-native-svg:writeReleaseLintModelMetadata UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:lintVitalAnalyzeRelease UP-TO-DATE
-> Task :react-native-thermal-receipt-printer-image-qr:writeReleaseLintModelMetadata
+> Task :react-native-thermal-receipt-printer-image-qr:writeReleaseLintModelMetadata UP-TO-DATE
 > Task :react-native-view-shot:lintVitalAnalyzeRelease UP-TO-DATE
-> Task :react-native-view-shot:writeReleaseLintModelMetadata
+> Task :react-native-view-shot:writeReleaseLintModelMetadata UP-TO-DATE
 > Task :react-native-webview:lintVitalAnalyzeRelease UP-TO-DATE
-> Task :react-native-webview:writeReleaseLintModelMetadata
+> Task :react-native-webview:writeReleaseLintModelMetadata UP-TO-DATE
 > Task :expo:generateReleaseLintVitalModel UP-TO-DATE
 > Task :expo-constants:generateReleaseLintVitalModel UP-TO-DATE
 > Task :expo-dev-client:generateReleaseLintVitalModel UP-TO-DATE
@@ -1589,18 +1317,18 @@ w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymou
 > Task :expo-modules-core:generateReleaseLintVitalModel UP-TO-DATE
 > Task :expo-speech-recognition:generateReleaseLintVitalModel UP-TO-DATE
 > Task :expo-updates-interface:generateReleaseLintVitalModel UP-TO-DATE
-> Task :react-native-async-storage_async-storage:generateReleaseLintVitalModel
-> Task :react-native-community_datetimepicker:generateReleaseLintVitalModel
-> Task :react-native-community_netinfo:generateReleaseLintVitalModel
-> Task :react-native-linear-gradient:generateReleaseLintVitalModel
-> Task :react-native-picker_picker:generateReleaseLintVitalModel
-> Task :react-native-ping:generateReleaseLintVitalModel
-> Task :react-native-safe-area-context:generateReleaseLintVitalModel
-> Task :react-native-screens:generateReleaseLintVitalModel
-> Task :react-native-svg:generateReleaseLintVitalModel
-> Task :react-native-thermal-receipt-printer-image-qr:generateReleaseLintVitalModel
-> Task :react-native-view-shot:generateReleaseLintVitalModel
-> Task :react-native-webview:generateReleaseLintVitalModel
+> Task :react-native-async-storage_async-storage:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-community_datetimepicker:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-community_netinfo:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-linear-gradient:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-picker_picker:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-ping:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-safe-area-context:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-screens:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-svg:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-thermal-receipt-printer-image-qr:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-view-shot:generateReleaseLintVitalModel UP-TO-DATE
+> Task :react-native-webview:generateReleaseLintVitalModel UP-TO-DATE
 > Task :app:processReleaseJavaRes UP-TO-DATE
 > Task :app:mergeReleaseJavaResource UP-TO-DATE
 > Task :app:optimizeReleaseResources
@@ -1611,124 +1339,123 @@ w: file:///opt/build-farm/apppuntodeventa/android/app/src/main/java/com/anonymou
 > Task :app:writeReleaseSigningConfigVersions UP-TO-DATE
 > Task :expo:bundleReleaseAar UP-TO-DATE
 > Task :expo:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :expo:mergeReleaseResources
+> Task :app:lintVitalAnalyzeRelease
+> Task :expo:mergeReleaseResources UP-TO-DATE
+> Task :app:lintVitalReportRelease
 > Task :expo:verifyReleaseResources UP-TO-DATE
+> Task :app:lintVitalRelease
 > Task :expo:assembleRelease UP-TO-DATE
 > Task :expo-constants:bundleReleaseAar
 > Task :expo-constants:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :expo-constants:mergeReleaseResources
+> Task :expo-constants:mergeReleaseResources UP-TO-DATE
 > Task :expo-constants:verifyReleaseResources UP-TO-DATE
 > Task :expo-constants:assembleRelease
 > Task :expo-dev-client:bundleReleaseAar UP-TO-DATE
 > Task :expo-dev-client:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :expo-dev-client:mergeReleaseResources
+> Task :expo-dev-client:mergeReleaseResources UP-TO-DATE
 > Task :expo-dev-client:verifyReleaseResources UP-TO-DATE
 > Task :expo-dev-client:assembleRelease UP-TO-DATE
 > Task :expo-dev-launcher:bundleReleaseAar UP-TO-DATE
 > Task :expo-dev-launcher:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :react-native-async-storage_async-storage:lintVitalAnalyzeRelease
-> Task :expo-dev-launcher:mergeReleaseResources
+> Task :expo-dev-launcher:mergeReleaseResources UP-TO-DATE
 > Task :expo-dev-launcher:verifyReleaseResources UP-TO-DATE
 > Task :expo-dev-launcher:assembleRelease UP-TO-DATE
 > Task :expo-dev-menu:bundleReleaseAar UP-TO-DATE
 > Task :expo-dev-menu:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :expo-dev-menu:mergeReleaseResources
+> Task :expo-dev-menu:mergeReleaseResources UP-TO-DATE
 > Task :expo-dev-menu:verifyReleaseResources UP-TO-DATE
 > Task :expo-dev-menu:assembleRelease UP-TO-DATE
 > Task :expo-dev-menu-interface:bundleReleaseAar UP-TO-DATE
 > Task :expo-dev-menu-interface:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :expo-dev-menu-interface:mergeReleaseResources
+> Task :expo-dev-menu-interface:mergeReleaseResources UP-TO-DATE
+> Task :app:packageRelease
+> Task :app:createReleaseApkListingFileRedirect
+> Task :app:assembleRelease
 > Task :expo-dev-menu-interface:verifyReleaseResources UP-TO-DATE
 > Task :expo-dev-menu-interface:assembleRelease UP-TO-DATE
 > Task :expo-json-utils:bundleReleaseAar UP-TO-DATE
 > Task :expo-json-utils:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :expo-json-utils:mergeReleaseResources
+> Task :expo-json-utils:mergeReleaseResources UP-TO-DATE
 > Task :expo-json-utils:verifyReleaseResources UP-TO-DATE
 > Task :expo-json-utils:assembleRelease UP-TO-DATE
 > Task :expo-manifests:bundleReleaseAar UP-TO-DATE
 > Task :expo-manifests:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :expo-manifests:mergeReleaseResources
+> Task :expo-manifests:mergeReleaseResources UP-TO-DATE
 > Task :expo-manifests:verifyReleaseResources UP-TO-DATE
 > Task :expo-manifests:assembleRelease UP-TO-DATE
-> Task :expo-modules-core:bundleReleaseAar
+> Task :expo-modules-core:bundleReleaseAar UP-TO-DATE
 > Task :expo-modules-core:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :app:lintVitalAnalyzeRelease
-> Task :expo-modules-core:mergeReleaseResources
-> Task :app:lintVitalReportRelease
+> Task :expo-modules-core:mergeReleaseResources UP-TO-DATE
 > Task :expo-modules-core:verifyReleaseResources UP-TO-DATE
-> Task :app:lintVitalRelease
-> Task :expo-modules-core:assembleRelease
+> Task :expo-modules-core:assembleRelease UP-TO-DATE
 > Task :expo-speech-recognition:bundleReleaseAar UP-TO-DATE
 > Task :expo-speech-recognition:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :expo-speech-recognition:mergeReleaseResources
+> Task :expo-speech-recognition:mergeReleaseResources UP-TO-DATE
 > Task :expo-speech-recognition:verifyReleaseResources UP-TO-DATE
 > Task :expo-speech-recognition:assembleRelease UP-TO-DATE
 > Task :expo-updates-interface:bundleReleaseAar UP-TO-DATE
 > Task :expo-updates-interface:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :app:packageRelease
-> Task :app:createReleaseApkListingFileRedirect
-> Task :app:assembleRelease
-> Task :expo-updates-interface:mergeReleaseResources
+> Task :expo-updates-interface:mergeReleaseResources UP-TO-DATE
 > Task :expo-updates-interface:verifyReleaseResources UP-TO-DATE
 > Task :expo-updates-interface:assembleRelease UP-TO-DATE
-> Task :react-native-async-storage_async-storage:bundleReleaseAar
+> Task :react-native-async-storage_async-storage:bundleReleaseAar UP-TO-DATE
 > Task :react-native-async-storage_async-storage:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :react-native-async-storage_async-storage:mergeReleaseResources
+> Task :react-native-async-storage_async-storage:mergeReleaseResources UP-TO-DATE
 > Task :react-native-async-storage_async-storage:verifyReleaseResources UP-TO-DATE
-> Task :react-native-async-storage_async-storage:assembleRelease
+> Task :react-native-async-storage_async-storage:assembleRelease UP-TO-DATE
 > Task :react-native-community_datetimepicker:bundleReleaseAar UP-TO-DATE
 > Task :react-native-community_datetimepicker:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :react-native-community_datetimepicker:mergeReleaseResources
+> Task :react-native-community_datetimepicker:mergeReleaseResources UP-TO-DATE
 > Task :react-native-community_datetimepicker:verifyReleaseResources UP-TO-DATE
 > Task :react-native-community_datetimepicker:assembleRelease UP-TO-DATE
 > Task :react-native-community_netinfo:bundleReleaseAar UP-TO-DATE
 > Task :react-native-community_netinfo:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :react-native-community_netinfo:mergeReleaseResources
+> Task :react-native-community_netinfo:mergeReleaseResources UP-TO-DATE
 > Task :react-native-community_netinfo:verifyReleaseResources UP-TO-DATE
 > Task :react-native-community_netinfo:assembleRelease UP-TO-DATE
 > Task :react-native-linear-gradient:bundleReleaseAar UP-TO-DATE
 > Task :react-native-linear-gradient:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :react-native-linear-gradient:mergeReleaseResources
+> Task :react-native-linear-gradient:mergeReleaseResources UP-TO-DATE
 > Task :react-native-linear-gradient:verifyReleaseResources UP-TO-DATE
 > Task :react-native-linear-gradient:assembleRelease UP-TO-DATE
 > Task :react-native-picker_picker:bundleReleaseAar UP-TO-DATE
 > Task :react-native-picker_picker:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :react-native-picker_picker:mergeReleaseResources
+> Task :react-native-picker_picker:mergeReleaseResources UP-TO-DATE
 > Task :react-native-picker_picker:verifyReleaseResources UP-TO-DATE
 > Task :react-native-picker_picker:assembleRelease UP-TO-DATE
 > Task :react-native-ping:bundleReleaseAar UP-TO-DATE
 > Task :react-native-ping:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :react-native-ping:mergeReleaseResources
+> Task :react-native-ping:mergeReleaseResources UP-TO-DATE
 > Task :react-native-ping:verifyReleaseResources UP-TO-DATE
 > Task :react-native-ping:assembleRelease UP-TO-DATE
 > Task :react-native-safe-area-context:bundleReleaseAar UP-TO-DATE
 > Task :react-native-safe-area-context:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :react-native-safe-area-context:mergeReleaseResources
+> Task :react-native-safe-area-context:mergeReleaseResources UP-TO-DATE
 > Task :react-native-safe-area-context:verifyReleaseResources UP-TO-DATE
 > Task :react-native-safe-area-context:assembleRelease UP-TO-DATE
-> Task :react-native-screens:bundleReleaseAar
+> Task :react-native-screens:bundleReleaseAar UP-TO-DATE
 > Task :react-native-screens:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :react-native-screens:mergeReleaseResources
+> Task :react-native-screens:mergeReleaseResources UP-TO-DATE
 > Task :react-native-screens:verifyReleaseResources UP-TO-DATE
-> Task :react-native-screens:assembleRelease
+> Task :react-native-screens:assembleRelease UP-TO-DATE
 > Task :react-native-svg:bundleReleaseAar UP-TO-DATE
 > Task :react-native-svg:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :react-native-svg:mergeReleaseResources
+> Task :react-native-svg:mergeReleaseResources UP-TO-DATE
 > Task :react-native-svg:verifyReleaseResources UP-TO-DATE
 > Task :react-native-svg:assembleRelease UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:bundleReleaseAar UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :react-native-thermal-receipt-printer-image-qr:mergeReleaseResources
+> Task :react-native-thermal-receipt-printer-image-qr:mergeReleaseResources UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:verifyReleaseResources UP-TO-DATE
 > Task :react-native-thermal-receipt-printer-image-qr:assembleRelease UP-TO-DATE
 > Task :react-native-view-shot:bundleReleaseAar UP-TO-DATE
 > Task :react-native-view-shot:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :react-native-view-shot:mergeReleaseResources
+> Task :react-native-view-shot:mergeReleaseResources UP-TO-DATE
 > Task :react-native-view-shot:verifyReleaseResources UP-TO-DATE
 > Task :react-native-view-shot:assembleRelease UP-TO-DATE
 > Task :react-native-webview:bundleReleaseAar UP-TO-DATE
 > Task :react-native-webview:mapReleaseSourceSetPaths UP-TO-DATE
-> Task :react-native-webview:mergeReleaseResources
+> Task :react-native-webview:mergeReleaseResources UP-TO-DATE
 > Task :react-native-webview:verifyReleaseResources UP-TO-DATE
 > Task :react-native-webview:assembleRelease UP-TO-DATE
 
@@ -1740,20 +1467,19 @@ You can use '--warning-mode all' to show the individual deprecation warnings and
 
 For more on this, please refer to https://docs.gradle.org/8.14.3/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
 
-BUILD SUCCESSFUL in 17m 29s
-1050 actionable tasks: 186 executed, 864 up-to-date
+BUILD SUCCESSFUL in 10m 55s
+1050 actionable tasks: 38 executed, 1012 up-to-date
 =================================================
 Perfil 'preview' guardado para la proxima compilacion.
 COMPILACION FINALIZADA EXITOSAMENTE
-APK: QHuboMorPOS_v1.0.227_preview_fast.apk
+APK: QHuboMorPOS_v1.0.239_preview_fast.apk
 =================================================
 
 [TRAP] Ejecutando limpieza garantizada (codigo de salida: 0)...
 [TRAP] Limpieza post-compilacion exitosa.
 Descargando el APK a tu computadora local...
-QHuboMorPOS_v1.0.227_preview_fast.apk                                            100%   66MB   3.7MB/s   00:18
+QHuboMorPOS_v1.0.239_preview_fast.apk                                            100%   66MB   2.3MB/s   00:28
 =============================================
 ¡EXITO! Tu APK de despliegue rapido esta listo en:
-C:\Users\Administrador\Documents\apk's\QHuboMorPOS_v1.0.227_preview_fast.apk
+C:\Users\Administrador\Documents\apk's\QHuboMorPOS_v1.0.239_preview_fast.apk
 =============================================
- DESKTOP-HATI3ID    C:\APIS_v2.3\puntodeventafront\scripts  ➜ (   main)   18m 27.96s   5:49 PM  

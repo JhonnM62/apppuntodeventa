@@ -190,7 +190,45 @@ if [ -n "$PREBUILD_FLAG" ]; then
   echo "   Ejecutando: npx expo prebuild --platform android $PREBUILD_FLAG"
   npx expo prebuild --platform android $PREBUILD_FLAG
   echo "Proyecto nativo generado."
+
+  # ─── RESTAURAR OPTIMIZACIONES DE TAMAÑO ─────────────────────────────────────
+  # expo prebuild --clean regenera gradle.properties con valores por defecto de
+  # Expo que incluyen las 4 arquitecturas nativas (armeabi-v7a, arm64-v8a, x86,
+  # x86_64). Eso duplica el tamaño de los .so nativos: ~66 MB -> ~114 MB.
+  # Forzamos aqui los valores correctos justo despues del prebuild.
+  GRADLE_PROPS="$ANDROID_DIR/gradle.properties"
+  echo "   Optimizando gradle.properties para reducir tamaño APK..."
+
+  # Eliminar arquitecturas de emulador (x86/x86_64) — la linea mas impactante
+  sed -i 's/^reactNativeArchitectures=.*/reactNativeArchitectures=armeabi-v7a,arm64-v8a/' "$GRADLE_PROPS"
+
+  # Habilitar minify y shrink resources para release
+  if ! grep -q 'android.enableMinifyInReleaseBuilds' "$GRADLE_PROPS"; then
+    echo "android.enableMinifyInReleaseBuilds=true" >> "$GRADLE_PROPS"
+  else
+    sed -i 's/^android.enableMinifyInReleaseBuilds=.*/android.enableMinifyInReleaseBuilds=true/' "$GRADLE_PROPS"
+  fi
+
+  if ! grep -q 'android.enableShrinkResourcesInReleaseBuilds' "$GRADLE_PROPS"; then
+    echo "android.enableShrinkResourcesInReleaseBuilds=true" >> "$GRADLE_PROPS"
+  else
+    sed -i 's/^android.enableShrinkResourcesInReleaseBuilds=.*/android.enableShrinkResourcesInReleaseBuilds=true/' "$GRADLE_PROPS"
+  fi
+
+  # Desactivar legacyPackaging (mejora compresion de .so)
+  if ! grep -q 'expo.useLegacyPackaging' "$GRADLE_PROPS"; then
+    echo "expo.useLegacyPackaging=false" >> "$GRADLE_PROPS"
+  else
+    sed -i 's/^expo.useLegacyPackaging=.*/expo.useLegacyPackaging=false/' "$GRADLE_PROPS"
+  fi
+
+  # Ajustar JVM para el VPS (Expo suele poner 4096m pero el VPS tiene menos RAM)
+  sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx2560m -XX:MaxMetaspaceSize=512m -Dfile.encoding=UTF-8/' "$GRADLE_PROPS"
+
+  echo "   ✔ gradle.properties optimizado: solo arm64+armeabi, minify ON, shrink ON"
+  # ─────────────────────────────────────────────────────────────────────────────
 else
+
   echo "   Saltando prebuild para no corromper la cache nativa."
   echo "   Inyectando version desde app.json directamente en build.gradle..."
   APP_VERSION=$(node -e "console.log(require('./app.json').expo.version)")
