@@ -24,6 +24,8 @@ import { useCustomAlert } from '../../context/CustomAlertContext';
 import usePrinterStore from '../../store/usePrinterStore';
 import PrintPreviewModal from '../../components/ui/PrintPreviewModal';
 import { TicketData } from '../../utils/printer';
+import { FloatingScrollButtons } from '../../components/ui/FloatingScrollButtons';
+import { useScrollDirection } from '../../hooks/useScrollDirection';
 
 const TABS = [
   { key: 'todos', label: 'TODOS', color: '#6366f1' },
@@ -111,7 +113,7 @@ interface FilterState {
   maxTotal: string;
   pedidoNumero: string;
   cliente: string;
-  categoriaProducto: string;
+  categoriaProducto: string[];
 }
 
 type SectionData = {
@@ -357,6 +359,33 @@ const PedidosScreen = () => {
   const [remoteSearchResults, setRemoteSearchResults] = useState<VentaItem[] | null>(null);
   const [isSearchingRemote, setIsSearchingRemote] = useState(false);
 
+  // --- Scroll & Floating Buttons ---
+  const listRef = useRef<any>(null);
+  const handleScrollBase = useScrollDirection();
+  const [showScrollUp, setShowScrollUp] = useState(false);
+  const [showScrollDown, setShowScrollDown] = useState(false);
+
+  const handleScroll = useCallback((event: any) => {
+    handleScrollBase(event);
+    const offsetY = event.nativeEvent.contentOffset.y;
+    const contentHeight = event.nativeEvent.contentSize.height;
+    const layoutHeight = event.nativeEvent.layoutMeasurement.height;
+    
+    setShowScrollUp(offsetY > 400);
+    
+    const isScrollable = contentHeight > layoutHeight;
+    const distanceToBottom = contentHeight - layoutHeight - offsetY;
+    setShowScrollDown(isScrollable && distanceToBottom > 400);
+  }, [handleScrollBase]);
+
+  const scrollToTop = useCallback(() => {
+    listRef.current?.scrollToOffset?.({ offset: 0, animated: true });
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    listRef.current?.scrollToEnd?.({ animated: true });
+  }, []);
+
   // Manual Print Preview States
   const { manualPreviewEnabled, printManual } = usePrinterStore();
   const [printPreviewVisible, setPrintPreviewVisible] = useState(false);
@@ -525,7 +554,7 @@ const PedidosScreen = () => {
     maxTotal: '',
     pedidoNumero: '',
     cliente: '',
-    categoriaProducto: '',
+    categoriaProducto: [],
   });
 
   const { joinRoom, isConnected } = useSocket();
@@ -751,7 +780,7 @@ const PedidosScreen = () => {
       if (filters.vendedor) query.usuario = filters.vendedor;
       if (filters.minTotal) query.totalMin = filters.minTotal;
       if (filters.maxTotal) query.totalMax = filters.maxTotal;
-      if (filters.categoriaProducto) query.categoriaProducto = filters.categoriaProducto;
+      if (filters.categoriaProducto && filters.categoriaProducto.length > 0) query.categoriaProducto = filters.categoriaProducto.join(',');
       if (filters.cliente) query.search = query.search ? `${query.search} ${filters.cliente}` : filters.cliente;
       if (filters.pedidoNumero) query.search = query.search ? `${query.search} ${filters.pedidoNumero}` : filters.pedidoNumero;
 
@@ -902,9 +931,9 @@ const PedidosScreen = () => {
       }
     }
 
-    if (filters.categoriaProducto) {
+    if (filters.categoriaProducto && filters.categoriaProducto.length > 0) {
       filtered = filtered.filter(v => 
-        v.ordenVentas?.some(prod => prod.categoriaProducto === filters.categoriaProducto || prod.categoria === filters.categoriaProducto)
+        v.ordenVentas?.some(prod => filters.categoriaProducto.includes(prod.categoriaProducto || '') || filters.categoriaProducto.includes(prod.categoria || ''))
       );
     }
 
@@ -1108,7 +1137,7 @@ showAlert({
       maxTotal: '',
       pedidoNumero: '',
       cliente: '',
-      categoriaProducto: '',
+      categoriaProducto: [],
     });
     setIsFiltering(false);
     setFilterModalVisible(false);
@@ -2255,20 +2284,20 @@ showAlert({
             <RNText style={styles.filterSectionTitle}>CATEGORÍA DE PRODUCTO</RNText>
             <View style={styles.chipsContainer}>
               <TouchableOpacity
-                style={[styles.chip, !filters.categoriaProducto && styles.chipActive]}
-                onPress={() => setFilters(prev => ({ ...prev, categoriaProducto: '' }))}
+                style={[styles.chip, filters.categoriaProducto.length === 0 && styles.chipActive]}
+                onPress={() => setFilters(prev => ({ ...prev, categoriaProducto: [] }))}
               >
-                <RNText style={[styles.chipText, !filters.categoriaProducto && styles.chipTextActive]}>
+                <RNText style={[styles.chipText, filters.categoriaProducto.length === 0 && styles.chipTextActive]}>
                   Todas
                 </RNText>
               </TouchableOpacity>
               {productCategorias?.map(cat => (
                 <TouchableOpacity
                   key={cat}
-                  style={[styles.chip, filters.categoriaProducto === cat && styles.chipActive]}
-                  onPress={() => setFilters(prev => ({ ...prev, categoriaProducto: prev.categoriaProducto === cat ? '' : cat }))}
+                  style={[styles.chip, filters.categoriaProducto.includes(cat) && styles.chipActive]}
+                  onPress={() => setFilters(prev => ({ ...prev, categoriaProducto: prev.categoriaProducto.includes(cat) ? prev.categoriaProducto.filter(c => c !== cat) : [...prev.categoriaProducto, cat] }))}
                 >
-                  <RNText style={[styles.chipText, filters.categoriaProducto === cat && styles.chipTextActive]}>
+                  <RNText style={[styles.chipText, filters.categoriaProducto.includes(cat) && styles.chipTextActive]}>
                     {cat}
                   </RNText>
                 </TouchableOpacity>
@@ -2804,11 +2833,14 @@ showAlert({
         </View>
       ) : (
         <FlatList
+          ref={listRef}
           style={{ flex: 1 }}
           data={flatListData}
           extraData={[selectedToDelete, isSelectionMode]}
           renderItem={renderListItem}
           keyExtractor={keyExtractor}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           onEndReached={handleLoadMore}
           onEndReachedThreshold={0.5}
           ListFooterComponent={
@@ -2844,6 +2876,41 @@ showAlert({
             </View>
           }
         />
+      )}
+
+      {/* Floating Scroll Buttons */}
+      <FloatingScrollButtons
+        showUp={showScrollUp}
+        showDown={showScrollDown}
+        onUp={scrollToTop}
+        onDown={scrollToBottom}
+        bottomOffset={isSelectionMode && selectedToDelete.length > 0 ? 190 : 140}
+      />
+
+      {isSelectionMode && selectedToDelete.length > 0 && (
+        <View style={styles.bulkActionContainer}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ backgroundColor: '#e0e7ff', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, marginRight: 8 }}>
+              <RNText style={{ color: '#4338ca', fontWeight: 'bold' }}>{selectedToDelete.length}</RNText>
+            </View>
+            <RNText style={{ fontWeight: 'bold', color: '#374151' }}>Seleccionados</RNText>
+          </View>
+          <View style={{ flexDirection: 'row' }}>
+            <TouchableOpacity 
+              style={{ backgroundColor: '#f3f4f6', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, marginRight: 8 }}
+              onPress={() => { setIsSelectionMode(false); setSelectedToDelete([]); }}
+            >
+              <RNText style={{ fontWeight: '600', color: '#4b5563' }}>Cancelar</RNText>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={{ backgroundColor: '#ef4444', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}
+              onPress={handleBulkDelete}
+            >
+              <Ionicons name="trash" size={16} color="#fff" style={{ marginRight: 6 }} />
+              <RNText style={{ color: '#fff', fontWeight: 'bold' }}>Eliminar</RNText>
+            </TouchableOpacity>
+          </View>
+        </View>
       )}
 
       {renderModal()}

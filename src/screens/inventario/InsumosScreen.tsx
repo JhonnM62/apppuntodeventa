@@ -33,6 +33,7 @@ import api from '../../services/api';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
+import { FloatingScrollButtons } from '../../components/ui/FloatingScrollButtons';
 import { usePermissions } from '../../hooks/usePermissions';
 
 const ESTADOS_STOCK = {
@@ -62,7 +63,7 @@ const InsumosScreen = ({ navigation }: Props) => {
   const [categoriasList, setCategoriasList] = useState<CategoriaInsumoItem[]>([]);
   const ajustesPendientes = insumos.filter(i => i.ultimoAjustePendiente);
 
-  const handleScroll = useScrollDirection();
+  const { handleScroll, isScrollingDown, isAtTop, isAtBottom } = useScrollDirection();
   const [stockModal, setStockModal] = useState<{ tipo: 'entrada' | 'salida'; cantidad: number; observacion: string; cantidadPorPaquete?: number; paquetesEnBodega?: number; ultimoAjustePendiente?: any }>({
     tipo: 'entrada',
     cantidad: 0,
@@ -1153,6 +1154,14 @@ if (status !== 'granted') {
             )}
           </View>
         }
+      />
+      
+      <FloatingScrollButtons
+        scrollRef={flashListRef}
+        isScrollingDown={isScrollingDown}
+        isAtTop={isAtTop}
+        isAtBottom={isAtBottom}
+        bottomOffset={140} // For floating dock
       />
 
       <Modal visible={showModal} animationType="slide" onRequestClose={() => setShowModal(false)} presentationStyle="pageSheet">

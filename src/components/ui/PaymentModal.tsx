@@ -956,8 +956,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       presentationStyle="pageSheet"
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        enabled={Platform.OS === 'ios'}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        enabled={true}
         style={styles.modalOverlay}
         keyboardVerticalOffset={0}
       >
@@ -972,8 +972,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         </Animated.View>
         <Animated.View style={[styles.modalContent, { 
           transform: [{ translateY: slideAnim }], 
-          maxHeight: windowHeight * 0.94,
-          marginBottom: Platform.OS === 'android' ? keyboardHeight : 0
+          maxHeight: windowHeight * 0.94
         }]}>
           <View style={styles.handle} />
 

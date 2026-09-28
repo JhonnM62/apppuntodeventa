@@ -42,6 +42,7 @@ import AdminSaleFormModal from './AdminSaleFormModal';
 import { useProductStore } from '../../store/useProductStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
+import { FloatingScrollButtons } from '../../components/ui/FloatingScrollButtons';
 
 function HistorialVentasScreenInner({ navigation }: any) {
   const { canCreate, canEdit, canDelete } = usePermissions('historial_ventas');
@@ -60,17 +61,17 @@ function HistorialVentasScreenInner({ navigation }: any) {
   // Advanced Filters State
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [activeFilters, setActiveFilters] = useState<{
-    estado?: string;
-    medioDePago?: string;
+    estado?: string[];
+    medioDePago?: string[];
     fechaDesde?: string;
     fechaHasta?: string;
     totalMin?: string;
     totalMax?: string;
-    categoriaProducto?: string;
+    categoriaProducto?: string[];
   }>({});
   const [tempFilters, setTempFilters] = useState(activeFilters);
   const [showDatePicker, setShowDatePicker] = useState<{show: boolean, type: 'desde' | 'hasta'}>({show: false, type: 'desde'});
-  const isFilterActive = Object.values(activeFilters).some(v => v !== undefined && v !== '');
+  const isFilterActive = Object.values(activeFilters).some(v => v !== undefined && v !== '' && (!Array.isArray(v) || v.length > 0));
 
   // Current tab derived state
   const currentCache = cache[activeTab];
@@ -79,7 +80,31 @@ function HistorialVentasScreenInner({ navigation }: any) {
   const hasNextPage = currentCache.hasNextPage;
   const totalRecords = currentCache.total;
 
-  const handleScroll = useScrollDirection();
+  const handleScrollBase = useScrollDirection();
+  const listRef = useRef<any>(null);
+  const [showScrollUp, setShowScrollUp] = useState(false);
+  const [showScrollDown, setShowScrollDown] = useState(false);
+
+  const handleScroll = useCallback((event: any) => {
+    handleScrollBase(event);
+    const offsetY = event.nativeEvent.contentOffset.y;
+    const contentHeight = event.nativeEvent.contentSize.height;
+    const layoutHeight = event.nativeEvent.layoutMeasurement.height;
+    
+    setShowScrollUp(offsetY > 400);
+    
+    const isScrollable = contentHeight > layoutHeight;
+    const distanceToBottom = contentHeight - layoutHeight - offsetY;
+    setShowScrollDown(isScrollable && distanceToBottom > 400);
+  }, [handleScrollBase]);
+
+  const scrollToTop = useCallback(() => {
+    listRef.current?.scrollToOffset?.({ offset: 0, animated: true });
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    listRef.current?.scrollToEnd?.({ animated: true });
+  }, []);
   
   // Modal state
   const [selectedVenta, setSelectedVenta] = useState<any>(null);
@@ -263,7 +288,10 @@ function HistorialVentasScreenInner({ navigation }: any) {
         limit: 500, // Load initial chunk and fetch more on scroll
         includeDeleted: tab === 'eliminadas',
         search: search || undefined,
-        ...currentFilters
+        ...currentFilters,
+        estado: Array.isArray(currentFilters.estado) ? currentFilters.estado.join(',') : currentFilters.estado,
+        medioDePago: Array.isArray(currentFilters.medioDePago) ? currentFilters.medioDePago.join(',') : currentFilters.medioDePago,
+        categoriaProducto: Array.isArray(currentFilters.categoriaProducto) ? currentFilters.categoriaProducto.join(',') : currentFilters.categoriaProducto
       });
 
       let newData = [];
@@ -1100,6 +1128,7 @@ function HistorialVentasScreenInner({ navigation }: any) {
           </View>
         ) : (
           <FlatList
+            ref={listRef}
             style={{ flex: 1 }}
             data={flatListData}
             renderItem={renderItem}
@@ -1167,6 +1196,15 @@ function HistorialVentasScreenInner({ navigation }: any) {
             }
           />
         )}
+        
+        {/* Botones Flotantes de Scroll */}
+        <FloatingScrollButtons
+          showUp={showScrollUp}
+          showDown={showScrollDown}
+          onUp={scrollToTop}
+          onDown={scrollToBottom}
+          bottomOffset={isSelectionMode && selectedToDelete.length > 0 ? 190 : 140}
+        />
       </View>
 
       {/* Floating Bulk Action Bar */}
@@ -1553,10 +1591,13 @@ function HistorialVentasScreenInner({ navigation }: any) {
                 {['PAGADO', 'ENTREGADO', 'DEUDOR', 'EN_EL_CARRITO', 'INICIADO', 'TOMADO', 'LISTO_PARA_ENTREGA'].map(estado => (
                   <TouchableOpacity
                     key={estado}
-                    onPress={() => setTempFilters(prev => ({ ...prev, estado: prev.estado === estado ? undefined : estado }))}
-                    className={`px-3 py-2 rounded-lg border ${tempFilters.estado === estado ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-300'}`}
+                    onPress={() => setTempFilters(prev => {
+                      const current = prev.estado || [];
+                      return { ...prev, estado: current.includes(estado) ? current.filter(e => e !== estado) : [...current, estado] };
+                    })}
+                    className={`px-3 py-2 rounded-lg border ${tempFilters.estado?.includes(estado) ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-300'}`}
                   >
-                    <Text className={`text-xs font-bold ${tempFilters.estado === estado ? 'text-indigo-700' : 'text-gray-600'}`}>
+                    <Text className={`text-xs font-bold ${tempFilters.estado?.includes(estado) ? 'text-indigo-700' : 'text-gray-600'}`}>
                       {estado.replace(/_/g, ' ')}
                     </Text>
                   </TouchableOpacity>
@@ -1567,20 +1608,23 @@ function HistorialVentasScreenInner({ navigation }: any) {
               <Text className="text-gray-800 font-bold mb-2">Categoría de Producto</Text>
               <View className="flex-row flex-wrap gap-2 mb-5">
                 <TouchableOpacity
-                  onPress={() => setTempFilters(prev => ({ ...prev, categoriaProducto: undefined }))}
-                  className={`px-3 py-2 rounded-lg border ${!tempFilters.categoriaProducto ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-300'}`}
+                  onPress={() => setTempFilters(prev => ({ ...prev, categoriaProducto: [] }))}
+                  className={`px-3 py-2 rounded-lg border ${!tempFilters.categoriaProducto?.length ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-300'}`}
                 >
-                  <Text className={`text-xs font-bold ${!tempFilters.categoriaProducto ? 'text-indigo-700' : 'text-gray-600'}`}>
+                  <Text className={`text-xs font-bold ${!tempFilters.categoriaProducto?.length ? 'text-indigo-700' : 'text-gray-600'}`}>
                     Todas
                   </Text>
                 </TouchableOpacity>
                 {productCategorias?.map(cat => (
                   <TouchableOpacity
                     key={cat}
-                    onPress={() => setTempFilters(prev => ({ ...prev, categoriaProducto: prev.categoriaProducto === cat ? undefined : cat }))}
-                    className={`px-3 py-2 rounded-lg border ${tempFilters.categoriaProducto === cat ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-300'}`}
+                    onPress={() => setTempFilters(prev => {
+                      const current = prev.categoriaProducto || [];
+                      return { ...prev, categoriaProducto: current.includes(cat) ? current.filter(c => c !== cat) : [...current, cat] };
+                    })}
+                    className={`px-3 py-2 rounded-lg border ${tempFilters.categoriaProducto?.includes(cat) ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-300'}`}
                   >
-                    <Text className={`text-xs font-bold ${tempFilters.categoriaProducto === cat ? 'text-indigo-700' : 'text-gray-600'}`}>
+                    <Text className={`text-xs font-bold ${tempFilters.categoriaProducto?.includes(cat) ? 'text-indigo-700' : 'text-gray-600'}`}>
                       {cat}
                     </Text>
                   </TouchableOpacity>
@@ -1593,10 +1637,13 @@ function HistorialVentasScreenInner({ navigation }: any) {
                 {['EFECTIVO', 'TRANSFERENCIA', 'NEQUI', 'DAVIPLATA', 'BANCOLOMBIA', 'EFECTIVO Y OTROS', 'PENDIENTE'].map(medio => (
                   <TouchableOpacity
                     key={medio}
-                    onPress={() => setTempFilters(prev => ({ ...prev, medioDePago: prev.medioDePago === medio ? undefined : medio }))}
-                    className={`px-3 py-2 rounded-lg border ${tempFilters.medioDePago === medio ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-300'}`}
+                    onPress={() => setTempFilters(prev => {
+                      const current = prev.medioDePago || [];
+                      return { ...prev, medioDePago: current.includes(medio) ? current.filter(m => m !== medio) : [...current, medio] };
+                    })}
+                    className={`px-3 py-2 rounded-lg border ${tempFilters.medioDePago?.includes(medio) ? 'bg-indigo-100 border-indigo-500' : 'bg-white border-gray-300'}`}
                   >
-                    <Text className={`text-xs font-bold ${tempFilters.medioDePago === medio ? 'text-indigo-700' : 'text-gray-600'}`}>
+                    <Text className={`text-xs font-bold ${tempFilters.medioDePago?.includes(medio) ? 'text-indigo-700' : 'text-gray-600'}`}>
                       {medio}
                     </Text>
                   </TouchableOpacity>

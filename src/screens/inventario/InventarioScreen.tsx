@@ -176,10 +176,11 @@ const InventarioScreen = ({ navigation }: any) => {
         const matchText = (i.nombre || i.Nombre || '').toLowerCase().includes(changeInsumoSearchText.toLowerCase());
         const cat = i.nombreCategoria || i.NombreCategoria || i.categoriaNombre || i.Categoria;
         const matchCat = changeInsumoCategoriaFilter ? (cat || 'Sin categoría') === changeInsumoCategoriaFilter : true;
-        return matchText && matchCat;
+        const alreadyInOrders = ordenes.some(o => o.nombreDelAlimento === i.IDalimentos);
+        return matchText && matchCat && !alreadyInOrders;
       })
       .slice(0, 20);
-  }, [insumos, changeInsumoSearchText, changeInsumoCategoriaFilter]);
+  }, [insumos, changeInsumoSearchText, changeInsumoCategoriaFilter, ordenes]);
 
 
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -2703,6 +2704,9 @@ const InventarioScreen = ({ navigation }: any) => {
                         const stock = Number(getInsumoStock(i.IDalimentos)) || 0;
                         matchStock = stock > 0;
                       }
+                      
+                      const alreadyInOrders = ordenes.some(o => o.nombreDelAlimento === i.IDalimentos);
+                      if (alreadyInOrders) return false;
 
                       return matchText && matchCat && matchStock;
                     })
@@ -2769,6 +2773,9 @@ const InventarioScreen = ({ navigation }: any) => {
                         const stock = Number(getInsumoStock(i.IDalimentos)) || 0;
                         matchStock = stock > 0;
                       }
+
+                      const alreadyInOrders = ordenes.some(o => o.nombreDelAlimento === i.IDalimentos);
+                      if (alreadyInOrders) return false;
 
                       return matchText && matchCat && matchStock;
                     }).length === 0 && (
