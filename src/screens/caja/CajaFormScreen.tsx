@@ -2713,11 +2713,12 @@ setSaving(false);
           animationType="fade"
           onRequestClose={() => setAddQtyModalVisible(false)}
         >
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ flex: 1 }}
+          <KeyboardAwareScrollView 
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            enableOnAndroid={true}
           >
-            <View className="flex-1 bg-black/50 justify-center items-center px-4">
+            <View className="flex-1 bg-black/50 justify-center items-center px-4 py-10">
               <View className="bg-white rounded-2xl p-5 w-full max-w-sm">
               {addQtyIndex !== null && (() => {
                 const insumoData = allInsumos.find((i: any) => i.IDalimentos === fields[addQtyIndex]?.nombreInsumo);
@@ -2905,7 +2906,7 @@ setSaving(false);
               })()}
               </View>
             </View>
-          </KeyboardAvoidingView>
+          </KeyboardAwareScrollView>
         </Modal>
 
         {/* Subtract Quantity Modal */}
@@ -2915,11 +2916,12 @@ setSaving(false);
           animationType="fade"
           onRequestClose={() => setSubQtyModalVisible(false)}
         >
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ flex: 1 }}
+          <KeyboardAwareScrollView 
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            enableOnAndroid={true}
           >
-            <View className="flex-1 bg-black/50 justify-center items-center px-4">
+            <View className="flex-1 bg-black/50 justify-center items-center px-4 py-10">
               <View className="bg-white rounded-2xl p-5 w-full max-w-sm">
               <Text className="text-lg font-bold text-gray-800 mb-2">Descuento de Producción</Text>
               <Text className="text-sm text-gray-500 mb-4">Se deducirá del stock general y de tu cantidad de apertura actual (ej. daño, consumo interno).</Text>
@@ -2989,7 +2991,7 @@ setSaving(false);
               </View>
               </View>
             </View>
-          </KeyboardAvoidingView>
+          </KeyboardAwareScrollView>
         </Modal>
 
         {/* Direct Sum Modal (General Mode) */}
@@ -2999,11 +3001,12 @@ setSaving(false);
           animationType="fade"
           onRequestClose={() => setDirectSumModalVisible(false)}
         >
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={{ flex: 1 }}
+          <KeyboardAwareScrollView 
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            enableOnAndroid={true}
           >
-            <View className="flex-1 bg-black/50 justify-center items-center px-4">
+            <View className="flex-1 bg-black/50 justify-center items-center px-4 py-10">
               <View className="bg-white rounded-2xl p-5 w-full max-w-sm">
               <Text className="text-lg font-bold text-gray-800 mb-2">Sumar a Cantidad Apertura</Text>
               <Text className="text-sm text-gray-500 mb-4">
@@ -3045,7 +3048,7 @@ setSaving(false);
               </View>
               </View>
             </View>
-          </KeyboardAvoidingView>
+          </KeyboardAwareScrollView>
         </Modal>
 
         {/* CUADRE MODAL (Scenario B) */}
