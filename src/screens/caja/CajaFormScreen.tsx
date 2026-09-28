@@ -17,7 +17,7 @@ import useAuthStore from '../../store/useAuthStore';
 import { useSettingsStore } from '../../store/useSettingsStore';
 import { insumosService, InsumoItem } from '../../services/insumos';
 import { getProducts } from '../../services/products';
-import { abrirCaja, getResumenCaja, deleteCaja, getCajas, cerrarCaja, updateCaja, reabrirCaja, getVerificacionPendiente } from '../../services/caja';
+import { abrirCaja, getResumenCaja, deleteCaja, getCajas, getCajasPaginated, cerrarCaja, updateCaja, reabrirCaja, getVerificacionPendiente } from '../../services/caja';
 import api from '../../services/api';
 import { formatCurrency, parseCurrency, formatTime12h, formatDateToDDMMAAAA } from '../../utils/formatters';
 import { generateAndShareCajaPDF } from '../../utils/cajaPdf';
@@ -1025,11 +1025,12 @@ setSaving(false);
   const copyPreviousCajaInsumos = async () => {
     try {
       setSaving(true);
-      const allCajas = await getCajas();
+      // El backend siempre devuelve { data, total, ... } — usamos getCajasPaginated
+      // Traemos las 5 más recientes (ya vienen ordenadas desc por fechaDeApertura)
+      const result = await getCajasPaginated(0, 5);
+      const allCajas: any[] = result?.data || [];
       
-      // Ordenar por fecha y hora (más reciente primero) y tomar la última caja que no sea la actual (si la hay)
-      // Como allCajas suele venir ordenada por fecha desc desde el backend, tomamos la primera si es nueva, 
-      // o la primera que no sea la actual si estamos editando.
+      // Tomar la más reciente que no sea la caja actual
       const lastCaja = allCajas.find((c: any) => c.IDcaja !== cajaId);
       
       if (!lastCaja) {

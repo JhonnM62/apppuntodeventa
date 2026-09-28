@@ -35,8 +35,12 @@ export const checkCajaActiva = async () => {
 };
 
 export const getCajas = async () => {
-  const response = await api.get('/caja');
-  return response.data;
+  // NOTE: api interceptor already unwraps response.data, so `response` here IS the data
+  const response = await api.get('/caja') as any;
+  // Normalize: backend may return array directly or { data: [...] }
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.data)) return response.data;
+  return [];
 };
 
 export interface CajasPaginatedResponse {
