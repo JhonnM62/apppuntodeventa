@@ -155,7 +155,7 @@ export default function GastosScreen({ navigation }: any) {
   return (
     <SafeAreaView className="flex-1 bg-gray-50" edges={['bottom']}>
       <StatusBar style="light" />
-      <SafeAreaView className="bg-green-600 z-10" edges={['top']}>
+      <SafeAreaView style={{ backgroundColor: '#22c55e', zIndex: 10 }} edges={['top']}>
         <View className="px-4 py-4 flex-row items-center justify-between shadow-sm">
           <View className="flex-row items-center flex-1">
             <TouchableOpacity onPress={() => navigation.goBack()} className="mr-3 p-1">
