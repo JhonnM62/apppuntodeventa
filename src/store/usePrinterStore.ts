@@ -2,8 +2,9 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPrinterConfigs } from '../services/printer-config';
-import { executePrint } from '../utils/printer';
+import { executePrint, executeWebPrintBatch } from '../utils/printer';
 import { splitComandaPorSeccion } from '../utils/splitComanda';
+import useSeccionesStore from './useSeccionesStore';
 import Toast from 'react-native-toast-message';
 import { Platform } from 'react-native';
 
@@ -150,7 +151,6 @@ const usePrinterStore = create<PrinterState>()(
       printSmart: async (ticketData, type) => {
         const state = get();
         if (Platform.OS === 'web') {
-          const { executeWebPrintBatch } = await import('../utils/printer');
           executeWebPrintBatch([{ data: ticketData, type }], state.paperSize);
           return true;
         }
@@ -187,7 +187,6 @@ const usePrinterStore = create<PrinterState>()(
           const webTickets: { data: any; type: 'comanda' | 'factura' }[] = [];
           
           if (printComanda) {
-            const { default: useSeccionesStore } = await import('./useSeccionesStore');
             const seccionesState = useSeccionesStore.getState();
             const secciones = seccionesState.getSeccionesActivas();
             
@@ -219,7 +218,6 @@ const usePrinterStore = create<PrinterState>()(
           }
           
           if (webTickets.length > 0) {
-            const { executeWebPrintBatch } = await import('../utils/printer');
             executeWebPrintBatch(webTickets, state.paperSize);
           }
           return;
@@ -248,8 +246,6 @@ const usePrinterStore = create<PrinterState>()(
       // printTicketConSecciones — divide la comanda y la imprime por sección
       // ─────────────────────────────────────────────────────────────────
       printTicketConSecciones: async (ticketData: any) => {
-        // Importar de forma lazy para no crear dependencia circular con el store
-        const { default: useSeccionesStore } = await import('./useSeccionesStore');
         const seccionesState = useSeccionesStore.getState();
         const secciones = seccionesState.getSeccionesActivas();
         const pausaMs = (seccionesState.pausaEntreTickets ?? 2) * 1000;
@@ -283,7 +279,6 @@ const usePrinterStore = create<PrinterState>()(
             },
             type: 'comanda' as const,
           }));
-          const { executeWebPrintBatch } = await import('../utils/printer');
           executeWebPrintBatch(ticketsParaImprimir, state.paperSize);
           return;
         }

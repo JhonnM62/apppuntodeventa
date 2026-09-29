@@ -847,7 +847,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                    precioUnitario: item.precio,
                    subtotal: item.precio * newQty,
                    modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
-                   seccionCocinaId: item.seccionCocinaId || item.producto?.seccionCocinaId
+                   seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || item.producto?.seccionCocinaId || item.producto?.categoriaSeccionCocinaId
                  });
                }
 
@@ -860,7 +860,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                    subtotal: item.precio * prevQty,
                    modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
                    cantidadPreparada: preparadaQtyMap[id as string] || 0,
-                   seccionCocinaId: item.seccionCocinaId || item.producto?.seccionCocinaId
+                   seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || item.producto?.seccionCocinaId || item.producto?.categoriaSeccionCocinaId
                  });
                }
              });
@@ -871,7 +871,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                precioUnitario: item.precio,
                subtotal: item.precioTotal,
                modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
-               seccionCocinaId: item.seccionCocinaId || (item as any).producto?.seccionCocinaId
+               seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId
              }));
           }
 
@@ -993,7 +993,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                 precioUnitario: item.precio,
                 subtotal: item.precioTotal,
                 modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
-                seccionCocinaId: item.seccionCocinaId || (item as any).producto?.seccionCocinaId
+                seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId
               })),
               estado: payload.venta.estado,
               metodoPago: finalMethod,
@@ -1125,7 +1125,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                   precioUnitario: Number(item.precioUnitario || item.Precio_Unitario || 0),
                   subtotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
                   modifiers: item.modifiers,
-                  seccionCocinaId: item.seccionCocinaId
+                  seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId
                 })),
                 estado: data.estado,
                 metodoPago: data.medioDePago || editingVenta?.medioDePago || 'PENDIENTE',
@@ -1202,7 +1202,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           precioUnitario: Number(item.precioUnitario || item.Precio_Unitario || 0),
           subtotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
           modifiers: item.modifiers,
-          seccionCocinaId: item.seccionCocinaId
+          seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId
         })),
         estado: data.estado,
         metodoPago: data.medioDePago || 'PENDIENTE',

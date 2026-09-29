@@ -10,12 +10,15 @@ import { useSocketEvent } from '../../hooks/useSocketEvent';
 import { SocketEvent } from '../../types/socket.types';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import { FlashList as OriginalFlashList } from '@shopify/flash-list';
+import { getSecciones, SeccionCocina } from '../../services/seccion-cocina';
+
 const FlashList = OriginalFlashList as any;
 
 const CategoriasScreen = () => {
   const { showAlert } = useCustomAlert();
   const { user } = useAuthStore();
   const [categorias, setCategorias] = useState<CategoriaItem[]>([]);
+  const [secciones, setSecciones] = useState<SeccionCocina[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -24,19 +27,24 @@ const CategoriasScreen = () => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isDeletingBatch, setIsDeletingBatch] = useState(false);
 
-  const [formData, setFormData] = useState<CreateCategoriaDto>({
+  const [formData, setFormData] = useState<CreateCategoriaDto & { seccionCocinaId?: string | null }>({
     nombre: '',
     image: '',
+    seccionCocinaId: null,
   });
 
   const { canCreate, canEdit, canDelete } = usePermissions('inventario');
 
-  const loadCategorias = useCallback(async () => {
+  const loadCategoriasAndSecciones = useCallback(async () => {
     try {
-      const data = await categoriasService.getAll();
+      const [data, seccionesData] = await Promise.all([
+        categoriasService.getAll(),
+        getSecciones()
+      ]);
       setCategorias(data || []);
+      setSecciones(seccionesData || []);
     } catch (error: any) {
-      showAlert({ type: 'error', title: 'Error', message: 'No se pudieron cargar las categorías' });
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudieron cargar los datos' });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -44,16 +52,16 @@ const CategoriasScreen = () => {
   }, []);
 
   useEffect(() => {
-    loadCategorias();
-  }, [loadCategorias]);
+    loadCategoriasAndSecciones();
+  }, [loadCategoriasAndSecciones]);
 
   useSocketEvent<any>(SocketEvent.REFRESH_CATEGORIAS, () => {
-    loadCategorias();
-  }, [loadCategorias]);
+    loadCategoriasAndSecciones();
+  }, [loadCategoriasAndSecciones]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    loadCategorias();
+    loadCategoriasAndSecciones();
     setSelectedItems([]);
   };
 
@@ -72,7 +80,7 @@ const CategoriasScreen = () => {
         try {
           await Promise.all(selectedItems.map(id => categoriasService.delete(id)));
           setSelectedItems([]);
-          loadCategorias();
+          loadCategoriasAndSecciones();
           showAlert({ type: 'success', title: 'Éxito', message: 'Categorías eliminadas.' });
         } catch (error: any) {
           showAlert({ type: 'error', title: 'Error', message: 'No se pudieron eliminar todas las categorías.' });
@@ -101,10 +109,19 @@ const CategoriasScreen = () => {
       }
       setShowModal(false);
       setEditingCategoria(null);
-      setFormData({ nombre: '', image: '' });
-      loadCategorias();
+      setFormData({ nombre: '', image: '', seccionCocinaId: null });
+      loadCategoriasAndSecciones();
     } catch (error: any) {
-      showAlert({ type: 'error', title: 'Error', message: error?.response?.data?.message || 'Error al guardar' });
+      const errorMsg = error?.response?.data?.message;
+      let displayMsg = 'Error al guardar';
+      if (typeof errorMsg === 'string') {
+        displayMsg = errorMsg;
+      } else if (Array.isArray(errorMsg)) {
+        displayMsg = errorMsg.join(', ');
+      } else if (error?.message) {
+        displayMsg = error.message;
+      }
+      showAlert({ type: 'error', title: 'Error', message: displayMsg });
     } finally {
       setSaving(false);
     }
@@ -119,7 +136,7 @@ const CategoriasScreen = () => {
       onConfirm: async () => {
         try {
           await categoriasService.delete(cat.IDcategoria);
-          loadCategorias();
+          loadCategoriasAndSecciones();
         } catch (error: any) {
           showAlert({ type: 'error', title: 'Error', message: 'No se pudo eliminar' });
         }
@@ -130,13 +147,17 @@ const CategoriasScreen = () => {
 
   const openCreateModal = () => {
     setEditingCategoria(null);
-    setFormData({ nombre: '', image: '' });
+    setFormData({ nombre: '', image: '', seccionCocinaId: null });
     setShowModal(true);
   };
 
-  const openEditModal = (cat: CategoriaItem) => {
+  const openEditModal = (cat: any) => {
     setEditingCategoria(cat);
-    setFormData({ nombre: cat.nombre, image: cat.image || '' });
+    setFormData({ 
+      nombre: cat.nombre, 
+      image: cat.image || '', 
+      seccionCocinaId: cat.seccionCocinaId || null 
+    });
     setShowModal(true);
   };
 
@@ -172,6 +193,7 @@ const CategoriasScreen = () => {
             <RNText style={styles.categoriaName}>{item.nombre}</RNText>
             <RNText style={styles.categoriaMeta}>
               {productoCount > 0 ? `${productoCount} productos` : 'Sin productos'}
+              {item.seccionCocina && ` • Impresión: ${item.seccionCocina.nombre}`}
             </RNText>
           </View>
 
@@ -296,6 +318,41 @@ const CategoriasScreen = () => {
                 onChangeText={(t) => setFormData(p => ({ ...p, image: t }))}
               />
             </View>
+
+            <View style={styles.inputGroup}>
+              <RNText style={styles.inputLabel}>Sección de Cocina (Impresión)</RNText>
+              <View style={styles.pickerContainer}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <TouchableOpacity
+                    style={[styles.pickerChip, formData.seccionCocinaId === null && styles.pickerChipActive]}
+                    onPress={() => setFormData(p => ({ ...p, seccionCocinaId: null }))}
+                  >
+                    <RNText style={[styles.pickerChipText, formData.seccionCocinaId === null && styles.pickerChipTextActive]}>
+                      Ninguna / Por defecto
+                    </RNText>
+                  </TouchableOpacity>
+                  {secciones.map((sec) => (
+                    <TouchableOpacity
+                      key={sec.IDseccion}
+                      style={[
+                        styles.pickerChip, 
+                        formData.seccionCocinaId === sec.IDseccion && styles.pickerChipActive,
+                        formData.seccionCocinaId === sec.IDseccion ? { backgroundColor: sec.color } : { borderColor: sec.color }
+                      ]}
+                      onPress={() => setFormData(p => ({ ...p, seccionCocinaId: sec.IDseccion }))}
+                    >
+                      <RNText style={[
+                        styles.pickerChipText, 
+                        formData.seccionCocinaId === sec.IDseccion && styles.pickerChipTextActive,
+                        formData.seccionCocinaId === sec.IDseccion ? { color: '#FFF' } : { color: sec.color }
+                      ]}>
+                        {sec.nombre}
+                      </RNText>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            </View>
           </ScrollView>
 
           <View style={styles.modalFooter}>
@@ -355,6 +412,11 @@ const styles = StyleSheet.create({
   saveBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, backgroundColor: '#22c55e', alignItems: 'center' },
   saveBtnDisabled: { backgroundColor: '#9ca3af' },
   saveBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  pickerContainer: { flexDirection: 'row', marginTop: 4 },
+  pickerChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#e5e7eb', marginRight: 8, backgroundColor: '#fff' },
+  pickerChipActive: { backgroundColor: '#3b82f6', borderColor: '#3b82f6' },
+  pickerChipText: { fontSize: 13, fontWeight: '500', color: '#4b5563' },
+  pickerChipTextActive: { color: '#fff' },
 });
 
 export default CategoriasScreen;

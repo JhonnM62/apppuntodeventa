@@ -228,7 +228,7 @@ const useCartStore = create<CartStore>((set, get) => ({
           categoriaNombre: item.categoriaProducto || item.categoria,
           imagenUrl: item.imagenUrl || item.producto?.imagenUrl || item.producto?.image,
           modifiers: parsedModifiers,
-          seccionCocinaId: item.producto?.seccionCocinaId || item.seccionCocinaId,
+          seccionCocinaId: item.producto?.seccionCocinaId || item.producto?.categoriaSeccionCocinaId || item.seccionCocinaId || item.categoriaSeccionCocinaId,
           ...item,
         };
       }

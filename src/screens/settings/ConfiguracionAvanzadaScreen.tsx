@@ -88,7 +88,7 @@ export default function ConfiguracionAvanzadaScreen() {
           <Text className="text-gray-500 mb-4 text-sm">Configura cuántas columnas de productos se mostrarán en computadoras y pantallas anchas. (A mayor número, cajas más pequeñas).</Text>
           
           <View className="flex-row flex-wrap gap-3">
-            {[4, 5, 6, 7, 8].map((cols) => {
+            {[4, 5, 6, 7, 8, 9, 10, 11, 12].map((cols) => {
               const isSelected = useSettingsStore(state => state.gridColumnsWeb) === cols;
               return (
                 <TouchableOpacity
@@ -112,7 +112,7 @@ export default function ConfiguracionAvanzadaScreen() {
           <Text className="text-gray-500 mb-4 text-sm">Configura cuántas columnas de productos se mostrarán en celulares y dispositivos móviles.</Text>
           
           <View className="flex-row flex-wrap gap-3">
-            {[2, 3, 4].map((cols) => {
+            {[2, 3, 4, 5, 6].map((cols) => {
               const isSelected = useSettingsStore(state => state.gridColumnsMobile) === cols;
               return (
                 <TouchableOpacity

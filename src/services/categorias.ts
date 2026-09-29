@@ -11,12 +11,15 @@ export type CategoriaItem = {
     precioUnitario: number;
     cantidad: number;
   }[];
+  seccionCocinaId?: string | null;
+  seccionCocina?: any;
 };
 
 export type CreateCategoriaDto = {
   nombre: string;
   image?: string;
   padreId?: string;
+  seccionCocinaId?: string | null;
 };
 
 export type UpdateCategoriaDto = Partial<CreateCategoriaDto>;

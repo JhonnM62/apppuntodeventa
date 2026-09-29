@@ -436,7 +436,7 @@ const PedidosScreen = () => {
         subtotal: Number(prod.precioTotal || ((prod.precio || 0) * (prod.cantidad || 1))),
         modifiers: getModifiers(prod.comentarios),
         cantidadPreparada: prod.cantidadPreparada ? Number(prod.cantidadPreparada) : undefined,
-        seccionCocinaId: prod.producto?.seccionCocinaId || prod.seccionCocinaId
+        seccionCocinaId: prod.producto?.seccionCocinaId || prod.producto?.categoriaSeccionCocinaId || prod.producto?.categoriaRelacion?.seccionCocinaId || prod.seccionCocinaId || prod.categoriaSeccionCocinaId
       }))
     };
   };

@@ -13,6 +13,7 @@ export interface SaleProduct {
   imagenUrl?: string;
   comentarios?: string;
   seccionCocinaId?: string | null;
+  categoriaSeccionCocinaId?: string | null;
   producto?: any;
 }
 

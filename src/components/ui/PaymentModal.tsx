@@ -344,7 +344,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           precioUnitario: precioUnitario,
           subtotal: subtotal,
           modifiers: item.modifiers?.map((m: any) => ({ name: m.name, price: m.price, quantity: m.quantity })),
-          seccionCocinaId: item.seccionCocinaId,
+          seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId,
         };
       }),
       estado: estado,
