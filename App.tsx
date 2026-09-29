@@ -14,6 +14,11 @@ import Toast, { BaseToast, ErrorToast, ToastConfig } from 'react-native-toast-me
 import { usePushNotifications } from './src/hooks/usePushNotifications';
 import { CustomAlertProvider } from './src/context/CustomAlertContext';
 import { useGlobalSalesSync } from './src/hooks/useGlobalSalesSync';
+import { usePrinterServer } from './src/hooks/usePrinterServer';
+import { setPrinterSocket } from './src/store/usePrinterStore';
+import useSeccionesStore from './src/store/useSeccionesStore';
+import { useSocket } from './src/context/SocketContext';
+import useAuthStore from './src/store/useAuthStore';
 
 let BLEPrinter: any = null;
 try {
@@ -31,6 +36,29 @@ function AppInitializer({ children }: { children: React.ReactNode }) {
 
   // Initialize global sales sync for sockets and background fetching
   useGlobalSalesSync();
+
+  // Servidor de impresión BT remoto
+  usePrinterServer();
+
+  // Conectar socket al printer store para printRemote()
+  const { socket } = useSocket();
+  const user = useAuthStore((s) => s.user);
+  useEffect(() => {
+    const negocioId = (user as any)?.negocioId ?? (user as any)?.IDnegocio ?? 'default';
+    setPrinterSocket(socket, negocioId);
+  }, [socket, (user as any)?.negocioId ?? (user as any)?.IDnegocio]);
+
+  // Cargar secciones de cocina al iniciar
+  const fetchSecciones = useSeccionesStore((s) => s.fetchSecciones);
+  useEffect(() => {
+    const loadSecciones = async () => {
+      try {
+        const token = await AsyncStorage.getItem('token');
+        if (token) fetchSecciones();
+      } catch {}
+    };
+    loadSecciones();
+  }, []);
 
   // Auto-connect printer state
   const { currentPrinter, isConnected, setConnected } = usePrinterStore();

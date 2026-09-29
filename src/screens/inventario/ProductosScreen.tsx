@@ -31,7 +31,7 @@ const ProductosScreen = ({ navigation }: Props) => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [isDeletingBatch, setIsDeletingBatch] = useState(false);
 
-  const handleScroll = useScrollDirection();
+  const { handleScroll } = useScrollDirection();
 
   const fetchProductos = useCallback(async () => {
     try {

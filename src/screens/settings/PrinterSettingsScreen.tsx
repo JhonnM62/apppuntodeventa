@@ -18,7 +18,7 @@ try {
 }
 
 const PrinterSettingsScreen = ({ navigation }: any) => {
-  const { currentPrinter, paperSize, isConnected, configs, setPrinter, setPaperSize, setConnected, fetchConfigs, setConfigs, manualPreviewEnabled, manualAutoPrintEnabled, manualAutoPrintSeconds, setManualPrintConfigs } = usePrinterStore();
+  const { currentPrinter, paperSize, isConnected, configs, setPrinter, setPaperSize, setConnected, fetchConfigs, setConfigs, manualPreviewEnabled, manualAutoPrintEnabled, manualAutoPrintSeconds, setManualPrintConfigs, servidorActivo, setServidorActivo } = usePrinterStore();
   const { showAlert } = useCustomAlert();
   const [devices, setDevices] = useState<PrinterDevice[]>([]);
   const [scanning, setScanning] = useState(false);
@@ -397,6 +397,25 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
               })}
             </View>
           )}
+        </View>
+
+        {/* MODO SERVIDOR */}
+        <View style={styles.card}>
+          <View style={[styles.cardHeader, { marginBottom: 8 }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="server-outline" size={24} color="#8b5cf6" />
+              <RNText style={styles.cardTitle}>Modo Servidor de Impresión</RNText>
+            </View>
+            <Switch
+              value={servidorActivo}
+              onValueChange={setServidorActivo}
+              trackColor={{ false: '#d1d5db', true: '#c4b5fd' }}
+              thumbColor={servidorActivo ? '#8b5cf6' : '#f3f4f6'}
+            />
+          </View>
+          <RNText style={styles.cardDescription}>
+            Habilita esta opción si deseas que esta tablet actúe como servidor. Recibirá e imprimirá automáticamente los tickets enviados remotamente desde los celulares de los meseros.
+          </RNText>
         </View>
 
         {/* Impresión Automática */}

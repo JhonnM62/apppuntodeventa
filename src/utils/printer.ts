@@ -52,6 +52,9 @@ export interface TicketData {
     direccion?: string;
     telefono?: string;
   };
+  seccionNombre?: string | null;
+  seccionColor?: string | null;
+  seccionIcono?: string | null;
 }
 
 // Helpers para alinear texto de forma manual (evita fallos de comandos ESC/POS en algunas impresoras)
@@ -314,7 +317,11 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
   payload += ESC_CMD.ALIGN_CT;
   payload += ESC_CMD.TXT_4SQUARE;
   payload += ESC_CMD.TXT_BOLD_ON;
-  payload += cleanText('NUEVA ORDEN (COCINA)') + '\n';
+  if (data.seccionNombre) {
+    payload += cleanText(`NUEVA ORDEN: ${data.seccionNombre.toUpperCase()}`) + '\n';
+  } else {
+    payload += cleanText('NUEVA ORDEN (COCINA)') + '\n';
+  }
   payload += ESC_CMD.TXT_NORMAL;
   payload += ESC_CMD.TXT_BOLD_OFF;
   payload += ESC_CMD.ALIGN_LT;

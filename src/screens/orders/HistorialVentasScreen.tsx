@@ -81,7 +81,7 @@ function HistorialVentasScreenInner({ navigation }: any) {
   const hasNextPage = currentCache.hasNextPage;
   const totalRecords = currentCache.total;
 
-  const handleScrollBase = useScrollDirection();
+  const { handleScroll: handleScrollBase } = useScrollDirection();
   const listRef = useRef<any>(null);
   const [showScrollUp, setShowScrollUp] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);

@@ -199,7 +199,7 @@ export default function CajaListScreen({ navigation }: any) {
   // ─── Control de Scroll y Botones Flotantes ───────────────────────────────────
   const [showScrollUp, setShowScrollUp] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
-  const handleScrollBase = useScrollDirection();
+  const { handleScroll: handleScrollBase } = useScrollDirection();
   
   const handleScroll = useCallback((event: any) => {
     handleScrollBase(event);

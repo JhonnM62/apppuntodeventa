@@ -177,7 +177,7 @@ export default function ClientesListScreen({ navigation }: any) {
   );
 
   // Hide FloatingDock logic when scrolling down
-  const handleScroll = useScrollDirection();
+  const { handleScroll } = useScrollDirection();
   
   return (
     <View style={{ flex: 1, backgroundColor: '#f9fafb' }}>

@@ -313,10 +313,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     
     if (!printComanda && !printFactura) return;
     
-    if (!isConnected || !currentPrinter) {
-      Toast.show({ type: 'warning', text1: 'Impresión Fallida', text2: 'No hay impresora conectada', position: 'top' });
-      return;
-    }
+    if (!printComanda && !printFactura) return;
 
     // Extraemos de forma limpia el ID sin la palabra repetida
     let cleanOrderId = orderId;
@@ -347,6 +344,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           precioUnitario: precioUnitario,
           subtotal: subtotal,
           modifiers: item.modifiers?.map((m: any) => ({ name: m.name, price: m.price, quantity: m.quantity })),
+          seccionCocinaId: item.seccionCocinaId,
         };
       }),
       estado: estado,
@@ -355,23 +353,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       devueltas: cambio,
     };
 
-    let errorCount = 0;
-
-    if (printComanda) {
-      const successComanda = await executePrint(ticketData, paperSize, currentPrinter.inner_mac_address, 'comanda');
-      if (!successComanda) errorCount++;
-    }
-
-    if (printFactura) {
-      // Pequeña pausa para no saturar el buffer de la impresora Bluetooth si se mandan ambos
-      if (printComanda) {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-      }
-      const successFactura = await executePrint(ticketData, paperSize, currentPrinter.inner_mac_address, 'factura');
-      if (!successFactura) errorCount++;
-    }
-
-    if (errorCount > 0) {
+    try {
+      await usePrinterStore.getState().printTicket(ticketData);
+    } catch (err) {
+      console.error('Error al imprimir ticket:', err);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo imprimir correctamente', position: 'top' });
     }
   };

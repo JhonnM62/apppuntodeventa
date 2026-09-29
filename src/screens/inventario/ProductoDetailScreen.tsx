@@ -13,6 +13,7 @@ import { getProductById, createProduct, updateProduct, deleteProduct, uploadImag
 import * as ImagePicker from 'expo-image-picker';
 import { insumosService } from '../../services/insumos';
 import categoriasService from '../../services/categorias';
+import { getSecciones, SeccionCocina } from '../../services/seccion-cocina';
 import Toast from 'react-native-toast-message';
 import { formatCurrency } from '../../utils/formatters';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -31,12 +32,13 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
   const { id } = route.params;
   const isNew = id === 'new';
   const { canEdit, canDelete } = usePermissions('productos');
-  const handleScroll = useScrollDirection();
+  const { handleScroll } = useScrollDirection();
 
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [insumosList, setInsumosList] = useState<any[]>([]);
   const [categoriasList, setCategoriasList] = useState<any[]>([]);
+  const [seccionesList, setSeccionesList] = useState<SeccionCocina[]>([]);
   
   const [formData, setFormData] = useState<any>({
     nombre: '',
@@ -52,7 +54,8 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
     llevarControlEnCaja: 'no',
     mostrarDisponibilidad: false,
     orden: 0,
-    recetaInsumos: []
+    recetaInsumos: [],
+    seccionCocinaId: null
   });
 
   const [showInsumoSelector, setShowInsumoSelector] = useState(false);
@@ -126,14 +129,16 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
 
   const fetchData = useCallback(async () => {
     try {
-      const [insumosRes, categoriasRes] = await Promise.all([
+      const [insumosRes, categoriasRes, seccionesRes] = await Promise.all([
         insumosService.getAll({ limit: 1000 }),
-        categoriasService.getAll()
+        categoriasService.getAll(),
+        getSecciones()
       ]);
       setInsumosList(insumosRes || []);
       const rawCats = (categoriasRes as any)?.data || categoriasRes || [];
       const validCats = rawCats.filter((c: any) => c.nombre && !c.nombre.match(/^[0-9a-f]{8}$/i));
       setCategoriasList(validCats);
+      setSeccionesList(seccionesRes || []);
 
       if (!isNew) {
         const product = await getProductById(id);
@@ -204,7 +209,8 @@ const ProductoDetailScreen = ({ navigation, route }: Props) => {
           insumo: ri.insumo || ri.insumoRelacion?.IDalimentos,
           tipoDeMedida: ri.tipoDeMedida || ri.insumoRelacion?.Unidades || 'Und',
           cantidad: Number(ri.cantidad) || 0
-        }))
+        })),
+        seccionCocinaId: formData.seccionCocinaId || null
       };
 
       if (isNew) {
@@ -407,6 +413,43 @@ const handleDelete = () => {
                       >
                         <RNText style={[styles.pickerChipText, formData.categoria === cat.IDcategoria && styles.pickerChipTextActive]}>
                           {cat.nombre}
+                        </RNText>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={[styles.inputGroup, { flex: 1, marginRight: 8 }]}>
+                <RNText style={styles.label}>Sección de Cocina (Impresión)</RNText>
+                <View style={styles.pickerContainer}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <TouchableOpacity
+                      style={[styles.pickerChip, formData.seccionCocinaId === null && styles.pickerChipActive]}
+                      onPress={() => handleChange('seccionCocinaId', null)}
+                    >
+                      <RNText style={[styles.pickerChipText, formData.seccionCocinaId === null && styles.pickerChipTextActive]}>
+                        General
+                      </RNText>
+                    </TouchableOpacity>
+                    {seccionesList.map((sec) => (
+                      <TouchableOpacity
+                        key={sec.IDseccion}
+                        style={[
+                          styles.pickerChip, 
+                          formData.seccionCocinaId === sec.IDseccion && styles.pickerChipActive,
+                          formData.seccionCocinaId === sec.IDseccion ? { backgroundColor: sec.color } : { borderColor: sec.color }
+                        ]}
+                        onPress={() => handleChange('seccionCocinaId', sec.IDseccion)}
+                      >
+                        <RNText style={[
+                          styles.pickerChipText, 
+                          formData.seccionCocinaId === sec.IDseccion && styles.pickerChipTextActive,
+                          formData.seccionCocinaId === sec.IDseccion ? { color: '#FFF' } : { color: sec.color }
+                        ]}>
+                          {sec.nombre}
                         </RNText>
                       </TouchableOpacity>
                     ))}

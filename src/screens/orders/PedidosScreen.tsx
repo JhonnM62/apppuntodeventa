@@ -362,7 +362,7 @@ const PedidosScreen = () => {
 
   // --- Scroll & Floating Buttons ---
   const listRef = useRef<any>(null);
-  const handleScrollBase = useScrollDirection();
+  const { handleScroll: handleScrollBase } = useScrollDirection();
   const [showScrollUp, setShowScrollUp] = useState(false);
   const [showScrollDown, setShowScrollDown] = useState(false);
 
@@ -435,7 +435,8 @@ const PedidosScreen = () => {
         precioUnitario: Number(prod.precio || 0),
         subtotal: Number(prod.precioTotal || ((prod.precio || 0) * (prod.cantidad || 1))),
         modifiers: getModifiers(prod.comentarios),
-        cantidadPreparada: prod.cantidadPreparada ? Number(prod.cantidadPreparada) : undefined
+        cantidadPreparada: prod.cantidadPreparada ? Number(prod.cantidadPreparada) : undefined,
+        seccionCocinaId: prod.producto?.seccionCocinaId || prod.seccionCocinaId
       }))
     };
   };

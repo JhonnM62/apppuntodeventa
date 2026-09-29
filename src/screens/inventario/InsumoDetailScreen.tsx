@@ -82,7 +82,7 @@ type Props = {
 const InsumoDetailScreen = ({ navigation, route }: Props) => {
   const { canEdit, canDelete } = usePermissions('insumos');
   const { showAlert } = useCustomAlert();
-  const handleScroll = useScrollDirection();
+  const { handleScroll } = useScrollDirection();
 
   const [insumo, setInsumo] = useState<InsumoItem | null>(null);
   const [loading, setLoading] = useState(true);

@@ -251,7 +251,7 @@ export default function ClienteDetailScreen({ route, navigation }: any) {
   const [ventasLoadingMore, setVentasLoadingMore] = useState(false);
 
   const { canEdit, canDelete } = usePermissions('clientes');
-  const handleScroll = useScrollDirection();
+  const { handleScroll } = useScrollDirection();
 
   const fetchCliente = async () => {
     try {

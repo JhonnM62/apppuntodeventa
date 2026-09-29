@@ -56,6 +56,7 @@ import ProductoDetailScreen from '../screens/inventario/ProductoDetailScreen';
 import NotificationSettingsScreen from '../screens/settings/NotificationSettingsScreen';
 import ConfiguracionNegocioScreen from '../screens/settings/ConfiguracionNegocioScreen';
 import ConfiguracionAvanzadaScreen from '../screens/settings/ConfiguracionAvanzadaScreen';
+import SeccionesCocinaScreen from '../screens/settings/SeccionesCocinaScreen';
 
 // Nomina / Payroll
 import CheckInScreen from '../screens/nomina/CheckInScreen';
@@ -78,6 +79,7 @@ export type RootStackParamList = {
   NotificationSettings: undefined;
   ConfiguracionNegocio: undefined;
   ConfiguracionAvanzada: undefined;
+  SeccionesCocina: undefined;
   Insumos: undefined;
   InsumoDetail: { id: string };
   AuditoriaConteo: { insumoId?: string; insumoNombre?: string };
@@ -268,6 +270,7 @@ const RootNavigator = () => {
             <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen as any} />
             <Stack.Screen name="ConfiguracionNegocio" component={ConfiguracionNegocioScreen as any} />
             <Stack.Screen name="ConfiguracionAvanzada" component={ConfiguracionAvanzadaScreen as any} />
+            <Stack.Screen name="SeccionesCocina" component={SeccionesCocinaScreen as any} />
             <Stack.Screen name="Insumos" component={InsumosScreen as any} />
             <Stack.Screen name="Analytics" component={AnalyticsScreen as any} />
             <Stack.Screen name="BulkImport" component={BulkImportScreen as any} />

@@ -55,6 +55,15 @@ const MODULES = [
     route: 'PrinterSettings',
   },
   {
+    id: 'secciones_cocina',
+    title: 'Secciones e Impresión',
+    description: 'Rutas de impresión y áreas',
+    icon: 'chef-hat',
+    color: '#f97316',
+    route: 'SeccionesCocina',
+    adminOnly: true,
+  },
+  {
     id: 'config_negocio',
     title: 'Negocio (Corte)',
     description: 'Ajustar horarios de corte y operación',

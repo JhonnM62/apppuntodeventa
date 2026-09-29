@@ -207,7 +207,7 @@ export default function ReportesScreen({ navigation }: any) {
   const [showEndPicker, setShowEndPicker] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  const handleScroll = useScrollDirection();
+  const { handleScroll } = useScrollDirection();
 
   // ⚠️ useFocusEffect en lugar de useEffect: recarga cada vez que la pantalla gana foco
   useFocusEffect(

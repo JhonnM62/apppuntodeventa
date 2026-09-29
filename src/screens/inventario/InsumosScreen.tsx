@@ -64,6 +64,9 @@ const InsumosScreen = ({ navigation }: Props) => {
   const ajustesPendientes = insumos.filter(i => i.ultimoAjustePendiente);
 
   const { handleScroll, isScrollingDown, isAtTop, isAtBottom } = useScrollDirection();
+
+  // Scroll helpers para los botones flotantes
+  const scrollToBottom = () => flashListRef.current?.scrollToEnd?.({ animated: true });
   const [stockModal, setStockModal] = useState<{ tipo: 'entrada' | 'salida'; cantidad: number; observacion: string; cantidadPorPaquete?: number; paquetesEnBodega?: number; ultimoAjustePendiente?: any }>({
     tipo: 'entrada',
     cantidad: 0,
@@ -1157,11 +1160,11 @@ if (status !== 'granted') {
       />
       
       <FloatingScrollButtons
-        scrollRef={flashListRef}
-        isScrollingDown={isScrollingDown}
-        isAtTop={isAtTop}
-        isAtBottom={isAtBottom}
-        bottomOffset={160} // For floating dock
+        showUp={!isAtTop}
+        showDown={!isAtBottom}
+        onUp={scrollToTop}
+        onDown={scrollToBottom}
+        bottomOffset={160}
       />
 
       <Modal visible={showModal} animationType="slide" onRequestClose={() => setShowModal(false)} presentationStyle="pageSheet">
