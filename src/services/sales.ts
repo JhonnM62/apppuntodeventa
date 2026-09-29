@@ -12,6 +12,8 @@ export interface SaleProduct {
   estado: string;
   imagenUrl?: string;
   comentarios?: string;
+  seccionCocinaId?: string | null;
+  producto?: any;
 }
 
 export interface SalePayload {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Image, RefreshControl, Platform, TextInput, FlatList, StyleSheet, Modal as RNModal, ScrollView, Text as RNText, KeyboardAvoidingView, Keyboard } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Image, RefreshControl, Platform, TextInput, FlatList, StyleSheet, Modal as RNModal, ScrollView, Text as RNText, KeyboardAvoidingView, Keyboard, useWindowDimensions } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -197,9 +197,13 @@ const CartItemComponent = React.memo(({
 });
 
 const NewSaleScreen = ({ navigation, route }: Props) => {
+  const { width: windowWidth } = useWindowDimensions();
+  const isMobileScreen = windowWidth < 768;
+  const { primaryColor, gridColumnsWeb, gridColumnsMobile } = useSettingsStore();
+  const dynamicColumns = isMobileScreen ? (gridColumnsMobile || 3) : (gridColumnsWeb || 6);
+
   const { showAlert } = useCustomAlert();
   const insets = useSafeAreaInsets();
-  const { primaryColor } = useSettingsStore();
   const cachedMesas = useMesaStore((state) => state.mesas);
   const setCachedMesas = useMesaStore((state) => state.setMesas);
   const shouldRefetchMesas = useMesaStore((state) => state.shouldRefetch);
@@ -1916,10 +1920,11 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           ) : (
             <View style={{ flex: 1, minHeight: 400, width: '100%' }}>
               <FlashList
+                key={`grid-${dynamicColumns}`}
                 data={filteredProducts}
                 renderItem={renderProduct}
                 keyExtractor={(item, index) => `${item.IDproductos}-${index}`}
-                numColumns={3}
+                numColumns={dynamicColumns}
                 // @ts-ignore
                 estimatedItemSize={200}
                 contentContainerStyle={{ paddingBottom: 100 }}

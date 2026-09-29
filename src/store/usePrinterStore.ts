@@ -324,7 +324,7 @@ const usePrinterStore = create<PrinterState>()(
           }
 
           // Pausa entre tickets (excepto el último)
-          if (i < grupos.length - 1 && Platform.OS !== 'web') {
+          if (i < grupos.length - 1) {
             await new Promise((r) => setTimeout(r, pausaMs));
           }
         }

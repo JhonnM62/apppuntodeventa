@@ -82,6 +82,54 @@ export default function ConfiguracionAvanzadaScreen() {
           </View>
         </View>
 
+        {/* Sección: Tamaño de Productos en Web */}
+        <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 16, marginBottom: 24 }}>
+          <Text className="text-lg font-bold mb-1 text-gray-800">Cajas de Productos (Web)</Text>
+          <Text className="text-gray-500 mb-4 text-sm">Configura cuántas columnas de productos se mostrarán en computadoras y pantallas anchas. (A mayor número, cajas más pequeñas).</Text>
+          
+          <View className="flex-row flex-wrap gap-3">
+            {[4, 5, 6, 7, 8].map((cols) => {
+              const isSelected = useSettingsStore(state => state.gridColumnsWeb) === cols;
+              return (
+                <TouchableOpacity
+                  key={cols}
+                  onPress={() => useSettingsStore.getState().setGridColumnsWeb(cols)}
+                  style={{ backgroundColor: isSelected ? primaryColor : '#f3f4f6', minWidth: 50 }}
+                  className={`py-3 px-4 rounded-xl items-center justify-center`}
+                >
+                  <Text className={`font-bold ${isSelected ? 'text-white' : 'text-gray-700'}`}>
+                    {cols}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Sección: Tamaño de Productos en Móvil */}
+        <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 16, marginBottom: 24 }}>
+          <Text className="text-lg font-bold mb-1 text-gray-800">Cajas de Productos (Móvil)</Text>
+          <Text className="text-gray-500 mb-4 text-sm">Configura cuántas columnas de productos se mostrarán en celulares y dispositivos móviles.</Text>
+          
+          <View className="flex-row flex-wrap gap-3">
+            {[2, 3, 4].map((cols) => {
+              const isSelected = useSettingsStore(state => state.gridColumnsMobile) === cols;
+              return (
+                <TouchableOpacity
+                  key={cols}
+                  onPress={() => useSettingsStore.getState().setGridColumnsMobile(cols)}
+                  style={{ backgroundColor: isSelected ? primaryColor : '#f3f4f6', minWidth: 50 }}
+                  className={`py-3 px-4 rounded-xl items-center justify-center`}
+                >
+                  <Text className={`font-bold ${isSelected ? 'text-white' : 'text-gray-700'}`}>
+                    {cols}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
+
         {/* Reset */}
         <TouchableOpacity
           onPress={resetSettings}
