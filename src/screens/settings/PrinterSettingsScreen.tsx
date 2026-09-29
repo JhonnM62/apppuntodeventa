@@ -40,6 +40,20 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
   useEffect(() => {
     // Fetch printer configs on mount
     fetchConfigs();
+
+    const verifyConnection = async () => {
+      if (isConnected && BLEPrinter) {
+        try {
+          await BLEPrinter.init();
+        } catch (err: any) {
+          const errorMessage = typeof err === 'string' ? err : (err?.message || '');
+          if (errorMessage.toLowerCase().includes('not enabled') || errorMessage.toLowerCase().includes('bluetooth')) {
+            setConnected(false);
+          }
+        }
+      }
+    };
+    verifyConnection();
   }, []);
 
   const handleToggleConfig = async (statusKey: string, field: 'imprimirComanda' | 'imprimirFactura', newValue: boolean) => {
@@ -525,7 +539,7 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
 
       {/* Snackbar estilo nativo para activar Bluetooth */}
       {showBluetoothBanner && (
-        <View style={[styles.snackbar, { bottom: insets.bottom + 20 }]}>
+        <View style={[styles.snackbar, { bottom: insets.bottom + 140 }]}>
           <RNText style={styles.snackbarText}>¡El 'Bluetooth' no está activado!</RNText>
           <TouchableOpacity onPress={activateBluetooth} activeOpacity={0.7}>
             <RNText style={styles.snackbarAction}>ACTIVAR</RNText>
@@ -584,7 +598,7 @@ const styles = StyleSheet.create({
   switchLabel: { fontSize: 15, fontWeight: '600', color: '#374151' },
   snackbar: {
     position: 'absolute',
-    bottom: 20,
+    bottom: 100,
     left: 16,
     right: 16,
     backgroundColor: '#323232',

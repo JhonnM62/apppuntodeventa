@@ -485,6 +485,89 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
   return payload;
 };
 
+export const executeWebPrintBatch = (
+  tickets: { data: TicketData; type: 'comanda' | 'factura' }[],
+  paperSize: 58 | 80
+) => {
+  if (Platform.OS !== 'web' || tickets.length === 0) return true;
+
+  // Limpiar impresiones anteriores si quedaron pegadas
+  const oldDiv = document.getElementById('ticket-print-area');
+  if (oldDiv) oldDiv.remove();
+  const oldStyle = document.getElementById('ticket-print-style');
+  if (oldStyle) oldStyle.remove();
+
+  const htmlPayloads = tickets.map(t => getHtmlTicketPayload(t.data, paperSize, t.type));
+  // Unimos los HTML con un page-break para que la impresora corte entre tickets (comandas de secciones diferentes)
+  const htmlPayload = htmlPayloads.map(payload => 
+    `<div>${payload}</div>`
+  ).join('<div style="page-break-after: always; margin-bottom: 20px;"></div>');
+
+  const printDiv = document.createElement('div');
+  printDiv.id = 'ticket-print-area';
+  printDiv.innerHTML = htmlPayload;
+  
+  const style = document.createElement('style');
+  style.id = 'ticket-print-style';
+  style.innerHTML = `
+    @media screen {
+      #ticket-print-area {
+        position: absolute;
+        left: -9999px;
+        top: -9999px;
+      }
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #ticket-print-area, #ticket-print-area * {
+        visibility: visible;
+      }
+      #ticket-print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        margin: 0; 
+        padding: 10px; 
+        font-family: monospace; 
+        white-space: pre; 
+        font-size: 14px;
+        line-height: 1.2;
+        width: max-content;
+        color: black;
+      }
+      @page {
+        margin: 0;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+  document.body.appendChild(printDiv);
+  
+  // Forzar reflujo
+  // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+  printDiv.offsetHeight;
+
+  window.print();
+  
+  // En móviles el tiempo de generación de la previsualización puede tardar varios segundos.
+  // Un timeout de 1000ms elimina el elemento antes de que el celular termine, dejando la hoja en blanco o cancelando la ventana.
+  // Se aumenta a 60 segundos para permitir la impresión tranquila en celulares, y también escuchamos el onafterprint.
+  
+  const cleanup = () => {
+    if (document.body.contains(printDiv)) document.body.removeChild(printDiv);
+    if (document.head.contains(style)) document.head.removeChild(style);
+    window.removeEventListener('afterprint', cleanup);
+  };
+  
+  window.addEventListener('afterprint', cleanup);
+  setTimeout(cleanup, 60000);
+
+  return true;
+};
+
 export const executePrint = async (
   ticketData: TicketData,
   paperSize: 58 | 80,
@@ -506,79 +589,15 @@ export const executePrint = async (
     } catch (err) {
       console.log('Error fetching configuracion for ticket:', err);
     }
-    if (Platform.OS === 'web' || !BLEPrinter) {
-      const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
-      console.log(`Simulando impresión (${type}) (No hay BLEPrinter)\n`, payload);
-      
-      if (Platform.OS === 'web') {
-        const htmlPayload = getHtmlTicketPayload(ticketData, paperSize, type);
-        
-        // En móviles (Android Chrome), los iframes ocultos bloquean la impresión.
-        // La forma más robusta es inyectar un div en el body, ocultar el resto con CSS @media print,
-        // imprimir la ventana principal y luego limpiar.
-        
-        const printDiv = document.createElement('div');
-        printDiv.id = 'ticket-print-area';
-        printDiv.innerHTML = htmlPayload;
-        
-        const style = document.createElement('style');
-        style.id = 'ticket-print-style';
-        style.innerHTML = `
-          @media screen {
-            #ticket-print-area {
-              position: absolute;
-              left: -9999px;
-              top: -9999px;
-            }
-          }
-          @media print {
-            body * {
-              visibility: hidden;
-            }
-            #ticket-print-area, #ticket-print-area * {
-              visibility: visible;
-            }
-            #ticket-print-area {
-              position: absolute;
-              left: 0;
-              top: 0;
-              margin: 0; 
-              padding: 10px; 
-              font-family: monospace; 
-              white-space: pre; 
-              font-size: 14px;
-              line-height: 1.2;
-              width: max-content;
-              color: black;
-            }
-            @page {
-              margin: 0;
-            }
-          }
-        `;
+    
+    if (Platform.OS === 'web') {
+      console.log(`Ejecutando impresión web (${type})`);
+      return executeWebPrintBatch([{ data: ticketData, type }], paperSize);
+    }
 
-        document.head.appendChild(style);
-        document.body.appendChild(printDiv);
-        
-        // Forzar reflujo para que el navegador aplique los estilos inmediatamente antes de imprimir
-        // Esto evita tener que usar setTimeout, el cual hace que Chrome Móvil pierda 
-        // el contexto de acción del usuario y bloquee la impresión.
-        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-        printDiv.offsetHeight;
-
-        window.print();
-        
-        // Limpieza diferida (se ejecutará cuando se cierre el diálogo de impresión o retorne el hilo)
-        setTimeout(() => {
-          if (document.body.contains(printDiv)) {
-            document.body.removeChild(printDiv);
-          }
-          if (document.head.contains(style)) {
-            document.head.removeChild(style);
-          }
-        }, 1000);
-      }
-      return true; // Simulado
+    if (!BLEPrinter) {
+      console.log(`Simulando impresión (${type}) (No hay BLEPrinter)`);
+      return true; // Simulado en móvil sin BT
     }
 
     // Helper for logo printing

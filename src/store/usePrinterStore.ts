@@ -149,7 +149,11 @@ const usePrinterStore = create<PrinterState>()(
       // ─────────────────────────────────────────────────────────────────
       printSmart: async (ticketData, type) => {
         const state = get();
-        if (Platform.OS === 'web') return true;
+        if (Platform.OS === 'web') {
+          const { executeWebPrintBatch } = await import('../utils/printer');
+          executeWebPrintBatch([{ data: ticketData, type }], state.paperSize);
+          return true;
+        }
 
         if (state.isConnected && state.currentPrinter) {
           // Impresión local directa
@@ -179,9 +183,51 @@ const usePrinterStore = create<PrinterState>()(
 
         if (!printComanda && !printFactura) return;
 
-        // Verificar si hay impresora disponible (local o remota)
+        if (Platform.OS === 'web') {
+          const webTickets: { data: any; type: 'comanda' | 'factura' }[] = [];
+          
+          if (printComanda) {
+            const { default: useSeccionesStore } = await import('./useSeccionesStore');
+            const seccionesState = useSeccionesStore.getState();
+            const secciones = seccionesState.getSeccionesActivas();
+            
+            if (secciones.length === 0) {
+              webTickets.push({ data: ticketData, type: 'comanda' });
+            } else {
+              const grupos = splitComandaPorSeccion(ticketData.productos ?? [], secciones, true);
+              if (grupos.length === 0) {
+                webTickets.push({ data: ticketData, type: 'comanda' });
+              } else {
+                grupos.forEach((g) => {
+                  webTickets.push({
+                    data: {
+                      ...ticketData,
+                      productos: g.productos,
+                      seccionNombre: g.seccion.IDseccion === '__general__' ? null : g.seccion.nombre,
+                      seccionColor: g.seccion.color,
+                      seccionIcono: g.seccion.icono,
+                    },
+                    type: 'comanda'
+                  });
+                });
+              }
+            }
+          }
+          
+          if (printFactura) {
+            webTickets.push({ data: ticketData, type: 'factura' });
+          }
+          
+          if (webTickets.length > 0) {
+            const { executeWebPrintBatch } = await import('../utils/printer');
+            executeWebPrintBatch(webTickets, state.paperSize);
+          }
+          return;
+        }
+
+        // Verificar si hay impresora disponible (local o remota) para App Móvil
         const hayImpresora = (state.isConnected && state.currentPrinter) || !!_socket;
-        if (Platform.OS !== 'web' && !hayImpresora) {
+        if (!hayImpresora) {
           Toast.show({ type: 'warning', text1: 'Sin impresora', text2: 'No hay impresora BT local ni servidor disponible', position: 'top' });
           return;
         }
@@ -191,7 +237,7 @@ const usePrinterStore = create<PrinterState>()(
         }
 
         if (printFactura) {
-          if (printComanda && Platform.OS !== 'web') {
+          if (printComanda) {
             await new Promise((r) => setTimeout(r, 1500));
           }
           await get().printSmart(ticketData, 'factura');
@@ -223,6 +269,22 @@ const usePrinterStore = create<PrinterState>()(
           // Todos los productos sin sección y sin GENERAL → ticket único
           console.log('[DEBUG-PRINTER] printTicketConSecciones - sin grupos (0 productos), enviando ticket general.');
           await get().printSmart(ticketData, 'comanda');
+          return;
+        }
+
+        if (Platform.OS === 'web') {
+          const ticketsParaImprimir = grupos.map((g) => ({
+            data: {
+              ...ticketData,
+              productos: g.productos,
+              seccionNombre: g.seccion.IDseccion === '__general__' ? null : g.seccion.nombre,
+              seccionColor: g.seccion.color,
+              seccionIcono: g.seccion.icono,
+            },
+            type: 'comanda' as const,
+          }));
+          const { executeWebPrintBatch } = await import('../utils/printer');
+          executeWebPrintBatch(ticketsParaImprimir, state.paperSize);
           return;
         }
 

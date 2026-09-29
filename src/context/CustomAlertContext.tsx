@@ -129,6 +129,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
+    paddingBottom: 220, // Empuja la alerta hacia arriba para que el dock no la oculte
   },
   overlayTouch: {
     ...StyleSheet.absoluteFillObject,
