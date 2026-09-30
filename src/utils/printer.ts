@@ -518,16 +518,12 @@ export const executeWebPrintBatch = (
       }
     }
     @media print {
-      body * {
-        visibility: hidden;
-      }
-      #ticket-print-area, #ticket-print-area * {
-        visibility: visible;
+      body > :not(#ticket-print-area) {
+        display: none !important;
       }
       #ticket-print-area {
-        position: absolute;
-        left: 0;
-        top: 0;
+        display: block !important;
+        position: static;
         margin: 0; 
         padding: 10px; 
         font-family: monospace; 
