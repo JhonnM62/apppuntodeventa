@@ -770,7 +770,7 @@ export default function AdminNominaScreen({ navigation }: any) {
 
   const handleOpenLlegadas = () => {
     const pendientes = (resumen?.descuentos || []).filter((d: any) => d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE');
-    setSelectedLlegadas(pendientes.map((d: any) => d.IDdescuento));
+    setSelectedLlegadas([]);
     setShowLlegadasModal(true);
   };
 

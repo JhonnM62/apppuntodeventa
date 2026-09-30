@@ -619,23 +619,22 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
       {/* MODAL DE REPARTO */}
       <Modal visible={modalVisible} animationType="slide" transparent statusBarTranslucent>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
-          <SafeAreaView style={{ flex: 1 }}>
-            <View style={[styles.modalOverlay, Platform.OS === 'android' && { paddingBottom: keyboardHeight }]}>
-              <View style={styles.modalContent}>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Repartir Nuevo Descuento</Text>
-                  <TouchableOpacity onPress={() => setModalVisible(false)}>
-                    <Ionicons name="close" size={24} color="#374151" />
-                  </TouchableOpacity>
-                </View>
+          <View style={[styles.modalOverlay, Platform.OS === 'android' && { paddingBottom: keyboardHeight }]}>
+            <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Repartir Nuevo Descuento</Text>
+                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                  <Ionicons name="close" size={24} color="#374151" />
+                </TouchableOpacity>
+              </View>
 
-                {loadingForm ? (
-                  <ActivityIndicator size="large" color="#ec4899" style={{ marginVertical: 40 }} />
-                ) : (
-                  <ScrollView
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={{ flexGrow: 1, paddingBottom: 32 }}
-                  >
+              {loadingForm ? (
+                <ActivityIndicator size="large" color="#ec4899" style={{ marginVertical: 40 }} />
+              ) : (
+                <ScrollView
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={{ flexGrow: 1, paddingBottom: 10 }}
+                >
                     <View style={styles.formGroup}>
                       <View style={{ flexDirection: 'row', gap: 10, marginBottom: 15 }}>
                         <TouchableOpacity
@@ -824,9 +823,8 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
                     <View style={{ height: 20 }} />
                   </ScrollView>
                 )}
-              </View>
             </View>
-          </SafeAreaView>
+          </View>
         </KeyboardAvoidingView>
       </Modal>
       {/* MODAL DE EDICIÓN */}
@@ -1214,5 +1212,5 @@ const styles = StyleSheet.create({
   empName: { fontSize: 15, fontWeight: '600', color: '#111827' },
   empRole: { fontSize: 12, color: '#6b7280' },
 
-  mainBtn: { backgroundColor: '#ec4899', paddingVertical: 16, borderRadius: 12 }
+  mainBtn: { backgroundColor: '#ec4899', minHeight: 56, justifyContent: 'center', alignItems: 'center', borderRadius: 12 }
 });
