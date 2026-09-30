@@ -18,7 +18,10 @@ import { usePrinterServer } from './src/hooks/usePrinterServer';
 import { setPrinterSocket } from './src/store/usePrinterStore';
 import useSeccionesStore from './src/store/useSeccionesStore';
 import { useSocket } from './src/context/SocketContext';
+import { LogBox } from 'react-native';
 import useAuthStore from './src/store/useAuthStore';
+
+LogBox.ignoreLogs(['[expo-av]: Expo AV has been deprecated']);
 
 let BLEPrinter: any = null;
 try {

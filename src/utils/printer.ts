@@ -4,6 +4,7 @@ import { APP_CONFIG } from '../constants/app.config';
 
 let BLEPrinter: any = null;
 let currentConnectedMac: string | null = null;
+const lastPrintTimes: Record<string, number> = {};
 try {
   const PrinterModule = require('react-native-thermal-receipt-printer-image-qr');
   BLEPrinter = PrinterModule.BLEPrinter;
@@ -628,13 +629,17 @@ export const executePrint = async (
       }
     };
 
-    // Intentar imprimir sin reconectar si es la misma impresora
     let connected = false;
-    if (currentConnectedMac === macAddress) {
+    const now = Date.now();
+    const lastPrint = lastPrintTimes[macAddress] || 0;
+    const timeSinceLastPrint = now - lastPrint;
+
+    if (currentConnectedMac === macAddress && timeSinceLastPrint < 1800000) {
       try {
         await printLogoIfConfigured();
         const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
         await BLEPrinter.printText(payload);
+        lastPrintTimes[macAddress] = Date.now();
         return true;
       } catch (quickPrintErr) {
         console.log('Fallo al imprimir directamente, se intentará reconectar...', quickPrintErr);
@@ -664,6 +669,7 @@ export const executePrint = async (
 
       const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
       await BLEPrinter.printText(payload);
+      lastPrintTimes[macAddress] = Date.now();
       return true;
     }
   } catch (error: any) {
