@@ -70,18 +70,15 @@ const useCartStore = create<CartStore>((set, get) => ({
       
       // Stock validation
       const isAvailabilityEnabled = product.mostrarDisponibilidad === true || product.mostrarDisponibilidad === 1 || product.mostrarDisponibilidad === 'true' || product.mostrarDisponibilidad === 'si';
-      const availableStock = isAvailabilityEnabled
-        ? (product.disponibilidadCalculada !== undefined 
-          ? Number(product.disponibilidadCalculada) 
-          : product.Stock !== undefined 
-            ? Number(product.Stock) 
-            : Infinity)
-        : Infinity;
-          
-      const currentQty = existing ? existing.quantity : 0;
       
-      if (currentQty >= availableStock) {
-        Toast.show({ type: 'error', text1: 'Stock insuficiente', text2: `Solo hay ${availableStock} unidades disponibles de ${product.nombre}.` });
+      let shelfAvailable = Infinity;
+      if (isAvailabilityEnabled) {
+        const { useProductStore } = require('./useProductStore'); // lazy load to avoid circular deps
+        shelfAvailable = useProductStore.getState().getDisponibilidadReal(product.IDproductos);
+      }
+          
+      if (shelfAvailable <= 0 && isAvailabilityEnabled) {
+        Toast.show({ type: 'error', text1: 'Stock insuficiente', text2: `No hay más unidades disponibles de ${product.nombre}.` });
         return state;
       }
 
@@ -133,16 +130,15 @@ const useCartStore = create<CartStore>((set, get) => ({
       const existing = state.cart.find((item) => item.IDproductos === productId);
       if (existing) {
         const isAvailabilityEnabled = existing.mostrarDisponibilidad === true || existing.mostrarDisponibilidad === 1 || existing.mostrarDisponibilidad === 'true' || existing.mostrarDisponibilidad === 'si';
-        const availableStock = isAvailabilityEnabled
-          ? (existing.disponibilidadCalculada !== undefined 
-            ? Number(existing.disponibilidadCalculada) 
-            : existing.Stock !== undefined 
-              ? Number(existing.Stock) 
-              : Infinity)
-          : Infinity;
+        let maxAllowed = Infinity;
+        if (isAvailabilityEnabled) {
+          const { useProductStore } = require('./useProductStore');
+          const shelfAvailable = useProductStore.getState().getDisponibilidadReal(existing.IDproductos);
+          maxAllowed = shelfAvailable + existing.quantity;
+        }
             
-        if (quantity > availableStock) {
-          Toast.show({ type: 'error', text1: 'Stock insuficiente', text2: `Solo hay ${availableStock} unidades disponibles.` });
+        if (quantity > maxAllowed && isAvailabilityEnabled) {
+          Toast.show({ type: 'error', text1: 'Stock insuficiente', text2: `Solo puedes llevar ${maxAllowed} unidades.` });
           return state; // Do not update
         }
       }

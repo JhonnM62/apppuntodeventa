@@ -546,7 +546,9 @@ export const executeWebPrintBatch = (
   // eslint-disable-next-line @typescript-eslint/no-unused-expressions
   printDiv.offsetHeight;
 
-  window.print();
+  setTimeout(() => {
+    window.print();
+  }, 100);
   
   // En móviles el tiempo de generación de la previsualización puede tardar varios segundos.
   // Un timeout de 1000ms elimina el elemento antes de que el celular termine, dejando la hoja en blanco o cancelando la ventana.

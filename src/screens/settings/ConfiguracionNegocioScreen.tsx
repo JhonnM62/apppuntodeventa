@@ -76,6 +76,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const [saving, setSaving] = useState(false);
   const [horaCorteDia, setHoraCorteDia] = useState('00:00');
   const [modoOperacion, setModoOperacion] = useState('GENERAL');
+  const [tiempoReservaInventario, setTiempoReservaInventario] = useState('5');
   
   // Datos comerciales
   const [nombreComercial, setNombreComercial] = useState(APP_CONFIG.ticketName);
@@ -183,6 +184,9 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         if (dataNegocio.modoOperacion) {
           setModoOperacion(dataNegocio.modoOperacion);
         }
+        if (dataNegocio.tiempoReservaInventario !== undefined && dataNegocio.tiempoReservaInventario !== null) {
+          setTiempoReservaInventario(String(dataNegocio.tiempoReservaInventario));
+        }
         if (dataNegocio.nombreComercial) setNombreComercial(dataNegocio.nombreComercial);
         if (dataNegocio.nit) setNit(dataNegocio.nit);
         if (dataNegocio.direccion) setDireccion(dataNegocio.direccion);
@@ -273,6 +277,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
       await Promise.all([
         updateConfiguracion({ 
           horaCorteDia, modoOperacion, nombreComercial, nit, direccion, telefono,
+          tiempoReservaInventario: tiempoReservaInventario ? parseInt(tiempoReservaInventario, 10) : 5,
           latitudNegocio: latitudNegocio ? parseFloat(latitudNegocio) : undefined,
           longitudNegocio: longitudNegocio ? parseFloat(longitudNegocio) : undefined,
           radioGeocercaM: radioGeocercaM ? parseInt(radioGeocercaM, 10) : 100,
@@ -589,6 +594,32 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 8 }}>
             El modo Restaurante habilita el control de insumos por plato en los reportes de caja.
           </Text>
+
+          <Text style={[styles.label, { marginTop: 20 }]}>Tiempo de Reserva de Inventario (Minutos)</Text>
+          <Text style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>
+            Tiempo que los productos en el carrito de Nueva Venta restarán inventario antes de expirar.
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TouchableOpacity 
+              style={[styles.timeBtn, { marginRight: 8 }]}
+              onPress={() => setTiempoReservaInventario(String(Math.max(1, parseInt(tiempoReservaInventario || '1', 10) - 1)))}
+            >
+              <Ionicons name="remove" size={20} color="#374151" />
+            </TouchableOpacity>
+            <TextInput
+              style={[styles.input, { flex: 1, textAlign: 'center', marginBottom: 0 }]}
+              value={tiempoReservaInventario}
+              onChangeText={(text) => setTiempoReservaInventario(text.replace(/[^0-9]/g, ''))}
+              placeholder="Ej. 5"
+              keyboardType="numeric"
+            />
+            <TouchableOpacity 
+              style={[styles.timeBtn, { marginLeft: 8 }]}
+              onPress={() => setTiempoReservaInventario(String(parseInt(tiempoReservaInventario || '0', 10) + 1))}
+            >
+              <Ionicons name="add" size={20} color="#374151" />
+            </TouchableOpacity>
+          </View>
 
           {/* OPCIONES DE LOGO */}
           <View style={{ marginTop: 24, borderTopWidth: 1, borderTopColor: '#f3f4f6', paddingTop: 16 }}>

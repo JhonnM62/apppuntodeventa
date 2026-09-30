@@ -202,6 +202,9 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const { primaryColor, gridColumnsWeb, gridColumnsMobile } = useSettingsStore();
   const dynamicColumns = isMobileScreen ? (gridColumnsMobile || 3) : (gridColumnsWeb || 6);
 
+  const { joinRoom, isConnected } = useSocket();
+  const { emitCustomEvent: socketEmit } = useSocketEmitter();
+
   const { showAlert } = useCustomAlert();
   const insets = useSafeAreaInsets();
   const cachedMesas = useMesaStore((state) => state.mesas);
@@ -280,6 +283,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   const cart = useCartStore((state) => state.cart);
   const cartStartTime = useCartStore((state) => state.cartStartTime);
+  const reservasGlobales = useProductStore((state) => state.reservasGlobales);
   const editingSaleId = useCartStore((state) => state.editingSaleId);
   const editingVenta = useCartStore((state) => state.editingVenta);
   const addToCart = useCartStore((state) => state.addToCart);
@@ -309,6 +313,100 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     setNumpadVisible(false);
     setNumpadItem(null);
   };
+  // ────────────────────────────────────────────────────────────────────────
+  
+  // ── Sockets & Reservas Inventario ───────────────────────────────────────
+  const prevReservedItems = useRef<Set<string>>(new Set());
+
+  // Liberar al salir de la pantalla y escuchar expiraciones
+  useEffect(() => {
+    const handleExpiracion = () => clearCart();
+    
+    let sub: any;
+    try {
+      const { DeviceEventEmitter } = require('react-native');
+      sub = DeviceEventEmitter.addListener('on_reserva_expirada', handleExpiracion);
+      if (typeof window !== 'undefined' && window.addEventListener) {
+        window.addEventListener('on_reserva_expirada', handleExpiracion);
+      }
+    } catch (e) {}
+
+    return () => {
+      if (sub) sub.remove();
+      try {
+        if (typeof window !== 'undefined' && window.removeEventListener) {
+          window.removeEventListener('on_reserva_expirada', handleExpiracion);
+        }
+      } catch (e) {}
+      socketEmit('liberar_reservas', {});
+    };
+  }, [clearCart, socketEmit]);
+
+  // Sincronizar carrito con backend
+  useEffect(() => {
+    if (!isConnected) return;
+    
+    const currentReserved = new Map<string, number>();
+    cart.forEach(item => {
+      if (item.mostrarDisponibilidad === true || item.mostrarDisponibilidad === 1 || item.mostrarDisponibilidad === '1' || item.mostrarDisponibilidad === 'true') {
+        currentReserved.set(item.IDproductos, item.quantity);
+      }
+    });
+
+    prevReservedItems.current.forEach(prodId => {
+      if (!currentReserved.has(prodId)) {
+        socketEmit('reservar_producto', { productoId: prodId, cantidad: 0 });
+      }
+    });
+
+    currentReserved.forEach((cantidad, prodId) => {
+      socketEmit('reservar_producto', { productoId: prodId, cantidad });
+    });
+
+    prevReservedItems.current = new Set(currentReserved.keys());
+  }, [cart, isConnected, socketEmit]);
+
+  const [tiempoReservaMinutos, setTiempoReservaMinutos] = useState(5);
+
+  useEffect(() => {
+    import('../../services/configuracion').then(({ getConfiguracion }) => {
+      getConfiguracion().then((res: any) => {
+        const config = res?.data || res;
+        if (config?.tiempoReservaInventario) setTiempoReservaMinutos(config.tiempoReservaInventario);
+      }).catch(() => {});
+    }).catch(() => {});
+  }, []);
+
+  const hasReservedItems = useMemo(() => cart.some(item => 
+    item.mostrarDisponibilidad === true || item.mostrarDisponibilidad === 1 || String(item.mostrarDisponibilidad) === 'true' || String(item.mostrarDisponibilidad) === '1'
+  ), [cart]);
+
+  const [timeLeftStr, setTimeLeftStr] = useState('');
+
+  useEffect(() => {
+    if (!hasReservedItems || !cartStartTime) {
+      setTimeLeftStr('');
+      return;
+    }
+    
+    const updateTime = () => {
+      const start = new Date(cartStartTime).getTime();
+      const expire = start + tiempoReservaMinutos * 60 * 1000;
+      const now = Date.now();
+      const left = expire - now;
+      if (left <= 0) {
+        setTimeLeftStr('¡Expirado!');
+      } else {
+        const m = Math.floor(left / 60000);
+        const s = Math.floor((left % 60000) / 1000);
+        setTimeLeftStr(`${m}:${s.toString().padStart(2, '0')}`);
+      }
+    };
+    
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
+    return () => clearInterval(interval);
+  }, [hasReservedItems, cartStartTime, tiempoReservaMinutos]);
   // ────────────────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -427,7 +525,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     }
   }, [editingVenta, mesas, selectedMesa]);
 
-  const { joinRoom, isConnected } = useSocket();
   const { emitNuevaOrden, emitOrdenActualizada } = useSocketEmitter();
 
   const hasJoinedRoom = useRef(false);
@@ -500,8 +597,48 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       );
     }
 
-    return filtered;
-  }, [cachedProductos, searchQuery, activeCategory]);
+    // Calcular insumos reservados a nivel global
+    const insumosReservadosGlobales: Record<string, number> = {};
+    cachedProductos.forEach(p => {
+      const reservado = reservasGlobales[p.IDproductos] || 0;
+      if (reservado > 0 && p.insumosRequeridos && p.insumosRequeridos.length > 0) {
+        p.insumosRequeridos.forEach((ins: any) => {
+          insumosReservadosGlobales[ins.IDinsumo] = (insumosReservadosGlobales[ins.IDinsumo] || 0) + (ins.cantidad * reservado);
+        });
+      }
+    });
+
+    // Calcular disponibilidad real
+    return filtered.map(p => {
+      if (p.mostrarDisponibilidad === true || p.mostrarDisponibilidad === 1 || String(p.mostrarDisponibilidad) === 'true' || String(p.mostrarDisponibilidad) === '1') {
+        let maxPossible = Number(p.disponibilidadCalculada ?? p.cantidad ?? p.Stock ?? 0);
+        
+        if (p.insumosRequeridos && p.insumosRequeridos.length > 0) {
+          // Si el producto depende de insumos, su disponibilidad es el cuello de botella de sus insumos restantes
+          maxPossible = Infinity;
+          p.insumosRequeridos.forEach((ins: any) => {
+            const stockRestante = Math.max(0, ins.stockGlobal - (insumosReservadosGlobales[ins.IDinsumo] || 0));
+            const cantRequerida = ins.cantidad;
+            if (cantRequerida > 0) {
+              const possible = Math.floor(stockRestante / cantRequerida);
+              if (possible < maxPossible) maxPossible = possible;
+            }
+          });
+          if (maxPossible === Infinity) maxPossible = 0;
+        } else {
+          // Si no tiene insumos, su disponibilidad es simplemente su stock menos sus reservas
+          const reservado = reservasGlobales[p.IDproductos] || 0;
+          maxPossible = Math.max(0, maxPossible - reservado);
+        }
+
+        return {
+          ...p,
+          disponibilidadCalculada: maxPossible,
+        };
+      }
+      return p;
+    });
+  }, [cachedProductos, searchQuery, activeCategory, reservasGlobales]);
 
   const startRecording = async () => {
     try {
@@ -1881,6 +2018,17 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                   <Text style={styles.clearCartText}>Limpiar</Text>
                 </TouchableOpacity>
               </View>
+              {hasReservedItems && timeLeftStr !== '' && (
+                <View style={{ backgroundColor: '#fef3c7', padding: 8, marginHorizontal: 12, marginBottom: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="timer-outline" size={18} color="#d97706" />
+                  <Text style={{ color: '#d97706', fontSize: 12, marginLeft: 6, flex: 1 }}>
+                    Tus artículos están reservados por {tiempoReservaMinutos} min.
+                  </Text>
+                  <Text style={{ color: '#b45309', fontWeight: 'bold', fontSize: 14 }}>
+                    {timeLeftStr}
+                  </Text>
+                </View>
+              )}
               <View style={{ paddingBottom: 10 }}>
                 {cart.map((item, index) => (
                   <View key={`${item.IDproductos}-${index}`}>

@@ -113,6 +113,9 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
           console.log('[SocketContext] Re-joining room after reconnect:', room);
           newSocket.emit('joinRoom', { room });
         });
+        
+        // Pedir el estado inicial de las reservas globales
+        newSocket.emit('get_reservas');
       });
 
       newSocket.on('disconnect', (reason) => {
@@ -205,6 +208,42 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
             visibilityTime: 4000,
           });
         }
+      });
+
+      newSocket.on('init_reservas', (reservas: Record<string, number>) => {
+        if (!isMountedRef.current) return;
+        useProductStore.getState().setReservasGlobales(reservas);
+      });
+
+      newSocket.on('stock_reservado_update', (data: { productoId: string, cantidadReservadaTotal: number }) => {
+        if (!isMountedRef.current) return;
+        useProductStore.getState().updateReservaGlobal(data.productoId, data.cantidadReservadaTotal);
+      });
+
+      newSocket.on('reserva_expirada', (data: { message: string }) => {
+        if (!isMountedRef.current) return;
+        // Lanzamos un evento en el window/global object para que NewSaleScreen se entere
+        // y limpie el carrito local, o usamos Toast.
+        Toast.show({
+          type: 'error',
+          text1: 'Reserva Expirada ⏳',
+          text2: data.message || 'Tus productos reservados han sido devueltos al inventario.',
+          position: 'top',
+          visibilityTime: 6000,
+        });
+        
+        // También podemos comunicarlo mediante un custom event o zustand state.
+        // Por ahora lo más robusto es notificar al window global en la app
+        // React Native usa DeviceEventEmitter, o usamos dispatchEvent en web
+        try {
+          if (typeof window !== 'undefined' && window.dispatchEvent) {
+            window.dispatchEvent(new CustomEvent('on_reserva_expirada'));
+          }
+          const { DeviceEventEmitter } = require('react-native');
+          if (DeviceEventEmitter) {
+            DeviceEventEmitter.emit('on_reserva_expirada');
+          }
+        } catch (e) {}
       });
 
       socketRef.current = newSocket;

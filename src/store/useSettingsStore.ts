@@ -16,8 +16,8 @@ interface SettingsState {
 
 const DEFAULT_COLOR = '#16a34a'; // Tailwind green-600
 const DEFAULT_FONT_SCALE = 1;
-const DEFAULT_GRID_WEB = 6;
-const DEFAULT_GRID_MOBILE = 3;
+const DEFAULT_GRID_WEB = 8;
+const DEFAULT_GRID_MOBILE = 4;
 
 export const useSettingsStore = create<SettingsState>()(
   persist(

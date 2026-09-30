@@ -4,7 +4,6 @@ export type CategoriaItem = {
   IDcategoria: string;
   nombre: string;
   image?: string;
-  padreId?: string;
   productos?: {
     IDproductos: string;
     nombre: string;
@@ -18,7 +17,6 @@ export type CategoriaItem = {
 export type CreateCategoriaDto = {
   nombre: string;
   image?: string;
-  padreId?: string;
   seccionCocinaId?: string | null;
 };
 
