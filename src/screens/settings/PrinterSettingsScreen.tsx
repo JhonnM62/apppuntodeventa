@@ -6,7 +6,8 @@ import usePrinterStore, { PrinterDevice, PrinterConfig } from '../../store/usePr
 import { updatePrinterConfigs } from '../../services/printer-config';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import { TextInput } from 'react-native';
-
+import { useSocket } from '../../context/SocketContext';
+import { useSocketEvent } from '../../hooks/useSocketEvent';
 // Mock the BLE Printer for now since it requires physical device / native code
 // In real usage, you'd import { BLEPrinter } from 'react-native-thermal-receipt-printer-image-qr';
 let BLEPrinter: any = null;
@@ -18,14 +19,16 @@ try {
 }
 
 const PrinterSettingsScreen = ({ navigation }: any) => {
-  const { currentPrinter, paperSize, isConnected, configs, setPrinter, setPaperSize, setConnected, fetchConfigs, setConfigs, manualPreviewEnabled, manualAutoPrintEnabled, manualAutoPrintSeconds, setManualPrintConfigs, servidorActivo, setServidorActivo } = usePrinterStore();
+  const { currentPrinter, paperSize, isConnected, configs, setPrinter, setPaperSize, setConnected, fetchConfigs, setConfigs, manualPreviewEnabled, manualAutoPrintEnabled, manualAutoPrintSeconds, setManualPrintConfigs, servidorActivo, setServidorActivo, webPrintMode, setWebPrintMode } = usePrinterStore();
   const { showAlert } = useCustomAlert();
   const [devices, setDevices] = useState<PrinterDevice[]>([]);
   const [scanning, setScanning] = useState(false);
   const [connectingTo, setConnectingTo] = useState<string | null>(null);
   const [showBluetoothBanner, setShowBluetoothBanner] = useState(false);
   const [isSavingConfigs, setIsSavingConfigs] = useState(false);
+  const [printServers, setPrintServers] = useState<any[]>([]);
   const insets = useSafeAreaInsets();
+  const { emit } = useSocket();
 
   // Estados disponibles en la aplicación (basados en constants de ventas)
   const ORDER_STATUSES = [
@@ -37,9 +40,21 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
     { key: 'CREDITO', label: 'Crédito' },
   ];
 
+  // Listen to print servers updates
+  useSocketEvent('PRINT_SERVERS_UPDATE', (data: any) => {
+    if (data && data.servers) {
+      setPrintServers(data.servers);
+    } else if (Array.isArray(data)) {
+      setPrintServers(data);
+    }
+  }, []);
+
   useEffect(() => {
     // Fetch printer configs on mount
     fetchConfigs();
+    
+    // Si estamos en modo remoto o web, pedir la lista de servidores de impresión
+    emit('GET_PRINT_SERVERS', {});
 
     const verifyConnection = async () => {
       if (isConnected && BLEPrinter) {
@@ -295,8 +310,90 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Estado actual */}
-        <View style={styles.card}>
+        {Platform.OS === 'web' && (
+          <View style={styles.card}>
+            <RNText style={styles.cardTitle}>Configuración de Impresión Web</RNText>
+            <RNText style={styles.cardDescription}>
+              Elige cómo deseas imprimir los tickets cuando usas la versión web.
+            </RNText>
+
+            <View style={{ marginTop: 16 }}>
+              <TouchableOpacity
+                style={[
+                  styles.paperOption,
+                  { marginBottom: 8, flexDirection: 'row', alignItems: 'center' },
+                  webPrintMode === 'native' && styles.paperOptionActive
+                ]}
+                onPress={() => setWebPrintMode('native')}
+              >
+                <Ionicons name="browsers-outline" size={24} color={webPrintMode === 'native' ? '#3b82f6' : '#9ca3af'} />
+                <View style={{ marginLeft: 12, flex: 1 }}>
+                  <RNText style={[styles.paperOptionText, webPrintMode === 'native' && styles.paperOptionTextActive]}>
+                    Nativo del Navegador
+                  </RNText>
+                  <RNText style={styles.paperOptionDesc}>Usa el cuadro de diálogo de impresión del navegador.</RNText>
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.paperOption,
+                  { flexDirection: 'row', alignItems: 'center' },
+                  webPrintMode === 'remote' && styles.paperOptionActive
+                ]}
+                onPress={() => setWebPrintMode('remote')}
+              >
+                <Ionicons name="phone-portrait-outline" size={24} color={webPrintMode === 'remote' ? '#3b82f6' : '#9ca3af'} />
+                <View style={{ marginLeft: 12, flex: 1 }}>
+                  <RNText style={[styles.paperOptionText, webPrintMode === 'remote' && styles.paperOptionTextActive]}>
+                    Remota (Servidor POS)
+                  </RNText>
+                  <RNText style={styles.paperOptionDesc}>Envía los tickets a un celular o tablet con la app instalada.</RNText>
+                </View>
+              </TouchableOpacity>
+            </View>
+
+            {webPrintMode === 'remote' && (
+              <View style={{ marginTop: 24 }}>
+                <View style={[styles.scanHeader, { marginBottom: 12 }]}>
+                  <RNText style={styles.cardTitle}>Servidores Activos</RNText>
+                  <TouchableOpacity style={styles.scanBtn} onPress={() => emit('GET_PRINT_SERVERS', {})}>
+                    <RNText style={styles.scanBtnText}>Actualizar</RNText>
+                  </TouchableOpacity>
+                </View>
+
+                {printServers.length === 0 ? (
+                  <View style={styles.emptyScan}>
+                    <Ionicons name="server-outline" size={40} color="#d1d5db" />
+                    <RNText style={styles.emptyScanText}>No hay servidores de impresión activos. Abre la app en un dispositivo y activa el "Modo Servidor".</RNText>
+                  </View>
+                ) : (
+                  <View style={styles.deviceList}>
+                    {printServers.map((server, idx) => (
+                      <View key={idx} style={[styles.deviceItem, { paddingVertical: 12 }]}>
+                        <View style={styles.deviceIcon}>
+                          <Ionicons name="server" size={24} color="#22c55e" />
+                        </View>
+                        <View style={styles.deviceInfo}>
+                          <RNText style={styles.deviceName}>Servidor POS</RNText>
+                          <RNText style={styles.deviceMac}>ID: {server}</RNText>
+                        </View>
+                        <View style={styles.deviceStatus}>
+                          <RNText style={{ color: '#22c55e', fontWeight: 'bold' }}>Online</RNText>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            )}
+          </View>
+        )}
+
+        {Platform.OS !== 'web' && (
+          <>
+            {/* Estado actual */}
+            <View style={styles.card}>
           <RNText style={styles.cardTitle}>Estado de Conexión</RNText>
           <View style={styles.statusRow}>
             <View style={styles.statusIconContainer}>
@@ -332,6 +429,8 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
             </View>
           )}
         </View>
+        </>
+        )}
 
         {/* Configuración de Papel */}
         <View style={styles.card}>
@@ -357,6 +456,8 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
           </View>
         </View>
 
+        {Platform.OS !== 'web' && (
+          <>
         {/* Escaneo de Dispositivos */}
         <View style={styles.card}>
           <View style={styles.scanHeader}>
@@ -415,7 +516,7 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
 
         {/* MODO SERVIDOR */}
         <View style={styles.card}>
-          <View style={[styles.cardHeader, { marginBottom: 8 }]}>
+          <View style={[styles.scanHeader, { marginBottom: 8 }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Ionicons name="server-outline" size={24} color="#8b5cf6" />
               <RNText style={styles.cardTitle}>Modo Servidor de Impresión</RNText>
@@ -431,6 +532,8 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
             Habilita esta opción si deseas que esta tablet actúe como servidor. Recibirá e imprimirá automáticamente los tickets enviados remotamente desde los celulares de los meseros.
           </RNText>
         </View>
+        </>
+        )}
 
         {/* Impresión Automática */}
         <View style={styles.card}>

@@ -53,8 +53,7 @@ export const iniciarDescanso = async (turnoId: string, params: { latitud?: numbe
     const type = match ? `image/${match[1]}` : 'image/jpeg';
     
     if (Platform.OS === 'web') {
-      const blob = await uriToBlob(params.fotoUri, type);
-      formData.append('foto', blob, filename);
+      formData.append('fotoBase64', params.fotoUri);
     } else {
       formData.append('foto', { uri: params.fotoUri, name: filename, type } as any);
     }
@@ -77,8 +76,7 @@ export const terminarDescanso = async (turnoId: string, params: { latitud?: numb
     const type = match ? `image/${match[1]}` : 'image/jpeg';
     
     if (Platform.OS === 'web') {
-      const blob = await uriToBlob(params.fotoUri, type);
-      formData.append('foto', blob, filename);
+      formData.append('fotoBase64', params.fotoUri);
     } else {
       formData.append('foto', { uri: params.fotoUri, name: filename, type } as any);
     }
@@ -169,11 +167,8 @@ export const registrarEntrada = async (params: {
     const type = match ? `image/${match[1]}` : `image/jpeg`;
 
     if (Platform.OS === 'web') {
-      console.log(`[DEBUG registrarEntrada] Convirtiendo URI a Blob en Web...`);
-      // Web: convertir URI a Blob real
-      const blob = await uriToBlob(params.fotoUri, type);
-      formData.append('foto', blob, filename);
-      console.log(`[DEBUG registrarEntrada] Blob agregado al FormData en Web`);
+      console.log(`[DEBUG registrarEntrada] Enviando foto como base64 en Web para evitar bug Safari`);
+      formData.append('fotoBase64', params.fotoUri);
     } else {
       console.log(`[DEBUG registrarEntrada] Usando sintaxis nativa de RN para FormData`);
       // APK React Native: sintaxis nativa
@@ -215,11 +210,8 @@ export const registrarSalida = async (id: string, params: {
     const type = match ? `image/${match[1]}` : 'image/jpeg';
     
     if (Platform.OS === 'web') {
-      console.log(`[DEBUG registrarSalida] Convirtiendo URI a Blob en Web...`);
-      // Web: convertir URI a Blob real
-      const blob = await uriToBlob(params.fotoUri, type);
-      formData.append('foto', blob, filename);
-      console.log(`[DEBUG registrarSalida] Blob agregado al FormData en Web`);
+      console.log(`[DEBUG registrarSalida] Enviando foto como base64 en Web para evitar bug Safari`);
+      formData.append('fotoBase64', params.fotoUri);
     } else {
       console.log(`[DEBUG registrarSalida] Usando sintaxis nativa de RN para FormData`);
       // APK React Native: sintaxis nativa

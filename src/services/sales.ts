@@ -34,6 +34,7 @@ export interface SalePayload {
     cartStartTime?: string;
     clienteId?: number;
     temporalId?: string;
+    abono?: number;
   };
   productos: SaleProduct[];
 }

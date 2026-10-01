@@ -200,7 +200,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const { width: windowWidth } = useWindowDimensions();
   const isMobileScreen = windowWidth < 768;
   const { primaryColor, gridColumnsWeb, gridColumnsMobile } = useSettingsStore();
-  const dynamicColumns = isMobileScreen ? (gridColumnsMobile || 3) : (gridColumnsWeb || 6);
+  const dynamicColumns = isMobileScreen ? (gridColumnsMobile || 4) : (gridColumnsWeb || 8);
 
   const { joinRoom, isConnected } = useSocket();
   const { emitCustomEvent: socketEmit } = useSocketEmitter();
@@ -344,7 +344,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   // Sincronizar carrito con backend
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected || isSubmitting) return; // FIX: Pausar liberación de reservas mientras se procesa la venta
     
     const currentReserved = new Map<string, number>();
     cart.forEach(item => {
@@ -364,7 +364,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     });
 
     prevReservedItems.current = new Set(currentReserved.keys());
-  }, [cart, isConnected, socketEmit]);
+  }, [cart, isConnected, socketEmit, isSubmitting]);
 
   const [tiempoReservaMinutos, setTiempoReservaMinutos] = useState(5);
 
@@ -887,6 +887,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     propina?: number;
     porcentajePropina?: string;
     totalInput?: number;
+    abono?: number;
   }) => {
     if (isSubmitting) return; // FIX: Prevent double submission
     setIsSubmitting(true);
@@ -929,6 +930,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             propina: paymentData.propina,
             porcentajePropina: paymentData.porcentajePropina,
             clienteId: selectedCliente ? selectedCliente.IDcliente : undefined,
+            abono: paymentData.abono,
           },
           productos: cart.map((item) => ({
             productoId: item.IDproductos,
@@ -1022,6 +1024,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             metodoPago: finalMethod,
             efectivoRecibido: payload.venta.efectivoRecibido,
             devueltas: payload.venta.devueltas,
+            abono: paymentData.abono,
             vendedor: useAuthStore.getState().user?.nombre || 'Caja'
           };
           printStore.printTicket(ticketData);
@@ -1087,6 +1090,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           porcentajePropina: paymentData.porcentajePropina,
           cartStartTime: cartStartTime,
           clienteId: selectedCliente ? selectedCliente.IDcliente : undefined,
+          abono: paymentData.abono,
         },
         productos: cart.map((item) => ({
           productoId: item.IDproductos,
@@ -1138,6 +1142,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               devueltas: payload.venta.devueltas,
               propina: payload.venta.propina,
               porcentajePropina: payload.venta.porcentajePropina,
+              abono: paymentData.abono,
               vendedor: useAuthStore.getState().user?.nombre || 'Caja'
             };
             printStore.printTicket(ticketData);
@@ -1190,7 +1195,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     }
   };
 
-  const handleSavePedido = async (data: { estado: string; medioDePago?: string | null }) => {
+  const handleSavePedido = async (data: { estado: string; medioDePago?: string | null; abono?: number }) => {
     if (isSubmitting) return; // FIX: Prevent double submission
     setIsSubmitting(true);
     try {
@@ -1229,6 +1234,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             descuento: descuento,
             porcentajeDeDescuento: discountPercent.toString(),
             clienteId: selectedCliente ? selectedCliente.IDcliente : undefined,
+            abono: data.abono,
           },
           productos: cart.map((item) => ({
             productoId: item.IDproductos,
@@ -1270,6 +1276,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                 devueltas: editingVenta?.devueltas || 0,
                 propina: editingVenta?.propina,
                 porcentajePropina: editingVenta?.porcentajePropina,
+                abono: data.abono,
                 vendedor: useAuthStore.getState().user?.nombre || 'Caja'
               };
               printStore.printTicket(ticketData);
@@ -1345,6 +1352,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         metodoPago: data.medioDePago || 'PENDIENTE',
         efectivoRecibido: 0,
         devueltas: 0,
+        abono: data.abono,
         vendedor: useAuthStore.getState().user?.nombre || 'Caja'
       };
 
@@ -1361,6 +1369,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           porcentajeDeDescuento: discountPercent.toString(),
           cartStartTime: cartStartTime,
           temporalId: temporalId,
+          clienteId: selectedCliente ? selectedCliente.IDcliente : undefined,
+          abono: data.abono,
         },
         productos: cart.map((item) => ({
           productoId: item.IDproductos,

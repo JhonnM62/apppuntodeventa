@@ -37,6 +37,7 @@ import {
 } from '../types/socket.types';
 import useAuthStore from '../store/useAuthStore';
 import { useProductStore } from '../store/useProductStore';
+import { setPrinterSocket } from '../store/usePrinterStore';
 import Toast from 'react-native-toast-message';
 
 const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:3000';
@@ -107,6 +108,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
         setConnectionState(ConnectionState.CONNECTED);
         setError(null);
         reconnectAttemptsRef.current = 0;
+        
+        // Configurar el socket para impresión remota
+        const { user } = useAuthStore.getState();
+        const negocioId = user?.IDnegocio?.toString() || 'default';
+        setPrinterSocket(newSocket, negocioId);
 
         // Re-join rooms after reconnect
         joinedRooms.forEach((room) => {

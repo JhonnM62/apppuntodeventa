@@ -475,10 +475,6 @@ export default function AdminNominaScreen({ navigation }: any) {
     try {
       setLoading(true);
       
-      const resUsuarios = await api.get('/usuarios');
-      const usuariosActivos = (resUsuarios.data?.data || []).filter((u: any) => u.isActive);
-      setEmpleados(usuariosActivos);
-
       const now = new Date();
       const colombiaTime = new Date(now.getTime() - (5 * 60 * 60 * 1000));
       
@@ -489,16 +485,21 @@ export default function AdminNominaScreen({ navigation }: any) {
       const hoyUTC = new Date(Date.UTC(y, m, d, 0, 0, 0, 0));
       const finHoyUTC = new Date(Date.UTC(y, m, d, 23, 59, 59, 999));
 
-      const resTurnos = await getTurnos({ 
-        fechaDesde: hoyUTC.toISOString(), 
-        fechaHasta: finHoyUTC.toISOString(),
-        limit: 100
-      });
-      
-      const resActivos = await getTurnos({
-        estado: 'ACTIVO',
-        limit: 100
-      });
+      const [resUsuarios, resTurnos, resActivos] = await Promise.all([
+        api.get('/usuarios'),
+        getTurnos({ 
+          fechaDesde: hoyUTC.toISOString(), 
+          fechaHasta: finHoyUTC.toISOString(),
+          limit: 100
+        }),
+        getTurnos({
+          estado: 'ACTIVO',
+          limit: 100
+        })
+      ]);
+
+      const usuariosActivos = (resUsuarios.data?.data || []).filter((u: any) => u.isActive);
+      setEmpleados(usuariosActivos);
 
       const combined = [...(resTurnos.data || []), ...(resActivos.data || [])];
       const uniqueTurnos = Array.from(new Map(combined.map(t => [t.IDturno, t])).values());
@@ -1320,8 +1321,12 @@ const handleRecalcular = async () => {
                         <TouchableOpacity onPress={previewPdf} style={{backgroundColor: '#e0e7ff', padding: 8, borderRadius: 8, marginRight: 12}}>
                           <Ionicons name="document-text" size={24} color="#4338ca" />
                         </TouchableOpacity>
-                        <TouchableOpacity onPress={() => setSelectedEmpleado(null)} style={{ padding: 4 }} disabled={liquidando || recalculando}>
-                          <Ionicons name="close" size={26} color="#6b7280" />
+                        <TouchableOpacity 
+                          onPress={() => setSelectedEmpleado(null)} 
+                          style={{ padding: 8, backgroundColor: '#f3f4f6', borderRadius: 8 }} 
+                          hitSlop={{top: 15, bottom: 15, left: 15, right: 15}}
+                          disabled={liquidando || recalculando}>
+                          <Ionicons name="close" size={24} color="#ef4444" />
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -1554,11 +1559,11 @@ const handleRecalcular = async () => {
       {/* Modal Llegadas Tarde */}
       <Modal visible={showLlegadasModal} animationType="fade" transparent>
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { maxHeight: '80%' }]}>
             <Text style={styles.modalTitle}>Llegadas Tarde Pendientes</Text>
             <Text style={styles.modalSubtitle}>Selecciona cuáles deseas cobrar en esta liquidación</Text>
             
-            <ScrollView style={{ maxHeight: 300, marginBottom: 16 }}>
+            <ScrollView style={{ height: 350, flexShrink: 1, marginBottom: 16 }}>
               {(resumen?.descuentos || []).filter((d: any) => d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE').map((d: any) => (
                 <TouchableOpacity 
                   key={d.IDdescuento} 

@@ -64,6 +64,9 @@ interface PrinterState {
   printSmart: (ticketData: any, type: 'comanda' | 'factura') => Promise<boolean>;
   // Impresión con secciones: imprime N tickets sequencialmente
   printTicketConSecciones: (ticketData: any) => Promise<void>;
+  
+  webPrintMode: 'native' | 'remote';
+  setWebPrintMode: (mode: 'native' | 'remote') => void;
 }
 
 const usePrinterStore = create<PrinterState>()(
@@ -77,6 +80,9 @@ const usePrinterStore = create<PrinterState>()(
       manualPreviewEnabled: true,
       manualAutoPrintEnabled: false,
       manualAutoPrintSeconds: 3,
+      webPrintMode: 'native',
+
+      setWebPrintMode: (mode) => set({ webPrintMode: mode }),
 
       setPrinter: (printer) => set({ currentPrinter: printer }),
       setPaperSize: (size) => set({ paperSize: size }),
@@ -91,7 +97,11 @@ const usePrinterStore = create<PrinterState>()(
         try {
           const configs = await getPrinterConfigs();
           set({ configs });
-        } catch (error) {
+        } catch (error: any) {
+          if (error?.message === 'No token stored' || error?.message?.includes('No token')) {
+            // Ignore token missing errors (e.g. during logout)
+            return;
+          }
           console.error('Error fetching printer configs:', error);
         }
       },
@@ -150,7 +160,7 @@ const usePrinterStore = create<PrinterState>()(
       // ─────────────────────────────────────────────────────────────────
       printSmart: async (ticketData, type) => {
         const state = get();
-        if (Platform.OS === 'web') {
+        if (Platform.OS === 'web' && state.webPrintMode !== 'remote') {
           executeWebPrintBatch([{ data: ticketData, type }], state.paperSize);
           return true;
         }
@@ -183,7 +193,7 @@ const usePrinterStore = create<PrinterState>()(
 
         if (!printComanda && !printFactura) return;
 
-        if (Platform.OS === 'web') {
+        if (Platform.OS === 'web' && state.webPrintMode !== 'remote') {
           const webTickets: { data: any; type: 'comanda' | 'factura' }[] = [];
           
           if (printComanda) {
@@ -268,7 +278,7 @@ const usePrinterStore = create<PrinterState>()(
           return;
         }
 
-        if (Platform.OS === 'web') {
+        if (Platform.OS === 'web' && state.webPrintMode !== 'remote') {
           const ticketsParaImprimir = grupos.map((g) => ({
             data: {
               ...ticketData,

@@ -368,12 +368,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     try {
       const estadoActual = selectedEstado;
       const pedidoIdActual = editingPedidoId;
-      
+      const abonoTotal = (abonoPrevio || 0) + (selectedEstado === 'RESERVA' ? abonoAmount : 0);
       const result = await onSave({ 
         estado: estadoActual, 
         pedidoId: pedidoIdActual, 
         medioDePago: method,
-        abono: selectedEstado === 'RESERVA' ? abonoAmount : undefined
+        abono: abonoTotal > 0 ? abonoTotal : undefined
       });
       const finalOrderId = (result && 'pedidoId' in result) ? result.pedidoId : pedidoIdActual;
       
@@ -434,6 +434,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       const finalEfectivo = method === 'EFECTIVO' || method === 'EFECTIVO Y OTROS' ? efectivoAmount : undefined;
       const finalDevueltas = method === 'EFECTIVO' ? devueltas : undefined;
 
+      const abonoTotal = (abonoPrevio || 0) + (selectedEstado === 'RESERVA' ? abonoAmount : 0);
+
       const result = await onCobrar({
         medioDePago: finalMethod as string,
         banco: finalMethod === 'EFECTIVO' ? null : selectedBank, // Fix: Do not send bank if cash
@@ -442,7 +444,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         transferencia: method === 'TRANSFERENCIA' || method === 'TARJETA' || method === 'EFECTIVO Y OTROS' ? transferenciaAmount : undefined,
         estado: selectedEstado,
         pedidoId: editingPedidoId,
-        abono: selectedEstado === 'RESERVA' ? abonoAmount : undefined,
+        abono: abonoTotal > 0 ? abonoTotal : undefined,
         propina: propinaValue,
         porcentajePropina: propinaPercent > 0 ? (propinaPercent * 100).toString() : undefined,
         descuento: getDiscountAmount(),
@@ -938,13 +940,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       visible={visible}
       animationType="slide"
       onRequestClose={handleClose}
-      presentationStyle="pageSheet"
+      transparent={true}
     >
       <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         enabled={true}
         style={styles.modalOverlay}
-        keyboardVerticalOffset={0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
         <Animated.View style={[styles.overlayBg, { opacity: fadeAnim }]}>
           <TouchableOpacity
@@ -1079,7 +1081,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 const styles = StyleSheet.create({
   modalOverlay: { flex: 1, justifyContent: 'flex-end' },
   overlayBg: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.5)' },
-  modalContent: { backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingBottom: Platform.OS === 'ios' ? 34 : 20 },
+  modalContent: { backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28 },
   handle: { width: 40, height: 4, backgroundColor: '#d1d5db', borderRadius: 2, alignSelf: 'center', marginTop: 12 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
   headerLeft: { flexDirection: 'row', alignItems: 'center' },
@@ -1151,7 +1153,7 @@ const styles = StyleSheet.create({
   pendingText: { fontSize: 15, fontWeight: '800', color: '#d97706', marginLeft: 8 },
   completeBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0fdf4', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1.5, borderColor: '#86efac' },
   completeText: { fontSize: 15, fontWeight: '800', color: '#16a34a', marginLeft: 8 },
-  footer: { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 16, gap: 12, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
+  footer: { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 16, paddingBottom: Platform.OS === 'ios' ? 34 : 24, gap: 12, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
   cancelButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14, backgroundColor: '#f3f4f6', borderWidth: 1.5, borderColor: '#e5e7eb' },
   cancelButtonText: { fontSize: 16, fontWeight: '700', color: '#6b7280', marginLeft: 8 },
   confirmButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14, backgroundColor: '#22c55e' },

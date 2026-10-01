@@ -276,11 +276,16 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
   }
   if (data.totalGlobal !== undefined) {
     payload += alignRight(cleanText(`TOTAL GLOBAL: ${formatCurrency(data.totalGlobal)}`), width) + '\n';
+  } else if (data.abono && data.abono > 0) {
+    payload += alignRight(cleanText(`TOTAL GLOBAL: ${formatCurrency(data.total)}`), width) + '\n';
   }
+  
   if (data.abono && data.abono > 0) {
     payload += alignRight(cleanText(`Abono: -${formatCurrency(data.abono)}`), width) + '\n';
+    payload += alignRight(cleanText(`TOTAL A PAGAR: ${formatCurrency(data.total - data.abono)}`), width) + '\n';
+  } else {
+    payload += alignRight(cleanText(`TOTAL A PAGAR: ${formatCurrency(data.total)}`), width) + '\n';
   }
-  payload += alignRight(cleanText(`TOTAL A PAGAR: ${formatCurrency(data.total)}`), width) + '\n';
   
   if (data.metodoPago) {
     payload += alignRight(cleanText(`Medio de Pago: ${data.metodoPago}`), width) + '\n';
@@ -562,10 +567,12 @@ export const executeWebPrintBatch = (
   };
   
   window.addEventListener('afterprint', cleanup);
-  setTimeout(cleanup, 60000);
+  setTimeout(cleanup, 1800000); // 30 minutos
 
   return true;
 };
+
+let cachedConfig: any = null;
 
 export const executePrint = async (
   ticketData: TicketData,
@@ -575,8 +582,12 @@ export const executePrint = async (
 ): Promise<boolean> => {
   try {
     try {
-      const configRes = await getConfiguracion();
-      const config = configRes?.data || configRes;
+      if (!cachedConfig) {
+        const configRes = await getConfiguracion();
+        cachedConfig = configRes?.data || configRes;
+      }
+      
+      const config = cachedConfig;
       if (config && (config.nombreComercial || config.nit || config.direccion || config.telefono)) {
         ticketData.comercio = {
           nombre: config.nombreComercial,
@@ -650,13 +661,18 @@ export const executePrint = async (
     if (!connected) {
       try {
         try {
+          if (BLEPrinter.closeConn) {
+            await BLEPrinter.closeConn();
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
           await BLEPrinter.init();
           await new Promise(resolve => setTimeout(resolve, 200));
         } catch (initErr) {
           console.log('Fallo al inicializar Bluetooth (¿apagado?):', initErr);
-          throw initErr;
+          // Ignoramos el error de init por si la librería no lo soporta o ya estaba init
         }
         await BLEPrinter.connectPrinter(macAddress);
+        await new Promise(resolve => setTimeout(resolve, 500)); // Espera adicional para que el socket esté listo
         currentConnectedMac = macAddress;
       } catch (connectionError) {
         currentConnectedMac = null;

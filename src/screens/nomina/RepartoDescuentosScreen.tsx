@@ -633,7 +633,7 @@ export default function RepartoDescuentosScreen({ navigation }: any) {
               ) : (
                 <ScrollView
                   showsVerticalScrollIndicator={false}
-                  contentContainerStyle={{ flexGrow: 1, paddingBottom: 10 }}
+                  contentContainerStyle={{ flexGrow: 1, paddingBottom: 60 }}
                 >
                     <View style={styles.formGroup}>
                       <View style={{ flexDirection: 'row', gap: 10, marginBottom: 15 }}>

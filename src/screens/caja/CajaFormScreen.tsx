@@ -1015,6 +1015,8 @@ setSaving(false);
       });
       showAlert({ title: 'Arqueo Exitoso', message: response.data?.message || 'Se han ajustado las diferencias.', type: 'success' });
       setModalArquearVisible(false);
+      useInsumosCacheStore.getState().invalidate();
+      await fetchInitialData(false);
     } catch (error: any) {
       showAlert({ title: 'Error', message: error.response?.data?.message || 'Hubo un error al arquear.', type: 'error' });
     } finally {
@@ -2894,6 +2896,8 @@ setSaving(false);
                                 setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
                                 showAlert({ title: 'Éxito', message: 'Paquetes abiertos y stock sumado a la caja.', type: 'success' });
                                 setAddQtyModalVisible(false);
+                                useInsumosCacheStore.getState().invalidate();
+                                await fetchInitialData(false);
                               } catch (error: any) {
                                 const errorData = error.response?.data;
                                 const backendMessage = errorData?.message;
@@ -2920,6 +2924,8 @@ setSaving(false);
                                 setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
                                 showAlert({ title: 'Éxito', message: 'Entrada registrada y sumada al stock global.', type: 'success' });
                                 setAddQtyModalVisible(false);
+                                useInsumosCacheStore.getState().invalidate();
+                                await fetchInitialData(false);
                               } catch (error: any) {
                                 const errorData = error.response?.data;
                                 const backendMessage = errorData?.message;
@@ -3011,6 +3017,8 @@ setSaving(false);
                         setValue(`insumos.${addQtyIndex}.cantApertura`, newVal, { shouldDirty: true });
                         setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
                         showAlert({ title: 'Éxito', message: 'Consumo interno registrado y descontado del stock global.', type: 'success' });
+                        useInsumosCacheStore.getState().invalidate();
+                        await fetchInitialData(false);
                       } catch (error: any) {
                         showAlert({ title: 'Error', message: error.response?.data?.message || 'No se pudo descontar el insumo.', type: 'error' });
                       } finally {
@@ -3271,12 +3279,12 @@ setSaving(false);
               </View>
 
               <ScrollView className="p-4" showsVerticalScrollIndicator={false}>
-                <View className="flex-row px-2 pb-2 mb-2 border-b border-gray-100">
+                <View className="flex-row px-1 pb-2 mb-2 border-b border-gray-100">
                   <View className="w-8" />
-                  <Text className="flex-1 font-semibold text-gray-600 text-xs">Insumo</Text>
-                  <Text className="w-16 font-semibold text-gray-600 text-xs text-right">Global</Text>
-                  <Text className="w-16 font-semibold text-gray-600 text-xs text-right">Físico</Text>
-                  <Text className="w-16 font-semibold text-gray-600 text-xs text-right">Dif</Text>
+                  <Text className="flex-1 font-semibold text-gray-600 text-[11px]">Insumo</Text>
+                  <Text className="w-12 sm:w-16 font-semibold text-gray-600 text-[11px] text-right">Global</Text>
+                  <Text className="w-12 sm:w-16 font-semibold text-gray-600 text-[11px] text-right">Físico</Text>
+                  <Text className="w-10 sm:w-14 font-semibold text-gray-600 text-[11px] text-right">Dif</Text>
                 </View>
 
                 {arquearPreviewList.length === 0 ? (
@@ -3288,7 +3296,7 @@ setSaving(false);
                     return (
                       <TouchableOpacity 
                         key={index} 
-                        className="flex-row items-center py-3 px-2 border-b border-gray-100 bg-gray-50 mb-1 rounded"
+                        className="flex-row items-center py-3 px-1 border-b border-gray-100 bg-gray-50 mb-1 rounded"
                         onPress={() => {
                           if (isSelected) {
                             setSelectedArquearIds(prev => prev.filter(id => id !== item.IDalimentos));
@@ -3297,19 +3305,19 @@ setSaving(false);
                           }
                         }}
                       >
-                        <View className="w-8 justify-center">
+                        <View className="w-8 justify-center items-center">
                           <Ionicons 
                             name={isSelected ? "checkbox" : "square-outline"} 
                             size={22} 
                             color={isSelected ? primaryColor || "#16a34a" : "#9ca3af"} 
                           />
                         </View>
-                        <Text className="flex-1 font-medium text-gray-800 text-sm" numberOfLines={1}>
+                        <Text className="flex-1 font-medium text-gray-800 text-xs sm:text-sm pl-1" numberOfLines={2}>
                           {item.nombre}
                         </Text>
-                        <Text className="w-16 text-gray-600 text-sm text-right">{item.stockSistema}</Text>
-                        <Text className="w-16 text-gray-800 text-sm text-right font-medium">{item.stockFisico}</Text>
-                        <Text className={`w-16 text-sm text-right font-bold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                        <Text className="w-12 sm:w-16 text-gray-600 text-xs sm:text-sm text-right">{item.stockSistema}</Text>
+                        <Text className="w-12 sm:w-16 text-gray-800 text-xs sm:text-sm text-right font-medium">{item.stockFisico}</Text>
+                        <Text className={`w-10 sm:w-14 text-xs sm:text-sm text-right font-bold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
                           {isPositive ? '+' : ''}{item.diferencia}
                         </Text>
                       </TouchableOpacity>
@@ -3331,24 +3339,26 @@ setSaving(false);
                 />
               </View>
 
-              <View className="flex-row justify-end items-center p-4 border-t border-gray-200">
-                <Text className="text-gray-500 text-xs mr-4">
+              <View className="flex-row justify-between items-center p-4 border-t border-gray-200">
+                <Text className="text-gray-500 text-[11px] sm:text-xs flex-1 mr-2" numberOfLines={2}>
                   {selectedArquearIds.length} insumo(s) seleccionado(s)
                 </Text>
-                <TouchableOpacity 
-                  onPress={() => setModalArquearVisible(false)} 
-                  className="px-4 py-2 rounded border border-gray-300 mr-2 bg-white"
-                >
-                  <Text className="text-gray-700 font-medium">Cancelar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  onPress={confirmArquearInsumos}
-                  disabled={selectedArquearIds.length === 0}
-                  className={`px-4 py-2 rounded flex-row items-center ${selectedArquearIds.length === 0 ? 'bg-gray-400' : 'bg-orange-500'}`}
-                >
-                  <Ionicons name="sync" size={16} color="#fff" />
-                  <Text className="text-white font-medium ml-1">Confirmar Arqueo</Text>
-                </TouchableOpacity>
+                <View className="flex-row items-center">
+                  <TouchableOpacity 
+                    onPress={() => setModalArquearVisible(false)} 
+                    className="px-3 py-2 rounded border border-gray-300 mr-2 bg-white"
+                  >
+                    <Text className="text-gray-700 font-medium text-xs sm:text-sm">Cancelar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={confirmArquearInsumos}
+                    disabled={selectedArquearIds.length === 0}
+                    className={`px-3 py-2 rounded flex-row items-center ${selectedArquearIds.length === 0 ? 'bg-gray-400' : 'bg-orange-500'}`}
+                  >
+                    <Ionicons name="sync" size={16} color="#fff" />
+                    <Text className="text-white font-medium ml-1 text-xs sm:text-sm">Confirmar Arqueo</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
