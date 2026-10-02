@@ -202,7 +202,16 @@ const usePrinterStore = create<PrinterState>()(
           
           if (printComanda) {
             const seccionesState = useSeccionesStore.getState();
-            const secciones = seccionesState.getSeccionesActivas();
+            let secciones = seccionesState.getSeccionesActivas();
+            
+            if (secciones.length === 0 && !seccionesState.loading) {
+              try {
+                await seccionesState.fetchSecciones();
+                secciones = useSeccionesStore.getState().getSeccionesActivas();
+              } catch(e) {
+                console.log('Error fetching secciones for printer web', e);
+              }
+            }
             
             if (secciones.length === 0) {
               webTickets.push({ data: ticketData, type: 'comanda' });
@@ -261,9 +270,18 @@ const usePrinterStore = create<PrinterState>()(
       // ─────────────────────────────────────────────────────────────────
       printTicketConSecciones: async (ticketData: any) => {
         const seccionesState = useSeccionesStore.getState();
-        const secciones = seccionesState.getSeccionesActivas();
+        let secciones = seccionesState.getSeccionesActivas();
         const pausaMs = (seccionesState.pausaEntreTickets ?? 2) * 1000;
         const state = get();
+        
+        if (secciones.length === 0 && !seccionesState.loading) {
+          try {
+            await seccionesState.fetchSecciones();
+            secciones = useSeccionesStore.getState().getSeccionesActivas();
+          } catch(e) {
+            console.log('Error fetching secciones for printer', e);
+          }
+        }
 
         if (secciones.length === 0) {
           // Sin secciones → un solo ticket (comportamiento original)
