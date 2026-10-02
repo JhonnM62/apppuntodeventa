@@ -945,7 +945,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             imagenUrl: item.imagenUrl || item.image,
             comentarios: item.modifiers?.length ? JSON.stringify(item.modifiers) : undefined,
             seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || item.producto?.seccionCocinaId || item.producto?.categoriaSeccionCocinaId || null,
-            categoriaSeccionCocinaId: item.categoriaSeccionCocinaId || item.producto?.categoriaSeccionCocinaId || null,
           })),
         };
 
@@ -1107,7 +1106,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           imagenUrl: item.imagenUrl || item.image,
           comentarios: item.modifiers?.length ? JSON.stringify(item.modifiers) : undefined,
           seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || item.producto?.seccionCocinaId || item.producto?.categoriaSeccionCocinaId || null,
-          categoriaSeccionCocinaId: item.categoriaSeccionCocinaId || item.producto?.categoriaSeccionCocinaId || null,
         })),
       };
 
@@ -1253,7 +1251,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             imagenUrl: item.imagenUrl || item.image,
             comentarios: item.modifiers?.length ? JSON.stringify(item.modifiers) : undefined,
             seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || item.producto?.seccionCocinaId || item.producto?.categoriaSeccionCocinaId || null,
-            categoriaSeccionCocinaId: item.categoriaSeccionCocinaId || item.producto?.categoriaSeccionCocinaId || null,
           })),
         };
         // Eliminamos el setTimeout optimista para esperar a la respuesta del backend
@@ -1352,7 +1349,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           precioUnitario: Number(item.precioUnitario || item.Precio_Unitario || 0),
           subtotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
           modifiers: item.modifiers,
-          seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId
+          seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || item.producto?.seccionCocinaId || item.producto?.categoriaSeccionCocinaId || null
         })),
         estado: data.estado,
         metodoPago: data.medioDePago || 'PENDIENTE',
@@ -1391,7 +1388,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           imagenUrl: item.imagenUrl || item.image,
           comentarios: item.modifiers?.length ? JSON.stringify(item.modifiers) : undefined,
           seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || item.producto?.seccionCocinaId || item.producto?.categoriaSeccionCocinaId || null,
-          categoriaSeccionCocinaId: item.categoriaSeccionCocinaId || item.producto?.categoriaSeccionCocinaId || null,
         })),
       };
 

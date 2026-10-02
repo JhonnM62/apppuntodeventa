@@ -56,12 +56,18 @@ export const usePrinterServer = () => {
         if (!payload) continue;
 
         try {
-          await executePrint(
+          const printPromise = executePrint(
             payload.ticketData,
             payload.paperSize ?? paperSize,
             currentPrinter.inner_mac_address,
             payload.type,
           );
+          
+          await Promise.race([
+            printPromise,
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de impresión bluetooth')), 15000))
+          ]);
+          
           emit(SocketEvent.PRINT_DONE, { jobId: payload.jobId, success: true });
         } catch (err: any) {
           emit(SocketEvent.PRINT_DONE, {
