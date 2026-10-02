@@ -207,8 +207,22 @@ export default function CheckInScreen({ navigation }: any) {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        if (Platform.OS === 'web' && result.assets[0].base64) {
-          setFotoUri(`data:image/jpeg;base64,${result.assets[0].base64}`);
+        if (Platform.OS === 'web') {
+          if (result.assets[0].base64) {
+            const b64 = result.assets[0].base64;
+            setFotoUri(b64.startsWith('data:') ? b64 : `data:image/jpeg;base64,${b64}`);
+          } else if (result.assets[0].uri) {
+            try {
+              const response = await fetch(result.assets[0].uri);
+              const blob = await response.blob();
+              const reader = new FileReader();
+              reader.onloadend = () => setFotoUri(reader.result as string);
+              reader.readAsDataURL(blob);
+            } catch (e) {
+              console.warn('Error convirtiendo blob a base64', e);
+              setFotoUri(result.assets[0].uri);
+            }
+          }
         } else {
           setFotoUri(result.assets[0].uri);
         }

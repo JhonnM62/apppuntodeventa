@@ -147,8 +147,24 @@ export default function DescansoCard({
         base64: true,
       });
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        if (Platform.OS === 'web' && result.assets[0].base64) {
-          return `data:image/jpeg;base64,${result.assets[0].base64}`;
+        if (Platform.OS === 'web') {
+          if (result.assets[0].base64) {
+            const b64 = result.assets[0].base64;
+            return b64.startsWith('data:') ? b64 : `data:image/jpeg;base64,${b64}`;
+          } else if (result.assets[0].uri) {
+            try {
+              const response = await fetch(result.assets[0].uri);
+              const blob = await response.blob();
+              return new Promise<string>((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+              });
+            } catch (e) {
+              console.warn('Error convirtiendo blob a base64', e);
+            }
+          }
         }
         return result.assets[0].uri;
       }
