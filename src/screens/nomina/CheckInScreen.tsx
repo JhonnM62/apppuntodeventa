@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { View, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert, ScrollView, TextInput } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert, ScrollView, TextInput, Platform } from 'react-native';
 import { Text } from '../../components/ui/text';
 import { Button } from '../../components/ui/button';
 import { Card } from '../../components/ui/card';
@@ -203,10 +203,15 @@ export default function CheckInScreen({ navigation }: any) {
         allowsEditing: false,
         quality: 0.5,
         cameraType: ImagePicker.CameraType.front,
+        base64: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setFotoUri(result.assets[0].uri);
+        if (Platform.OS === 'web' && result.assets[0].base64) {
+          setFotoUri(`data:image/jpeg;base64,${result.assets[0].base64}`);
+        } else {
+          setFotoUri(result.assets[0].uri);
+        }
       }
     } catch (error) {
       console.error(error);

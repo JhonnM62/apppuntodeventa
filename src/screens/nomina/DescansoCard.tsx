@@ -144,8 +144,12 @@ export default function DescansoCard({
         allowsEditing: false,
         quality: 0.5,
         cameraType: ImagePicker.CameraType.front,
+        base64: true,
       });
       if (!result.canceled && result.assets && result.assets.length > 0) {
+        if (Platform.OS === 'web' && result.assets[0].base64) {
+          return `data:image/jpeg;base64,${result.assets[0].base64}`;
+        }
         return result.assets[0].uri;
       }
     } catch (e) {
