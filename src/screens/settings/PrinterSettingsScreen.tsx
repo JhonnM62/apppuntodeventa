@@ -375,8 +375,8 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
                           <Ionicons name="server" size={24} color="#22c55e" />
                         </View>
                         <View style={styles.deviceInfo}>
-                          <RNText style={styles.deviceName}>Servidor POS</RNText>
-                          <RNText style={styles.deviceMac}>ID: {server}</RNText>
+                          <RNText style={styles.deviceName}>{server.deviceName || 'Servidor POS'}</RNText>
+                          <RNText style={styles.deviceMac}>ID: {server.socketId || server}</RNText>
                         </View>
                         <View style={styles.deviceStatus}>
                           <RNText style={{ color: '#22c55e', fontWeight: 'bold' }}>Online</RNText>
