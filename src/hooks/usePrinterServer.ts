@@ -15,6 +15,7 @@
  */
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
+import * as Device from 'expo-device';
 import usePrinterStore from '../store/usePrinterStore';
 import useAuthStore from '../store/useAuthStore';
 import { useSocket } from '../context/SocketContext';
@@ -30,6 +31,9 @@ export const usePrinterServer = () => {
 
   const negocioId = (user as any)?.negocioId ?? (user as any)?.IDnegocio ?? 'default';
 
+  const queueRef = useRef<PrintJobPayload[]>([]);
+  const isPrintingRef = useRef(false);
+
   useEffect(() => {
     // Solo en móvil y si hay BT conectado y socket disponible
     if (Platform.OS === 'web') return;
@@ -39,31 +43,51 @@ export const usePrinterServer = () => {
     }
 
     // Registrarse como servidor de impresión
-    emit(SocketEvent.PRINT_REGISTER, { negocioId });
+    const deviceName = Device.modelName || Device.deviceName || 'Dispositivo iOS/Android';
+    emit(SocketEvent.PRINT_REGISTER, { negocioId, deviceName });
     registeredRef.current = true;
 
-    const handleJob = async (payload: PrintJobPayload) => {
-      try {
-        await executePrint(
-          payload.ticketData,
-          payload.paperSize ?? paperSize,
-          currentPrinter.inner_mac_address,
-          payload.type,
-        );
-        emit(SocketEvent.PRINT_DONE, { jobId: payload.jobId, success: true });
-      } catch (err: any) {
-        emit(SocketEvent.PRINT_DONE, {
-          jobId: payload.jobId,
-          success: false,
-          error: err?.message ?? 'Error de impresión',
-        });
+    const processQueue = async () => {
+      if (isPrintingRef.current || queueRef.current.length === 0) return;
+      isPrintingRef.current = true;
+
+      while (queueRef.current.length > 0) {
+        const payload = queueRef.current.shift();
+        if (!payload) continue;
+
+        try {
+          await executePrint(
+            payload.ticketData,
+            payload.paperSize ?? paperSize,
+            currentPrinter.inner_mac_address,
+            payload.type,
+          );
+          emit(SocketEvent.PRINT_DONE, { jobId: payload.jobId, success: true });
+        } catch (err: any) {
+          emit(SocketEvent.PRINT_DONE, {
+            jobId: payload.jobId,
+            success: false,
+            error: err?.message ?? 'Error de impresión',
+          });
+        }
+
+        // Breve pausa para no saturar la cola bluetooth del dispositivo
+        await new Promise((r) => setTimeout(r, 1500));
       }
+
+      isPrintingRef.current = false;
+    };
+
+    const handleJob = (payload: PrintJobPayload) => {
+      queueRef.current.push(payload);
+      processQueue();
     };
 
     socket.on(SocketEvent.PRINT_JOB, handleJob);
 
     return () => {
       socket.off(SocketEvent.PRINT_JOB, handleJob);
+      emit(SocketEvent.LEAVE_ROOM, { room: `printers:${negocioId}` });
       registeredRef.current = false;
     };
   }, [printerConnected, currentPrinter, socketConnected, socket, negocioId]);

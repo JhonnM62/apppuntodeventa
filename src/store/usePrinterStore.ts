@@ -67,6 +67,8 @@ interface PrinterState {
   
   webPrintMode: 'native' | 'remote';
   setWebPrintMode: (mode: 'native' | 'remote') => void;
+  targetPrintServerId: string | null;
+  setTargetPrintServerId: (id: string | null) => void;
 }
 
 const usePrinterStore = create<PrinterState>()(
@@ -81,8 +83,9 @@ const usePrinterStore = create<PrinterState>()(
       manualAutoPrintEnabled: false,
       manualAutoPrintSeconds: 3,
       webPrintMode: 'native',
-
       setWebPrintMode: (mode) => set({ webPrintMode: mode }),
+      targetPrintServerId: null,
+      setTargetPrintServerId: (id) => set({ targetPrintServerId: id }),
 
       setPrinter: (printer) => set({ currentPrinter: printer }),
       setPaperSize: (size) => set({ paperSize: size }),
@@ -122,8 +125,8 @@ const usePrinterStore = create<PrinterState>()(
       // printRemote — delegar impresión a otro dispositivo por Socket
       // ─────────────────────────────────────────────────────────────────
       printRemote: async (ticketData, type) => {
-        if (!_socket) {
-          Toast.show({ type: 'warning', text1: 'Sin servidor de impresión', text2: 'No hay dispositivo con impresora disponible', position: 'top' });
+        if (!_socket || !_socket.connected) {
+          Toast.show({ type: 'warning', text1: 'Sin conexión', text2: 'No estás conectado al servidor actualmente', position: 'top' });
           return false;
         }
 
@@ -136,14 +139,15 @@ const usePrinterStore = create<PrinterState>()(
           ticketData,
           type,
           paperSize: state.paperSize,
+          targetSocketId: state.targetPrintServerId,
         });
 
         return new Promise<boolean>((resolve) => {
           const timeout = setTimeout(() => {
             _socket?.off(`print:ack:${jobId}`);
-            Toast.show({ type: 'warning', text1: 'Sin respuesta', text2: 'El servidor de impresión no respondió', position: 'top' });
+            Toast.show({ type: 'warning', text1: 'Sin respuesta', text2: 'El servidor de impresión tardó demasiado en responder', position: 'top' });
             resolve(false);
-          }, 10_000);
+          }, 25_000);
 
           _socket.once(`print:ack:${jobId}`, ({ success, error }: any) => {
             clearTimeout(timeout);

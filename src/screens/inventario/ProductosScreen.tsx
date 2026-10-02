@@ -11,6 +11,7 @@ import { Card } from '../../components/ui/card';
 import { getProducts, deleteProduct } from '../../services/products';
 import { formatCurrency } from '../../utils/formatters';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { useSocketEvent } from '../../hooks/useSocketEvent';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
@@ -45,9 +46,11 @@ const ProductosScreen = ({ navigation }: Props) => {
     }
   }, []);
 
-  useEffect(() => {
-    fetchProductos();
-  }, [fetchProductos]);
+  useFocusEffect(
+    useCallback(() => {
+      fetchProductos();
+    }, [fetchProductos])
+  );
 
   useSocketEvent('REFRESH_PRODUCTOS', () => {
     fetchProductos();

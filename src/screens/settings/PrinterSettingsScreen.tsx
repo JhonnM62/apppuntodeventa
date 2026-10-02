@@ -8,6 +8,7 @@ import { useCustomAlert } from '../../context/CustomAlertContext';
 import { TextInput } from 'react-native';
 import { useSocket } from '../../context/SocketContext';
 import { useSocketEvent } from '../../hooks/useSocketEvent';
+import useAuthStore from '../../store/useAuthStore';
 // Mock the BLE Printer for now since it requires physical device / native code
 // In real usage, you'd import { BLEPrinter } from 'react-native-thermal-receipt-printer-image-qr';
 let BLEPrinter: any = null;
@@ -19,8 +20,10 @@ try {
 }
 
 const PrinterSettingsScreen = ({ navigation }: any) => {
-  const { currentPrinter, paperSize, isConnected, configs, setPrinter, setPaperSize, setConnected, fetchConfigs, setConfigs, manualPreviewEnabled, manualAutoPrintEnabled, manualAutoPrintSeconds, setManualPrintConfigs, servidorActivo, setServidorActivo, webPrintMode, setWebPrintMode } = usePrinterStore();
+  const { currentPrinter, paperSize, isConnected, configs, setPrinter, setPaperSize, setConnected, fetchConfigs, setConfigs, manualPreviewEnabled, manualAutoPrintEnabled, manualAutoPrintSeconds, setManualPrintConfigs, servidorActivo, setServidorActivo, webPrintMode, setWebPrintMode, targetPrintServerId, setTargetPrintServerId } = usePrinterStore();
   const { showAlert } = useCustomAlert();
+  const user = useAuthStore((s) => s.user);
+  const negocioId = (user as any)?.negocioId ?? (user as any)?.IDnegocio ?? 'default';
   const [devices, setDevices] = useState<PrinterDevice[]>([]);
   const [scanning, setScanning] = useState(false);
   const [connectingTo, setConnectingTo] = useState<string | null>(null);
@@ -42,19 +45,20 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
 
   // Listen to print servers updates
   useSocketEvent('print:servers_update', (data: any) => {
-    if (data && data.servers) {
+    if (data && Array.isArray(data.servers)) {
       setPrintServers(data.servers);
     } else if (Array.isArray(data)) {
       setPrintServers(data);
+    } else {
+      setPrintServers([]);
     }
   }, []);
 
   useEffect(() => {
     // Fetch printer configs on mount
     fetchConfigs();
-    
     // Si estamos en modo remoto o web, pedir la lista de servidores de impresión
-    emit('print:get_servers', {});
+    emit('print:get_servers', { negocioId });
 
     const verifyConnection = async () => {
       if (isConnected && BLEPrinter) {
@@ -357,32 +361,46 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
               <View style={{ marginTop: 24 }}>
                 <View style={[styles.scanHeader, { marginBottom: 12 }]}>
                   <RNText style={styles.cardTitle}>Servidores Activos</RNText>
-                  <TouchableOpacity style={styles.scanBtn} onPress={() => emit('print:get_servers', {})}>
+                  <TouchableOpacity style={styles.scanBtn} onPress={() => emit('print:get_servers', { negocioId })}>
                     <RNText style={styles.scanBtnText}>Actualizar</RNText>
                   </TouchableOpacity>
                 </View>
 
-                {printServers.length === 0 ? (
+                {!Array.isArray(printServers) || printServers.length === 0 ? (
                   <View style={styles.emptyScan}>
                     <Ionicons name="server-outline" size={40} color="#d1d5db" />
                     <RNText style={styles.emptyScanText}>No hay servidores de impresión activos. Abre la app en un dispositivo y activa el "Modo Servidor".</RNText>
                   </View>
                 ) : (
                   <View style={styles.deviceList}>
-                    {printServers.map((server, idx) => (
-                      <View key={idx} style={[styles.deviceItem, { paddingVertical: 12 }]}>
+                    {printServers.map((server, idx) => {
+                      const isSelected = targetPrintServerId === (server?.socketId || server);
+                      return (
+                      <TouchableOpacity 
+                        key={idx} 
+                        style={[
+                          styles.deviceItem, 
+                          { paddingVertical: 12 },
+                          isSelected && { borderColor: '#3b82f6', backgroundColor: '#eff6ff', borderWidth: 1 }
+                        ]}
+                        onPress={() => setTargetPrintServerId(server?.socketId || server)}
+                      >
                         <View style={styles.deviceIcon}>
-                          <Ionicons name="server" size={24} color="#22c55e" />
+                          <Ionicons name="server" size={24} color={isSelected ? '#3b82f6' : '#22c55e'} />
                         </View>
                         <View style={styles.deviceInfo}>
-                          <RNText style={styles.deviceName}>{server.deviceName || 'Servidor POS'}</RNText>
-                          <RNText style={styles.deviceMac}>ID: {server.socketId || server}</RNText>
+                          <RNText style={[styles.deviceName, isSelected && { color: '#1e3a8a' }]}>{server?.deviceName || 'Servidor POS'}</RNText>
+                          <RNText style={styles.deviceMac}>ID: {server?.socketId || server}</RNText>
                         </View>
                         <View style={styles.deviceStatus}>
-                          <RNText style={{ color: '#22c55e', fontWeight: 'bold' }}>Online</RNText>
+                          {isSelected ? (
+                            <Ionicons name="checkmark-circle" size={24} color="#3b82f6" />
+                          ) : (
+                            <RNText style={{ color: '#22c55e', fontWeight: 'bold' }}>Online</RNText>
+                          )}
                         </View>
-                      </View>
-                    ))}
+                      </TouchableOpacity>
+                    )})}
                   </View>
                 )}
               </View>

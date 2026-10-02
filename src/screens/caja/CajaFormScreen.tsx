@@ -1015,7 +1015,7 @@ setSaving(false);
       });
       showAlert({ title: 'Arqueo Exitoso', message: response.data?.message || 'Se han ajustado las diferencias.', type: 'success' });
       setModalArquearVisible(false);
-      useInsumosCacheStore.getState().invalidate();
+      useInsumosCacheStore.getState().clearCache();
       await fetchInitialData(false);
     } catch (error: any) {
       showAlert({ title: 'Error', message: error.response?.data?.message || 'Hubo un error al arquear.', type: 'error' });
@@ -2896,7 +2896,7 @@ setSaving(false);
                                 setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
                                 showAlert({ title: 'Éxito', message: 'Paquetes abiertos y stock sumado a la caja.', type: 'success' });
                                 setAddQtyModalVisible(false);
-                                useInsumosCacheStore.getState().invalidate();
+                                useInsumosCacheStore.getState().clearCache();
                                 await fetchInitialData(false);
                               } catch (error: any) {
                                 const errorData = error.response?.data;
@@ -2924,7 +2924,7 @@ setSaving(false);
                                 setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
                                 showAlert({ title: 'Éxito', message: 'Entrada registrada y sumada al stock global.', type: 'success' });
                                 setAddQtyModalVisible(false);
-                                useInsumosCacheStore.getState().invalidate();
+                                useInsumosCacheStore.getState().clearCache();
                                 await fetchInitialData(false);
                               } catch (error: any) {
                                 const errorData = error.response?.data;
@@ -3017,7 +3017,7 @@ setSaving(false);
                         setValue(`insumos.${addQtyIndex}.cantApertura`, newVal, { shouldDirty: true });
                         setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
                         showAlert({ title: 'Éxito', message: 'Consumo interno registrado y descontado del stock global.', type: 'success' });
-                        useInsumosCacheStore.getState().invalidate();
+                        useInsumosCacheStore.getState().clearCache();
                         await fetchInitialData(false);
                       } catch (error: any) {
                         showAlert({ title: 'Error', message: error.response?.data?.message || 'No se pudo descontar el insumo.', type: 'error' });
