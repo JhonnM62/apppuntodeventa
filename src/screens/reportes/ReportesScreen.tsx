@@ -22,6 +22,14 @@ import { es } from 'date-fns/locale';
 import { ReporteFilter } from '../../services/reportes';
 import Toast from 'react-native-toast-message';
 import DateTimePicker from '@react-native-community/datetimepicker';
+
+const parseLocal = (iso: string | Date | null | undefined): Date => {
+  if (!iso) return new Date();
+  if (typeof iso === 'string') {
+    return new Date(iso.replace(/Z$/i, ''));
+  }
+  return iso;
+};
 import { usePermissions } from '../../hooks/usePermissions';
 import { useFocusEffect } from '@react-navigation/native';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
@@ -146,7 +154,6 @@ const S = StyleSheet.create({
   modalSub: { fontSize: 13, color: '#6b7280', textAlign: 'center', marginBottom: 24 },
   dateRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 24 },
   datePicker: {
-    flex: 1,
     backgroundColor: '#f9fafb',
     borderWidth: 1,
     borderColor: '#d1d5db',
@@ -235,10 +242,10 @@ export default function ReportesScreen({ navigation }: any) {
   // ── Eliminar ────────────────────────────────────────────────────────────────
   const handleDeleteReporte = (item: ReporteFilter) => {
     const fechaDesde = item.desde
-      ? format(new Date(item.desde), "d 'de' MMMM", { locale: es })
+      ? format(parseLocal(item.desde), "d 'de' MMMM", { locale: es })
       : 'N/A';
     const fechaHasta = item.hasta
-      ? format(new Date(item.hasta), "d 'de' MMMM", { locale: es })
+      ? format(parseLocal(item.hasta), "d 'de' MMMM", { locale: es })
       : 'N/A';
 
     Alert.alert(
@@ -326,13 +333,13 @@ export default function ReportesScreen({ navigation }: any) {
       <View style={{ flex: 1, marginRight: 12 }}>
         <Text style={S.cardTitle}>
           {item.desde
-            ? format(new Date(item.desde), "d 'de' MMM. 'de' yyyy", { locale: es })
+            ? format(parseLocal(item.desde), "d 'de' MMM. 'de' yyyy", { locale: es })
             : 'N/A'}
         </Text>
         <Text style={S.cardSub}>
           Hasta:{' '}
           {item.hasta
-            ? format(new Date(item.hasta), "d 'de' MMM. 'de' yyyy", { locale: es })
+            ? format(parseLocal(item.hasta), "d 'de' MMM. 'de' yyyy", { locale: es })
             : 'N/A'}
         </Text>
       </View>

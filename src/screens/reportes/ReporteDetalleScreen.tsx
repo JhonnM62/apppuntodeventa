@@ -6,6 +6,14 @@ import { Text } from '../../components/ui/text';
 import api from '../../services/api';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+
+const parseLocal = (iso: string | Date | null | undefined): Date => {
+  if (!iso) return new Date();
+  if (typeof iso === 'string') {
+    return new Date(iso.replace(/Z$/i, ''));
+  }
+  return iso;
+};
 import { generateAndShareDineroGuardadoPDF } from '../../utils/reportesPdf';
 import Toast from 'react-native-toast-message';
 import { usePermissions } from '../../hooks/usePermissions';
@@ -279,12 +287,12 @@ export default function ReporteDetalleScreen({ route, navigation }: any) {
 
           <Text className="text-sm text-gray-500 mt-2">Desde</Text>
           <Text className="text-base font-bold text-gray-800">
-            {detalle.reporte.desde ? format(new Date(detalle.reporte.desde), "d 'de' MMM. 'de' yyyy", { locale: es }) : '-'}
+            {detalle.reporte.desde ? format(parseLocal(detalle.reporte.desde), "d 'de' MMM. 'de' yyyy", { locale: es }) : '-'}
           </Text>
 
           <Text className="text-sm text-gray-500 mt-2">Hasta</Text>
           <Text className="text-base font-bold text-gray-800">
-            {detalle.reporte.hasta ? format(new Date(detalle.reporte.hasta), "d 'de' MMM. 'de' yyyy", { locale: es }) : '-'}
+            {detalle.reporte.hasta ? format(parseLocal(detalle.reporte.hasta), "d 'de' MMM. 'de' yyyy", { locale: es }) : '-'}
           </Text>
         </View>
 

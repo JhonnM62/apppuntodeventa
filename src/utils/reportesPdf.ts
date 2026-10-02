@@ -60,6 +60,26 @@ const parseLocal = (iso: string | null | undefined): Date => {
   return new Date(String(iso).replace(/Z$/i, ''));
 };
 
+const openHtmlInBrowserWindow = (html: string, fileName: string) => {
+  const printWindow = window.open('', '_blank', 'width=900,height=700');
+  if (!printWindow) {
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName + '.html';
+    link.click();
+    URL.revokeObjectURL(url);
+    return;
+  }
+  printWindow.document.write(html);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => {
+    printWindow.print();
+  }, 500);
+};
+
 const formatDate = (iso: string | null | undefined): string => {
   const d = parseLocal(iso);
   if (isNaN(d.getTime())) return '';
@@ -91,17 +111,26 @@ const calcEfectivoYTransferencias = (ventas: VentaCaja[]): CalcEfectivo => {
 
   (ventas || []).forEach((v) => {
     const total = Number(v.totalInput || 0);
-    const medio = (v.medioDePago || '').toUpperCase();
+    // Same normalization as backend caja.service.ts
+    const medioRaw = (v.medioDePago || '').toUpperCase().replace(/_/g, ' ').trim();
 
-    if (medio === 'EFECTIVO' || medio === 'PENDIENTE') {
+    if (medioRaw === 'EFECTIVO') {
       efectivoApp += total;
-    } else if (medio === 'EFECTIVO Y OTROS') {
-      efectivoApp += Number(v.efectivoRecibido || 0);
-      transferenciaApp += Number(v.valorDeTransferencia || 0);
-    } else {
-      // TRANSFERENCIA, NEQUI, DAVIPLATA, TARJETA, etc.
+    } else if (
+      medioRaw === 'NEQUI' || 
+      medioRaw === 'TRANSFERENCIA' || 
+      medioRaw === 'TRASNFERENCIA' || 
+      medioRaw === 'DAVIPLATA' || 
+      medioRaw === 'TARJETA'
+    ) {
       transferenciaApp += total;
+    } else if (medioRaw === 'MIXTO' || medioRaw === 'EFECTIVO Y OTROS') {
+      const efectivoR = Number((v as any).efectivoRecibido || 0);
+      const tr = total - efectivoR;
+      efectivoApp += efectivoR;
+      transferenciaApp += tr;
     }
+    // PENDIENTE is ignored entirely, just like in backend
   });
 
   return { efectivoApp, transferenciaApp };
@@ -425,13 +454,7 @@ export const generateAndShareDineroGuardadoPDF = async (detalle: DetalleDineroGu
   try {
     // ── Web (PWA / Chrome) ──────────────────────────────────────────────────
     if (Platform.OS === 'web') {
-      const { uri } = await Print.printToFileAsync({ html: htmlContent, base64: true });
-      const link = document.createElement('a');
-      link.href = uri;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      openHtmlInBrowserWindow(htmlContent, fileName);
       return;
     }
 

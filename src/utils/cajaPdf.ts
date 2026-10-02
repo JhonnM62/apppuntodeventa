@@ -164,7 +164,7 @@ const buildGeneralHTML = (resumen: any, fileName: string): string => {
       <tr><td>Efectivo Físico Contado (Cierre)</td><td class="text-right"><strong>${formatMoney(resumen.resumen.efectivoCierre || 0)}</strong></td></tr>
       <tr><td>Transferencias / Otros (Digital)</td><td class="text-right">${formatMoney(resumen.resumen.transferenciasContadas ?? ((resumen.resumen.totalTransferencia || 0) + (resumen.resumen.totalNequi || 0)))}</td></tr>
       <tr><td>Total Ventas Sistema</td><td class="text-right">${formatMoney(resumen.resumen.totalVentas || 0)}</td></tr>
-      <tr><td>Total Efectivo Sistema</td><td class="text-right">${formatMoney((resumen.resumen.totalVentas || 0) - ((resumen.resumen.totalTransferencia || 0) + (resumen.resumen.totalNequi || 0)))}</td></tr>
+      <tr><td>Total Efectivo Sistema</td><td class="text-right">${formatMoney(resumen.resumen.totalEfectivo || 0)}</td></tr>
       <tr><td style="padding-left:20px;font-size:11px;color:#555;">• Repartido en Efectivo</td><td class="text-right" style="font-size:11px;color:#555;">${formatMoney(resumen.resumen.efectivoRepartido || 0)}</td></tr>
       <tr><td style="padding-left:20px;font-size:11px;color:#555;">• Repartido en Transferencias</td><td class="text-right" style="font-size:11px;color:#555;">${formatMoney(resumen.resumen.transferenciasRepartidas || 0)}</td></tr>
       <tr><td>Dinero Retirado (Guardado)</td><td class="text-right">${formatMoney(resumen.resumen.plataGuardada || 0)}</td></tr>
