@@ -31,9 +31,6 @@ export const usePrinterServer = () => {
 
   const negocioId = (user as any)?.negocioId ?? (user as any)?.IDnegocio ?? 'default';
 
-  const queueRef = useRef<PrintJobPayload[]>([]);
-  const isPrintingRef = useRef(false);
-
   useEffect(() => {
     // Solo en móvil y si hay BT conectado y socket disponible
     if (Platform.OS === 'web') return;
@@ -47,46 +44,22 @@ export const usePrinterServer = () => {
     emit(SocketEvent.PRINT_REGISTER, { negocioId, deviceName });
     registeredRef.current = true;
 
-    const processQueue = async () => {
-      if (isPrintingRef.current || queueRef.current.length === 0) return;
-      isPrintingRef.current = true;
-
-      while (queueRef.current.length > 0) {
-        const payload = queueRef.current.shift();
-        if (!payload) continue;
-
-        try {
-          const printPromise = executePrint(
-            payload.ticketData,
-            payload.paperSize ?? paperSize,
-            currentPrinter.inner_mac_address,
-            payload.type,
-          );
-          
-          await Promise.race([
-            printPromise,
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de impresión bluetooth')), 15000))
-          ]);
-          
-          emit(SocketEvent.PRINT_DONE, { jobId: payload.jobId, success: true });
-        } catch (err: any) {
-          emit(SocketEvent.PRINT_DONE, {
-            jobId: payload.jobId,
-            success: false,
-            error: err?.message ?? 'Error de impresión',
-          });
-        }
-
-        // Breve pausa para no saturar la cola bluetooth del dispositivo
-        await new Promise((r) => setTimeout(r, 1500));
+    const handleJob = async (payload: PrintJobPayload) => {
+      try {
+        await executePrint(
+          payload.ticketData,
+          payload.paperSize ?? paperSize,
+          currentPrinter.inner_mac_address,
+          payload.type,
+        );
+        emit(SocketEvent.PRINT_DONE, { jobId: payload.jobId, success: true });
+      } catch (err: any) {
+        emit(SocketEvent.PRINT_DONE, {
+          jobId: payload.jobId,
+          success: false,
+          error: err?.message ?? 'Error de impresión bluetooth',
+        });
       }
-
-      isPrintingRef.current = false;
-    };
-
-    const handleJob = (payload: PrintJobPayload) => {
-      queueRef.current.push(payload);
-      processQueue();
     };
 
     socket.on(SocketEvent.PRINT_JOB, handleJob);
