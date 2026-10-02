@@ -41,7 +41,7 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
   ];
 
   // Listen to print servers updates
-  useSocketEvent('PRINT_SERVERS_UPDATE', (data: any) => {
+  useSocketEvent('print:servers_update', (data: any) => {
     if (data && data.servers) {
       setPrintServers(data.servers);
     } else if (Array.isArray(data)) {
@@ -54,7 +54,7 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
     fetchConfigs();
     
     // Si estamos en modo remoto o web, pedir la lista de servidores de impresión
-    emit('GET_PRINT_SERVERS', {});
+    emit('print:get_servers', {});
 
     const verifyConnection = async () => {
       if (isConnected && BLEPrinter) {
@@ -357,7 +357,7 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
               <View style={{ marginTop: 24 }}>
                 <View style={[styles.scanHeader, { marginBottom: 12 }]}>
                   <RNText style={styles.cardTitle}>Servidores Activos</RNText>
-                  <TouchableOpacity style={styles.scanBtn} onPress={() => emit('GET_PRINT_SERVERS', {})}>
+                  <TouchableOpacity style={styles.scanBtn} onPress={() => emit('print:get_servers', {})}>
                     <RNText style={styles.scanBtnText}>Actualizar</RNText>
                   </TouchableOpacity>
                 </View>
