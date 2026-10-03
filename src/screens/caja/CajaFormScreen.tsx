@@ -685,26 +685,34 @@ export default function CajaFormScreen({ route, navigation }: any) {
       }
 
       if (cleanData.insumos) {
-        cleanData.insumos = cleanData.insumos.map((i: any) => {
-          const processed: any = {
-            ...i,
-            cantDeCierre: i.cantDeCierre === '' || isNaN(Number(i.cantDeCierre)) ? undefined : Number(i.cantDeCierre)
-          };
-          // Prevenir que meseros o no-admins sobreescriban la apertura por accidente al guardar
-          if (!isAdmin) {
-            delete processed.cantApertura;
-          }
-          return processed;
-        });
-
         if (!isNew && isFinalClose) {
-          const faltanInsumos = cleanData.insumos.some((i: any) => i.cantDeCierre === undefined);
+          const faltanInsumos = cleanData.insumos.some((i: any) => i.cantDeCierre === '' || i.cantDeCierre === null || i.cantDeCierre === undefined);
           if (faltanInsumos) {
             Toast.show({ type: 'error', text1: 'Conteos incompletos', text2: 'Debes ingresar la cantidad final para todos los insumos listados antes de cerrar la caja.' });
             setSaving(false);
             return;
           }
         }
+
+        cleanData.insumos = cleanData.insumos.map((i: any, index: number) => {
+          const isAperturaDirty = !!dirtyFields.insumos?.[index]?.cantApertura;
+          const isCierreDirty = !!dirtyFields.insumos?.[index]?.cantDeCierre;
+
+          const processed: any = {
+            ...i,
+            cantDeCierre: i.cantDeCierre === '' || isNaN(Number(i.cantDeCierre)) ? null : Number(i.cantDeCierre)
+          };
+          
+          if (!isAdmin || (!isNew && !isAperturaDirty)) {
+            delete processed.cantApertura;
+          }
+
+          if (!isNew && !isCierreDirty) {
+            delete processed.cantDeCierre;
+          }
+
+          return processed;
+        });
       }
 
       if (isNew) {
