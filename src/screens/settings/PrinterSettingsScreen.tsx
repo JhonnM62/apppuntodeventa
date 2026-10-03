@@ -368,13 +368,41 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
 
                 {!Array.isArray(printServers) || printServers.length === 0 ? (
                   <View style={styles.emptyScan}>
-                    <Ionicons name="server-outline" size={40} color="#d1d5db" />
-                    <RNText style={styles.emptyScanText}>No hay servidores de impresión activos. Abre la app en un dispositivo y activa el "Modo Servidor".</RNText>
+                    {targetPrintServerId ? (
+                      <View style={{ width: '100%' }}>
+                        <RNText style={[styles.cardDescription, { marginBottom: 12, textAlign: 'center' }]}>
+                          Servidor guardado (Actualmente Desconectado)
+                        </RNText>
+                        <TouchableOpacity 
+                          style={[styles.deviceItem, { paddingVertical: 12, borderColor: '#ef4444', borderWidth: 1, opacity: 0.7 }]}
+                          onPress={() => {}}
+                        >
+                          <View style={styles.deviceIcon}>
+                            <Ionicons name="server-outline" size={24} color="#ef4444" />
+                          </View>
+                          <View style={styles.deviceInfo}>
+                            <RNText style={styles.deviceName}>Servidor Guardado</RNText>
+                            <RNText style={styles.deviceMac}>ID: {targetPrintServerId}</RNText>
+                          </View>
+                          <View style={styles.deviceStatus}>
+                            <RNText style={{ color: '#ef4444', fontWeight: 'bold' }}>Offline</RNText>
+                          </View>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={{ marginTop: 12, alignItems: 'center' }} onPress={() => setTargetPrintServerId(null)}>
+                          <RNText style={{ color: '#ef4444', fontSize: 14 }}>Olvidar servidor</RNText>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <>
+                        <Ionicons name="server-outline" size={40} color="#d1d5db" />
+                        <RNText style={styles.emptyScanText}>No hay servidores de impresión activos. Abre la app en un dispositivo y activa el "Modo Servidor".</RNText>
+                      </>
+                    )}
                   </View>
                 ) : (
                   <View style={styles.deviceList}>
                     {printServers.map((server, idx) => {
-                      const isSelected = targetPrintServerId === (server?.socketId || server);
+                      const isSelected = targetPrintServerId === (server?.serverId || server?.socketId || server);
                       return (
                       <TouchableOpacity 
                         key={idx} 
@@ -383,14 +411,14 @@ const PrinterSettingsScreen = ({ navigation }: any) => {
                           { paddingVertical: 12 },
                           isSelected && { borderColor: '#3b82f6', backgroundColor: '#eff6ff', borderWidth: 1 }
                         ]}
-                        onPress={() => setTargetPrintServerId(server?.socketId || server)}
+                        onPress={() => setTargetPrintServerId(server?.serverId || server?.socketId || server)}
                       >
                         <View style={styles.deviceIcon}>
                           <Ionicons name="server" size={24} color={isSelected ? '#3b82f6' : '#22c55e'} />
                         </View>
                         <View style={styles.deviceInfo}>
                           <RNText style={[styles.deviceName, isSelected && { color: '#1e3a8a' }]}>{server?.deviceName || 'Servidor POS'}</RNText>
-                          <RNText style={styles.deviceMac}>ID: {server?.socketId || server}</RNText>
+                          <RNText style={styles.deviceMac}>ID: {server?.serverId || server?.socketId || server}</RNText>
                         </View>
                         <View style={styles.deviceStatus}>
                           {isSelected ? (

@@ -378,6 +378,7 @@ const usePrinterStore = create<PrinterState>()(
       name: 'printer-storage',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (state) => ({
+        deviceId: state.deviceId,
         currentPrinter: state.currentPrinter,
         paperSize: state.paperSize,
         configs: state.configs,
@@ -385,6 +386,8 @@ const usePrinterStore = create<PrinterState>()(
         manualPreviewEnabled: state.manualPreviewEnabled,
         manualAutoPrintEnabled: state.manualAutoPrintEnabled,
         manualAutoPrintSeconds: state.manualAutoPrintSeconds,
+        webPrintMode: state.webPrintMode,
+        targetPrintServerId: state.targetPrintServerId,
       }),
     }
   )
