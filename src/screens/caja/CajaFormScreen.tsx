@@ -2897,7 +2897,7 @@ setSaving(false);
                                 showAlert({ title: 'Éxito', message: 'Paquetes abiertos y stock sumado a la caja.', type: 'success' });
                                 setAddQtyModalVisible(false);
                                 useInsumosCacheStore.getState().clearCache();
-                                await fetchInitialData(false);
+                                await fetchInitialData(false, true);
                               } catch (error: any) {
                                 const errorData = error.response?.data;
                                 const backendMessage = errorData?.message;
@@ -2925,7 +2925,7 @@ setSaving(false);
                                 showAlert({ title: 'Éxito', message: 'Entrada registrada y sumada al stock global.', type: 'success' });
                                 setAddQtyModalVisible(false);
                                 useInsumosCacheStore.getState().clearCache();
-                                await fetchInitialData(false);
+                                await fetchInitialData(false, true);
                               } catch (error: any) {
                                 const errorData = error.response?.data;
                                 const backendMessage = errorData?.message;
@@ -3018,7 +3018,7 @@ setSaving(false);
                         setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
                         showAlert({ title: 'Éxito', message: 'Consumo interno registrado y descontado del stock global.', type: 'success' });
                         useInsumosCacheStore.getState().clearCache();
-                        await fetchInitialData(false);
+                        await fetchInitialData(false, true);
                       } catch (error: any) {
                         showAlert({ title: 'Error', message: error.response?.data?.message || 'No se pudo descontar el insumo.', type: 'error' });
                       } finally {
