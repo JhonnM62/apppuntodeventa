@@ -125,6 +125,7 @@ const usePrinterStore = create<PrinterState>()(
       // printRemote — delegar impresión a otro dispositivo por Socket
       // ─────────────────────────────────────────────────────────────────
       printRemote: async (ticketData, type) => {
+        console.log('[DEBUG- PRINTER STORE] printRemote - INIT', { type, hasSocket: !!_socket, socketConnected: _socket?.connected });
         if (!_socket || !_socket.connected) {
           Toast.show({ type: 'warning', text1: 'Sin conexión', text2: 'No estás conectado al servidor actualmente', position: 'top' });
           return false;
@@ -133,6 +134,7 @@ const usePrinterStore = create<PrinterState>()(
         const jobId = generateUUID();
         const state = get();
 
+        console.log(`[DEBUG- PRINTER STORE] printRemote - emitting print:request jobId=${jobId} target=${state.targetPrintServerId || 'all'}`);
         _socket.emit('print:request', {
           jobId,
           negocioId: _negocioId,
@@ -144,12 +146,14 @@ const usePrinterStore = create<PrinterState>()(
 
         return new Promise<boolean>((resolve) => {
           const timeout = setTimeout(() => {
+            console.log(`[DEBUG- PRINTER STORE] printRemote - TIMEOUT 25s reached for jobId=${jobId}`);
             _socket?.off(`print:ack:${jobId}`);
             Toast.show({ type: 'warning', text1: 'Sin respuesta', text2: 'El servidor de impresión tardó demasiado en responder', position: 'top' });
             resolve(false);
           }, 25_000);
 
           _socket.once(`print:ack:${jobId}`, ({ success, error }: any) => {
+            console.log(`[DEBUG- PRINTER STORE] printRemote - received print:ack:${jobId}`, { success, error });
             clearTimeout(timeout);
             if (!success) {
               Toast.show({ type: 'error', text1: 'Error remoto', text2: error || 'Error al imprimir remotamente', position: 'top' });

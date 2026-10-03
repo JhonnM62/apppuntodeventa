@@ -645,15 +645,19 @@ export const executePrint = async (
     const lastPrint = lastPrintTimes[macAddress] || 0;
     const timeSinceLastPrint = now - lastPrint;
 
+    console.log(`[DEBUG- PRINTER] executePrint - currentConnectedMac=${currentConnectedMac} macAddress=${macAddress}`);
+
     if (currentConnectedMac === macAddress && timeSinceLastPrint < 1800000) {
       try {
         await printLogoIfConfigured();
         const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
+        console.log(`[DEBUG- PRINTER] executePrint - BLEPrinter.printText directly`);
         await BLEPrinter.printText(payload);
+        console.log(`[DEBUG- PRINTER] executePrint - BLEPrinter.printText success`);
         lastPrintTimes[macAddress] = Date.now();
         return true;
       } catch (quickPrintErr) {
-        console.log('Fallo al imprimir directamente, se intentará reconectar...', quickPrintErr);
+        console.log('[DEBUG- PRINTER] executePrint - Fallo al imprimir directamente, se intentará reconectar...', quickPrintErr);
         currentConnectedMac = null;
       }
     }
@@ -662,21 +666,25 @@ export const executePrint = async (
       try {
         try {
           if (BLEPrinter.closeConn) {
+            console.log(`[DEBUG- PRINTER] executePrint - Closing existing conn...`);
             await BLEPrinter.closeConn();
             await new Promise(resolve => setTimeout(resolve, 300));
           }
+          console.log(`[DEBUG- PRINTER] executePrint - Init BLEPrinter...`);
           await BLEPrinter.init();
           await new Promise(resolve => setTimeout(resolve, 200));
         } catch (initErr) {
-          console.log('Fallo al inicializar Bluetooth (¿apagado?):', initErr);
+          console.log('[DEBUG- PRINTER] executePrint - Fallo al inicializar Bluetooth:', initErr);
           // Ignoramos el error de init por si la librería no lo soporta o ya estaba init
         }
+        console.log(`[DEBUG- PRINTER] executePrint - Connecting to ${macAddress}...`);
         await BLEPrinter.connectPrinter(macAddress);
+        console.log(`[DEBUG- PRINTER] executePrint - Connected successfully!`);
         await new Promise(resolve => setTimeout(resolve, 500)); // Espera adicional para que el socket esté listo
         currentConnectedMac = macAddress;
       } catch (connectionError) {
         currentConnectedMac = null;
-        console.log('La impresora está apagada o desconectada:', connectionError);
+        console.log('[DEBUG- PRINTER] executePrint - La impresora está apagada o desconectada:', connectionError);
         throw new Error(typeof connectionError === 'string' ? connectionError : 'La impresora está apagada o fuera de rango');
       }
 

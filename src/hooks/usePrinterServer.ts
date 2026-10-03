@@ -45,6 +45,7 @@ export const usePrinterServer = () => {
     registeredRef.current = true;
 
     const handleJob = async (payload: PrintJobPayload) => {
+      console.log(`[DEBUG- PRINTER SERVER] Received print:job jobId=${payload.jobId} type=${payload.type}`);
       try {
         await executePrint(
           payload.ticketData,
@@ -52,8 +53,10 @@ export const usePrinterServer = () => {
           currentPrinter.inner_mac_address,
           payload.type,
         );
+        console.log(`[DEBUG- PRINTER SERVER] print:job executed successfully for jobId=${payload.jobId}, emitting PRINT_DONE`);
         emit(SocketEvent.PRINT_DONE, { jobId: payload.jobId, success: true });
       } catch (err: any) {
+        console.error(`[DEBUG- PRINTER SERVER] print:job failed for jobId=${payload.jobId}`, err);
         emit(SocketEvent.PRINT_DONE, {
           jobId: payload.jobId,
           success: false,
