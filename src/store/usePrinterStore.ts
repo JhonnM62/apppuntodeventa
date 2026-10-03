@@ -175,7 +175,7 @@ const usePrinterStore = create<PrinterState>()(
           return true;
         }
 
-        if (state.isConnected && state.currentPrinter) {
+        if (state.currentPrinter) {
           // Impresión local directa
           try {
             await executePrint(ticketData, state.paperSize, state.currentPrinter.inner_mac_address, type);
@@ -253,7 +253,7 @@ const usePrinterStore = create<PrinterState>()(
         }
 
         // Verificar si hay impresora disponible (local o remota) para App Móvil
-        const hayImpresora = (state.isConnected && state.currentPrinter) || !!_socket;
+        const hayImpresora = !!state.currentPrinter || !!_socket;
         if (!hayImpresora) {
           Toast.show({ type: 'warning', text1: 'Sin impresora', text2: 'No hay impresora BT local ni servidor disponible', position: 'top' });
           return;
