@@ -490,23 +490,73 @@ export default function ReportesScreen({ navigation }: any) {
               <View style={S.dateRow}>
                 <View style={{ flex: 1, marginRight: 8 }}>
                   <RNText style={S.dateLabel}>Fecha de Inicio</RNText>
-                  <TouchableOpacity
-                    style={S.datePicker}
-                    onPress={() => setShowStartPicker(true)}
-                  >
-                    <Ionicons name="calendar-outline" size={18} color={primaryColor || "#16a34a"} />
-                    <RNText style={S.datePickerText}>{format(tempStartDate, 'dd/MM/yyyy')}</RNText>
-                  </TouchableOpacity>
+                  {Platform.OS === 'web' ? (
+                    React.createElement('input', {
+                      type: 'date',
+                      value: format(tempStartDate, 'yyyy-MM-dd'),
+                      onChange: (e: any) => {
+                        const val = e.target.value;
+                        if (val) {
+                          const [y, m, d] = val.split('-');
+                          setTempStartDate(new Date(parseInt(y), parseInt(m) - 1, parseInt(d)));
+                        }
+                      },
+                      style: {
+                        padding: '10px 12px',
+                        borderRadius: '12px',
+                        border: '1px solid #d1d5db',
+                        backgroundColor: '#f9fafb',
+                        fontSize: '14px',
+                        color: '#1f2937',
+                        outline: 'none',
+                        width: '100%',
+                        fontFamily: 'inherit',
+                      }
+                    })
+                  ) : (
+                    <TouchableOpacity
+                      style={S.datePicker}
+                      onPress={() => setShowStartPicker(true)}
+                    >
+                      <Ionicons name="calendar-outline" size={18} color={primaryColor || "#16a34a"} />
+                      <RNText style={S.datePickerText}>{format(tempStartDate, 'dd/MM/yyyy')}</RNText>
+                    </TouchableOpacity>
+                  )}
                 </View>
                 <View style={{ flex: 1, marginLeft: 8 }}>
                   <RNText style={S.dateLabel}>Fecha Fin</RNText>
-                  <TouchableOpacity
-                    style={S.datePicker}
-                    onPress={() => setShowEndPicker(true)}
-                  >
-                    <Ionicons name="calendar-outline" size={18} color={primaryColor || "#16a34a"} />
-                    <RNText style={S.datePickerText}>{format(tempEndDate, 'dd/MM/yyyy')}</RNText>
-                  </TouchableOpacity>
+                  {Platform.OS === 'web' ? (
+                    React.createElement('input', {
+                      type: 'date',
+                      value: format(tempEndDate, 'yyyy-MM-dd'),
+                      onChange: (e: any) => {
+                        const val = e.target.value;
+                        if (val) {
+                          const [y, m, d] = val.split('-');
+                          setTempEndDate(new Date(parseInt(y), parseInt(m) - 1, parseInt(d)));
+                        }
+                      },
+                      style: {
+                        padding: '10px 12px',
+                        borderRadius: '12px',
+                        border: '1px solid #d1d5db',
+                        backgroundColor: '#f9fafb',
+                        fontSize: '14px',
+                        color: '#1f2937',
+                        outline: 'none',
+                        width: '100%',
+                        fontFamily: 'inherit',
+                      }
+                    })
+                  ) : (
+                    <TouchableOpacity
+                      style={S.datePicker}
+                      onPress={() => setShowEndPicker(true)}
+                    >
+                      <Ionicons name="calendar-outline" size={18} color={primaryColor || "#16a34a"} />
+                      <RNText style={S.datePickerText}>{format(tempEndDate, 'dd/MM/yyyy')}</RNText>
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
 
@@ -554,7 +604,7 @@ export default function ReportesScreen({ navigation }: any) {
         </Modal>
 
         {/* ── Date Pickers ────────────────────────────────────────────────── */}
-        {showStartPicker && (
+        {Platform.OS !== 'web' && showStartPicker && (
           <DateTimePicker
             value={tempStartDate}
             mode="date"
@@ -565,7 +615,7 @@ export default function ReportesScreen({ navigation }: any) {
             }}
           />
         )}
-        {showEndPicker && (
+        {Platform.OS !== 'web' && showEndPicker && (
           <DateTimePicker
             value={tempEndDate}
             mode="date"
