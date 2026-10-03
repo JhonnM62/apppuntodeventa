@@ -21,6 +21,8 @@ import { format, startOfMonth, endOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { ReporteFilter } from '../../services/reportes';
 import Toast from 'react-native-toast-message';
+import { useSettingsStore } from '../../store/useSettingsStore';
+import { useCustomAlert } from '../../context/CustomAlertContext';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 const parseLocal = (iso: string | Date | null | undefined): Date => {
@@ -192,6 +194,9 @@ try { Sharing = require('expo-sharing'); } catch { /* no disponible */ }
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 export default function ReportesScreen({ navigation }: any) {
+  const { primaryColor } = useSettingsStore();
+  const { showAlert } = useCustomAlert();
+  
   const {
     reportesDineroGuardado,
     isLoading,
@@ -248,14 +253,14 @@ export default function ReportesScreen({ navigation }: any) {
       ? format(parseLocal(item.hasta), "d 'de' MMMM", { locale: es })
       : 'N/A';
 
-    Alert.alert(
-      'Eliminar Reporte',
-      `Reporte del ${fechaDesde} hasta el ${fechaHasta}.\n\n¿Está seguro que desea eliminarlo permanentemente?`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Eliminar', style: 'destructive', onPress: () => eliminarReporte(item.FilterID) },
-      ]
-    );
+    showAlert({
+      type: 'confirm',
+      title: 'Eliminar Reporte',
+      message: `Reporte del ${fechaDesde} hasta el ${fechaHasta}.\n\n¿Está seguro que desea eliminarlo permanentemente?`,
+      confirmText: 'Eliminar',
+      cancelText: 'Cancelar',
+      onConfirm: () => eliminarReporte(item.FilterID),
+    });
   };
 
   // ── PDF Consolidado (lista) ─────────────────────────────────────────────────
@@ -382,11 +387,11 @@ export default function ReportesScreen({ navigation }: any) {
   return (
     // ⚠️ REGLA 2: root container con style puro, SafeAreaView con style puro
     <View style={S.root}>
-      <StatusBar style="light" backgroundColor="#22C55E" translucent={false} />
+      <StatusBar style="light" backgroundColor={primaryColor || "#22C55E"} translucent={false} />
       <SafeAreaView style={S.safeArea} edges={['top']}>
 
         {/* ── Header ─────────────────────────────────────────────────────── */}
-        <View style={S.header}>
+        <View style={[S.header, { backgroundColor: primaryColor || '#16a34a' }]}>
           <View style={S.headerLeft}>
             <TouchableOpacity style={S.backBtn} onPress={() => navigation.goBack()}>
               <Ionicons name="arrow-back" size={24} color="white" />
@@ -424,7 +429,7 @@ export default function ReportesScreen({ navigation }: any) {
                   onPress={() => setActiveTab(tab)}
                   activeOpacity={0.8}
                 >
-                  <Text style={[S.tabText, isActive && S.tabTextActive]}>
+                  <Text style={[S.tabText, isActive && [S.tabTextActive, { color: primaryColor || '#16a34a' }]]}>
                     {tab === 'DINERO_GUARDADO' ? 'Dinero Guardado' : 'Ventas'}
                   </Text>
                 </TouchableOpacity>
@@ -436,7 +441,7 @@ export default function ReportesScreen({ navigation }: any) {
         {/* ── Contenido ──────────────────────────────────────────────────── */}
         {isLoading ? (
           <View style={S.loadingBox}>
-            <ActivityIndicator size="large" color="#16a34a" />
+            <ActivityIndicator size="large" color={primaryColor || "#16a34a"} />
           </View>
         ) : activeTab === 'DINERO_GUARDADO' ? (
           <FlatList
@@ -489,7 +494,7 @@ export default function ReportesScreen({ navigation }: any) {
                     style={S.datePicker}
                     onPress={() => setShowStartPicker(true)}
                   >
-                    <Ionicons name="calendar-outline" size={18} color="#16a34a" />
+                    <Ionicons name="calendar-outline" size={18} color={primaryColor || "#16a34a"} />
                     <RNText style={S.datePickerText}>{format(tempStartDate, 'dd/MM/yyyy')}</RNText>
                   </TouchableOpacity>
                 </View>
@@ -499,14 +504,14 @@ export default function ReportesScreen({ navigation }: any) {
                     style={S.datePicker}
                     onPress={() => setShowEndPicker(true)}
                   >
-                    <Ionicons name="calendar-outline" size={18} color="#16a34a" />
+                    <Ionicons name="calendar-outline" size={18} color={primaryColor || "#16a34a"} />
                     <RNText style={S.datePickerText}>{format(tempEndDate, 'dd/MM/yyyy')}</RNText>
                   </TouchableOpacity>
                 </View>
               </View>
 
               <TouchableOpacity
-                style={[S.btnGreen, creating && { opacity: 0.7 }]}
+                style={[S.btnGreen, { backgroundColor: primaryColor || '#16a34a' }, creating && { opacity: 0.7 }]}
                 disabled={creating}
                 onPress={async () => {
                   setCreating(true);
