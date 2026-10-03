@@ -41,7 +41,8 @@ export const usePrinterServer = () => {
 
     // Registrarse como servidor de impresión
     const deviceName = Device.modelName || Device.deviceName || 'Dispositivo iOS/Android';
-    emit(SocketEvent.PRINT_REGISTER, { negocioId, deviceName });
+    const deviceId = usePrinterStore.getState().deviceId;
+    emit(SocketEvent.PRINT_REGISTER, { negocioId, deviceName, deviceId });
     registeredRef.current = true;
 
     const handleJob = async (payload: PrintJobPayload) => {

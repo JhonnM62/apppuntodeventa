@@ -36,6 +36,7 @@ const generateUUID = () =>
   });
 
 interface PrinterState {
+  deviceId: string;
   currentPrinter: PrinterDevice | null;
   paperSize: PrinterPaperSize;
   isConnected: boolean;
@@ -74,6 +75,7 @@ interface PrinterState {
 const usePrinterStore = create<PrinterState>()(
   persist(
     (set, get) => ({
+      deviceId: generateUUID(),
       currentPrinter: null,
       paperSize: 58,
       isConnected: false,
