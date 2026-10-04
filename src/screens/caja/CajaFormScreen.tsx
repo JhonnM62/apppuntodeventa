@@ -560,21 +560,58 @@ export default function CajaFormScreen({ route, navigation }: any) {
           };
         });
 
-        reset({
-          nombre: caja.nombre || '',
-          fechaDeApertura: caja.fechaDeApertura ? formatDateToLocalYYYYMMDD(caja.fechaDeApertura) : '',
-          horaDeApertura: formatTime12h(caja.horaDeApertura || ''),
-          efectivoDeApertura: caja.efectivoDeApertura != null ? String(caja.efectivoDeApertura) : ('' as any),
-          fechaDeCierre: caja.fechaDeCierre ? formatDateToLocalYYYYMMDD(caja.fechaDeCierre) : '',
-          horaDeCierre: formatTime12h(caja.horaDeCierre || ''),
-          efectivoDeCierre: caja.efectivoDeCierre != null ? String(caja.efectivoDeCierre) : ('' as any),
-          plataGuardada: caja.plataGuardada != null ? String(caja.plataGuardada) : ('' as any),
-          cuadroCaja: caja.cuadroCaja || '',
-          valorFaltante: caja.valorFaltante != null ? String(caja.valorFaltante) : ('' as any),
-          valorExcedente: caja.valorExcedente != null ? String(caja.valorExcedente) : ('' as any),
-          observaciones: caja.observaciones || '',
-          insumos: mappedInsumos
-        }, { keepDirtyValues: isSocketRefresh });
+        if (isSocketRefresh) {
+          const currentValues = getValues();
+          const currentInsumos = currentValues.insumos || [];
+          const dirtyFields = control._formState.dirtyFields || {} as any;
+          const dirtyInsumos = dirtyFields.insumos || [];
+          
+          const mergedInsumos = mappedInsumos.map((newInsumo: any, idx: number) => {
+            const current = currentInsumos[idx] || {};
+            const dirty = dirtyInsumos[idx] || {};
+            return {
+              ...newInsumo,
+              cantApertura: dirty.cantApertura ? current.cantApertura : newInsumo.cantApertura,
+              cantDeCierre: dirty.cantDeCierre ? current.cantDeCierre : newInsumo.cantDeCierre,
+              observacion: dirty.observacion ? current.observacion : newInsumo.observacion,
+            };
+          });
+
+          reset({
+            ...currentValues,
+            nombre: caja.nombre || '',
+            fechaDeApertura: caja.fechaDeApertura ? formatDateToLocalYYYYMMDD(caja.fechaDeApertura) : '',
+            horaDeApertura: formatTime12h(caja.horaDeApertura || ''),
+            efectivoDeApertura: dirtyFields.efectivoDeApertura ? currentValues.efectivoDeApertura : (caja.efectivoDeApertura != null ? String(caja.efectivoDeApertura) : ('' as any)),
+            fechaDeCierre: caja.fechaDeCierre ? formatDateToLocalYYYYMMDD(caja.fechaDeCierre) : '',
+            horaDeCierre: formatTime12h(caja.horaDeCierre || ''),
+            efectivoDeCierre: dirtyFields.efectivoDeCierre ? currentValues.efectivoDeCierre : (caja.efectivoDeCierre != null ? String(caja.efectivoDeCierre) : ('' as any)),
+            plataGuardada: dirtyFields.plataGuardada ? currentValues.plataGuardada : (caja.plataGuardada != null ? String(caja.plataGuardada) : ('' as any)),
+            cuadroCaja: caja.cuadroCaja || '',
+            valorFaltante: caja.valorFaltante != null ? String(caja.valorFaltante) : ('' as any),
+            valorExcedente: caja.valorExcedente != null ? String(caja.valorExcedente) : ('' as any),
+            observaciones: dirtyFields.observaciones ? currentValues.observaciones : (caja.observaciones || ''),
+            insumos: mergedInsumos
+          }, { keepDirtyValues: true });
+          
+          setValue('insumos', mergedInsumos, { shouldDirty: false });
+        } else {
+          reset({
+            nombre: caja.nombre || '',
+            fechaDeApertura: caja.fechaDeApertura ? formatDateToLocalYYYYMMDD(caja.fechaDeApertura) : '',
+            horaDeApertura: formatTime12h(caja.horaDeApertura || ''),
+            efectivoDeApertura: caja.efectivoDeApertura != null ? String(caja.efectivoDeApertura) : ('' as any),
+            fechaDeCierre: caja.fechaDeCierre ? formatDateToLocalYYYYMMDD(caja.fechaDeCierre) : '',
+            horaDeCierre: formatTime12h(caja.horaDeCierre || ''),
+            efectivoDeCierre: caja.efectivoDeCierre != null ? String(caja.efectivoDeCierre) : ('' as any),
+            plataGuardada: caja.plataGuardada != null ? String(caja.plataGuardada) : ('' as any),
+            cuadroCaja: caja.cuadroCaja || '',
+            valorFaltante: caja.valorFaltante != null ? String(caja.valorFaltante) : ('' as any),
+            valorExcedente: caja.valorExcedente != null ? String(caja.valorExcedente) : ('' as any),
+            observaciones: caja.observaciones || '',
+            insumos: mappedInsumos
+          });
+        }
         
         // Recuperar el valor guardado de transferencias contadas si existe y no ha sido editado
         if (caja.transferenciasContadas != null && !isTransferenciasDirty) {
