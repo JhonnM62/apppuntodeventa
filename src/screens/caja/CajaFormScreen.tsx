@@ -291,6 +291,14 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [subQtyReason, setSubQtyReason] = useState('');
   const [isSubmittingAdjustment, setIsSubmittingAdjustment] = useState(false);
 
+  const [selectedInsumoTarget, setSelectedInsumoTarget] = useState<{
+    idCierre?: string;
+    nombreInsumo: string;
+    nombreInsumoReal?: string;
+    categoria?: string;
+    originalIndex?: number;
+  } | null>(null);
+
   const { control, handleSubmit, reset, watch, formState: { errors, dirtyFields }, setValue, getValues } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
@@ -305,6 +313,23 @@ export default function CajaFormScreen({ route, navigation }: any) {
     control,
     name: 'insumos',
   });
+
+  const getTargetIndex = useCallback((target: { idCierre?: string; nombreInsumo: string; originalIndex?: number } | null) => {
+    if (!target) return -1;
+    const currentInsumos = getValues('insumos') || [];
+    if (target.idCierre) {
+      const idx = currentInsumos.findIndex((i: any) => i.Idcierreyapertura === target.idCierre);
+      if (idx !== -1) return idx;
+    }
+    if (target.nombreInsumo) {
+      const idx = currentInsumos.findIndex((i: any) => i.nombreInsumo === target.nombreInsumo);
+      if (idx !== -1) return idx;
+    }
+    if (target.originalIndex !== undefined && target.originalIndex >= 0 && target.originalIndex < currentInsumos.length) {
+      return target.originalIndex;
+    }
+    return -1;
+  }, [getValues]);
 
   const allowNavigation = useRef(false);
   const [pendingNavigationAction, setPendingNavigationAction] = useState<any>(null);
@@ -563,24 +588,37 @@ export default function CajaFormScreen({ route, navigation }: any) {
         if (isSocketRefresh) {
           const currentValues = getValues();
           const currentInsumos = currentValues.insumos || [];
-          const dirtyFields = control._formState.dirtyFields || {} as any;
+          const dirtyFields = control._formState.dirtyFields || ({} as any);
           const dirtyInsumos = dirtyFields.insumos || [];
           
-          const mergedInsumos = mappedInsumos.map((newInsumo: any) => {
-            const currentIndex = currentInsumos.findIndex((i: any) => 
-              (i.Idcierreyapertura && i.Idcierreyapertura === newInsumo.Idcierreyapertura) ||
-              (!i.Idcierreyapertura && i.nombreInsumo === newInsumo.nombreInsumo)
+          // Mantener el orden estable de currentInsumos para que ningún índice numérico se desplace ni se crucen los dirtyFields
+          const mergedInsumos = currentInsumos.map((current: any, idx: number) => {
+            const incoming = mappedInsumos.find((newInsumo: any) => 
+              (newInsumo.Idcierreyapertura && newInsumo.Idcierreyapertura === current.Idcierreyapertura) ||
+              (!newInsumo.Idcierreyapertura && newInsumo.nombreInsumo === current.nombreInsumo)
             );
             
-            const current = currentIndex >= 0 ? currentInsumos[currentIndex] : {};
-            const dirty = currentIndex >= 0 ? (dirtyInsumos[currentIndex] || {}) : {};
+            if (!incoming) return current;
+            
+            const dirty = dirtyInsumos[idx] || {};
             
             return {
-              ...newInsumo,
-              cantApertura: dirty.cantApertura ? current.cantApertura : newInsumo.cantApertura,
-              cantDeCierre: dirty.cantDeCierre ? current.cantDeCierre : newInsumo.cantDeCierre,
-              observacion: dirty.observacion ? current.observacion : newInsumo.observacion,
+              ...incoming,
+              cantApertura: dirty.cantApertura ? current.cantApertura : incoming.cantApertura,
+              cantDeCierre: dirty.cantDeCierre ? current.cantDeCierre : incoming.cantDeCierre,
+              observacion: dirty.observacion ? current.observacion : incoming.observacion,
             };
+          });
+
+          // Agregar insumos nuevos que hayan llegado del backend y no estuvieran antes en currentInsumos
+          mappedInsumos.forEach((incoming: any) => {
+            const exists = currentInsumos.some((curr: any) => 
+              (curr.Idcierreyapertura && curr.Idcierreyapertura === incoming.Idcierreyapertura) ||
+              (!curr.Idcierreyapertura && curr.nombreInsumo === incoming.nombreInsumo)
+            );
+            if (!exists) {
+              mergedInsumos.push(incoming);
+            }
           });
 
           reset({
@@ -598,9 +636,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
             valorExcedente: caja.valorExcedente != null ? String(caja.valorExcedente) : ('' as any),
             observaciones: dirtyFields.observaciones ? currentValues.observaciones : (caja.observaciones || ''),
             insumos: mergedInsumos
-          }, { keepDirtyValues: true });
-          
-          setValue('insumos', mergedInsumos, { shouldDirty: false });
+          });
         } else {
           reset({
             nombre: caja.nombre || '',
@@ -1843,12 +1879,20 @@ setSaving(false);
                                   <TouchableOpacity 
                                     className="bg-green-500 rounded w-6 h-6 items-center justify-center mr-1"
                                     onPress={() => {
+                                      const targetData = {
+                                        idCierre: item.Idcierreyapertura,
+                                        nombreInsumo: item.nombreInsumo,
+                                        nombreInsumoReal: item.nombreInsumoReal || item.nombreInsumo,
+                                        categoria: item.categoria,
+                                        originalIndex: index,
+                                      };
+                                      setSelectedInsumoTarget(targetData);
                                       if (modoOperacion === 'GENERAL') {
                                         setDirectSumIndex(index);
                                         setDirectSumAmount('');
                                         setDirectSumModalVisible(true);
                                       } else {
-                                        const insumoId = getValues(`insumos.${index}.nombreInsumo`);
+                                        const insumoId = item.nombreInsumo;
                                         const insumoData = allInsumos.find((i: any) => i.IDalimentos === insumoId);
                                         const hasPaquetes = insumoData && Number(insumoData.paquetesEnBodega) > 0;
                                         const hasPaqueteConfig = insumoData && Number(insumoData.cantidadPorPaquete) > 0;
@@ -1871,6 +1915,14 @@ setSaving(false);
                                   <TouchableOpacity 
                                     className="bg-red-500 rounded w-6 h-6 items-center justify-center"
                                     onPress={() => {
+                                      const targetData = {
+                                        idCierre: item.Idcierreyapertura,
+                                        nombreInsumo: item.nombreInsumo,
+                                        nombreInsumoReal: item.nombreInsumoReal || item.nombreInsumo,
+                                        categoria: item.categoria,
+                                        originalIndex: index,
+                                      };
+                                      setSelectedInsumoTarget(targetData);
                                       if (modoOperacion === 'GENERAL') {
                                         setDirectSubIndex(index);
                                         setDirectSubAmount('');
@@ -2811,8 +2863,9 @@ setSaving(false);
           >
             <View className="flex-1 bg-black/50 justify-center items-center px-4 py-10">
               <View className="bg-white rounded-2xl p-5 w-full max-w-sm">
-              {addQtyIndex !== null && (() => {
-                const insumoData = allInsumos.find((i: any) => i.IDalimentos === fields[addQtyIndex]?.nombreInsumo);
+              {(selectedInsumoTarget || addQtyIndex !== null) && (() => {
+                const insumoId = selectedInsumoTarget?.nombreInsumo || (addQtyIndex !== null ? fields[addQtyIndex]?.nombreInsumo : '');
+                const insumoData = allInsumos.find((i: any) => i.IDalimentos === insumoId);
                 const showTabs = Number(insumoData?.cantidadPorPaquete) > 0;
 
                 return (
@@ -2834,9 +2887,14 @@ setSaving(false);
                       </View>
                     )}
 
-                    <Text className="text-lg font-bold text-gray-800 mb-2">
+                    <Text className="text-lg font-bold text-gray-800 mb-1">
                       {addQtyMode === 'paquete' ? 'Abrir Paquete de Insumo' : 'Añadir Cantidad Libre'}
                     </Text>
+                    {selectedInsumoTarget?.nombreInsumoReal && (
+                      <Text className="text-xs font-bold text-blue-600 mb-2">
+                        {selectedInsumoTarget.nombreInsumoReal}
+                      </Text>
+                    )}
                     <Text className="text-sm text-gray-500 mb-2">
                       {addQtyMode === 'paquete' 
                         ? 'Ingresa la cantidad real extraída del paquete para sumarla a la apertura.'
@@ -2927,24 +2985,27 @@ setSaving(false);
                         className="px-4 py-2 bg-green-600 rounded-lg items-center justify-center min-w-[80px]"
                         disabled={isSubmittingAdjustment}
                         onPress={async () => {
-                          if (addQtyIndex !== null && addQtyAmount && !isNaN(Number(addQtyAmount))) {
+                          const targetIdx = getTargetIndex(selectedInsumoTarget);
+                          const actualInsumoId = selectedInsumoTarget?.nombreInsumo || (targetIdx >= 0 ? fields[targetIdx]?.nombreInsumo : '');
+
+                          if (actualInsumoId && addQtyAmount && !isNaN(Number(addQtyAmount))) {
                             const amountToAdd = Number(addQtyAmount);
                             
                             if (addQtyMode === 'paquete') {
-                              const insumoId = fields[addQtyIndex].nombreInsumo;
                               setIsSubmittingAdjustment(true);
                               try {
                                 await api.post('/movimientos-insumos/abrir-paquete', {
-                                  insumoId: insumoId,
+                                  insumoId: actualInsumoId,
                                   cajaId: cajaId,
                                   cantidadReal: amountToAdd,
                                   cantidadDePaquetes: Number(addQtyPackagesToOpen) || 1,
-                                  syncGlobalStock: true // Para abrir paquete siempre afectamos stock global si el admin lo configuró
+                                  syncGlobalStock: true
                                 });
                                 
-                                const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
-                                setValue(`insumos.${addQtyIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
-                                setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
+                                if (targetIdx >= 0) {
+                                  const currentVal = Number(getValues(`insumos.${targetIdx}.cantApertura`)) || 0;
+                                  setValue(`insumos.${targetIdx}.cantApertura`, currentVal + amountToAdd, { shouldDirty: false });
+                                }
                                 showAlert({ title: 'Éxito', message: 'Paquetes abiertos y stock sumado a la caja.', type: 'success' });
                                 setAddQtyModalVisible(false);
                                 useInsumosCacheStore.getState().clearCache();
@@ -2959,20 +3020,20 @@ setSaving(false);
                               }
                             } else {
                               // Modo libre
-                              const insumoId = fields[addQtyIndex].nombreInsumo;
                               setIsSubmittingAdjustment(true);
                               try {
                                 await api.post('/movimientos-insumos/entrada-libre', {
-                                  insumoId: insumoId,
+                                  insumoId: actualInsumoId,
                                   cajaId: cajaId,
                                   cantidadAgregada: amountToAdd,
                                   cantidadTeorica: addQtyFreeAction === 'merma' ? (Number(addQtyTheoretical) || 0) : 0,
                                   syncGlobalStock: addQtyFreeAction !== 'trasladar'
                                 });
 
-                                const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
-                                setValue(`insumos.${addQtyIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
-                                setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
+                                if (targetIdx >= 0) {
+                                  const currentVal = Number(getValues(`insumos.${targetIdx}.cantApertura`)) || 0;
+                                  setValue(`insumos.${targetIdx}.cantApertura`, currentVal + amountToAdd, { shouldDirty: false });
+                                }
                                 showAlert({ title: 'Éxito', message: 'Entrada registrada y sumada al stock global.', type: 'success' });
                                 setAddQtyModalVisible(false);
                                 useInsumosCacheStore.getState().clearCache();
@@ -3050,23 +3111,26 @@ setSaving(false);
                   className="px-4 py-2 bg-red-600 rounded-lg items-center justify-center min-w-[80px]"
                   disabled={isSubmittingAdjustment}
                   onPress={async () => {
-                    if (addQtyIndex !== null && subQtyAmount && !isNaN(Number(subQtyAmount))) {
+                    const targetIdx = getTargetIndex(selectedInsumoTarget);
+                    const actualInsumoId = selectedInsumoTarget?.nombreInsumo || (targetIdx >= 0 ? fields[targetIdx]?.nombreInsumo : '');
+
+                    if (actualInsumoId && subQtyAmount && !isNaN(Number(subQtyAmount))) {
                       const amountToSub = Number(subQtyAmount);
-                      const insumoId = fields[addQtyIndex].nombreInsumo;
                       
                       setIsSubmittingAdjustment(true);
                       try {
                         await api.post('/movimientos-insumos/descuento-produccion', {
-                          insumoId: insumoId,
+                          insumoId: actualInsumoId,
                           cajaId: cajaId,
                           cantidadDescontada: amountToSub,
                           observacion: subQtyReason
                         });
                         
-                        const currentVal = Number(getValues(`insumos.${addQtyIndex}.cantApertura`)) || 0;
-                        const newVal = Math.max(0, currentVal - amountToSub);
-                        setValue(`insumos.${addQtyIndex}.cantApertura`, newVal, { shouldDirty: true });
-                        setModifiedInsumoIndexes(prev => new Set(prev).add(addQtyIndex));
+                        if (targetIdx >= 0) {
+                          const currentVal = Number(getValues(`insumos.${targetIdx}.cantApertura`)) || 0;
+                          const newVal = Math.max(0, currentVal - amountToSub);
+                          setValue(`insumos.${targetIdx}.cantApertura`, newVal, { shouldDirty: false });
+                        }
                         showAlert({ title: 'Éxito', message: 'Consumo interno registrado y descontado del stock global.', type: 'success' });
                         useInsumosCacheStore.getState().clearCache();
                         await fetchInitialData(false, true);
@@ -3131,11 +3195,12 @@ setSaving(false);
                 <TouchableOpacity 
                   className="flex-1 py-3 rounded-xl bg-green-500 items-center"
                   onPress={() => {
-                    if (directSumIndex !== null && directSumAmount && !isNaN(Number(directSumAmount))) {
+                    const targetIdx = getTargetIndex(selectedInsumoTarget);
+                    if (targetIdx >= 0 && directSumAmount && !isNaN(Number(directSumAmount))) {
                       const amountToAdd = Number(directSumAmount);
-                      const currentVal = Number(getValues(`insumos.${directSumIndex}.cantApertura`)) || 0;
-                      setValue(`insumos.${directSumIndex}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
-                      setModifiedInsumoIndexes(prev => new Set(prev).add(directSumIndex));
+                      const currentVal = Number(getValues(`insumos.${targetIdx}.cantApertura`)) || 0;
+                      setValue(`insumos.${targetIdx}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
+                      setModifiedInsumoIndexes(prev => new Set(prev).add(targetIdx));
                       setDirectSumModalVisible(false);
                     }
                   }}
@@ -3188,12 +3253,13 @@ setSaving(false);
                 <TouchableOpacity 
                   className="flex-1 py-3 rounded-xl bg-red-600 items-center"
                   onPress={() => {
-                    if (directSubIndex !== null && directSubAmount && !isNaN(Number(directSubAmount))) {
+                    const targetIdx = getTargetIndex(selectedInsumoTarget);
+                    if (targetIdx >= 0 && directSubAmount && !isNaN(Number(directSubAmount))) {
                       const amountToSub = Number(directSubAmount);
-                      const currentVal = Number(getValues(`insumos.${directSubIndex}.cantApertura`)) || 0;
+                      const currentVal = Number(getValues(`insumos.${targetIdx}.cantApertura`)) || 0;
                       const newVal = Math.max(0, currentVal - amountToSub);
-                      setValue(`insumos.${directSubIndex}.cantApertura`, newVal, { shouldDirty: true });
-                      setModifiedInsumoIndexes(prev => new Set(prev).add(directSubIndex));
+                      setValue(`insumos.${targetIdx}.cantApertura`, newVal, { shouldDirty: true });
+                      setModifiedInsumoIndexes(prev => new Set(prev).add(targetIdx));
                       setDirectSubModalVisible(false);
                     }
                   }}
