@@ -566,9 +566,15 @@ export default function CajaFormScreen({ route, navigation }: any) {
           const dirtyFields = control._formState.dirtyFields || {} as any;
           const dirtyInsumos = dirtyFields.insumos || [];
           
-          const mergedInsumos = mappedInsumos.map((newInsumo: any, idx: number) => {
-            const current = currentInsumos[idx] || {};
-            const dirty = dirtyInsumos[idx] || {};
+          const mergedInsumos = mappedInsumos.map((newInsumo: any) => {
+            const currentIndex = currentInsumos.findIndex((i: any) => 
+              (i.Idcierreyapertura && i.Idcierreyapertura === newInsumo.Idcierreyapertura) ||
+              (!i.Idcierreyapertura && i.nombreInsumo === newInsumo.nombreInsumo)
+            );
+            
+            const current = currentIndex >= 0 ? currentInsumos[currentIndex] : {};
+            const dirty = currentIndex >= 0 ? (dirtyInsumos[currentIndex] || {}) : {};
+            
             return {
               ...newInsumo,
               cantApertura: dirty.cantApertura ? current.cantApertura : newInsumo.cantApertura,
