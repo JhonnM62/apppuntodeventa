@@ -3093,7 +3093,7 @@ setSaving(false);
                 </TouchableOpacity>
                 <TouchableOpacity 
                   className="px-4 py-2 bg-red-600 rounded-lg items-center justify-center min-w-[80px]"
-                  onPress={() => {
+                  onPress={async () => {
                     const targetIdx = getTargetIndex(selectedInsumoTarget);
                     const actualInsumoId = selectedInsumoTarget?.nombreInsumo || (targetIdx >= 0 ? fields[targetIdx]?.nombreInsumo : '');
 
@@ -3101,18 +3101,32 @@ setSaving(false);
                       const amountToSub = Number(subQtyAmount);
                       if (amountToSub <= 0) return;
 
-                      if (targetIdx >= 0) {
-                        const currentVal = Number(getValues(`insumos.${targetIdx}.cantApertura`)) || 0;
-                        const newVal = Math.max(0, currentVal - amountToSub);
-                        setValue(`insumos.${targetIdx}.cantApertura`, newVal, { shouldDirty: true });
-                        setModifiedInsumoIndexes(prev => new Set(prev).add(targetIdx));
+                      try {
+                        await insumosService.descontarStock(
+                          actualInsumoId,
+                          amountToSub,
+                          subQtyReason || 'Descuento de Producción (Caja)'
+                        );
+
+                        if (targetIdx >= 0) {
+                          const currentVal = Number(getValues(`insumos.${targetIdx}.cantApertura`)) || 0;
+                          const newVal = Math.max(0, currentVal - amountToSub);
+                          setValue(`insumos.${targetIdx}.cantApertura`, newVal, { shouldDirty: true });
+                          setModifiedInsumoIndexes(prev => new Set(prev).add(targetIdx));
+                        }
+                        Toast.show({
+                          type: 'success',
+                          text1: 'Descuento aplicado',
+                          text2: `-${amountToSub} descontados del stock global y apertura. Pulsa 'Guardar' para registrar la apertura.`
+                        });
+                        setSubQtyModalVisible(false);
+                      } catch (error: any) {
+                        Toast.show({
+                          type: 'error',
+                          text1: 'Error',
+                          text2: error?.response?.data?.message || 'No se pudo descontar el stock global.'
+                        });
                       }
-                      Toast.show({
-                        type: 'info',
-                        text1: 'Cantidad descontada',
-                        text2: `-${amountToSub} restados de apertura. Pulsa 'Guardar' para confirmar los cambios.`
-                      });
-                      setSubQtyModalVisible(false);
                     }
                   }}
                 >
