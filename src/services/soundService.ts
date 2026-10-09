@@ -11,7 +11,8 @@ class SoundService {
       await Audio.setAudioModeAsync({
         playsInSilentModeIOS: true,
         staysActiveInBackground: false,
-        shouldDuckAndroid: true,
+        shouldDuckAndroid: false,
+        playThroughEarpieceAndroid: false,
       });
       
       const [beepObj, successObj] = await Promise.all([
@@ -30,7 +31,11 @@ class SoundService {
   async playBeep() {
     try {
       if (!this.beepSound) await this.loadSounds();
-      if (this.beepSound) await this.beepSound.replayAsync();
+      if (this.beepSound) {
+        await this.beepSound.stopAsync();
+        await this.beepSound.setVolumeAsync(1.0);
+        await this.beepSound.playAsync();
+      }
     } catch (error) {
       console.warn('Error playing beep', error);
     }
@@ -39,7 +44,11 @@ class SoundService {
   async playSuccess() {
     try {
       if (!this.successSound) await this.loadSounds();
-      if (this.successSound) await this.successSound.replayAsync();
+      if (this.successSound) {
+        await this.successSound.stopAsync();
+        await this.successSound.setVolumeAsync(1.0);
+        await this.successSound.playAsync();
+      }
     } catch (error) {
       console.warn('Error playing success sound', error);
     }
