@@ -605,8 +605,8 @@ export default function CajaFormScreen({ route, navigation }: any) {
             
             return {
               ...incoming,
-              cantApertura: dirty.cantApertura ? current.cantApertura : incoming.cantApertura,
-              cantDeCierre: dirty.cantDeCierre ? current.cantDeCierre : incoming.cantDeCierre,
+              cantApertura: (dirty.cantApertura || modifiedInsumoIndexes.has(idx)) ? current.cantApertura : incoming.cantApertura,
+              cantDeCierre: (dirty.cantDeCierre || modifiedInsumoIndexes.has(idx)) ? current.cantDeCierre : incoming.cantDeCierre,
               observacion: dirty.observacion ? current.observacion : incoming.observacion,
             };
           });
@@ -711,7 +711,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
         }));
       }
 
-      const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0;
+      const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0 || modifiedInsumoIndexes.size > 0;
       const dirtyFields = control._formState.dirtyFields || {} as any;
       
       const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre, updaterName: user?.nombre || user?.Nombre || user?.usuario || 'Un usuario' } as any;
@@ -739,6 +739,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
       await updateCaja(cajaId, updateData);
       await fetchInitialData();
+      setModifiedInsumoIndexes(new Set());
       
       setIsAutoCuadreModalVisible(true);
     } catch (error: any) {
@@ -775,8 +776,8 @@ export default function CajaFormScreen({ route, navigation }: any) {
         }
 
         cleanData.insumos = cleanData.insumos.map((i: any, index: number) => {
-          const isAperturaDirty = !!dirtyFields.insumos?.[index]?.cantApertura;
-          const isCierreDirty = !!dirtyFields.insumos?.[index]?.cantDeCierre;
+          const isAperturaDirty = !!dirtyFields.insumos?.[index]?.cantApertura || modifiedInsumoIndexes.has(index);
+          const isCierreDirty = !!dirtyFields.insumos?.[index]?.cantDeCierre || modifiedInsumoIndexes.has(index);
 
           const processed: any = {
             ...i,
@@ -817,7 +818,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           // ERROR HANDLING PATTERN: "Double-Step Save" (Systematic Debugging)
           // Dado que el endpoint de cerrarCaja tiene un ValidationPipe extremadamente estricto en producción que rechaza la trazabilidad compleja,
           // PRIMERO: Guardamos toda la trazabilidad y datos extras usando el endpoint genérico (updateCaja) que es flexible.
-          const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0;
+          const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0 || modifiedInsumoIndexes.size > 0;
           const dirtyFields = control._formState.dirtyFields || {} as any;
           
           const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre, updaterName: user?.nombre || user?.Nombre || user?.usuario || 'Un usuario' };
@@ -855,7 +856,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           Toast.show({ type: 'success', text1: 'Caja Cerrada', text2: 'La caja se ha cerrado definitivamente' });
         } else {
           // Guardado Parcial: El endpoint genérico updateCaja sí espera Idcierreyapertura, cantApertura, etc.
-          const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0;
+          const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0 || modifiedInsumoIndexes.size > 0;
           const dirtyFields = control._formState.dirtyFields || {} as any;
           
           const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre, updaterName: user?.nombre || user?.Nombre || user?.usuario || 'Un usuario' };
@@ -3016,7 +3017,7 @@ setSaving(false);
                       </TouchableOpacity>
                       <TouchableOpacity 
                         className="px-4 py-2 bg-green-600 rounded-lg items-center justify-center min-w-[80px]"
-                        onPress={() => {
+                        onPress={async () => {
                           const targetIdx = getTargetIndex(selectedInsumoTarget);
                           const actualInsumoId = selectedInsumoTarget?.nombreInsumo || (targetIdx >= 0 ? fields[targetIdx]?.nombreInsumo : '');
 
@@ -3024,18 +3025,51 @@ setSaving(false);
                             const rawAmount = Number(addQtyAmount);
                             if (rawAmount <= 0) return;
 
-                            const amountToAdd = rawAmount;
-                            if (targetIdx >= 0) {
-                              const currentVal = Number(getValues(`insumos.${targetIdx}.cantApertura`)) || 0;
-                              setValue(`insumos.${targetIdx}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
-                              setModifiedInsumoIndexes(prev => new Set(prev).add(targetIdx));
+                            setIsSubmittingAdjustment(true);
+                            try {
+                              if (addQtyMode === 'paquete') {
+                                const packagesToOpen = Number(addQtyPackagesToOpen) || 0;
+                                if (packagesToOpen > 0) {
+                                  const insumoData = allInsumos.find((i: any) => i.IDalimentos === actualInsumoId);
+                                  const currentPaquetes = Number(insumoData?.paquetesEnBodega) || 0;
+                                  const newPaquetes = Math.max(0, currentPaquetes - packagesToOpen);
+                                  await insumosService.update(actualInsumoId, { paquetesEnBodega: newPaquetes });
+                                }
+                              } else {
+                                if (addQtyFreeAction === 'nuevo') {
+                                  await insumosService.agregarStock(actualInsumoId, rawAmount, 'Ingreso Nuevo Libre (Añadido en Caja)');
+                                } else if (addQtyFreeAction === 'merma') {
+                                  const theoretical = Number(addQtyTheoretical) || 0;
+                                  const difference = rawAmount - theoretical;
+                                  if (difference < 0) {
+                                    await insumosService.descontarStock(actualInsumoId, Math.abs(difference), 'Merma reportada en Caja (Libre)');
+                                  } else if (difference > 0) {
+                                    await insumosService.agregarStock(actualInsumoId, difference, 'Excedente reportado en Caja (Libre)');
+                                  }
+                                }
+                              }
+
+                              if (targetIdx >= 0) {
+                                const currentVal = Number(getValues(`insumos.${targetIdx}.cantApertura`)) || 0;
+                                setValue(`insumos.${targetIdx}.cantApertura`, currentVal + rawAmount, { shouldDirty: true });
+                                setModifiedInsumoIndexes(prev => new Set(prev).add(targetIdx));
+                              }
+
+                              Toast.show({
+                                type: 'success',
+                                text1: 'Cantidad añadida',
+                                text2: `+${rawAmount} sumados a apertura. Pulsa 'Guardar' para confirmar los cambios.`
+                              });
+                              setAddQtyModalVisible(false);
+                            } catch (e: any) {
+                              Toast.show({
+                                type: 'error',
+                                text1: 'Error',
+                                text2: e?.response?.data?.message || 'No se pudo aplicar el ajuste en bodega.'
+                              });
+                            } finally {
+                              setIsSubmittingAdjustment(false);
                             }
-                            Toast.show({
-                              type: 'info',
-                              text1: 'Cantidad añadida',
-                              text2: `+${amountToAdd} sumados a apertura. Pulsa 'Guardar' para confirmar los cambios.`
-                            });
-                            setAddQtyModalVisible(false);
                           }
                         }}
                       >
