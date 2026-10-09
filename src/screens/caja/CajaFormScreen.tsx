@@ -784,7 +784,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
             cantDeCierre: i.cantDeCierre === '' || isNaN(Number(i.cantDeCierre)) ? null : Number(i.cantDeCierre)
           };
           
-          if (!isAdmin || (!isNew && !isAperturaDirty)) {
+          if (!isNew && !isAperturaDirty) {
             delete processed.cantApertura;
           }
 

@@ -16,7 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS, SPACING, FONT_SIZE } from '../../lib/theme';
-import { eliminarConteo, editarConteo } from '../../services/caja';
+import { eliminarConteo, editarConteo, refreshConteosCaja } from '../../services/caja';
 import { insumosService } from '../../services/insumos';
 import { useSocketEvent } from '../../hooks/useSocketEvent';
 import { SocketEvent } from '../../types/socket.types';
@@ -383,8 +383,14 @@ export default function AuditoriaConteoScreen({ route, navigation }: AuditoriaCo
 
   const handleRefreshCaja = async (cajaId: string) => {
     setRefreshingCajaId(cajaId);
-    await loadAuditoria();
-    setRefreshingCajaId(null);
+    try {
+      await refreshConteosCaja(cajaId);
+      await loadAuditoria();
+    } catch (error: any) {
+      showAlert({ type: 'error', title: 'Error', message: error?.response?.data?.message || 'No se pudo refrescar los conteos' });
+    } finally {
+      setRefreshingCajaId(null);
+    }
   };
 
   const renderCaja = ({ item }: { item: CajaAuditItem }) => {

@@ -187,6 +187,11 @@ export const editarConteo = async (cajaId: string, insumoId: string, conteoIndex
   return data;
 };
 
+export const refreshConteosCaja = async (cajaId: string) => {
+  const response = await api.patch(`/caja/${cajaId}/refresh-conteos`);
+  return response.data;
+};
+
 export const getAutoCuadrePreview = async (cajaId: string) => {
   const { data } = await api.post(`/caja/${cajaId}/auto-cuadre/preview`, {}, { timeout: 60000 });
   return data;
