@@ -1015,7 +1015,7 @@ const InventarioScreen = ({ navigation }: any) => {
   const handleSelectAll = () => {
     if (selectedInventario?.tipo?.toLowerCase() !== 'entradas' && selectedInventario?.tipo?.toLowerCase() !== 'entrada') return;
     
-    const pendingItems = ordenes.filter(o => !(o.seCompro === 'Si' || o.seCompro === 'si'));
+    const pendingItems = ordenes.filter(o => !(o.agregarAInsumos === 'Si' || o.agregarAInsumos === 'si'));
 
     if (selectedOrdenes.size === pendingItems.length) {
       setSelectedOrdenes(new Set());
