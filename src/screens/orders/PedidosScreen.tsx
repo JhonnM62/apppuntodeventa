@@ -23,6 +23,7 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import usePrinterStore from '../../store/usePrinterStore';
 import PrintPreviewModal from '../../components/ui/PrintPreviewModal';
+import { soundService } from '../../services/soundService';
 import { TicketData } from '../../utils/printer';
 import { FloatingScrollButtons } from '../../components/ui/FloatingScrollButtons';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
@@ -2477,6 +2478,7 @@ showAlert({
   const handleChangeEstado = async (newEstado: string) => {
     if (!selectedVenta) return;
     try {
+      soundService.playSuccess();
       // Optimizacion: Actualizar UI y emitir en background
       setTimeout(() => {
         updateVentaEstado(selectedVenta.IDventas, newEstado).catch(e => console.error(e));

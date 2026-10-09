@@ -28,6 +28,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
+import { soundService } from '../../services/soundService';
 import QuantityNumpad from '../../components/ui/QuantityNumpad';
 import { useSettingsStore } from '../../store/useSettingsStore';
 
@@ -286,7 +287,11 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const reservasGlobales = useProductStore((state) => state.reservasGlobales);
   const editingSaleId = useCartStore((state) => state.editingSaleId);
   const editingVenta = useCartStore((state) => state.editingVenta);
-  const addToCart = useCartStore((state) => state.addToCart);
+  const storeAddToCart = useCartStore((state) => state.addToCart);
+  const addToCart = React.useCallback((item: any) => {
+    storeAddToCart(item);
+    soundService.playBeep();
+  }, [storeAddToCart]);
   const decrementQuantity = useCartStore((state) => state.decrementQuantity);
   const removeFromCart = useCartStore((state) => state.removeFromCart);
   const setQuantity = useCartStore((state) => state.setQuantity);
@@ -1120,6 +1125,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       // Proceso de backend asíncrono (Promesa huérfana para no bloquear)
       createSale(payload)
         .then((response: any) => {
+          soundService.playSuccess();
           const ventaCreada = response?.data || response;
           const pedidoGenerado = ventaCreada?.pedido || payload.venta.pedido;
           
@@ -1396,6 +1402,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       import('../../services/sales').then(({ createSale }) => {
         createSale(payload)
           .then((response: any) => {
+            soundService.playSuccess();
             const ventaCreada = response?.data || response;
             const pedidoGenerado = ventaCreada?.pedido || `pedido-${Date.now()}`;
             
