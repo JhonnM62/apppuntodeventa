@@ -1389,9 +1389,11 @@ const InventarioScreen = ({ navigation }: any) => {
   };
 
   const ordenesNoComprados = ordenes.filter(o => o.seCompro === 'No' || o.seCompro === 'no');
-  const ordenesComprados = ordenes.filter(o => o.seCompro === 'Si' || o.seCompro === 'si');
+  const ordenesComprados = ordenes.filter(o => (o.seCompro === 'Si' || o.seCompro === 'si') && o.agregarAInsumos !== 'Si' && o.agregarAInsumos !== 'si');
+  const ordenesIngresados = ordenes.filter(o => (o.seCompro === 'Si' || o.seCompro === 'si') && (o.agregarAInsumos === 'Si' || o.agregarAInsumos === 'si'));
   const totalNoComprados = ordenesNoComprados.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0);
   const totalComprados = ordenesComprados.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0);
+  const totalIngresados = ordenesIngresados.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0);
 
   const renderInventarioItem = ({ item }: { item: InventarioItem }) => {
     const isEntrada = item.tipo?.toUpperCase().includes('ENTRADA');
@@ -1465,6 +1467,7 @@ const InventarioScreen = ({ navigation }: any) => {
 
   const renderOrdenItem = ({ item }: { item: OrderInventarioItem }) => {
     const isComprado = item.seCompro === 'Si' || item.seCompro === 'si';
+    const isIngresado = item.agregarAInsumos === 'Si' || item.agregarAInsumos === 'si';
     const isSelected = selectedOrdenes.has(item.IDorderinventario);
     
     const invContext = selectedInventario || item.inventario;
@@ -1609,14 +1612,14 @@ const InventarioScreen = ({ navigation }: any) => {
             padding: 12,
             paddingRight: showActionButtons ? 70 : 12,
             borderRadius: 12,
-            backgroundColor: isEntrada ? (isComprado ? '#f0fdf4' : isSelected ? '#eff6ff' : '#fff') : '#fff',
+            backgroundColor: isEntrada ? (isIngresado ? '#f0fdf4' : isSelected ? '#eff6ff' : isComprado ? '#fefce8' : '#fff') : '#fff',
             borderWidth: isEntrada && isSelected ? 2 : 1,
-            borderColor: isEntrada ? (isSelected ? '#3b82f6' : isComprado ? '#bbf7d0' : '#e5e7eb') : '#e5e7eb',
+            borderColor: isEntrada ? (isSelected ? '#3b82f6' : isIngresado ? '#bbf7d0' : isComprado ? '#fde047' : '#e5e7eb') : '#e5e7eb',
           }}
         >
         {isEntrada && selectionMode && canEditEntradas && (
           <View style={{ marginRight: 8, justifyContent: 'center', alignItems: 'center' }}>
-            {isComprado ? (
+            {isIngresado ? (
               <View style={{
                 width: 24,
                 height: 24,
@@ -1718,7 +1721,7 @@ const InventarioScreen = ({ navigation }: any) => {
             <RNText style={{ fontSize: 11, color: '#6b7280', fontWeight: 'bold', marginTop: 2 }}>
                 Stock previo: {item.cantInsumos !== undefined
                   ? (isEntrada
-                    ? (item.seCompro?.toLowerCase() === 'si' ? item.cantInsumos - (Number(item.cantidad) || 0) : item.cantInsumos)
+                    ? (isIngresado ? item.cantInsumos - (Number(item.cantidad) || 0) : item.cantInsumos)
                     : item.cantInsumos + (Number(item.cantidad) || 0))
                   : getInsumoStock(item.nombreDelAlimento)}
             </RNText>
@@ -1727,9 +1730,9 @@ const InventarioScreen = ({ navigation }: any) => {
                   {isEntrada ? 'Pide' : 'Retira'}: {item.cantidad}
                 </RNText>
                 <RNText style={{ fontSize: 11, color: '#6b7280', marginLeft: 6 }}>
-                  • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {(!isEntrada || item.seCompro?.toLowerCase() === 'si') ? 'Final' : 'Proy'}: {
+                  • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {(!isEntrada || isIngresado) ? 'Final' : 'Proy'}: {
                     item.cantInsumos !== undefined 
-                      ? (!isEntrada || item.seCompro?.toLowerCase() === 'si' 
+                      ? (!isEntrada || isIngresado 
                           ? item.cantInsumos 
                           : item.cantInsumos + (Number(item.cantidad) || 0)) 
                       : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : -(Number(item.cantidad) || 0)))
@@ -2351,16 +2354,23 @@ const InventarioScreen = ({ navigation }: any) => {
                     <View style={{ flexDirection: 'row', marginBottom: 16 }}>
                       <View style={{ flex: 1, marginRight: 8 }}>
                         <View className="bg-white rounded-xl p-3 items-center">
-                          <RNText className="text-xs text-gray-500">Sin comprar</RNText>
+                          <RNText className="text-xs text-gray-500">Pendientes</RNText>
                           <RNText className="text-lg font-bold text-red-600 mt-1">{ordenesNoComprados.length}</RNText>
                           <RNText className="text-xs text-gray-400">${totalNoComprados.toLocaleString('es-CO')}</RNText>
                         </View>
                       </View>
-                      <View style={{ flex: 1 }}>
+                      <View style={{ flex: 1, marginRight: 8 }}>
                         <View className="bg-white rounded-xl p-3 items-center">
                           <RNText className="text-xs text-gray-500">Comprados</RNText>
-                          <RNText className="text-lg font-bold text-green-600 mt-1">{ordenesComprados.length}</RNText>
+                          <RNText className="text-lg font-bold text-yellow-600 mt-1">{ordenesComprados.length}</RNText>
                           <RNText className="text-xs text-gray-400">${totalComprados.toLocaleString('es-CO')}</RNText>
+                        </View>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <View className="bg-white rounded-xl p-3 items-center">
+                          <RNText className="text-xs text-gray-500">Ingresados</RNText>
+                          <RNText className="text-lg font-bold text-green-600 mt-1">{ordenesIngresados.length}</RNText>
+                          <RNText className="text-xs text-gray-400">${totalIngresados.toLocaleString('es-CO')}</RNText>
                         </View>
                       </View>
                     </View>
@@ -2541,8 +2551,15 @@ const InventarioScreen = ({ navigation }: any) => {
 
                 {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && ordenesComprados.length > 0 && (
                   <View>
-                    <RNText style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', marginBottom: 8 }}>Completados</RNText>
+                    <RNText style={{ fontSize: 11, color: '#ca8a04', textTransform: 'uppercase', marginBottom: 8 }}>Comprados (Pendiente Ingreso)</RNText>
                     {renderGroupedList(ordenesComprados)}
+                  </View>
+                )}
+
+                {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && ordenesIngresados.length > 0 && (
+                  <View>
+                    <RNText style={{ fontSize: 11, color: '#16a34a', textTransform: 'uppercase', marginBottom: 8, marginTop: 16 }}>Ingresados al Stock</RNText>
+                    {renderGroupedList(ordenesIngresados)}
                   </View>
                 )}
 
@@ -2592,9 +2609,13 @@ const InventarioScreen = ({ navigation }: any) => {
                     <RNText style={{ fontSize: 12, color: '#991b1b', fontWeight: '600' }}>Pendientes</RNText>
                     <RNText style={{ fontSize: 18, fontWeight: '800', color: '#dc2626' }}>{ordenesNoComprados.length}</RNText>
                   </View>
+                  <View style={{ flex: 1, backgroundColor: '#fefce8', borderRadius: 12, padding: 12, alignItems: 'center' }}>
+                    <RNText style={{ fontSize: 12, color: '#a16207', fontWeight: '600' }}>Comprados</RNText>
+                    <RNText style={{ fontSize: 18, fontWeight: '800', color: '#ca8a04' }}>{ordenesComprados.length}</RNText>
+                  </View>
                   <View style={{ flex: 1, backgroundColor: '#f0fdf4', borderRadius: 12, padding: 12, marginLeft: 8, alignItems: 'center' }}>
-                    <RNText style={{ fontSize: 12, color: '#166534', fontWeight: '600' }}>Comprados</RNText>
-                    <RNText style={{ fontSize: 18, fontWeight: '800', color: '#16a34a' }}>{ordenesComprados.length}</RNText>
+                    <RNText style={{ fontSize: 12, color: '#166534', fontWeight: '600' }}>Ingresados</RNText>
+                    <RNText style={{ fontSize: 18, fontWeight: '800', color: '#16a34a' }}>{ordenesIngresados.length}</RNText>
                   </View>
                 </View>
               )}
@@ -2613,12 +2634,15 @@ const InventarioScreen = ({ navigation }: any) => {
                       
                       {catItems.map((item, idx) => {
                         const isComprado = item.seCompro === 'Si' || item.seCompro === 'si';
+                        const isIngresado = item.agregarAInsumos === 'Si' || item.agregarAInsumos === 'si';
                         const isEntrada = selectedInventario.tipo?.toLowerCase() === 'entradas' || selectedInventario.tipo?.toLowerCase() === 'entrada';
                         return (
                           <View key={item.IDorderinventario} style={{ flexDirection: 'row', paddingVertical: 8, borderBottomWidth: idx === catItems.length - 1 ? 0 : 1, borderBottomColor: '#f3f4f6' }}>
-                            <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: isComprado ? '#dcfce7' : '#f3f4f6', alignItems: 'center', justifyContent: 'center', marginRight: 12, marginTop: 2 }}>
-                              {isComprado ? (
-                                <Ionicons name="checkmark" size={14} color="#16a34a" />
+                            <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: isIngresado ? '#dcfce7' : isComprado ? '#fefce8' : '#f3f4f6', alignItems: 'center', justifyContent: 'center', marginRight: 12, marginTop: 2 }}>
+                              {isIngresado ? (
+                                <Ionicons name="checkmark-done" size={14} color="#16a34a" />
+                              ) : isComprado ? (
+                                <Ionicons name="checkmark" size={14} color="#ca8a04" />
                               ) : (
                                 <RNText style={{ fontSize: 12, color: '#9ca3af', fontWeight: '600' }}>{idx + 1}</RNText>
                               )}
