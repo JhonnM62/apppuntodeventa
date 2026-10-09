@@ -2900,7 +2900,7 @@ setSaving(false);
               {(selectedInsumoTarget || addQtyIndex !== null) && (() => {
                 const insumoId = selectedInsumoTarget?.nombreInsumo || (addQtyIndex !== null ? fields[addQtyIndex]?.nombreInsumo : '');
                 const insumoData = allInsumos.find((i: any) => i.IDalimentos === insumoId);
-                const showTabs = Number(insumoData?.cantidadPorPaquete) > 0;
+                const showTabs = Number(insumoData?.cantidadPorPaquete) > 0 || Number(insumoData?.paquetesEnBodega) > 0;
 
                 return (
                   <>
