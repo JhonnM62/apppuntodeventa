@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Switch, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSettingsStore } from '../../store/useSettingsStore';
-import { ArrowLeft, Check } from 'lucide-react-native';
+import { ArrowLeft, Check, Volume2 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 
 const PREDEFINED_COLORS = [
@@ -18,7 +18,10 @@ const PREDEFINED_COLORS = [
 
 export default function ConfiguracionAvanzadaScreen() {
   const navigation = useNavigation();
-  const { primaryColor, fontScale, setPrimaryColor, setFontScale, resetSettings } = useSettingsStore();
+  const { 
+    primaryColor, fontScale, enableSound, forceEarpiece,
+    setPrimaryColor, setFontScale, setEnableSound, setForceEarpiece, resetSettings 
+  } = useSettingsStore();
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }} edges={['top', 'bottom']}>
@@ -35,7 +38,43 @@ export default function ConfiguracionAvanzadaScreen() {
         style={{ flex: 1 }} 
         contentContainerStyle={{ flexGrow: 1, padding: 20, paddingBottom: 100 }}
       >
-        
+        {/* Sección: Audio y Sonido */}
+        <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 16, marginBottom: 24 }}>
+          <View className="flex-row items-center mb-1">
+            <Volume2 size={20} color="#1f2937" style={{ marginRight: 8 }} />
+            <Text className="text-lg font-bold text-gray-800">Audio y Sonidos</Text>
+          </View>
+          
+          <View className="flex-row items-center justify-between mt-4 mb-4">
+            <View className="flex-1 pr-4">
+              <Text className="text-base font-bold text-gray-800">Habilitar Sonidos</Text>
+              <Text className="text-sm text-gray-500 mt-1">Reproducir pitidos al realizar acciones como cobrar o agregar productos.</Text>
+            </View>
+            <Switch
+              value={enableSound}
+              onValueChange={setEnableSound}
+              trackColor={{ false: '#d1d5db', true: '#86efac' }}
+              thumbColor={enableSound ? '#16a34a' : '#9ca3af'}
+            />
+          </View>
+
+          {Platform.OS === 'android' && (
+            <View className="flex-row items-center justify-between">
+              <View className="flex-1 pr-4">
+                <Text className="text-base font-bold text-gray-800">Forzar Sonido Interno</Text>
+                <Text className="text-sm text-gray-500 mt-1">Intenta forzar que el sonido salga por el auricular de llamadas cuando hay audífonos o parlantes conectados al Jack o Bluetooth.</Text>
+              </View>
+              <Switch
+                value={forceEarpiece}
+                onValueChange={setForceEarpiece}
+                trackColor={{ false: '#d1d5db', true: '#86efac' }}
+                thumbColor={forceEarpiece ? '#16a34a' : '#9ca3af'}
+                disabled={!enableSound}
+              />
+            </View>
+          )}
+        </View>
+
         {/* Sección: Color Principal */}
         <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 16, marginBottom: 24 }}>
           <Text className="text-lg font-bold mb-1 text-gray-800">Color Principal</Text>
