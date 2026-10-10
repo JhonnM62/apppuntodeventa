@@ -14,6 +14,7 @@ import divipolaData from '../../data/divipola';
 import { APP_CONFIG } from '../../constants/app.config';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'react-native';
+import { useSettingsStore } from '../../store/useSettingsStore';
 
 let Location: any;
 try {
@@ -72,6 +73,7 @@ const PercentageChips = ({ values, onChange }: { values: number[], onChange: (v:
 
 export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const { enableSound, forceEarpiece, setEnableSound, setForceEarpiece } = useSettingsStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [horaCorteDia, setHoraCorteDia] = useState('00:00');
@@ -464,7 +466,42 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         contentContainerStyle={{ padding: 16, paddingBottom: 160 }}
         showsVerticalScrollIndicator={false}
       >
-        
+        {/* AUDIO Y SONIDO */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>
+            <Ionicons name="volume-high-outline" size={20} /> Audio y Sonido
+          </Text>
+          
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <View style={{ flex: 1, paddingRight: 16 }}>
+              <Text style={styles.label}>Habilitar Sonidos</Text>
+              <Text style={{ fontSize: 12, color: '#6b7280' }}>Reproducir pitidos al realizar acciones como cobrar o agregar productos.</Text>
+            </View>
+            <Switch
+              value={enableSound}
+              onValueChange={setEnableSound}
+              trackColor={{ false: '#d1d5db', true: '#86efac' }}
+              thumbColor={enableSound ? '#16a34a' : '#9ca3af'}
+            />
+          </View>
+
+          {Platform.OS === 'android' && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View style={{ flex: 1, paddingRight: 16 }}>
+                <Text style={styles.label}>Exclusivo por Auricular (Teléfono)</Text>
+                <Text style={{ fontSize: 12, color: '#6b7280' }}>Fuerza que el sonido salga por el pequeño altavoz de llamadas en vez del parlante Bluetooth o general.</Text>
+              </View>
+              <Switch
+                value={forceEarpiece}
+                onValueChange={setForceEarpiece}
+                trackColor={{ false: '#d1d5db', true: '#86efac' }}
+                thumbColor={forceEarpiece ? '#16a34a' : '#9ca3af'}
+                disabled={!enableSound}
+              />
+            </View>
+          )}
+        </View>
+
         {/* NEGOCIO */}
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>

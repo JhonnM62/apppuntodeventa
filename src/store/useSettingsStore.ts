@@ -7,10 +7,14 @@ interface SettingsState {
   fontScale: number;
   gridColumnsWeb: number;
   gridColumnsMobile: number;
+  enableSound: boolean;
+  forceEarpiece: boolean;
   setPrimaryColor: (color: string) => void;
   setFontScale: (scale: number) => void;
   setGridColumnsWeb: (cols: number) => void;
   setGridColumnsMobile: (cols: number) => void;
+  setEnableSound: (enable: boolean) => void;
+  setForceEarpiece: (force: boolean) => void;
   resetSettings: () => void;
 }
 
@@ -26,15 +30,21 @@ export const useSettingsStore = create<SettingsState>()(
       fontScale: DEFAULT_FONT_SCALE,
       gridColumnsWeb: DEFAULT_GRID_WEB,
       gridColumnsMobile: DEFAULT_GRID_MOBILE,
+      enableSound: true,
+      forceEarpiece: false,
       setPrimaryColor: (color) => set({ primaryColor: color }),
       setFontScale: (scale) => set({ fontScale: scale }),
       setGridColumnsWeb: (cols) => set({ gridColumnsWeb: cols }),
       setGridColumnsMobile: (cols) => set({ gridColumnsMobile: cols }),
+      setEnableSound: (enable) => set({ enableSound: enable }),
+      setForceEarpiece: (force) => set({ forceEarpiece: force }),
       resetSettings: () => set({ 
         primaryColor: DEFAULT_COLOR, 
         fontScale: DEFAULT_FONT_SCALE,
         gridColumnsWeb: DEFAULT_GRID_WEB,
-        gridColumnsMobile: DEFAULT_GRID_MOBILE
+        gridColumnsMobile: DEFAULT_GRID_MOBILE,
+        enableSound: true,
+        forceEarpiece: false
       }),
     }),
     {
