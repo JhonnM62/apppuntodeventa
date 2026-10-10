@@ -52,7 +52,7 @@ export default function ConfiguracionAvanzadaScreen() {
             </View>
             <Switch
               value={enableSound}
-              onValueChange={setEnableSound}
+              onValueChange={(val) => setEnableSound(val)}
               trackColor={{ false: '#d1d5db', true: '#86efac' }}
               thumbColor={enableSound ? '#16a34a' : '#9ca3af'}
             />
@@ -66,7 +66,10 @@ export default function ConfiguracionAvanzadaScreen() {
               </View>
               <Switch
                 value={forceEarpiece}
-                onValueChange={setForceEarpiece}
+                onValueChange={(val) => {
+                  setForceEarpiece(val);
+                  import('../../services/soundService').then((m) => m.soundService.loadSounds());
+                }}
                 trackColor={{ false: '#d1d5db', true: '#86efac' }}
                 thumbColor={forceEarpiece ? '#16a34a' : '#9ca3af'}
                 disabled={!enableSound}
