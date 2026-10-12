@@ -36,6 +36,44 @@ interface SalesStore {
 
 const CACHE_DURATION = 2 * 60 * 1000;
 
+// Storage seguro para ventas que captura QuotaExceededError en Web (límite 5MB de localStorage)
+const safeSalesStorage = {
+  getItem: async (name: string): Promise<string | null> => {
+    try {
+      return await AsyncStorage.getItem(name);
+    } catch {
+      return null;
+    }
+  },
+  setItem: async (name: string, value: string): Promise<void> => {
+    try {
+      await AsyncStorage.setItem(name, value);
+    } catch (e: any) {
+      // Capturar QuotaExceededError en navegadores web para evitar excepciones no controladas
+      const isQuotaError =
+        e?.name === 'QuotaExceededError' ||
+        e?.code === 22 ||
+        e?.code === 1014 ||
+        e?.number === -2147024882 ||
+        (typeof e?.message === 'string' && e.message.toLowerCase().includes('quota'));
+
+      if (isQuotaError) {
+        console.warn(`[useSalesStore] QuotaExceededError detectado. Limpiando ${name} de localStorage para liberar espacio.`);
+        try {
+          await AsyncStorage.removeItem(name);
+        } catch (_ign) {}
+      } else {
+        console.warn(`[useSalesStore] Error al guardar en storage (${name}):`, e?.message || e);
+      }
+    }
+  },
+  removeItem: async (name: string): Promise<void> => {
+    try {
+      await AsyncStorage.removeItem(name);
+    } catch (_e) {}
+  },
+};
+
 export const useSalesStore = create<SalesStore>()(
   persist(
     (set, get) => ({
@@ -143,18 +181,18 @@ export const useSalesStore = create<SalesStore>()(
     }),
     {
       name: 'sales-cache',
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => safeSalesStorage),
       partialize: (state) => {
         const ventasArray = Array.isArray(state.ventas) ? state.ventas : [];
-        // Para evitar QuotaExceededError (5MB limit en web localStorage), 
-        // persistimos todos los pendientes y solo los 50 pagados/entregados más recientes.
-        const pending = ventasArray.filter(v => v.estado && v.estado !== 'PAGADO' && v.estado !== 'ENTREGADO');
-        const completed = ventasArray.filter(v => v.estado === 'PAGADO' || v.estado === 'ENTREGADO').slice(0, 50);
+        // Para evitar QuotaExceededError (5MB limit en web localStorage):
+        // Solo persistimos órdenes activas/pendientes (máximo 15 pedidos).
+        // Las ventas pagadas/entregadas NO se persisten porque el backend las entrega frescas en cada carga.
+        const pending = ventasArray
+          .filter(v => v.estado && v.estado !== 'PAGADO' && v.estado !== 'ENTREGADO')
+          .slice(0, 15);
         
         return {
-          ventas: [...pending, ...completed],
-          // FIX: NO persistir lastFetched. Esto fuerza un API call fresco en cada carga de página,
-          // evitando que el cache shortcircuit muestre solo pedidos locales en navegadores móviles.
+          ventas: pending,
         };
       },
       // FIX: merge personalizado para que la hidratación no sobrescriba datos frescos del API.
