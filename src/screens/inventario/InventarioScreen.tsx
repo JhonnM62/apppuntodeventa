@@ -157,6 +157,7 @@ const InventarioScreen = ({ navigation }: any) => {
   const [inlineEditValues, setInlineEditValues] = useState<{ precioActual: string; cantidad: string; sumarCantidad?: string }>({ precioActual: '', cantidad: '' });
   const [isBulkEditing, setIsBulkEditing] = useState(false);
   const [bulkEditValues, setBulkEditValues] = useState<Record<string, { precioActual: string; cantidad: string; sumarCantidad?: string }>>({});
+  const [detailSearchText, setDetailSearchText] = useState('');
 
   const [newInventario, setNewInventario] = useState<CreateInventarioDto>({ nombre: '', tipo: 'entrada' });
   const [addItemsList, setAddItemsList] = useState<any[]>([]);
@@ -600,9 +601,16 @@ const InventarioScreen = ({ navigation }: any) => {
       .map(([categoria, { items: catItems, total }]) => (
         <View key={categoria} style={{ marginBottom: 16 }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginBottom: 8 }}>
-            <RNText style={{ fontSize: 12, fontWeight: '700', color: '#4b5563', textTransform: 'uppercase' }}>
-              {categoria}
-            </RNText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1, marginRight: 8, flexWrap: 'wrap', gap: 6 }}>
+              <RNText style={{ fontSize: 12, fontWeight: '700', color: '#4b5563', textTransform: 'uppercase' }}>
+                {categoria}
+              </RNText>
+              <View style={{ backgroundColor: '#e5e7eb', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10 }}>
+                <RNText style={{ fontSize: 11, fontWeight: '700', color: '#374151' }}>
+                  {catItems.length} {catItems.length === 1 ? 'artículo' : 'artículos'}
+                </RNText>
+              </View>
+            </View>
             {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && (
               <RNText style={{ fontSize: 12, fontWeight: '700', color: '#111827' }}>
                 ${total.toLocaleString('es-CO')}
@@ -913,11 +921,13 @@ const InventarioScreen = ({ navigation }: any) => {
     // Default close logic
     setIsBulkEditing(false);
     setBulkEditValues({});
+    setDetailSearchText('');
     setShowDetailModal(false);
     setSelectedInventario(null);
   };
 
   const handleOpenDetail = async (item: InventarioItem) => {
+    setDetailSearchText('');
     setSelectedInventario(item);
     setShowDetailModal(true);
     await fetchOrdenes(item.IDinventario);
@@ -1388,12 +1398,36 @@ const InventarioScreen = ({ navigation }: any) => {
     return Array.from(provedoresSet);
   };
 
+  const filterOrdenesBySearch = useCallback((itemsList: OrderInventarioItem[], query: string) => {
+    if (!query || !query.trim()) return itemsList;
+    const cleanQuery = query.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    return itemsList.filter((item) => {
+      const nombreItem = getInsumoName(item.nombreDelAlimento);
+      const categoria = getInsumoCategoria(item.nombreDelAlimento) || item.categoria || '';
+      const proveedor = item.provedor || '';
+      const cleanNombre = (nombreItem || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const cleanCat = (categoria || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const cleanProv = (proveedor || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const cleanRawId = (item.nombreDelAlimento || '').toLowerCase();
+      
+      return cleanNombre.includes(cleanQuery) || 
+             cleanCat.includes(cleanQuery) || 
+             cleanProv.includes(cleanQuery) ||
+             cleanRawId.includes(cleanQuery);
+    });
+  }, [insumos]);
+
   const ordenesNoComprados = ordenes.filter(o => o.seCompro === 'No' || o.seCompro === 'no');
   const ordenesComprados = ordenes.filter(o => (o.seCompro === 'Si' || o.seCompro === 'si') && o.agregarAInsumos !== 'Si' && o.agregarAInsumos !== 'si');
   const ordenesIngresados = ordenes.filter(o => (o.seCompro === 'Si' || o.seCompro === 'si') && (o.agregarAInsumos === 'Si' || o.agregarAInsumos === 'si'));
   const totalNoComprados = ordenesNoComprados.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0);
   const totalComprados = ordenesComprados.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0);
   const totalIngresados = ordenesIngresados.reduce((sum, o) => sum + (o.subtotal || ((o.precioActual || o.precio || 0) * o.cantidad)), 0);
+
+  const filteredOrdenesNoComprados = useMemo(() => filterOrdenesBySearch(ordenesNoComprados, detailSearchText), [ordenesNoComprados, detailSearchText, filterOrdenesBySearch]);
+  const filteredOrdenesComprados = useMemo(() => filterOrdenesBySearch(ordenesComprados, detailSearchText), [ordenesComprados, detailSearchText, filterOrdenesBySearch]);
+  const filteredOrdenesIngresados = useMemo(() => filterOrdenesBySearch(ordenesIngresados, detailSearchText), [ordenesIngresados, detailSearchText, filterOrdenesBySearch]);
+  const filteredOrdenes = useMemo(() => filterOrdenesBySearch(ordenes, detailSearchText), [ordenes, detailSearchText, filterOrdenesBySearch]);
 
   const renderInventarioItem = ({ item }: { item: InventarioItem }) => {
     const isEntrada = item.tipo?.toUpperCase().includes('ENTRADA');
@@ -2458,26 +2492,44 @@ const InventarioScreen = ({ navigation }: any) => {
                 </View>
               )}
 
-              <View style={{ marginBottom: 16 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+              <View style={{ width: '100%', alignSelf: 'stretch', marginBottom: 16 }}>
+                  <View style={{
+                    width: '100%',
+                    alignSelf: 'stretch',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    marginBottom: 12,
+                    flexWrap: 'wrap',
+                    gap: 8
+                  }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                      <RNText style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginRight: 8 }}>Items ({ordenes.length})</RNText>
+                      <RNText style={{ fontSize: 14, fontWeight: '700', color: '#374151', marginRight: 8 }}>
+                        Items ({detailSearchText.trim() ? `${filteredOrdenes.length} de ${ordenes.length}` : ordenes.length})
+                      </RNText>
                       {ordenes.length > 0 && !isBulkEditing && (
                         <TouchableOpacity 
                           onPress={handleToggleBulkEdit}
-                          style={{ padding: 6, backgroundColor: '#f3f4f6', borderRadius: 6, marginRight: 8 }}
+                          style={{ padding: 6, backgroundColor: '#f3f4f6', borderRadius: 6, borderWidth: 1, borderColor: '#e5e7eb' }}
                         >
                           <Ionicons name="create-outline" size={16} color="#6b7280" />
                         </TouchableOpacity>
                       )}
                     </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                    <View style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                      flexWrap: 'wrap',
+                      gap: 8,
+                      marginLeft: 'auto'
+                    }}>
                       {isBulkEditing ? (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 'auto' }}>
                           <TouchableOpacity 
                             onPress={handleToggleBulkEdit}
                             disabled={saving}
-                            style={{ paddingHorizontal: 10, paddingVertical: 6, backgroundColor: '#fee2e2', borderRadius: 6, flexDirection: 'row', alignItems: 'center' }}
+                            style={{ paddingHorizontal: 12, paddingVertical: 7, backgroundColor: '#fee2e2', borderRadius: 8, flexDirection: 'row', alignItems: 'center' }}
                           >
                             <Ionicons name="close" size={16} color="#ef4444" style={{ marginRight: 4 }} />
                             <RNText style={{ color: '#ef4444', fontSize: 12, fontWeight: '600' }}>Cancelar</RNText>
@@ -2485,7 +2537,7 @@ const InventarioScreen = ({ navigation }: any) => {
                           <TouchableOpacity 
                             onPress={handleSaveBulkEdit}
                             disabled={saving}
-                            style={{ paddingHorizontal: 10, paddingVertical: 6, backgroundColor: saving ? '#9ca3af' : '#22c55e', borderRadius: 6, flexDirection: 'row', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1.41 }}
+                            style={{ paddingHorizontal: 12, paddingVertical: 7, backgroundColor: saving ? '#9ca3af' : '#22c55e', borderRadius: 8, flexDirection: 'row', alignItems: 'center', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.2, shadowRadius: 1.41 }}
                           >
                             {saving ? <ActivityIndicator size="small" color="#fff" /> : <>
                               <Ionicons name="save-outline" size={16} color="#fff" style={{ marginRight: 4 }} />
@@ -2497,7 +2549,16 @@ const InventarioScreen = ({ navigation }: any) => {
                         <>
                           {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && ordenes.length > 0 && canEditEntradas && (
                             <TouchableOpacity
-                              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: selectionMode ? '#ef4444' : '#f3f4f6', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                backgroundColor: selectionMode ? '#ef4444' : '#f3f4f6',
+                                borderRadius: 8,
+                                paddingHorizontal: 12,
+                                paddingVertical: 7,
+                                borderWidth: selectionMode ? 0 : 1,
+                                borderColor: '#e5e7eb'
+                              }}
                               onPress={() => {
                                 setSelectionMode(!selectionMode);
                                 if (selectionMode) setSelectedOrdenes(new Set());
@@ -2511,7 +2572,14 @@ const InventarioScreen = ({ navigation }: any) => {
                             <>
                               {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && (
                                 <TouchableOpacity
-                                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#3b82f6', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, marginRight: 8 }}
+                                  style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    backgroundColor: '#3b82f6',
+                                    borderRadius: 8,
+                                    paddingHorizontal: 12,
+                                    paddingVertical: 7
+                                  }}
                                   onPress={() => {
                                     setShowDetailModal(false);
                                     navigation.navigate('AiUpload', { targetInventarioId: selectedInventario?.IDinventario });
@@ -2522,7 +2590,14 @@ const InventarioScreen = ({ navigation }: any) => {
                                 </TouchableOpacity>
                               )}
                               <TouchableOpacity
-                                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#22c55e', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}
+                                style={{
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  backgroundColor: '#22c55e',
+                                  borderRadius: 8,
+                                  paddingHorizontal: 12,
+                                  paddingVertical: 7
+                                }}
                                 onPress={() => {
                                   console.log('[DEBUG] Opening add item modal, insumos count:', insumos.length);
                                   if (insumos.length === 0) {
@@ -2542,30 +2617,88 @@ const InventarioScreen = ({ navigation }: any) => {
                     </View>
                   </View>
 
-                {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && ordenesNoComprados.length > 0 && (
+                {/* Barra de búsqueda de insumos en la lista actual */}
+                {ordenes.length > 0 && (
+                  <View style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    backgroundColor: '#ffffff',
+                    borderWidth: 1,
+                    borderColor: '#e5e7eb',
+                    borderRadius: 12,
+                    paddingHorizontal: 12,
+                    height: 44,
+                    marginBottom: 16,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 2,
+                    elevation: 1,
+                  }}>
+                    <Ionicons name="search-outline" size={18} color="#9ca3af" style={{ marginRight: 8 }} />
+                    <TextInput
+                      style={{
+                        flex: 1,
+                        fontSize: 14,
+                        color: '#111827',
+                        paddingVertical: 0,
+                        height: '100%',
+                      }}
+                      placeholder="Buscar insumos en esta lista..."
+                      placeholderTextColor="#9ca3af"
+                      value={detailSearchText}
+                      onChangeText={setDetailSearchText}
+                      returnKeyType="search"
+                      clearButtonMode="while-editing"
+                    />
+                    {detailSearchText.length > 0 && (
+                      <TouchableOpacity onPress={() => setDetailSearchText('')} style={{ padding: 4 }}>
+                        <Ionicons name="close-circle" size={18} color="#9ca3af" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                )}
+
+                {/* Mensaje si la búsqueda no arroja resultados */}
+                {detailSearchText.trim().length > 0 && filteredOrdenes.length === 0 && (
+                  <View style={{ backgroundColor: '#ffffff', borderRadius: 12, padding: 24, alignItems: 'center', borderWidth: 1, borderColor: '#e5e7eb', marginBottom: 16 }}>
+                    <Ionicons name="search-outline" size={36} color="#9ca3af" />
+                    <RNText style={{ fontSize: 14, fontWeight: '600', color: '#374151', marginTop: 8, textAlign: 'center' }}>
+                      No se encontraron insumos para "{detailSearchText}"
+                    </RNText>
+                    <TouchableOpacity
+                      onPress={() => setDetailSearchText('')}
+                      style={{ marginTop: 12, paddingHorizontal: 14, paddingVertical: 8, backgroundColor: '#f3f4f6', borderRadius: 8 }}
+                    >
+                      <RNText style={{ fontSize: 13, fontWeight: '600', color: '#4b5563' }}>Limpiar búsqueda</RNText>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && filteredOrdenesNoComprados.length > 0 && (
                   <View style={{ marginBottom: 16 }}>
                     <RNText style={{ fontSize: 11, color: '#6b7280', textTransform: 'uppercase', marginBottom: 8 }}>Pendientes</RNText>
-                    {renderGroupedList(ordenesNoComprados)}
+                    {renderGroupedList(filteredOrdenesNoComprados)}
                   </View>
                 )}
 
-                {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && ordenesComprados.length > 0 && (
+                {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && filteredOrdenesComprados.length > 0 && (
                   <View>
                     <RNText style={{ fontSize: 11, color: '#ca8a04', textTransform: 'uppercase', marginBottom: 8 }}>Comprados (Pendiente Ingreso)</RNText>
-                    {renderGroupedList(ordenesComprados)}
+                    {renderGroupedList(filteredOrdenesComprados)}
                   </View>
                 )}
 
-                {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && ordenesIngresados.length > 0 && (
+                {(selectedInventario?.tipo?.toLowerCase() === 'entradas' || selectedInventario?.tipo?.toLowerCase() === 'entrada') && filteredOrdenesIngresados.length > 0 && (
                   <View>
                     <RNText style={{ fontSize: 11, color: '#16a34a', textTransform: 'uppercase', marginBottom: 8, marginTop: 16 }}>Ingresados al Stock</RNText>
-                    {renderGroupedList(ordenesIngresados)}
+                    {renderGroupedList(filteredOrdenesIngresados)}
                   </View>
                 )}
 
-                {(!selectedInventario?.tipo?.toLowerCase().includes('entrada')) && ordenes.length > 0 && (
+                {(!selectedInventario?.tipo?.toLowerCase().includes('entrada')) && filteredOrdenes.length > 0 && (
                   <View style={{ marginBottom: 16 }}>
-                    {renderGroupedList(ordenes)}
+                    {renderGroupedList(filteredOrdenes)}
                   </View>
                 )}
 
@@ -2626,7 +2759,12 @@ const InventarioScreen = ({ navigation }: any) => {
                   .map(([categoria, { items: catItems, total }]) => (
                     <View key={categoria} style={{ marginBottom: 20 }}>
                       <View style={{ backgroundColor: '#f3f4f6', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 6, marginBottom: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <RNText style={{ fontSize: 14, fontWeight: '700', color: '#374151', textTransform: 'uppercase' }}>{categoria}</RNText>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 1, marginRight: 8, flexWrap: 'wrap', gap: 6 }}>
+                          <RNText style={{ fontSize: 14, fontWeight: '700', color: '#374151', textTransform: 'uppercase' }}>{categoria}</RNText>
+                          <View style={{ backgroundColor: '#e5e7eb', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                            <RNText style={{ fontSize: 11, fontWeight: '700', color: '#374151' }}>{catItems.length} {catItems.length === 1 ? 'artículo' : 'artículos'}</RNText>
+                          </View>
+                        </View>
                         {(selectedInventario.tipo?.toLowerCase() === 'entradas' || selectedInventario.tipo?.toLowerCase() === 'entrada') && (
                           <RNText style={{ fontSize: 14, fontWeight: '700', color: '#111827' }}>${total.toLocaleString('es-CO')}</RNText>
                         )}
@@ -3004,6 +3142,7 @@ const InventarioScreen = ({ navigation }: any) => {
                   setShowUnsavedChangesModal(false);
                   setIsBulkEditing(false);
                   setBulkEditValues({});
+                  setDetailSearchText('');
                   setShowDetailModal(false);
                   setSelectedInventario(null);
                 }}
