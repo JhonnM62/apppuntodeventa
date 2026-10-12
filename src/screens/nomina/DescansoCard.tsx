@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Text } from '../../components/ui/text';
 import { iniciarDescanso, terminarDescanso } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
+import FacialCaptureModal from '../../components/ui/FacialCaptureModal';
 
 let ImagePicker: any;
 try {
@@ -70,6 +71,7 @@ export default function DescansoCard({
 }: DescansoCardProps) {
   const { showAlert } = useCustomAlert();
   const [actionState, setActionState] = useState<'idle' | 'camera' | 'locating' | 'uploading'>('idle');
+  const [facialModalMode, setFacialModalMode] = useState<'inicio' | 'fin' | null>(null);
   const [inicio, setInicio] = useState<Date | null>(inicioIni ? new Date(inicioIni) : null);
   const [fin, setFin]       = useState<Date | null>(finIni    ? new Date(finIni)    : null);
   const [now, setNow]       = useState(new Date());
@@ -126,54 +128,6 @@ export default function DescansoCard({
 
   const isOvertime = secsRemaining === 0 && inicio && !fin;
 
-  const takePhoto = async () => {
-    if (!ImagePicker) {
-      showAlert({ type: 'error', title: 'Módulo no disponible', message: 'La cámara requiere una recompilación de la app para funcionar.' });
-      return null;
-    }
-    if (Platform.OS !== 'web') {
-      const { status } = await ImagePicker.requestCameraPermissionsAsync();
-      if (status !== 'granted') {
-        showAlert({ type: 'error', title: 'Permiso Denegado', message: 'Se necesita acceso a la cámara para el registro facial' });
-        return null;
-      }
-    }
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        quality: 0.5,
-        cameraType: ImagePicker.CameraType.front,
-        base64: true,
-      });
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        if (Platform.OS === 'web') {
-          if (result.assets[0].base64) {
-            const b64 = result.assets[0].base64;
-            return b64.startsWith('data:') ? b64 : `data:image/jpeg;base64,${b64}`;
-          } else if (result.assets[0].uri) {
-            try {
-              const response = await fetch(result.assets[0].uri);
-              const blob = await response.blob();
-              return new Promise<string>((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-              });
-            } catch (e) {
-              console.warn('Error convirtiendo blob a base64', e);
-            }
-          }
-        }
-        return result.assets[0].uri;
-      }
-    } catch (e) {
-      showAlert({ type: 'error', title: 'Error Cámara', message: 'Hubo un error al abrir la cámara.' });
-    }
-    return null;
-  };
-
   const getLocation = async () => {
     if (!Location) {
       showAlert({ type: 'error', title: 'Módulo no disponible', message: 'El GPS requiere una recompilación de la app para funcionar.' });
@@ -204,54 +158,45 @@ export default function DescansoCard({
     }
   };
 
-  const handleIniciar = async () => {
-    setActionState('camera');
-    try {
-      const photoPromise = takePhoto();
-      const locPromise = getLocation();
-      
-      const photoUri = await photoPromise;
-      if (!photoUri) { setActionState('idle'); return; }
-
-      setActionState('locating');
-      const loc = await locPromise;
-      if (!loc) { setActionState('idle'); return; }
-
-      setActionState('uploading');
-      const res = await iniciarDescanso(turnoId, { latitud: loc.latitud, longitud: loc.longitud, fotoUri: photoUri });
-      const newInicio = new Date(res.data.inicioDescanso);
-      setInicio(newInicio);
-      onDescansoChange({ inicioDescanso: res.data.inicioDescanso, finDescanso: null });
-    } catch (e: any) {
-      const msg = e?.response?.data?.message;
-      const errorMsg = Array.isArray(msg) ? msg[0] : (msg || 'No se pudo iniciar el descanso');
-      showAlert({ type: 'error', title: 'Error', message: errorMsg });
-    } finally { setActionState('idle'); }
+  const handlePressIniciar = () => {
+    setFacialModalMode('inicio');
   };
 
-  const handleTerminar = async () => {
-    setActionState('camera');
-    try {
-      const photoPromise = takePhoto();
-      const locPromise = getLocation();
-      
-      const photoUri = await photoPromise;
-      if (!photoUri) { setActionState('idle'); return; }
+  const handlePressTerminar = () => {
+    setFacialModalMode('fin');
+  };
 
-      setActionState('locating');
-      const loc = await locPromise;
-      if (!loc) { setActionState('idle'); return; }
+  const handlePhotoCaptured = async (fotoUri: string) => {
+    const isInicio = facialModalMode === 'inicio';
+    setFacialModalMode(null);
+    setActionState('locating');
+
+    try {
+      const loc = await getLocation();
+      if (!loc) {
+        setActionState('idle');
+        return;
+      }
 
       setActionState('uploading');
-      const res = await terminarDescanso(turnoId, { latitud: loc.latitud, longitud: loc.longitud, fotoUri: photoUri });
-      const newFin = new Date(res.data.finDescanso);
-      setFin(newFin);
-      onDescansoChange({ inicioDescanso: res.data.inicioDescanso, finDescanso: res.data.finDescanso });
+      if (isInicio) {
+        const res = await iniciarDescanso(turnoId, { latitud: loc.latitud, longitud: loc.longitud, fotoUri });
+        const newInicio = new Date(res.data.inicioDescanso);
+        setInicio(newInicio);
+        onDescansoChange({ inicioDescanso: res.data.inicioDescanso, finDescanso: null });
+      } else {
+        const res = await terminarDescanso(turnoId, { latitud: loc.latitud, longitud: loc.longitud, fotoUri });
+        const newFin = new Date(res.data.finDescanso);
+        setFin(newFin);
+        onDescansoChange({ inicioDescanso: res.data.inicioDescanso, finDescanso: res.data.finDescanso });
+      }
     } catch (e: any) {
       const msg = e?.response?.data?.message;
-      const errorMsg = Array.isArray(msg) ? msg[0] : (msg || 'No se pudo terminar el descanso');
+      const errorMsg = Array.isArray(msg) ? msg[0] : (msg || `No se pudo ${isInicio ? 'iniciar' : 'terminar'} el descanso`);
       showAlert({ type: 'error', title: 'Error', message: errorMsg });
-    } finally { setActionState('idle'); }
+    } finally {
+      setActionState('idle');
+    }
   };
 
   // ── STATE C: Completed ──────────────────────────────────
@@ -306,7 +251,7 @@ export default function DescansoCard({
 
         <TouchableOpacity
           style={[styles.btn, styles.btnOrange, actionState !== 'idle' && styles.btnDisabled]}
-          onPress={handleTerminar}
+          onPress={handlePressTerminar}
           disabled={actionState !== 'idle'}
         >
           <Ionicons 
@@ -320,6 +265,17 @@ export default function DescansoCard({
              actionState === 'uploading' ? 'Guardando...' : 'Terminar Descanso'}
           </Text>
         </TouchableOpacity>
+
+        <FacialCaptureModal
+          visible={facialModalMode === 'fin'}
+          title="Foto de Finalización de Descanso"
+          subtitle="Ubica tu rostro y hombros dentro de la silueta en posición vertical"
+          onCapture={handlePhotoCaptured}
+          onClose={() => {
+            setFacialModalMode(null);
+            setActionState('idle');
+          }}
+        />
       </Animated.View>
     );
   }
@@ -380,7 +336,7 @@ export default function DescansoCard({
 
       <TouchableOpacity
         style={[styles.btn, styles.btnGreen, actionState !== 'idle' && styles.btnDisabled]}
-        onPress={handleIniciar}
+        onPress={handlePressIniciar}
         disabled={actionState !== 'idle'}
       >
         <Ionicons 
@@ -394,6 +350,17 @@ export default function DescansoCard({
            actionState === 'uploading' ? 'Guardando...' : 'Iniciar Descanso'}
         </Text>
       </TouchableOpacity>
+
+      <FacialCaptureModal
+        visible={facialModalMode === 'inicio'}
+        title="Foto de Inicio de Descanso"
+        subtitle="Ubica tu rostro y hombros dentro de la silueta en posición vertical"
+        onCapture={handlePhotoCaptured}
+        onClose={() => {
+          setFacialModalMode(null);
+          setActionState('idle');
+        }}
+      />
     </View>
   );
 }

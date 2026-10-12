@@ -2122,22 +2122,30 @@ const handleRecalcular = async () => {
       )}
 
       {/* PHOTO VIEWER MODAL */}
-      {!!photoViewerUrl && (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', zIndex: 999999, elevation: 99 }}>
+      <Modal 
+        visible={!!photoViewerUrl} 
+        transparent 
+        animationType="fade" 
+        onRequestClose={() => setPhotoViewerUrl(null)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' }}>
           <TouchableOpacity 
-            style={{ position: 'absolute', top: 40, right: 20, padding: 25, zIndex: 100000, flexDirection: 'row', alignItems: 'center' }} 
+            style={{ position: 'absolute', top: 40, right: 20, padding: 20, zIndex: 100000, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 20 }} 
             onPress={() => setPhotoViewerUrl(null)}
+            accessibilityLabel="Cerrar visor de foto"
           >
-            <Ionicons name="close" size={40} color="#fff" />
-            <Text style={{ color: '#fff', fontSize: 16, marginLeft: 4 }}>Cerrar</Text>
+            <Ionicons name="close" size={30} color="#fff" />
+            <Text style={{ color: '#fff', fontSize: 16, marginLeft: 6, fontWeight: '600' }}>Cerrar</Text>
           </TouchableOpacity>
-          <Image 
-            source={{ uri: photoViewerUrl.startsWith('http') ? photoViewerUrl : `${(api.defaults.baseURL || '').replace(/\/$/, '')}${photoViewerUrl.startsWith('/') ? photoViewerUrl : '/' + photoViewerUrl}` }} 
-            style={{ width: '100%', height: '100%', resizeMode: 'contain' }} 
-            onError={(e) => Alert.alert('Error cargando imagen', 'La imagen no se pudo cargar desde el servidor.')}
-          />
+          {!!photoViewerUrl && (
+            <Image 
+              source={{ uri: photoViewerUrl.startsWith('http') ? photoViewerUrl : `${(api.defaults.baseURL || '').replace(/\/$/, '')}${photoViewerUrl.startsWith('/') ? photoViewerUrl : '/' + photoViewerUrl}` }} 
+              style={{ width: '100%', height: '85%', resizeMode: 'contain' }} 
+              onError={(_e) => Alert.alert('Error cargando imagen', 'La imagen no se pudo cargar desde el servidor.')}
+            />
+          )}
         </View>
-      )}
+      </Modal>
 
       
         

@@ -8,6 +8,7 @@ import {
   Text,
   StatusBar,
   ActivityIndicator,
+  Platform,
   useWindowDimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -29,13 +30,27 @@ export default function SignatureModal({ visible, title = 'Firmar Documento', lo
   const isPortrait = height > width;
 
   useEffect(() => {
-    if (visible) {
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
-    } else {
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-    }
+    // En Web los navegadores bloquean o rechazan screen.orientation.lock sin fullscreen
+    if (Platform.OS === 'web') return;
+
+    const applyOrientation = async () => {
+      try {
+        if (visible) {
+          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE_RIGHT);
+        } else {
+          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+        }
+      } catch (_e) {
+        // Ignorar si el dispositivo no soporta lock de orientación
+      }
+    };
+
+    applyOrientation();
+
     return () => {
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+      if (Platform.OS !== 'web') {
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+      }
     };
   }, [visible]);
 

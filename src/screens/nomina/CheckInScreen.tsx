@@ -16,6 +16,7 @@ import SignatureModal from '../../components/ui/SignatureModal';
 import DescansoCard from './DescansoCard';
 import LiquidacionViewerModal from '../../components/ui/LiquidacionViewerModal';
 import { generarLiquidacionHTML } from '../../utils/nominaPdf';
+import FacialCaptureModal from '../../components/ui/FacialCaptureModal';
 let ImagePicker: any;
 try {
   ImagePicker = require('expo-image-picker');
@@ -56,6 +57,7 @@ export default function CheckInScreen({ navigation }: any) {
   const [showSignatureEmpleado, setShowSignatureEmpleado] = useState(false);
   const [liquidando, setLiquidando] = useState(false);
   
+  const [showFacialCapture, setShowFacialCapture] = useState(false);
   const [fotoUri, setFotoUri] = useState<string | null>(null);
   const [location, setLocation] = useState<{ latitud: number, longitud: number } | null>(null);
   const [ceno, setCeno] = useState<boolean | null>(null); // Only used when checking out
@@ -188,49 +190,8 @@ export default function CheckInScreen({ navigation }: any) {
     }
   };
 
-  const takePhoto = async () => {
-    if (!ImagePicker) {
-      return showAlert({ type: 'error', title: 'Módulo no disponible', message: 'La cámara requiere una recompilación de la app para funcionar.' });
-    }
-    const { status } = await ImagePicker.requestCameraPermissionsAsync();
-    if (status !== 'granted') {
-      return showAlert({ type: 'error', title: 'Permiso Denegado', message: 'Se necesita acceso a la cámara para el registro facial' });
-    }
-
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        quality: 0.5,
-        cameraType: ImagePicker.CameraType.front,
-        base64: true,
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        if (Platform.OS === 'web') {
-          if (result.assets[0].base64) {
-            const b64 = result.assets[0].base64;
-            setFotoUri(b64.startsWith('data:') ? b64 : `data:image/jpeg;base64,${b64}`);
-          } else if (result.assets[0].uri) {
-            try {
-              const response = await fetch(result.assets[0].uri);
-              const blob = await response.blob();
-              const reader = new FileReader();
-              reader.onloadend = () => setFotoUri(reader.result as string);
-              reader.readAsDataURL(blob);
-            } catch (e) {
-              console.warn('Error convirtiendo blob a base64', e);
-              setFotoUri(result.assets[0].uri);
-            }
-          }
-        } else {
-          setFotoUri(result.assets[0].uri);
-        }
-      }
-    } catch (error) {
-      console.error(error);
-      showAlert({ type: 'error', title: 'Error Cámara', message: 'Hubo un problema al usar la cámara.' });
-    }
+  const takePhoto = () => {
+    setShowFacialCapture(true);
   };
 
   const getLocation = async () => {
@@ -414,11 +375,18 @@ export default function CheckInScreen({ navigation }: any) {
             
             <TouchableOpacity style={styles.photoBox} onPress={takePhoto}>
               {fotoUri ? (
-                <Image source={{ uri: fotoUri }} style={styles.photoImage} />
+                <View style={{ width: '100%', height: '100%', position: 'relative' }}>
+                  <Image source={{ uri: fotoUri }} style={styles.photoImage} resizeMode="cover" />
+                  <View style={styles.retakeBadge}>
+                    <Ionicons name="camera" size={14} color="#ffffff" />
+                    <Text style={styles.retakeBadgeText}>Cambiar foto</Text>
+                  </View>
+                </View>
               ) : (
                 <View style={styles.photoPlaceholder}>
-                  <Ionicons name="camera" size={32} color="#9ca3af" />
-                  <Text style={{ marginTop: 8, color: '#6b7280' }}>Tocar para tomar foto</Text>
+                  <Ionicons name="scan-outline" size={36} color="#3b82f6" />
+                  <Text style={{ marginTop: 8, color: '#1f2937', fontWeight: '600', fontSize: 14 }}>Tocar para tomar foto</Text>
+                  <Text style={{ marginTop: 2, color: '#6b7280', fontSize: 12 }}>Con silueta de encuadre vertical</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -541,6 +509,18 @@ export default function CheckInScreen({ navigation }: any) {
         />
       )}
 
+      {/* ── Modal de Captura Facial con Silueta ── */}
+      <FacialCaptureModal
+        visible={showFacialCapture}
+        title={turnoActivo ? 'Foto de Salida del Turno' : 'Foto de Entrada del Turno'}
+        subtitle="Ubica tu rostro y hombros dentro de la silueta en posición vertical"
+        onCapture={(uri) => {
+          setFotoUri(uri);
+          setShowFacialCapture(false);
+        }}
+        onClose={() => setShowFacialCapture(false)}
+      />
+
     </View>
   );
 }
@@ -563,6 +543,23 @@ const styles = StyleSheet.create({
   photoBox: { width: '100%', aspectRatio: 4/3, borderRadius: 12, overflow: 'hidden', backgroundColor: '#f9fafb', borderWidth: 2, borderColor: '#e5e7eb', borderStyle: 'dashed' },
   photoImage: { width: '100%', height: '100%' },
   photoPlaceholder: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  retakeBadge: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.75)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+  },
+  retakeBadgeText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
   
   locationBtn: { backgroundColor: '#eff6ff', borderWidth: 1, borderColor: '#bfdbfe', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
   
