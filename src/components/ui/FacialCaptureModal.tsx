@@ -141,7 +141,7 @@ const getNativeCameraHtml = () => `
 export default function FacialCaptureModal({
   visible,
   title = 'Registro Facial',
-  subtitle = 'Ubica tu rostro y hombros dentro de la silueta en posición vertical',
+  subtitle = 'Sostén el celular de frente a la altura de tus ojos. Rostro completo centrado (no apuntes al techo)',
   onCapture,
   onClose,
 }: FacialCaptureModalProps) {
@@ -638,7 +638,7 @@ export default function FacialCaptureModal({
                   ? 'Validando rostro con IA...'
                   : capturedUri
                   ? 'Foto encuadrada - Confirma si es correcta'
-                  : 'Ubica tu rostro y hombros dentro de la silueta'}
+                  : 'Ubica tu rostro completo y centrado de frente'}
               </Text>
             </View>
           </View>
@@ -690,7 +690,7 @@ export default function FacialCaptureModal({
                   <View style={{ flex: 1 }}>
                     <Text style={styles.aiErrorTitle}>Foto Rechazada</Text>
                     <Text style={styles.aiErrorText}>{aiValidationError}</Text>
-                    <Text style={styles.aiErrorHint}>Toca "Repetir Foto" para encuadrarte de nuevo de frente.</Text>
+                    <Text style={styles.aiErrorHint}>Sostén el celular de frente a la altura de tu cara (no al techo) y toca "Repetir Foto".</Text>
                   </View>
                 </View>
               )}

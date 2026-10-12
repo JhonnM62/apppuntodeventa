@@ -371,7 +371,7 @@ export default function CheckInScreen({ navigation }: any) {
 
           <View style={styles.actionSection}>
             <Text style={styles.sectionTitle}>PASO 1: FOTO OBLIGATORIA</Text>
-            <Text style={styles.instruction}>Obligatorio para iniciar y cerrar turno. Muestra tu rostro claramente.</Text>
+            <Text style={styles.instruction}>Obligatorio para iniciar y cerrar turno. Sostén el celular de frente; muestra tu rostro completo y centrado (no apuntes al techo ni al cielo).</Text>
             
             <TouchableOpacity style={styles.photoBox} onPress={takePhoto}>
               {fotoUri ? (
@@ -386,7 +386,7 @@ export default function CheckInScreen({ navigation }: any) {
                 <View style={styles.photoPlaceholder}>
                   <Ionicons name="scan-outline" size={36} color="#3b82f6" />
                   <Text style={{ marginTop: 8, color: '#1f2937', fontWeight: '600', fontSize: 14 }}>Tocar para tomar foto</Text>
-                  <Text style={{ marginTop: 2, color: '#6b7280', fontSize: 12 }}>Con silueta de encuadre vertical</Text>
+                  <Text style={{ marginTop: 2, color: '#6b7280', fontSize: 12 }}>Rostro completo centrado (no apuntar al techo)</Text>
                 </View>
               )}
             </TouchableOpacity>
@@ -513,7 +513,7 @@ export default function CheckInScreen({ navigation }: any) {
       <FacialCaptureModal
         visible={showFacialCapture}
         title={turnoActivo ? 'Foto de Salida del Turno' : 'Foto de Entrada del Turno'}
-        subtitle="Ubica tu rostro y hombros dentro de la silueta en posición vertical"
+        subtitle="Sostén el celular de frente a la altura de tus ojos. Rostro completo dentro de la silueta (no apuntes al techo)"
         onCapture={(uri) => {
           setFotoUri(uri);
           setShowFacialCapture(false);

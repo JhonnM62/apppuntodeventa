@@ -269,7 +269,7 @@ export default function DescansoCard({
         <FacialCaptureModal
           visible={facialModalMode === 'fin'}
           title="Foto de Finalización de Descanso"
-          subtitle="Ubica tu rostro y hombros dentro de la silueta en posición vertical"
+          subtitle="Sostén el celular de frente a la altura de tus ojos. Rostro completo dentro de la silueta (no apuntes al techo)"
           onCapture={handlePhotoCaptured}
           onClose={() => {
             setFacialModalMode(null);
@@ -354,7 +354,7 @@ export default function DescansoCard({
       <FacialCaptureModal
         visible={facialModalMode === 'inicio'}
         title="Foto de Inicio de Descanso"
-        subtitle="Ubica tu rostro y hombros dentro de la silueta en posición vertical"
+        subtitle="Sostén el celular de frente a la altura de tus ojos. Rostro completo dentro de la silueta (no apuntes al techo)"
         onCapture={handlePhotoCaptured}
         onClose={() => {
           setFacialModalMode(null);

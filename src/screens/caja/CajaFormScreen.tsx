@@ -150,7 +150,31 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [searchProducto, setSearchProducto] = useState('');
   const [selectedIndexForProduct, setSelectedIndexForProduct] = useState<number | null>(null);
   const [insumosAEliminar, setInsumosAEliminar] = useState<string[]>([]);
-  const [modifiedInsumoIndexes, setModifiedInsumoIndexes] = useState<Set<number>>(new Set());
+  const [modifiedKeys, setModifiedKeys] = useState<Set<string>>(new Set());
+  const modifiedAperturaKeysRef = useRef<Set<string>>(new Set());
+  const modifiedCierreKeysRef = useRef<Set<string>>(new Set());
+
+  const getInsumoKey = useCallback((item: any, fallbackIndex?: number): string => {
+    if (item?.Idcierreyapertura) return String(item.Idcierreyapertura);
+    if (item?.nombreInsumo) return `${item.nombreInsumo}_${fallbackIndex ?? ''}`;
+    return String(fallbackIndex ?? '');
+  }, []);
+
+  const markAperturaModified = useCallback((key: string) => {
+    modifiedAperturaKeysRef.current.add(key);
+    setModifiedKeys(prev => new Set(prev).add(key));
+  }, []);
+
+  const markCierreModified = useCallback((key: string) => {
+    modifiedCierreKeysRef.current.add(key);
+    setModifiedKeys(prev => new Set(prev).add(key));
+  }, []);
+
+  const clearModifiedKeys = useCallback(() => {
+    modifiedAperturaKeysRef.current.clear();
+    modifiedCierreKeysRef.current.clear();
+    setModifiedKeys(new Set());
+  }, []);
   const [focusedInsumoIndex, setFocusedInsumoIndex] = useState<number | null>(null);
 
   const [resumenData, setResumenData] = useState<any>(null);
@@ -602,11 +626,14 @@ export default function CajaFormScreen({ route, navigation }: any) {
             if (!incoming) return current;
             
             const dirty = dirtyInsumos[idx] || {};
+            const key = getInsumoKey(current, idx);
+            const isAperturaModified = modifiedAperturaKeysRef.current.has(key) || !!dirty.cantApertura;
+            const isCierreModified = modifiedCierreKeysRef.current.has(key) || !!dirty.cantDeCierre;
             
             return {
               ...incoming,
-              cantApertura: (dirty.cantApertura || modifiedInsumoIndexes.has(idx)) ? current.cantApertura : incoming.cantApertura,
-              cantDeCierre: (dirty.cantDeCierre || modifiedInsumoIndexes.has(idx)) ? current.cantDeCierre : incoming.cantDeCierre,
+              cantApertura: isAperturaModified ? current.cantApertura : incoming.cantApertura,
+              cantDeCierre: isCierreModified ? current.cantDeCierre : incoming.cantDeCierre,
               observacion: dirty.observacion ? current.observacion : incoming.observacion,
             };
           });
@@ -704,15 +731,31 @@ export default function CajaFormScreen({ route, navigation }: any) {
         cleanData.transferenciasContadas = Number(transferenciasContadas);
       }
 
+      const dirtyFields = control._formState.dirtyFields || {} as any;
       if (cleanData.insumos) {
-        cleanData.insumos = cleanData.insumos.map((i: any) => ({
-          ...i,
-          cantDeCierre: i.cantDeCierre === '' || isNaN(Number(i.cantDeCierre)) ? undefined : Number(i.cantDeCierre)
-        }));
+        cleanData.insumos = cleanData.insumos.map((i: any, index: number) => {
+          const key = getInsumoKey(i, index);
+          const isAperturaDirty = modifiedAperturaKeysRef.current.has(key) || !!dirtyFields.insumos?.[index]?.cantApertura;
+          const isCierreDirty = modifiedCierreKeysRef.current.has(key) || !!dirtyFields.insumos?.[index]?.cantDeCierre;
+
+          const processed: any = {
+            ...i,
+            cantDeCierre: i.cantDeCierre === '' || isNaN(Number(i.cantDeCierre)) ? null : Number(i.cantDeCierre)
+          };
+          
+          if (!isNew && !isAperturaDirty) {
+            delete processed.cantApertura;
+          }
+
+          if (!isNew && !isCierreDirty) {
+            delete processed.cantDeCierre;
+          }
+
+          return processed;
+        });
       }
 
-      const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0 || modifiedInsumoIndexes.size > 0;
-      const dirtyFields = control._formState.dirtyFields || {} as any;
+      const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0 || modifiedAperturaKeysRef.current.size > 0 || modifiedCierreKeysRef.current.size > 0;
       
       const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre, updaterName: user?.nombre || user?.Nombre || user?.usuario || 'Un usuario' } as any;
       if (!isInsumosDirty) delete updateData.insumos;
@@ -739,7 +782,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
       await updateCaja(cajaId, updateData);
       await fetchInitialData();
-      setModifiedInsumoIndexes(new Set());
+      clearModifiedKeys();
       
       setIsAutoCuadreModalVisible(true);
     } catch (error: any) {
@@ -776,8 +819,9 @@ export default function CajaFormScreen({ route, navigation }: any) {
         }
 
         cleanData.insumos = cleanData.insumos.map((i: any, index: number) => {
-          const isAperturaDirty = !!dirtyFields.insumos?.[index]?.cantApertura || modifiedInsumoIndexes.has(index);
-          const isCierreDirty = !!dirtyFields.insumos?.[index]?.cantDeCierre || modifiedInsumoIndexes.has(index);
+          const key = getInsumoKey(i, index);
+          const isAperturaDirty = modifiedAperturaKeysRef.current.has(key) || !!dirtyFields.insumos?.[index]?.cantApertura;
+          const isCierreDirty = modifiedCierreKeysRef.current.has(key) || !!dirtyFields.insumos?.[index]?.cantDeCierre;
 
           const processed: any = {
             ...i,
@@ -818,7 +862,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           // ERROR HANDLING PATTERN: "Double-Step Save" (Systematic Debugging)
           // Dado que el endpoint de cerrarCaja tiene un ValidationPipe extremadamente estricto en producción que rechaza la trazabilidad compleja,
           // PRIMERO: Guardamos toda la trazabilidad y datos extras usando el endpoint genérico (updateCaja) que es flexible.
-          const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0 || modifiedInsumoIndexes.size > 0;
+          const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0 || modifiedAperturaKeysRef.current.size > 0 || modifiedCierreKeysRef.current.size > 0;
           const dirtyFields = control._formState.dirtyFields || {} as any;
           
           const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre, updaterName: user?.nombre || user?.Nombre || user?.usuario || 'Un usuario' };
@@ -856,7 +900,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
           Toast.show({ type: 'success', text1: 'Caja Cerrada', text2: 'La caja se ha cerrado definitivamente' });
         } else {
           // Guardado Parcial: El endpoint genérico updateCaja sí espera Idcierreyapertura, cantApertura, etc.
-          const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0 || modifiedInsumoIndexes.size > 0;
+          const isInsumosDirty = !!control._formState.dirtyFields.insumos || insumosAEliminar.length > 0 || modifiedAperturaKeysRef.current.size > 0 || modifiedCierreKeysRef.current.size > 0;
           const dirtyFields = control._formState.dirtyFields || {} as any;
           
           const updateData = { ...cleanData, insumosAEliminar, usuario: user?.name || user?.nombre, updaterName: user?.nombre || user?.Nombre || user?.usuario || 'Un usuario' };
@@ -871,7 +915,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
         }
         
         await fetchInitialData();
-        setModifiedInsumoIndexes(new Set());
+        clearModifiedKeys();
         setIsTransferenciasDirty(false);
       }
     } catch (error: any) {
@@ -1787,7 +1831,8 @@ setSaving(false);
                         return nameA.localeCompare(nameB);
                       })
                       .map(({ item, originalIndex: index }) => {
-                        const isModified = modifiedInsumoIndexes.has(index);
+                        const insumoKey = getInsumoKey(item, index);
+                        const isModified = modifiedAperturaKeysRef.current.has(insumoKey) || modifiedCierreKeysRef.current.has(insumoKey) || modifiedKeys.has(insumoKey);
                         const isTargetInModal = (addQtyModalVisible || subQtyModalVisible || directSumModalVisible || directSubModalVisible) && (
                           (selectedInsumoTarget?.idCierre && selectedInsumoTarget.idCierre === item.Idcierreyapertura) ||
                           (selectedInsumoTarget?.nombreInsumo && selectedInsumoTarget.nombreInsumo === item.nombreInsumo) ||
@@ -1900,7 +1945,7 @@ setSaving(false);
                                 onBlur={() => setFocusedInsumoIndex(null)}
                                 onChangeText={(val) => {
                                   onChange(val);
-                                  setModifiedInsumoIndexes(prev => new Set(prev).add(index));
+                                  markAperturaModified(insumoKey);
                                 }}
                                 className={`flex-1 min-w-[40px] text-center font-bold bg-gray-50 border ${errors.insumos?.[index]?.cantApertura ? 'border-red-500' : 'border-gray-200'} rounded py-1 text-gray-900`}
                                 placeholder="0"
@@ -1989,7 +2034,7 @@ setSaving(false);
                                 onBlur={() => setFocusedInsumoIndex(null)}
                                 onChangeText={(val) => {
                                   onChange(val);
-                                  setModifiedInsumoIndexes(prev => new Set(prev).add(index));
+                                  markCierreModified(insumoKey);
                                 }}
                                 className={`text-center font-bold bg-gray-50 border ${errors.insumos?.[index]?.cantDeCierre ? 'border-red-500' : 'border-gray-200'} rounded py-1 text-gray-900`}
                                 placeholder="-"
@@ -3050,9 +3095,11 @@ setSaving(false);
                               }
 
                               if (targetIdx >= 0) {
+                                const currentItem = getValues(`insumos.${targetIdx}`);
+                                const key = currentItem ? getInsumoKey(currentItem, targetIdx) : (selectedInsumoTarget?.idCierre || selectedInsumoTarget?.nombreInsumo || '');
                                 const currentVal = Number(getValues(`insumos.${targetIdx}.cantApertura`)) || 0;
                                 setValue(`insumos.${targetIdx}.cantApertura`, currentVal + rawAmount, { shouldDirty: true });
-                                setModifiedInsumoIndexes(prev => new Set(prev).add(targetIdx));
+                                markAperturaModified(key);
                               }
 
                               Toast.show({
@@ -3135,6 +3182,18 @@ setSaving(false);
                       const amountToSub = Number(subQtyAmount);
                       if (amountToSub <= 0) return;
 
+                      let prevVal = 0;
+                      let itemKey = '';
+                      if (targetIdx >= 0) {
+                        const currentItem = getValues(`insumos.${targetIdx}`);
+                        itemKey = currentItem ? getInsumoKey(currentItem, targetIdx) : (selectedInsumoTarget?.idCierre || selectedInsumoTarget?.nombreInsumo || '');
+                        prevVal = Number(getValues(`insumos.${targetIdx}.cantApertura`)) || 0;
+                        const newVal = Math.max(0, prevVal - amountToSub);
+                        setValue(`insumos.${targetIdx}.cantApertura`, newVal, { shouldDirty: true });
+                        markAperturaModified(itemKey);
+                      }
+                      setSubQtyModalVisible(false);
+
                       try {
                         await insumosService.descontarStock(
                           actualInsumoId,
@@ -3142,19 +3201,15 @@ setSaving(false);
                           subQtyReason || 'Descuento de Producción (Caja)'
                         );
 
-                        if (targetIdx >= 0) {
-                          const currentVal = Number(getValues(`insumos.${targetIdx}.cantApertura`)) || 0;
-                          const newVal = Math.max(0, currentVal - amountToSub);
-                          setValue(`insumos.${targetIdx}.cantApertura`, newVal, { shouldDirty: true });
-                          setModifiedInsumoIndexes(prev => new Set(prev).add(targetIdx));
-                        }
                         Toast.show({
                           type: 'success',
                           text1: 'Descuento aplicado',
                           text2: `-${amountToSub} descontados del stock global y apertura. Pulsa 'Guardar' para registrar la apertura.`
                         });
-                        setSubQtyModalVisible(false);
                       } catch (error: any) {
+                        if (targetIdx >= 0) {
+                          setValue(`insumos.${targetIdx}.cantApertura`, prevVal, { shouldDirty: true });
+                        }
                         Toast.show({
                           type: 'error',
                           text1: 'Error',
@@ -3215,9 +3270,11 @@ setSaving(false);
                     const targetIdx = getTargetIndex(selectedInsumoTarget);
                     if (targetIdx >= 0 && directSumAmount && !isNaN(Number(directSumAmount))) {
                       const amountToAdd = Number(directSumAmount);
+                      const currentItem = getValues(`insumos.${targetIdx}`);
+                      const key = currentItem ? getInsumoKey(currentItem, targetIdx) : (selectedInsumoTarget?.idCierre || selectedInsumoTarget?.nombreInsumo || '');
                       const currentVal = Number(getValues(`insumos.${targetIdx}.cantApertura`)) || 0;
                       setValue(`insumos.${targetIdx}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
-                      setModifiedInsumoIndexes(prev => new Set(prev).add(targetIdx));
+                      markAperturaModified(key);
                       setDirectSumModalVisible(false);
                     }
                   }}
@@ -3273,10 +3330,12 @@ setSaving(false);
                     const targetIdx = getTargetIndex(selectedInsumoTarget);
                     if (targetIdx >= 0 && directSubAmount && !isNaN(Number(directSubAmount))) {
                       const amountToSub = Number(directSubAmount);
+                      const currentItem = getValues(`insumos.${targetIdx}`);
+                      const key = currentItem ? getInsumoKey(currentItem, targetIdx) : (selectedInsumoTarget?.idCierre || selectedInsumoTarget?.nombreInsumo || '');
                       const currentVal = Number(getValues(`insumos.${targetIdx}.cantApertura`)) || 0;
                       const newVal = Math.max(0, currentVal - amountToSub);
                       setValue(`insumos.${targetIdx}.cantApertura`, newVal, { shouldDirty: true });
-                      setModifiedInsumoIndexes(prev => new Set(prev).add(targetIdx));
+                      markAperturaModified(key);
                       setDirectSubModalVisible(false);
                     }
                   }}
