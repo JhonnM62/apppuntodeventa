@@ -189,4 +189,9 @@ export const processVoiceOrderWithIA = async (formData: FormData) => {
   return data;
 };
 
+export const validarRostroIA = async (image: string): Promise<{ valido: boolean; motivo?: string; omitido?: boolean }> => {
+  const response = await api.post('/ai/validar-rostro', { image });
+  return response.data;
+};
+
 export default api;

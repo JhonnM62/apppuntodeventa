@@ -110,7 +110,8 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     temperatura: '0.4',
     maxTokens: '2048',
     isActive: true,
-    usarRazonamiento: false
+    usarRazonamiento: false,
+    validarFacialAsistencia: false,
   });
 
   // Estados para Whatsapp
@@ -246,7 +247,8 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           temperatura: (dataIA.temperatura ?? 0.4).toString(),
           maxTokens: (dataIA.maxTokens ?? 2048).toString(),
           isActive: dataIA.isActive ?? true,
-          usarRazonamiento: dataIA.usarRazonamiento ?? false
+          usarRazonamiento: dataIA.usarRazonamiento ?? false,
+          validarFacialAsistencia: dataIA.validarFacialAsistencia ?? false,
         });
       }
 
@@ -300,7 +302,8 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           temperatura: parseFloat(iaConfig.temperatura) || 0.4,
           maxTokens: parseInt(iaConfig.maxTokens, 10) || 2048,
           isActive: iaConfig.isActive,
-          usarRazonamiento: iaConfig.usarRazonamiento
+          usarRazonamiento: iaConfig.usarRazonamiento,
+          validarFacialAsistencia: iaConfig.validarFacialAsistencia,
         }),
         updateConfiguracionWhatsapp({
           enabled: whatsappConfig.enabled,
@@ -993,6 +996,21 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
               onValueChange={(val) => setIaConfig({...iaConfig, usarRazonamiento: val})}
               trackColor={{ false: '#d1d5db', true: '#c7d2fe' }}
               thumbColor={iaConfig.usarRazonamiento ? '#4f46e5' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16 }}>
+            <View style={{ flex: 1, paddingRight: 16 }}>
+              <Text style={styles.label}>Validar Rostro en Asistencia</Text>
+              <Text style={[styles.infoTextIA, { marginTop: 0, fontSize: 12 }]}>
+                Exige que las fotos de check-in y descansos contengan un rostro humano claro y encuadrado con el modelo de IA seleccionado. Si no hay API Key o se desactiva, se omite.
+              </Text>
+            </View>
+            <Switch
+              value={iaConfig.validarFacialAsistencia}
+              onValueChange={(val) => setIaConfig({...iaConfig, validarFacialAsistencia: val})}
+              trackColor={{ false: '#d1d5db', true: '#c7d2fe' }}
+              thumbColor={iaConfig.validarFacialAsistencia ? '#4f46e5' : '#f3f4f6'}
             />
           </View>
 

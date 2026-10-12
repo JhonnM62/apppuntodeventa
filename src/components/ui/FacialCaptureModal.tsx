@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Svg, { Path, Line, Rect, Circle, Ellipse, Defs, Mask } from 'react-native-svg';
 import { WebView } from 'react-native-webview';
+import { validarRostroIA } from '../../services/api';
 
 let ImagePicker: any;
 try {
@@ -153,6 +154,8 @@ export default function FacialCaptureModal({
   const [loadingCamera, setLoadingCamera] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
+  const [validatingAI, setValidatingAI] = useState(false);
+  const [aiValidationError, setAiValidationError] = useState<string | null>(null);
 
   // Referencias para Web
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -366,6 +369,8 @@ export default function FacialCaptureModal({
   const handleRetake = () => {
     setCapturedUri(null);
     setCameraError(null);
+    setAiValidationError(null);
+    setValidatingAI(false);
     if (Platform.OS === 'web') {
       startWebStream(facingMode);
     } else {
@@ -376,17 +381,38 @@ export default function FacialCaptureModal({
     }
   };
 
-  // Confirmar y entregar la foto capturada
-  const handleConfirm = () => {
-    if (capturedUri) {
+  // Confirmar y entregar la foto capturada previa validación con IA
+  const handleConfirm = async () => {
+    if (!capturedUri || validatingAI) return;
+
+    setValidatingAI(true);
+    setAiValidationError(null);
+
+    try {
+      const res = await validarRostroIA(capturedUri);
+      if (res && res.valido === false) {
+        setAiValidationError(res.motivo || 'No se detecta un rostro humano mirando de frente a la cámara.');
+        setValidatingAI(false);
+        return;
+      }
+
       onCapture(capturedUri);
       handleClose();
+    } catch (err: any) {
+      console.warn('[FacialCaptureModal] Error en validación IA (fallback permisivo):', err);
+      // Fallback: no bloquear al empleado si hay error de red o timeout
+      onCapture(capturedUri);
+      handleClose();
+    } finally {
+      setValidatingAI(false);
     }
   };
 
   const handleClose = () => {
     stopWebStream();
     setCapturedUri(null);
+    setAiValidationError(null);
+    setValidatingAI(false);
     onClose();
   };
 
@@ -581,7 +607,7 @@ export default function FacialCaptureModal({
                   C 348 430, 360 470, 360 540
                 `}
                 fill="none"
-                stroke={capturedUri ? '#10b981' : '#ffffff'}
+                stroke={aiValidationError ? '#ef4444' : capturedUri ? '#10b981' : '#ffffff'}
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -591,22 +617,26 @@ export default function FacialCaptureModal({
               <Path
                 d="M 112 165 C 112 235, 142 282, 180 282 C 218 282, 248 235, 248 165"
                 fill="none"
-                stroke={capturedUri ? '#10b981' : 'rgba(255, 255, 255, 0.45)'}
+                stroke={aiValidationError ? '#ef4444' : capturedUri ? '#10b981' : 'rgba(255, 255, 255, 0.45)'}
                 strokeWidth="1.5"
                 strokeDasharray="4 4"
               />
             </Svg>
 
             {/* Chip guía de estado de encuadre */}
-            <View style={styles.guideBadge}>
+            <View style={[styles.guideBadge, aiValidationError ? { backgroundColor: 'rgba(239, 68, 68, 0.85)', borderColor: '#ef4444' } : null]}>
               <Ionicons
-                name={capturedUri ? 'checkmark-circle' : 'scan-outline'}
+                name={aiValidationError ? 'alert-circle' : validatingAI ? 'sync-outline' : capturedUri ? 'checkmark-circle' : 'scan-outline'}
                 size={16}
-                color={capturedUri ? '#10b981' : '#ffffff'}
+                color={aiValidationError ? '#ffffff' : validatingAI ? '#38bdf8' : capturedUri ? '#10b981' : '#ffffff'}
                 style={{ marginRight: 6 }}
               />
               <Text style={styles.guideBadgeText}>
-                {capturedUri
+                {aiValidationError
+                  ? 'Foto rechazada: rostro no válido'
+                  : validatingAI
+                  ? 'Validando rostro con IA...'
+                  : capturedUri
                   ? 'Foto encuadrada - Confirma si es correcta'
                   : 'Ubica tu rostro y hombros dentro de la silueta'}
               </Text>
@@ -653,16 +683,43 @@ export default function FacialCaptureModal({
         <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) + 6 }]}>
           {capturedUri ? (
             /* BOTONES POST-CAPTURA (Repetir Foto y Confirmar) */
-            <View style={styles.postCaptureActions}>
-              <TouchableOpacity style={styles.retakeBtn} onPress={handleRetake} activeOpacity={0.85}>
-                <Ionicons name="refresh-outline" size={20} color="#f1f5f9" style={{ marginRight: 8 }} />
-                <Text style={styles.retakeBtnText} numberOfLines={1}>Repetir Foto</Text>
-              </TouchableOpacity>
+            <View style={{ width: '100%' }}>
+              {aiValidationError && (
+                <View style={styles.aiErrorBanner}>
+                  <Ionicons name="alert-circle" size={22} color="#ef4444" style={{ marginRight: 8, marginTop: 1 }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.aiErrorTitle}>Foto Rechazada</Text>
+                    <Text style={styles.aiErrorText}>{aiValidationError}</Text>
+                    <Text style={styles.aiErrorHint}>Toca "Repetir Foto" para encuadrarte de nuevo de frente.</Text>
+                  </View>
+                </View>
+              )}
 
-              <TouchableOpacity style={styles.confirmBtn} onPress={handleConfirm} activeOpacity={0.85}>
-                <Ionicons name="checkmark-circle" size={22} color="#ffffff" style={{ marginRight: 8 }} />
-                <Text style={styles.confirmBtnText} numberOfLines={1}>Confirmar</Text>
-              </TouchableOpacity>
+              <View style={styles.postCaptureActions}>
+                <TouchableOpacity style={styles.retakeBtn} onPress={handleRetake} activeOpacity={0.85}>
+                  <Ionicons name="refresh-outline" size={20} color="#f1f5f9" style={{ marginRight: 8 }} />
+                  <Text style={styles.retakeBtnText} numberOfLines={1}>Repetir Foto</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.confirmBtn, (validatingAI || !!aiValidationError) && { opacity: validatingAI ? 0.7 : 0.4, backgroundColor: aiValidationError ? '#4b5563' : '#10b981' }]}
+                  onPress={handleConfirm}
+                  disabled={validatingAI || !!aiValidationError}
+                  activeOpacity={0.85}
+                >
+                  {validatingAI ? (
+                    <>
+                      <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 8 }} />
+                      <Text style={styles.confirmBtnText} numberOfLines={1}>Verificando...</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark-circle" size={22} color="#ffffff" style={{ marginRight: 8 }} />
+                      <Text style={styles.confirmBtnText} numberOfLines={1}>Confirmar</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
             /* CONTROLES DE CÁMARA EN VIVO (Obturador central + Voltear cámara) */
@@ -947,5 +1004,32 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
     letterSpacing: 0.3,
+  },
+  aiErrorBanner: {
+    backgroundColor: 'rgba(239, 68, 68, 0.18)',
+    borderWidth: 1,
+    borderColor: '#ef4444',
+    borderRadius: 12,
+    padding: 10,
+    marginBottom: 10,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  aiErrorTitle: {
+    color: '#ef4444',
+    fontWeight: '700',
+    fontSize: 13,
+    marginBottom: 1,
+  },
+  aiErrorText: {
+    color: '#fecaca',
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  aiErrorHint: {
+    color: '#f87171',
+    fontSize: 11,
+    fontWeight: '400',
   },
 });
