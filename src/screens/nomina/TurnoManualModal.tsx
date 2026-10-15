@@ -108,8 +108,20 @@ export default function TurnoManualModal({ visible, empleado, onClose, onSuccess
 
   const removeFecha = (f: string) => setFechas(fechas.filter(x => x !== f));
 
-  const formatTimeStr = (d: Date) =>
-    d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  const formatTimeStr = (d: Date) => {
+    const hours = d.getHours();
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    const ampm = hours >= 12 ? 'PM' : 'AM';
+    const h12 = hours % 12 || 12;
+    return `${String(h12).padStart(2, '0')}:${minutes} ${ampm}`;
+  };
+
+  const toTimeString24 = (d: Date | null) => {
+    if (!d) return '';
+    const h = String(d.getHours()).padStart(2, '0');
+    const m = String(d.getMinutes()).padStart(2, '0');
+    return `${h}:${m}`;
+  };
 
   const formatDateLabel = (d: Date) =>
     d.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -298,7 +310,7 @@ export default function TurnoManualModal({ visible, empleado, onClose, onSuccess
               {Platform.OS === 'web' ? (
                 React.createElement('input', {
                   type: 'time',
-                  value: horaEntrada.toTimeString().slice(0, 5),
+                  value: toTimeString24(horaEntrada),
                   onChange: (e: any) => {
                     if (e.target.value) {
                       const [h, m] = e.target.value.split(':');
@@ -335,7 +347,7 @@ export default function TurnoManualModal({ visible, empleado, onClose, onSuccess
               {Platform.OS === 'web' ? (
                 React.createElement('input', {
                   type: 'time',
-                  value: horaSalida ? horaSalida.toTimeString().slice(0, 5) : '',
+                  value: toTimeString24(horaSalida),
                   onChange: (e: any) => {
                     if (e.target.value) {
                       const [h, m] = e.target.value.split(':');
