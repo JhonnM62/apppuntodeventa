@@ -156,7 +156,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
   const getInsumoKey = useCallback((item: any, fallbackIndex?: number): string => {
     if (item?.Idcierreyapertura) return String(item.Idcierreyapertura);
-    if (item?.nombreInsumo) return `${item.nombreInsumo}_${fallbackIndex ?? ''}`;
+    if (item?.nombreInsumo) return String(item.nombreInsumo);
     return String(fallbackIndex ?? '');
   }, []);
 
@@ -174,8 +174,9 @@ export default function CajaFormScreen({ route, navigation }: any) {
     modifiedAperturaKeysRef.current.clear();
     modifiedCierreKeysRef.current.clear();
     setModifiedKeys(new Set());
+    setFocusedInsumoKey(null);
   }, []);
-  const [focusedInsumoIndex, setFocusedInsumoIndex] = useState<number | null>(null);
+  const [focusedInsumoKey, setFocusedInsumoKey] = useState<string | null>(null);
 
   const [resumenData, setResumenData] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'form' | 'analysis' | 'cuadre'>('form');
@@ -740,6 +741,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
           const processed: any = {
             ...i,
+            cantApertura: i.cantApertura === '' || isNaN(Number(i.cantApertura)) ? 0 : Number(i.cantApertura),
             cantDeCierre: i.cantDeCierre === '' || isNaN(Number(i.cantDeCierre)) ? null : Number(i.cantDeCierre)
           };
           
@@ -783,6 +785,9 @@ export default function CajaFormScreen({ route, navigation }: any) {
       await updateCaja(cajaId, updateData);
       await fetchInitialData();
       clearModifiedKeys();
+      setFocusedInsumoKey(null);
+      setSelectedInsumoTarget(null);
+      Keyboard.dismiss();
       
       setIsAutoCuadreModalVisible(true);
     } catch (error: any) {
@@ -796,6 +801,9 @@ export default function CajaFormScreen({ route, navigation }: any) {
   };
 
   const onSave = async (data: any, isFinalClose: boolean = false) => {
+    Keyboard.dismiss();
+    setFocusedInsumoKey(null);
+    setSelectedInsumoTarget(null);
     setSaving(true);
     try {
       const cleanData = { ...data };
@@ -825,6 +833,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
 
           const processed: any = {
             ...i,
+            cantApertura: i.cantApertura === '' || isNaN(Number(i.cantApertura)) ? 0 : Number(i.cantApertura),
             cantDeCierre: i.cantDeCierre === '' || isNaN(Number(i.cantDeCierre)) ? null : Number(i.cantDeCierre)
           };
           
@@ -888,8 +897,8 @@ export default function CajaFormScreen({ route, navigation }: any) {
             closeData.insumos = cleanData.insumos.map((i: any) => ({
               Idcierreyapertura: i.Idcierreyapertura,
               nombreInsumo: i.nombreInsumo,
-              cantApertura: i.cantApertura,
-              cantDeCierre: i.cantDeCierre,
+              cantApertura: i.cantApertura === '' || isNaN(Number(i.cantApertura)) ? 0 : Number(i.cantApertura),
+              cantDeCierre: i.cantDeCierre === '' || isNaN(Number(i.cantDeCierre)) ? null : Number(i.cantDeCierre),
               observacion: i.observacion,
               paraQueProducto: i.paraQueProducto
             }));
@@ -916,6 +925,9 @@ export default function CajaFormScreen({ route, navigation }: any) {
         
         await fetchInitialData();
         clearModifiedKeys();
+        setFocusedInsumoKey(null);
+        setSelectedInsumoTarget(null);
+        Keyboard.dismiss();
         setIsTransferenciasDirty(false);
       }
     } catch (error: any) {
@@ -931,6 +943,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
       }
     } finally {
       setSaving(false);
+      setFocusedInsumoKey(null);
     }
   };
 
@@ -1795,7 +1808,7 @@ setSaving(false);
                     <View className="w-10 shrink-0 items-center" />
                     <Text className="w-40 shrink-0 font-bold text-xs text-gray-600">Para qué producto</Text>
                     <Text className="w-48 shrink-0 font-bold text-xs text-gray-600">Insumos</Text>
-                    <Text className="w-24 shrink-0 font-bold text-xs text-gray-600 text-center">Cant. Apertura</Text>
+                    <Text className="w-28 shrink-0 font-bold text-xs text-gray-600 text-center">Cant. Apertura</Text>
                     <Text className="w-24 shrink-0 font-bold text-xs text-gray-600 text-center">Cant. Cierre</Text>
                   </View>
 
@@ -1838,7 +1851,7 @@ setSaving(false);
                           (selectedInsumoTarget?.nombreInsumo && selectedInsumoTarget.nombreInsumo === item.nombreInsumo) ||
                           (selectedInsumoTarget?.originalIndex === index)
                         );
-                        const isFocused = focusedInsumoIndex === index;
+                        const isFocused = focusedInsumoKey === insumoKey;
                         const isRowActive = isTargetInModal || isFocused;
 
                         const rowHighlightClass = isRowActive
@@ -1931,29 +1944,29 @@ setSaving(false);
                         </View>
                       </View>
 
-                      <View className="w-24 shrink-0 px-1">
+                      <View className="w-28 shrink-0 px-1">
                         <Controller
                           control={control}
                           name={`insumos.${index}.cantApertura`}
                           render={({ field: { onChange, value } }) => (
-                            <View className="flex-row items-center">
+                            <View className="flex-row items-center justify-between">
                               <TextInput
                                 editable={!isReadOnly && isAdmin}
                                 keyboardType="numeric"
                                 value={value !== undefined && value !== null ? String(value) : ''}
-                                onFocus={() => setFocusedInsumoIndex(index)}
-                                onBlur={() => setFocusedInsumoIndex(null)}
+                                onFocus={() => setFocusedInsumoKey(insumoKey)}
+                                onBlur={() => setFocusedInsumoKey(null)}
                                 onChangeText={(val) => {
                                   onChange(val);
                                   markAperturaModified(insumoKey);
                                 }}
-                                className={`flex-1 min-w-[40px] text-center font-bold bg-gray-50 border ${errors.insumos?.[index]?.cantApertura ? 'border-red-500' : 'border-gray-200'} rounded py-1 text-gray-900`}
+                                className={`w-12 text-center font-bold bg-gray-50 border ${errors.insumos?.[index]?.cantApertura ? 'border-red-500' : 'border-gray-200'} rounded py-1 text-gray-900`}
                                 placeholder="0"
                               />
-                              <View className="flex-row mt-1 justify-center space-x-1">
+                              <View className="flex-row items-center ml-1 space-x-1">
                                 {!isReadOnly && isAdmin && (
                                   <TouchableOpacity 
-                                    className="bg-green-500 rounded w-6 h-6 items-center justify-center mr-1"
+                                    className="bg-blue-600 rounded w-6 h-6 items-center justify-center mr-1"
                                     onPress={() => {
                                       const targetData = {
                                         idCierre: item.Idcierreyapertura,
@@ -2030,8 +2043,8 @@ setSaving(false);
                                 editable={!isReadOnly}
                                 keyboardType="numeric"
                                 value={value !== undefined ? String(value) : ''}
-                                onFocus={() => setFocusedInsumoIndex(index)}
-                                onBlur={() => setFocusedInsumoIndex(null)}
+                                onFocus={() => setFocusedInsumoKey(insumoKey)}
+                                onBlur={() => setFocusedInsumoKey(null)}
                                 onChangeText={(val) => {
                                   onChange(val);
                                   markCierreModified(insumoKey);
@@ -2933,7 +2946,10 @@ setSaving(false);
           visible={addQtyModalVisible}
           transparent
           animationType="fade"
-          onRequestClose={() => setAddQtyModalVisible(false)}
+          onRequestClose={() => {
+            setAddQtyModalVisible(false);
+            setSelectedInsumoTarget(null);
+          }}
         >
           <KeyboardAwareScrollView 
             contentContainerStyle={{ flexGrow: 1 }}
@@ -3055,7 +3071,10 @@ setSaving(false);
                     <View className="flex-row justify-end mt-2 space-x-3 gap-3">
                       <TouchableOpacity 
                         className="px-4 py-2 bg-gray-200 rounded-lg"
-                        onPress={() => setAddQtyModalVisible(false)}
+                        onPress={() => {
+                          setAddQtyModalVisible(false);
+                          setSelectedInsumoTarget(null);
+                        }}
                         disabled={isSubmittingAdjustment}
                       >
                         <Text className="text-gray-700 font-bold">Cancelar</Text>
@@ -3108,6 +3127,7 @@ setSaving(false);
                                 text2: `+${rawAmount} sumados a apertura. Pulsa 'Guardar' para confirmar los cambios.`
                               });
                               setAddQtyModalVisible(false);
+                              setSelectedInsumoTarget(null);
                             } catch (e: any) {
                               Toast.show({
                                 type: 'error',
@@ -3136,7 +3156,10 @@ setSaving(false);
           visible={subQtyModalVisible}
           transparent
           animationType="fade"
-          onRequestClose={() => setSubQtyModalVisible(false)}
+          onRequestClose={() => {
+            setSubQtyModalVisible(false);
+            setSelectedInsumoTarget(null);
+          }}
         >
           <KeyboardAwareScrollView 
             contentContainerStyle={{ flexGrow: 1 }}
@@ -3168,7 +3191,10 @@ setSaving(false);
               <View className="flex-row justify-end space-x-3">
                 <TouchableOpacity 
                   className="px-4 py-2 bg-gray-200 rounded-lg"
-                  onPress={() => setSubQtyModalVisible(false)}
+                  onPress={() => {
+                    setSubQtyModalVisible(false);
+                    setSelectedInsumoTarget(null);
+                  }}
                 >
                   <Text className="text-gray-700 font-bold">Cancelar</Text>
                 </TouchableOpacity>
@@ -3193,6 +3219,7 @@ setSaving(false);
                         markAperturaModified(itemKey);
                       }
                       setSubQtyModalVisible(false);
+                      setSelectedInsumoTarget(null);
 
                       try {
                         await insumosService.descontarStock(
@@ -3232,7 +3259,10 @@ setSaving(false);
           visible={directSumModalVisible}
           transparent
           animationType="fade"
-          onRequestClose={() => setDirectSumModalVisible(false)}
+          onRequestClose={() => {
+            setDirectSumModalVisible(false);
+            setSelectedInsumoTarget(null);
+          }}
         >
           <KeyboardAwareScrollView 
             contentContainerStyle={{ flexGrow: 1 }}
@@ -3260,7 +3290,10 @@ setSaving(false);
               <View className="flex-row space-x-3">
                 <TouchableOpacity 
                   className="flex-1 py-3 rounded-xl bg-gray-100 items-center border border-gray-200"
-                  onPress={() => setDirectSumModalVisible(false)}
+                  onPress={() => {
+                    setDirectSumModalVisible(false);
+                    setSelectedInsumoTarget(null);
+                  }}
                 >
                   <Text className="text-gray-700 font-bold">Cancelar</Text>
                 </TouchableOpacity>
@@ -3276,6 +3309,7 @@ setSaving(false);
                       setValue(`insumos.${targetIdx}.cantApertura`, currentVal + amountToAdd, { shouldDirty: true });
                       markAperturaModified(key);
                       setDirectSumModalVisible(false);
+                      setSelectedInsumoTarget(null);
                     }
                   }}
                 >
@@ -3292,7 +3326,10 @@ setSaving(false);
           visible={directSubModalVisible}
           transparent
           animationType="fade"
-          onRequestClose={() => setDirectSubModalVisible(false)}
+          onRequestClose={() => {
+            setDirectSubModalVisible(false);
+            setSelectedInsumoTarget(null);
+          }}
         >
           <KeyboardAwareScrollView 
             contentContainerStyle={{ flexGrow: 1 }}
@@ -3320,7 +3357,10 @@ setSaving(false);
               <View className="flex-row space-x-3">
                 <TouchableOpacity 
                   className="flex-1 py-3 rounded-xl bg-gray-100 items-center border border-gray-200"
-                  onPress={() => setDirectSubModalVisible(false)}
+                  onPress={() => {
+                    setDirectSubModalVisible(false);
+                    setSelectedInsumoTarget(null);
+                  }}
                 >
                   <Text className="text-gray-700 font-bold">Cancelar</Text>
                 </TouchableOpacity>
@@ -3337,6 +3377,7 @@ setSaving(false);
                       setValue(`insumos.${targetIdx}.cantApertura`, newVal, { shouldDirty: true });
                       markAperturaModified(key);
                       setDirectSubModalVisible(false);
+                      setSelectedInsumoTarget(null);
                     }
                   }}
                 >
