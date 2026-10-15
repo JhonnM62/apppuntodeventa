@@ -1,4 +1,4 @@
-﻿import React from "react";
+import React from "react";
 import {
   View,
   StyleSheet,
@@ -38,6 +38,30 @@ export default function LiquidacionViewerModal({
 
   const handleDescargar = async () => {
     try {
+      if (Platform.OS === "web") {
+        try {
+          const iframe = document.querySelector("iframe") as HTMLIFrameElement;
+          if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+            return;
+          }
+        } catch (_) {}
+        const printWindow = window.open("", "_blank");
+        if (printWindow) {
+          printWindow.document.open();
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => {
+            try { printWindow.print(); } catch (_) {}
+          }, 400);
+          return;
+        }
+        window.print();
+        return;
+      }
+
       if (!Print) return;
       const { uri } = await Print.printToFileAsync({ html });
       if (Sharing && (await Sharing.isAvailableAsync())) {

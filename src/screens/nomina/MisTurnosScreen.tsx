@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, RefreshControl } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, TextInput, RefreshControl, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '../../components/ui/text';
 import { Card } from '../../components/ui/card';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getMisTurnos, Turno, firmarLiquidacion, getLiquidacionById } from '../../services/nomina.service';
+import { getMisTurnos, Turno, firmarLiquidacion, getLiquidacionById, getResumenEmpleado } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import { useSocket } from '../../hooks/useSocket';
 import useSocketEvent from '../../hooks/useSocketEvent';
@@ -15,11 +15,19 @@ import LiquidacionViewerModal from '../../components/ui/LiquidacionViewerModal';
 import { generarLiquidacionHTML } from '../../utils/nominaPdf';
 import DescansoCard from './DescansoCard';
 
+let Print: any = null;
+try { Print = require('expo-print'); } catch (_) {}
+let Sharing: any = null;
+try { Sharing = require('expo-sharing'); } catch (_) {}
+
+const CONCEPTOS_BONO = ['BONO', 'PREMIO', 'HORAS_EXTRAS'];
+
 export default function MisTurnosScreen({ navigation }: any) {
   const insets = useSafeAreaInsets();
   const { showAlert } = useCustomAlert();
   const { user } = useAuthStore();
   const { joinRoom, isConnected } = useSocket();
+
   const [turnos, setTurnos] = useState<Turno[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -27,6 +35,12 @@ export default function MisTurnosScreen({ navigation }: any) {
   const [statusFilter, setStatusFilter] = useState('Todos');
   const [selectedQuincenaKey, setSelectedQuincenaKey] = useState<string>('');
   const [showAllQuincenas, setShowAllQuincenas] = useState(false);
+
+  // Resumen oficial obtenido del backend (mismo que calcula Resumen de Pagos en Admin)
+  const [resumenQuincenal, setResumenQuincenal] = useState<any>(null);
+  const [loadingResumen, setLoadingResumen] = useState(false);
+  const [showDescuentosDetalle, setShowDescuentosDetalle] = useState(true);
+  const [generandoPdf, setGenerandoPdf] = useState(false);
 
   const [pendingLiquidacion, setPendingLiquidacion] = useState<any>(null);
   const [visorHtml, setVisorHtml] = useState<string | null>(null);
@@ -124,7 +138,6 @@ export default function MisTurnosScreen({ navigation }: any) {
         setLoading(true);
       }
       const res = await getMisTurnos({ limit: 100 }); 
-      // Ensure we sort descending by Date
       const sortedTurnos = (res.data?.turnos || res.data || []).sort((a: any, b: any) => {
         const dateA = new Date(a.fecha || a.horaEntrada).getTime();
         const dateB = new Date(b.fecha || b.horaEntrada).getTime();
@@ -192,7 +205,6 @@ export default function MisTurnosScreen({ navigation }: any) {
   const isCurrentQuincena = activeQuincena.key === todayKey;
 
   const handlePrevQuincena = () => {
-    // Ir a quincena anterior (más antigua en array descendente)
     if (activeQuincenaIndex < quincenasList.length - 1) {
       setSelectedQuincenaKey(quincenasList[activeQuincenaIndex + 1].key);
       setShowAllQuincenas(false);
@@ -200,15 +212,50 @@ export default function MisTurnosScreen({ navigation }: any) {
   };
 
   const handleNextQuincena = () => {
-    // Ir a quincena siguiente (más reciente en array descendente)
     if (activeQuincenaIndex > 0) {
       setSelectedQuincenaKey(quincenasList[activeQuincenaIndex - 1].key);
       setShowAllQuincenas(false);
     }
   };
 
-  // Balance financiero consolidado de la quincena activa
-  const quincenaFinancials = useMemo(() => {
+  // Obtener el resumen oficial del backend para la quincena activa
+  // (incluye todos los descuentos globales del empleado como ADELANTOS, descuadres y retardos)
+  const fetchResumen = async (quincenaKey: string) => {
+    try {
+      setLoadingResumen(true);
+      const { fechaDesde, fechaHasta } = getQuincenaDateRange(quincenaKey);
+      const res = await getResumenEmpleado({ fechaDesde, fechaHasta });
+      const data = res?.data || res;
+      setResumenQuincenal(data);
+    } catch (error) {
+      console.error('[MisTurnosScreen] Error al obtener resumen de nómina:', error);
+    } finally {
+      setLoadingResumen(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeQuincena.key) {
+      fetchResumen(activeQuincena.key);
+    }
+  }, [activeQuincena.key]);
+
+  // Balance financiero consolidado (se prioriza el resumen oficial del backend)
+  const financials = useMemo(() => {
+    if (resumenQuincenal) {
+      return {
+        turnosCount: Number(resumenQuincenal.totalTurnos || 0),
+        completados: Number(resumenQuincenal.totalTurnos || 0),
+        activos: turnos.filter(t => t.estado === 'ACTIVO' && getQuincenaKey(t.horaEntrada || (t as any).fecha) === activeQuincena.key).length,
+        bruto: Number(resumenQuincenal.totalBruto || 0),
+        totalDescuentos: Number(resumenQuincenal.totalDescuentos || 0),
+        bonos: Number(resumenQuincenal.totalBonos || 0),
+        neto: Number(resumenQuincenal.totalNeto || 0),
+        descuentos: resumenQuincenal.descuentos || [],
+      };
+    }
+
+    // Fallback de cálculo local
     const quincenaTurnos = turnos.filter(t => {
       const f = t.horaEntrada || (t as any).fecha;
       return f && getQuincenaKey(f) === activeQuincena.key;
@@ -241,14 +288,123 @@ export default function MisTurnosScreen({ navigation }: any) {
       totalDescuentos,
       bonos,
       neto,
+      descuentos: [],
     };
-  }, [turnos, activeQuincena.key]);
+  }, [resumenQuincenal, turnos, activeQuincena.key]);
 
-  // Filtrado y agrupamiento de turnos para el listado
+  // Descuentos agrupados por concepto (mismo formato visual que el modal Resumen de Pagos)
+  const descuentosAgrupados = useMemo(() => {
+    if (!resumenQuincenal?.descuentos) return {};
+    return resumenQuincenal.descuentos.reduce((acc: any, d: any) => {
+      if (d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE') return acc;
+      const concepto = d.concepto || 'OTRO';
+      if (!acc[concepto]) acc[concepto] = { count: 0, total: 0 };
+      acc[concepto].count += 1;
+      acc[concepto].total += Number(d.valor || 0);
+      return acc;
+    }, {});
+  }, [resumenQuincenal?.descuentos]);
+
+  // ── Generación y Descarga de PDF (compatible con web móvil Safari/Chrome y nativo) ──
+  const abrirPdfDesdeHTML = async (html: string, nombreArchivo = 'Comprobante_Pago.pdf') => {
+    if (Platform.OS === 'web') {
+      try {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.open();
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.focus();
+          setTimeout(() => {
+            try { printWindow.print(); } catch (_) {}
+          }, 500);
+          return;
+        }
+      } catch (e) {
+        console.warn('Popup blocked on mobile web:', e);
+      }
+      // Fallback para Safari / Chrome móvil con bloqueador de popups: abrir visor modal in-app
+      setVisorHtml(html);
+      setVisorModoFirma(false);
+      return;
+    }
+
+    // Nativo (Android / iOS)
+    if (!Print) {
+      setVisorHtml(html);
+      setVisorModoFirma(false);
+      return;
+    }
+
+    try {
+      const { uri } = await Print.printToFileAsync({ html, base64: false });
+      if (Sharing && (await Sharing.isAvailableAsync())) {
+        await Sharing.shareAsync(uri, {
+          UTI: 'com.adobe.pdf',
+          mimeType: 'application/pdf',
+          dialogTitle: 'Comprobante de Pago',
+        });
+      } else {
+        setVisorHtml(html);
+        setVisorModoFirma(false);
+      }
+    } catch (err) {
+      console.error('[MisTurnosScreen] Error al exportar PDF nativo:', err);
+      setVisorHtml(html);
+      setVisorModoFirma(false);
+    }
+  };
+
+  const handleGenerarPdf = async () => {
+    let dataResumen = resumenQuincenal;
+    if (!dataResumen) {
+      try {
+        setGenerandoPdf(true);
+        const { fechaDesde, fechaHasta } = getQuincenaDateRange(activeQuincena.key);
+        const res = await getResumenEmpleado({ fechaDesde, fechaHasta });
+        dataResumen = res?.data || res;
+        setResumenQuincenal(dataResumen);
+      } catch (err) {
+        showAlert({ type: 'error', title: 'Error', message: 'No se pudieron obtener los datos para el PDF' });
+        return;
+      } finally {
+        setGenerandoPdf(false);
+      }
+    }
+
+    const { fechaDesde, fechaHasta } = getQuincenaDateRange(activeQuincena.key);
+    const empNombre = dataResumen?.usuario?.nombre || user?.nombre || 'Empleado';
+    const empCargo = dataResumen?.usuario?.cargo?.nombre || user?.cargo?.nombre || 'Empleado';
+    const cargo = dataResumen?.usuario?.cargo || user?.cargo;
+    const minutosGracia = dataResumen?.minutosGracia ?? 5;
+
+    const now = new Date();
+    const meses = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const fileName = `Resumen_${empNombre.replace(/\s+/g,'_')}_${now.getDate()}_${meses[now.getMonth()]}_${now.getFullYear()}.pdf`;
+
+    const html = generarLiquidacionHTML({
+      empleadoNombre: empNombre,
+      empleadoCargo: empCargo,
+      cargo,
+      minutosGracia,
+      fechaInicio: fechaDesde,
+      fechaFin: fechaHasta,
+      turnos: dataResumen?.turnos || [],
+      descuentos: (dataResumen?.descuentos || []).filter((d: any) => !(d.concepto === 'LLEGADA_TARDE' && d.estado === 'PENDIENTE')),
+      totalBruto: dataResumen?.totalBruto || 0,
+      totalDescuentos: dataResumen?.totalDescuentos || 0,
+      totalNeto: dataResumen?.totalNeto || 0,
+      firmaAdmin: '',
+      firmaEmpleado: '',
+    });
+
+    await abrirPdfDesdeHTML(html, fileName);
+  };
+
+  // Filtrado y agrupamiento de turnos para el listado inferior
   const filteredAndGroupedTurnos = useMemo(() => {
     let filtered = turnos;
 
-    // Si no está en modo "ver todas" y no hay búsqueda de texto, restringir a la quincena activa
     if (!showAllQuincenas && searchQuery.trim() === '') {
       filtered = filtered.filter(t => {
         const f = t.horaEntrada || (t as any).fecha;
@@ -285,9 +441,30 @@ export default function MisTurnosScreen({ navigation }: any) {
           <Ionicons name="arrow-back" size={24} color="#111827" />
         </TouchableOpacity>
         <Text style={styles.title}>Mis Turnos</Text>
-        <TouchableOpacity onPress={() => loadTurnos(true)} style={styles.reloadBtn}>
-          <Ionicons name="refresh" size={20} color="#4b5563" />
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity 
+            onPress={handleGenerarPdf} 
+            style={styles.headerBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            disabled={generandoPdf}
+          >
+            {generandoPdf ? (
+              <ActivityIndicator size="small" color="#4338ca" />
+            ) : (
+              <Ionicons name="document-text-outline" size={22} color="#4338ca" />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => {
+              loadTurnos(true);
+              if (activeQuincena.key) fetchResumen(activeQuincena.key);
+            }} 
+            style={styles.headerBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="refresh" size={20} color="#4b5563" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       {loading && !refreshing ? (
@@ -299,7 +476,10 @@ export default function MisTurnosScreen({ navigation }: any) {
           refreshControl={
             <RefreshControl 
               refreshing={refreshing} 
-              onRefresh={() => loadTurnos(true)} 
+              onRefresh={() => {
+                loadTurnos(true);
+                if (activeQuincena.key) fetchResumen(activeQuincena.key);
+              }} 
               colors={['#10b981', '#3b82f6']} 
             />
           }
@@ -364,7 +544,7 @@ export default function MisTurnosScreen({ navigation }: any) {
               <Text style={styles.heroSubheader}>BALANCE ESTIMADO A COBRAR</Text>
               <View style={styles.heroAmountRow}>
                 <Text style={styles.heroCurrencySymbol}>$</Text>
-                <Text style={styles.heroAmount}>{quincenaFinancials.neto.toLocaleString('es-CO')}</Text>
+                <Text style={styles.heroAmount}>{financials.neto.toLocaleString('es-CO')}</Text>
                 <Text style={styles.heroCurrencyCode}>COP</Text>
               </View>
               <Text style={styles.heroSubtitle}>
@@ -372,6 +552,21 @@ export default function MisTurnosScreen({ navigation }: any) {
                   ? 'Total neto acumulado de lo trabajado en esta quincena'
                   : 'Total neto liquidado / finalizado de este período'}
               </Text>
+
+              {/* Botón Descargar Comprobante PDF */}
+              <TouchableOpacity 
+                style={styles.heroPdfActionBtn}
+                onPress={handleGenerarPdf}
+                activeOpacity={0.8}
+                disabled={generandoPdf}
+              >
+                {generandoPdf ? (
+                  <ActivityIndicator size="small" color="#ffffff" style={{ marginRight: 6 }} />
+                ) : (
+                  <Ionicons name="document-text" size={16} color="#6ee7b7" style={{ marginRight: 6 }} />
+                )}
+                <Text style={styles.heroPdfActionText}>Descargar Comprobante PDF</Text>
+              </TouchableOpacity>
             </View>
 
             {/* Fila inferior: Chips de resumen Bruto, Descuentos y Bonos */}
@@ -379,14 +574,14 @@ export default function MisTurnosScreen({ navigation }: any) {
               <View style={styles.heroChip}>
                 <Ionicons name="wallet-outline" size={12} color="#94a3b8" />
                 <Text style={styles.heroChipLabel}>Bruto: </Text>
-                <Text style={styles.heroChipVal}>${quincenaFinancials.bruto.toLocaleString('es-CO')}</Text>
+                <Text style={styles.heroChipVal}>${financials.bruto.toLocaleString('es-CO')}</Text>
               </View>
 
               <View style={[styles.heroChip, styles.heroChipDiscount]}>
                 <Ionicons name="arrow-down-outline" size={12} color="#f87171" />
                 <Text style={[styles.heroChipLabel, { color: '#fca5a5' }]}>Dtos: </Text>
                 <Text style={[styles.heroChipVal, { color: '#fca5a5' }]}>
-                  -${quincenaFinancials.totalDescuentos.toLocaleString('es-CO')}
+                  -${financials.totalDescuentos.toLocaleString('es-CO')}
                 </Text>
               </View>
 
@@ -394,7 +589,7 @@ export default function MisTurnosScreen({ navigation }: any) {
                 <Ionicons name="arrow-up-outline" size={12} color="#34d399" />
                 <Text style={[styles.heroChipLabel, { color: '#86efac' }]}>Bonos: </Text>
                 <Text style={[styles.heroChipVal, { color: '#86efac' }]}>
-                  +${quincenaFinancials.bonos.toLocaleString('es-CO')}
+                  +${financials.bonos.toLocaleString('es-CO')}
                 </Text>
               </View>
             </View>
@@ -410,9 +605,9 @@ export default function MisTurnosScreen({ navigation }: any) {
                 </View>
                 <Text style={styles.miniCardLabel}>Turnos</Text>
               </View>
-              <Text style={styles.miniCardValue}>{quincenaFinancials.turnosCount}</Text>
+              <Text style={styles.miniCardValue}>{financials.turnosCount}</Text>
               <Text style={styles.miniCardSub}>
-                {quincenaFinancials.completados} comp. · {quincenaFinancials.activos} act.
+                {financials.completados} comp. · {financials.activos} act.
               </Text>
             </View>
 
@@ -425,9 +620,9 @@ export default function MisTurnosScreen({ navigation }: any) {
                 <Text style={styles.miniCardLabel}>Descuentos</Text>
               </View>
               <Text style={[styles.miniCardValue, { color: '#dc2626' }]}>
-                -${quincenaFinancials.totalDescuentos.toLocaleString('es-CO')}
+                -${financials.totalDescuentos.toLocaleString('es-CO')}
               </Text>
-              <Text style={styles.miniCardSub}>Cena, retardos, otros</Text>
+              <Text style={styles.miniCardSub}>Adelanto, cena, retardos</Text>
             </View>
 
             {/* Mini Card 3: Bonos / Extras */}
@@ -439,11 +634,60 @@ export default function MisTurnosScreen({ navigation }: any) {
                 <Text style={styles.miniCardLabel}>Bonos / Ext.</Text>
               </View>
               <Text style={[styles.miniCardValue, { color: '#16a34a' }]}>
-                +${quincenaFinancials.bonos.toLocaleString('es-CO')}
+                +${financials.bonos.toLocaleString('es-CO')}
               </Text>
               <Text style={styles.miniCardSub}>Premios y extras</Text>
             </View>
           </View>
+
+          {/* ── DESGLOSE DETALLADO DE DESCUENTOS (Identico al modal Resumen de Pagos) ── */}
+          {Object.keys(descuentosAgrupados).length > 0 && (
+            <View style={styles.descuentosDetalleCard}>
+              <TouchableOpacity 
+                style={styles.descuentosDetalleHeader}
+                onPress={() => setShowDescuentosDetalle(!showDescuentosDetalle)}
+                activeOpacity={0.7}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="receipt-outline" size={16} color="#ef4444" style={{ marginRight: 6 }} />
+                  <Text style={styles.descuentosDetalleTitle}>
+                    Desglose de Descuentos ({financials.descuentos.length})
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={styles.descuentosTotalTag}>
+                    -${financials.totalDescuentos.toLocaleString('es-CO')}
+                  </Text>
+                  <Ionicons 
+                    name={showDescuentosDetalle ? "chevron-up" : "chevron-down"} 
+                    size={16} 
+                    color="#64748b" 
+                    style={{ marginLeft: 4 }}
+                  />
+                </View>
+              </TouchableOpacity>
+
+              {showDescuentosDetalle && (
+                <View style={styles.descuentosDetalleBody}>
+                  {Object.entries(descuentosAgrupados).map(([concepto, data]: any) => {
+                    const esBono = CONCEPTOS_BONO.includes(concepto);
+                    const label = concepto === 'CENA' 
+                      ? `${data.count} ${data.count === 1 ? 'CENA' : 'CENAS'}`
+                      : `${data.count} ${data.count === 1 ? 'vez' : 'veces'} - ${concepto.replace(/_/g, ' ')}`;
+                    
+                    return (
+                      <View key={concepto} style={styles.descuentoDetalleRow}>
+                        <Text style={styles.descuentoDetalleLabel}>↳ {label}</Text>
+                        <Text style={[styles.descuentoDetalleValue, { color: esBono ? '#10b981' : '#dc2626' }]}>
+                          {esBono ? '+' : '-'}${Number(data.total).toLocaleString('es-CO')}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
+          )}
 
           {/* ── BANNER INFORMATIVO DE QUINCENA & TOGGLE ── */}
           <View style={styles.quincenaBanner}>
@@ -622,7 +866,7 @@ export default function MisTurnosScreen({ navigation }: any) {
                               </View>
                             )}
                             <View style={[styles.financialRow, { borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 8, marginTop: 4 }]}>
-                              <Text style={styles.netMoneyLabel}>Neto:</Text>
+                              <Text style={styles.netMoneyLabel}>Neto Turno:</Text>
                               <Text style={styles.netMoneyValue}>${fin.neto.toLocaleString('es-CO')}</Text>
                             </View>
                           </View>
@@ -642,7 +886,7 @@ export default function MisTurnosScreen({ navigation }: any) {
       <LiquidacionViewerModal
         visible={!!visorHtml}
         html={visorHtml || ''}
-        title="Comprobante de Liquidación"
+        title="Comprobante de Pago / Liquidación"
         showSignButton={visorModoFirma}
         onSign={handleAbrirFirma}
         onClose={() => setVisorHtml(null)}
@@ -658,8 +902,6 @@ export default function MisTurnosScreen({ navigation }: any) {
     </View>
   );
 }
-
-const CONCEPTOS_BONO = ['BONO', 'PREMIO', 'HORAS_EXTRAS'];
 
 export function calculateTurnoFinancials(turno: any) {
   const bruto = Number(turno.valorTurno || 0);
@@ -730,6 +972,30 @@ export function getQuincenaLabel(fechaStr: string) {
   return `16 - ${lastDay} ${month.toUpperCase()} ${year}`;
 }
 
+export function getQuincenaDateRange(quincenaKey: string) {
+  const parts = quincenaKey.split('-');
+  const year = parseInt(parts[0], 10) || new Date().getFullYear();
+  const month = (parseInt(parts[1], 10) || (new Date().getMonth() + 1)) - 1;
+  const q = parseInt(parts[2], 10) || 1;
+
+  let startDay = 1;
+  let endDay = 15;
+
+  if (q === 2) {
+    startDay = 16;
+    endDay = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+  }
+
+  // Idéntico a AdminNominaScreen lines 535-541
+  const fechaDesde = new Date(Date.UTC(year, month, startDay, 0, 0, 0, 0));
+  const fechaHasta = new Date(Date.UTC(year, month, endDay, 23, 59, 59, 999));
+
+  return {
+    fechaDesde: fechaDesde.toISOString(),
+    fechaHasta: fechaHasta.toISOString(),
+  };
+}
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
   header: { 
@@ -743,7 +1009,8 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f3f4f6' 
   },
   backBtn: { padding: 8 },
-  reloadBtn: { padding: 8 },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  headerBtn: { padding: 8 },
   title: { fontSize: 20, fontWeight: '700', color: '#111827' },
   
   content: { flex: 1 },
@@ -863,6 +1130,22 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: 'center',
   },
+  heroPdfActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(110, 231, 183, 0.4)',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    marginTop: 10,
+  },
+  heroPdfActionText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
   heroChipsRow: {
     flexDirection: 'row',
     gap: 6,
@@ -947,6 +1230,62 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#94a3b8',
     fontWeight: '500',
+  },
+
+  // Descuentos detalle card
+  descuentosDetalleCard: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#fca5a5',
+    overflow: 'hidden',
+    elevation: 1,
+    shadowColor: '#ef4444',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+  },
+  descuentosDetalleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#fff5f5',
+  },
+  descuentosDetalleTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#b91c1c',
+  },
+  descuentosTotalTag: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#dc2626',
+  },
+  descuentosDetalleBody: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#fee2e2',
+    backgroundColor: '#ffffff',
+  },
+  descuentoDetalleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  descuentoDetalleLabel: {
+    fontSize: 12,
+    color: '#4b5563',
+    fontWeight: '500',
+  },
+  descuentoDetalleValue: {
+    fontSize: 12,
+    fontWeight: '700',
   },
 
   // Quincena Banner
