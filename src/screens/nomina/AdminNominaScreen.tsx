@@ -30,6 +30,13 @@ try {
 }
 import { generarLiquidacionHTML } from '../../utils/nominaPdf';
 
+const STORAGE_KEY_LIQUIDACIONES = '@nomina_liquidaciones_cache';
+const STORAGE_KEY_DASHBOARD = '@nomina_dashboard_cache';
+
+// Caché en memoria para renderizado instantáneo (0ms) en iOS, Android y Desktop
+let memoryLiquidacionesCache: { data: any[]; total: number } | null = null;
+let memoryDashboardCache: { empleados: any[]; turnosHoy: any[] } | null = null;
+
 const formatMinSec = (totalSec: number): string => {
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
@@ -256,14 +263,46 @@ export default function AdminNominaScreen({ navigation }: any) {
     loadData();
   });
 
-  const loadLiquidaciones = async () => {
+  const loadLiquidaciones = async (forceRefresh = false) => {
     try {
-      setLoadingLiquidaciones(true);
+      // 1. SWR Cache Inmediato (0 ms en iOS, Android y Desktop):
+      if (memoryLiquidacionesCache && !forceRefresh) {
+        setLiquidaciones(memoryLiquidacionesCache.data);
+        setLiquidacionesTotal(memoryLiquidacionesCache.total);
+      } else if (!forceRefresh) {
+        // Buscar en AsyncStorage si no está en memoria
+        try {
+          const cached = await AsyncStorage.getItem(STORAGE_KEY_LIQUIDACIONES);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && Array.isArray(parsed.data)) {
+              setLiquidaciones(parsed.data);
+              setLiquidacionesTotal(parsed.total || parsed.data.length);
+              memoryLiquidacionesCache = parsed;
+            }
+          }
+        } catch (_) {}
+
+        // Solo mostrar spinner si no hay datos en caché en absoluto
+        if (!memoryLiquidacionesCache && liquidaciones.length === 0) {
+          setLoadingLiquidaciones(true);
+        }
+      } else {
+        setLoadingLiquidaciones(true);
+      }
+
       setLiquidacionesPage(1);
-      const res = await getLiquidaciones({ page: 1, limit: 50, _t: Date.now() } as any);
+      // Petición limpia sin _t innecesario para permitir navegación rápida y caché óptimo
+      const res = await getLiquidaciones({ page: 1, limit: 50 });
       const arr = Array.isArray(res?.data?.data) ? res.data.data : (Array.isArray(res?.data) ? res.data : []);
+      const total = res?.meta?.total || arr.length;
+
       setLiquidaciones(arr);
-      setLiquidacionesTotal(res?.meta?.total || arr.length);
+      setLiquidacionesTotal(total);
+
+      // Guardar en caché de memoria y almacenamiento persistente (compatible con iOS, Android y Desktop Web)
+      memoryLiquidacionesCache = { data: arr, total };
+      AsyncStorage.setItem(STORAGE_KEY_LIQUIDACIONES, JSON.stringify(memoryLiquidacionesCache)).catch(() => {});
     } catch (error) {
       console.error('Error cargando liquidaciones:', error);
     } finally {
@@ -276,10 +315,15 @@ export default function AdminNominaScreen({ navigation }: any) {
     try {
       setLoadingMoreLiquidaciones(true);
       const nextPage = liquidacionesPage + 1;
-      const res = await getLiquidaciones({ page: nextPage, limit: 50, _t: Date.now() } as any);
+      const res = await getLiquidaciones({ page: nextPage, limit: 50 });
       const arr = Array.isArray(res?.data?.data) ? res.data.data : (Array.isArray(res?.data) ? res.data : []);
       if (arr.length > 0) {
-        setLiquidaciones(prev => [...prev, ...arr]);
+        setLiquidaciones(prev => {
+          const updated = [...prev, ...arr];
+          memoryLiquidacionesCache = { data: updated, total: liquidacionesTotal };
+          AsyncStorage.setItem(STORAGE_KEY_LIQUIDACIONES, JSON.stringify(memoryLiquidacionesCache)).catch(() => {});
+          return updated;
+        });
         setLiquidacionesPage(nextPage);
       }
     } catch (error) {
@@ -312,7 +356,7 @@ export default function AdminNominaScreen({ navigation }: any) {
       const res = await deshacerLiquidacion(confirmDeshacerId);
       showAlert({ type: 'success', title: 'Éxito', message: res?.data?.mensaje || 'Liquidación deshecha' });
       setConfirmDeshacerId(null);
-      loadLiquidaciones();
+      await Promise.all([loadLiquidaciones(true), loadData(true)]);
     } catch (error: any) {
       const msg = error?.response?.data?.message || 'Error al deshacer la liquidación';
       showAlert({ type: 'error', title: 'Error', message: Array.isArray(msg) ? msg[0] : msg });
@@ -330,7 +374,7 @@ export default function AdminNominaScreen({ navigation }: any) {
         showAlert({ type: 'success', title: 'Éxito', message: 'Firma de administrador guardada correctamente' });
         setLiquidacionParaFirmaAdmin(null);
         setShowSignatureAdmin(false);
-        await loadLiquidaciones();
+        await loadLiquidaciones(true);
       } catch (e: any) {
         showAlert({ type: 'error', title: 'Error', message: e.response?.data?.message || 'No se pudo guardar la firma' });
         setShowSignatureAdmin(false);
@@ -360,7 +404,7 @@ export default function AdminNominaScreen({ navigation }: any) {
         empleadoALiquidar.current = null;
         setShowSignatureAdmin(false);
         setSelectedEmpleado(null); // Cierra el modal de resumen
-        await loadLiquidaciones();
+        await Promise.all([loadLiquidaciones(true), loadData(true)]);
       } catch (error: any) {
         console.error(error);
         const msg = error?.response?.data?.message || 'Error al liquidar al empleado';
@@ -393,7 +437,7 @@ export default function AdminNominaScreen({ navigation }: any) {
       setShowDescuentoExtraModal(false);
       setExtraDescripcion('');
       setExtraValor('');
-      await loadLiquidaciones();
+      await loadLiquidaciones(true);
     } catch (e: any) {
       showAlert({ type: 'error', title: 'Error', message: e.response?.data?.message || 'No se pudo agregar el descuento' });
     } finally {
@@ -401,24 +445,23 @@ export default function AdminNominaScreen({ navigation }: any) {
     }
   };
 
-  const abrirPdfDesdeHTML = async (html: string, nombreArchivo = 'Liquidacion_Nomina.pdf') => {
+  const abrirPdfDesdeHTML = async (html: string, nombreArchivo = 'Liquidacion_Nomina.pdf', printWindow?: any) => {
     if (Platform.OS === 'web') {
       // Web: expo-print's printToFileAsync is NOT supported on web.
-      // The reliable approach is to open a new tab, write the HTML, and trigger print().
-      const printWindow = window.open('', '_blank');
-      if (printWindow) {
-        printWindow.document.open();
-        printWindow.document.write(html);
-        printWindow.document.close();
-        printWindow.focus();
-        // Give the browser time to render the HTML before triggering the print dialog
-        setTimeout(() => { printWindow.print(); }, 600);
+      // Si ya teníamos una ventana abierta sincrónicamente al clic, la usamos; de lo contrario window.open
+      const win = printWindow || window.open('', '_blank');
+      if (win) {
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
+        win.focus();
+        // Dar tiempo al navegador para renderizar el HTML antes de lanzar el diálogo de impresión
+        setTimeout(() => { win.print(); }, 600);
       } else {
         showAlert({ type: 'error', title: 'Error', message: 'El navegador bloqueó la ventana emergente. Por favor, permite las ventanas emergentes para este sitio e intenta de nuevo.' });
       }
       return;
     }
-
 
     if (!Print) return showAlert({ type: 'error', title: 'Error', message: 'Módulo PDF no disponible' });
 
@@ -473,6 +516,19 @@ export default function AdminNominaScreen({ navigation }: any) {
   };
 
   const handleVerPDF = async (liquidacion: any) => {
+    // Para Web (Desktop, Safari iOS, Chrome Android en navegador), abrir la ventana SINCRÓNICAMENTE al clic
+    // para evitar que los navegadores móviles bloqueen la ventana emergente por ejecutarse tras un await asíncrono.
+    let preOpenedWindow: any = null;
+    if (Platform.OS === 'web') {
+      try {
+        preOpenedWindow = window.open('', '_blank');
+        if (preOpenedWindow) {
+          preOpenedWindow.document.write('<html><head><title>Generando Liquidación...</title><style>body{font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;margin:0;color:#374151;background-color:#f9fafb;}.loader{border:4px solid #f3f4f6;border-top:4px solid #3b82f6;border-radius:50%;width:36px;height:36px;animation:spin 1s linear infinite;margin-bottom:16px;}@keyframes spin{0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}</style></head><body><div class="loader"></div><div style="font-weight:600;font-size:16px;">Generando documento PDF...</div><div style="color:#6b7280;font-size:13px;margin-top:6px;">Por favor espere un momento</div></body></html>');
+          preOpenedWindow.document.close();
+        }
+      } catch (_) {}
+    }
+
     try {
       // Fetch full record to get turnosDetalle and descuentosDetalle which are not included in the list response
       const full = await getLiquidacionById(liquidacion.IDliquidacion);
@@ -498,19 +554,50 @@ export default function AdminNominaScreen({ navigation }: any) {
         firmaAdmin: liq.firmaAdmin,
         firmaEmpleado: liq.firmaEmpleado,
       });
-      await abrirPdfDesdeHTML(html, fileName);
+      await abrirPdfDesdeHTML(html, fileName, preOpenedWindow);
     } catch (e) {
+      if (preOpenedWindow) {
+        try { preOpenedWindow.close(); } catch (_) {}
+      }
       showAlert({ type: 'error', title: 'Error', message: 'No se pudo generar el PDF' });
     }
   };
 
-  const loadData = async () => {
+  const loadData = async (forceRefresh = false) => {
     try {
-      setLoading(true);
+      // SWR Cache Inmediato (0 ms en iOS, Android y Desktop)
+      if (memoryDashboardCache && !forceRefresh) {
+        setEmpleados(memoryDashboardCache.empleados);
+        setTurnosHoy(memoryDashboardCache.turnosHoy);
+      } else if (!forceRefresh) {
+        try {
+          const cached = await AsyncStorage.getItem(STORAGE_KEY_DASHBOARD);
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (parsed && Array.isArray(parsed.empleados)) {
+              setEmpleados(parsed.empleados);
+              setTurnosHoy(parsed.turnosHoy || []);
+              memoryDashboardCache = parsed;
+            }
+          }
+        } catch (_) {}
+
+        if (!memoryDashboardCache) {
+          setLoading(true);
+        }
+      } else {
+        setLoading(true);
+      }
+
+      // Revalidación en segundo plano
       const res = await getNominaAdminDashboard();
       if (res?.data) {
-        setEmpleados(res.data.empleados || []);
-        setTurnosHoy(res.data.turnosHoy || []);
+        const empleadosData = res.data.empleados || [];
+        const turnosHoyData = res.data.turnosHoy || [];
+        setEmpleados(empleadosData);
+        setTurnosHoy(turnosHoyData);
+        memoryDashboardCache = { empleados: empleadosData, turnosHoy: turnosHoyData };
+        AsyncStorage.setItem(STORAGE_KEY_DASHBOARD, JSON.stringify(memoryDashboardCache)).catch(() => {});
       }
     } catch (error) {
       console.error(error);
