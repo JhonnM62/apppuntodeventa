@@ -336,6 +336,11 @@ export const getResumenEmpleado = async (params?: { fechaDesde?: string; fechaHa
   return data;
 };
 
+export const getNominaAdminDashboard = async (params?: { fechaDesde?: string; fechaHasta?: string }) => {
+  const { data } = await api.get('/nomina/admin/dashboard', { params });
+  return data;
+};
+
 export const getResumenEmpleadoAdmin = async (usuarioId: string, params?: { fechaDesde?: string; fechaHasta?: string }) => {
   const { data } = await api.get(`/nomina/resumen/${usuarioId}`, { params });
   return data;

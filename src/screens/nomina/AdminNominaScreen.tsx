@@ -9,7 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import api from '../../services/api';
 import { Picker } from '@react-native-picker/picker';
-import { getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno, getLiquidaciones, getLiquidacionById, reenviarNotificacionFirma, firmarLiquidacionAdmin, agregarDescuentoExtraLiquidacion, deshacerLiquidacion } from '../../services/nomina.service';
+import { getNominaAdminDashboard, getResumenEmpleadoAdmin, liquidarEmpleado, getTurnos, updateTurnoAdmin, deleteTurno, getLiquidaciones, getLiquidacionById, reenviarNotificacionFirma, firmarLiquidacionAdmin, agregarDescuentoExtraLiquidacion, deshacerLiquidacion } from '../../services/nomina.service';
 import { useCustomAlert } from '../../context/CustomAlertContext';
 import TurnoManualModal from './TurnoManualModal';
 import SignatureModal from '../../components/ui/SignatureModal';
@@ -183,6 +183,9 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [historyEmpleado, setHistoryEmpleado] = useState<any>(null);
   const [historyTurnos, setHistoryTurnos] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyTotal, setHistoryTotal] = useState(0);
+  const [loadingMoreHistory, setLoadingMoreHistory] = useState(false);
   const [selectedHistoryTurnos, setSelectedHistoryTurnos] = useState<string[]>([]);
   const [showBatchEditModal, setShowBatchEditModal] = useState(false);
   const [batchEditForm, setBatchEditForm] = useState<any>({});
@@ -234,10 +237,20 @@ export default function AdminNominaScreen({ navigation }: any) {
   const [guardandoDescuentoExtra, setGuardandoDescuentoExtra] = useState(false);
   const [photoViewerUrl, setPhotoViewerUrl] = useState<string | null>(null);
 
+  // Liquidaciones pagination
+  const [liquidacionesPage, setLiquidacionesPage] = useState(1);
+  const [liquidacionesTotal, setLiquidacionesTotal] = useState(0);
+  const [loadingMoreLiquidaciones, setLoadingMoreLiquidaciones] = useState(false);
+
   useEffect(() => {
     loadData();
-    loadLiquidaciones();
   }, []);
+
+  useEffect(() => {
+    if (filterTab === 'Liquidados' && liquidaciones.length === 0) {
+      loadLiquidaciones();
+    }
+  }, [filterTab]);
 
   useSocketEvent('turno_actualizado', () => {
     loadData();
@@ -246,13 +259,33 @@ export default function AdminNominaScreen({ navigation }: any) {
   const loadLiquidaciones = async () => {
     try {
       setLoadingLiquidaciones(true);
-      const res = await getLiquidaciones({ limit: 50, _t: Date.now() } as any);
+      setLiquidacionesPage(1);
+      const res = await getLiquidaciones({ page: 1, limit: 50, _t: Date.now() } as any);
       const arr = Array.isArray(res?.data?.data) ? res.data.data : (Array.isArray(res?.data) ? res.data : []);
       setLiquidaciones(arr);
+      setLiquidacionesTotal(res?.meta?.total || arr.length);
     } catch (error) {
       console.error('Error cargando liquidaciones:', error);
     } finally {
       setLoadingLiquidaciones(false);
+    }
+  };
+
+  const loadMoreLiquidaciones = async () => {
+    if (loadingMoreLiquidaciones || liquidaciones.length >= liquidacionesTotal) return;
+    try {
+      setLoadingMoreLiquidaciones(true);
+      const nextPage = liquidacionesPage + 1;
+      const res = await getLiquidaciones({ page: nextPage, limit: 50, _t: Date.now() } as any);
+      const arr = Array.isArray(res?.data?.data) ? res.data.data : (Array.isArray(res?.data) ? res.data : []);
+      if (arr.length > 0) {
+        setLiquidaciones(prev => [...prev, ...arr]);
+        setLiquidacionesPage(nextPage);
+      }
+    } catch (error) {
+      console.error('Error cargando más liquidaciones:', error);
+    } finally {
+      setLoadingMoreLiquidaciones(false);
     }
   };
 
@@ -474,41 +507,14 @@ export default function AdminNominaScreen({ navigation }: any) {
   const loadData = async () => {
     try {
       setLoading(true);
-      
-      const now = new Date();
-      const colombiaTime = new Date(now.getTime() - (5 * 60 * 60 * 1000));
-      
-      const y = colombiaTime.getUTCFullYear();
-      const m = colombiaTime.getUTCMonth();
-      const d = colombiaTime.getUTCDate();
-
-      const hoyUTC = new Date(Date.UTC(y, m, d, 0, 0, 0, 0));
-      const finHoyUTC = new Date(Date.UTC(y, m, d, 23, 59, 59, 999));
-
-      const [resUsuarios, resTurnos, resActivos] = await Promise.all([
-        api.get('/usuarios'),
-        getTurnos({ 
-          fechaDesde: hoyUTC.toISOString(), 
-          fechaHasta: finHoyUTC.toISOString(),
-          limit: 100
-        }),
-        getTurnos({
-          estado: 'ACTIVO',
-          limit: 100
-        })
-      ]);
-
-      const usuariosActivos = (resUsuarios.data?.data || []).filter((u: any) => u.isActive);
-      setEmpleados(usuariosActivos);
-
-      const combined = [...(resTurnos.data || []), ...(resActivos.data || [])];
-      const uniqueTurnos = Array.from(new Map(combined.map(t => [t.IDturno, t])).values());
-
-      setTurnosHoy(uniqueTurnos);
-
+      const res = await getNominaAdminDashboard();
+      if (res?.data) {
+        setEmpleados(res.data.empleados || []);
+        setTurnosHoy(res.data.turnosHoy || []);
+      }
     } catch (error) {
       console.error(error);
-      showAlert({ type: 'error', title: 'Error', message: 'No se pudieron cargar los datos' });
+      showAlert({ type: 'error', title: 'Error', message: 'No se pudieron cargar los datos de nómina' });
     } finally {
       setLoading(false);
     }
@@ -605,16 +611,35 @@ export default function AdminNominaScreen({ navigation }: any) {
   const openHistory = async (empleado: any) => {
     setHistoryEmpleado(empleado);
     setSelectedHistoryTurnos([]);
+    setHistoryPage(1);
     try {
       setLoadingHistory(true);
-      const res = await getTurnos({ usuarioId: empleado.IDusuarios, limit: 30 });
+      const res = await getTurnos({ usuarioId: empleado.IDusuarios, page: 1, limit: 30 });
       setHistoryTurnos(res.data || []);
+      setHistoryTotal(res.meta?.total || (res.data || []).length);
     } catch (error) {
       console.error(error);
       showAlert({ type: 'error', title: 'Error', message: 'No se pudo cargar el historial de turnos' });
       setHistoryEmpleado(null);
     } finally {
       setLoadingHistory(false);
+    }
+  };
+
+  const handleLoadMoreHistory = async () => {
+    if (!historyEmpleado || loadingMoreHistory || historyTurnos.length >= historyTotal) return;
+    try {
+      setLoadingMoreHistory(true);
+      const nextPage = historyPage + 1;
+      const res = await getTurnos({ usuarioId: historyEmpleado.IDusuarios, page: nextPage, limit: 30 });
+      if (res.data && res.data.length > 0) {
+        setHistoryTurnos(prev => [...prev, ...res.data]);
+        setHistoryPage(nextPage);
+      }
+    } catch (error) {
+      console.error('Error cargando más historial:', error);
+    } finally {
+      setLoadingMoreHistory(false);
     }
   };
 
@@ -971,6 +996,9 @@ const handleRecalcular = async () => {
   };
 
   const getStatusTurnoHoy = (usuarioId: string) => {
+    const emp = empleados.find(e => e.IDusuarios === usuarioId);
+    if (emp?.statusHoy) return emp.statusHoy;
+
     const turnoActivo = turnosHoy.find(t => t.usuarioId === usuarioId && t.estado === 'ACTIVO');
     if (turnoActivo) {
       return { 
@@ -1227,6 +1255,24 @@ const handleRecalcular = async () => {
             );
             })
           )}
+          {liquidaciones.length < liquidacionesTotal && (
+            <TouchableOpacity 
+              style={[styles.loadMoreBtn, { marginHorizontal: 16 }]} 
+              onPress={loadMoreLiquidaciones}
+              disabled={loadingMoreLiquidaciones}
+            >
+              {loadingMoreLiquidaciones ? (
+                <ActivityIndicator size="small" color="#2563eb" />
+              ) : (
+                <>
+                  <Ionicons name="reload-outline" size={16} color="#2563eb" />
+                  <Text style={styles.loadMoreBtnText}>
+                    Cargar más liquidaciones ({liquidaciones.length} de {liquidacionesTotal})
+                  </Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
           <View style={{ height: 120 }} />
         </ScrollView>
       ) : (
@@ -1282,6 +1328,36 @@ const handleRecalcular = async () => {
                             <Text style={{ fontSize: 10, color: '#475569' }}>📸 Salida</Text>
                           </TouchableOpacity>
                         )}
+                      </View>
+                    </View>
+                  )}
+
+                  {empleado.quincena && (
+                    <View style={styles.quincenaSummaryBar}>
+                      <View style={styles.quincenaCol}>
+                        <Text style={styles.quincenaLabel}>Turnos</Text>
+                        <Text style={styles.quincenaVal}>{empleado.quincena.totalTurnos} días</Text>
+                      </View>
+                      <View style={styles.quincenaDivider} />
+                      <View style={styles.quincenaCol}>
+                        <Text style={styles.quincenaLabel}>Devengado</Text>
+                        <Text style={[styles.quincenaVal, { color: '#059669' }]}>
+                          ${Number(empleado.quincena.totalBruto || 0).toLocaleString('es-CO')}
+                        </Text>
+                      </View>
+                      <View style={styles.quincenaDivider} />
+                      <View style={styles.quincenaCol}>
+                        <Text style={styles.quincenaLabel}>Deducciones</Text>
+                        <Text style={[styles.quincenaVal, { color: empleado.quincena.totalDescuentos > 0 ? '#ef4444' : '#6b7280' }]}>
+                          {empleado.quincena.totalDescuentos > 0 ? `-$${Number(empleado.quincena.totalDescuentos).toLocaleString('es-CO')}` : '$0'}
+                        </Text>
+                      </View>
+                      <View style={styles.quincenaDivider} />
+                      <View style={styles.quincenaCol}>
+                        <Text style={styles.quincenaLabel}>Neto al Día</Text>
+                        <Text style={[styles.quincenaVal, { color: '#2563eb', fontWeight: '800' }]}>
+                          ${Number(empleado.quincena.totalNeto || 0).toLocaleString('es-CO')}
+                        </Text>
                       </View>
                     </View>
                   )}
@@ -1761,6 +1837,24 @@ const handleRecalcular = async () => {
                         </View>
                       </TouchableOpacity>
                     ))
+                  )}
+                  {historyTurnos.length < historyTotal && (
+                    <TouchableOpacity 
+                      style={styles.loadMoreBtn} 
+                      onPress={handleLoadMoreHistory}
+                      disabled={loadingMoreHistory}
+                    >
+                      {loadingMoreHistory ? (
+                        <ActivityIndicator size="small" color="#2563eb" />
+                      ) : (
+                        <>
+                          <Ionicons name="reload-outline" size={16} color="#2563eb" />
+                          <Text style={styles.loadMoreBtnText}>
+                            Cargar turnos anteriores ({historyTurnos.length} de {historyTotal})
+                          </Text>
+                        </>
+                      )}
+                    </TouchableOpacity>
                   )}
                 </ScrollView>
               </>
@@ -2386,5 +2480,56 @@ const styles = StyleSheet.create({
   statusChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#f3f4f6', marginRight: 8, marginBottom: 8, borderWidth: 1, borderColor: '#e5e7eb' },
   statusChipActive: { backgroundColor: '#111827', borderColor: '#111827' },
   statusChipText: { fontSize: 12, fontWeight: '600', color: '#4b5563' },
-  statusChipTextActive: { color: '#fff' }
+  statusChipTextActive: { color: '#fff' },
+
+  quincenaSummaryBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8fafc',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  quincenaCol: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  quincenaLabel: {
+    fontSize: 10,
+    color: '#64748b',
+    fontWeight: '600',
+    marginBottom: 2,
+    textTransform: 'uppercase',
+  },
+  quincenaVal: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1e293b',
+  },
+  quincenaDivider: {
+    width: 1,
+    height: 18,
+    backgroundColor: '#cbd5e1',
+  },
+  loadMoreBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    backgroundColor: '#eff6ff',
+    borderRadius: 8,
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  loadMoreBtnText: {
+    color: '#2563eb',
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
 });
