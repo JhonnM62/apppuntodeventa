@@ -137,6 +137,7 @@ export default function CajaFormScreen({ route, navigation }: any) {
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isReloading, setIsReloading] = useState(false);
   const [modalArquearVisible, setModalArquearVisible] = useState(false);
   const [arquearPreviewList, setArquearPreviewList] = useState<any[]>([]);
   const [selectedArquearIds, setSelectedArquearIds] = useState<string[]>([]);
@@ -704,9 +705,39 @@ export default function CajaFormScreen({ route, navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchInitialData(false);
+    useInsumosCacheStore.getState().clearCache();
+    await fetchInitialData(false, !isNew);
+    if (!isNew) {
+      await fetchResumenSilenciosamente();
+    }
     setRefreshing(false);
-  }, [fetchInitialData]);
+  }, [fetchInitialData, fetchResumenSilenciosamente, isNew]);
+
+  const handleManualReload = async () => {
+    if (isReloading || saving) return;
+    setIsReloading(true);
+    try {
+      useInsumosCacheStore.getState().clearCache();
+      await fetchInitialData(false, !isNew);
+      if (!isNew) {
+        await fetchResumenSilenciosamente();
+      }
+      Toast.show({
+        type: 'success',
+        text1: 'Datos actualizados',
+        text2: 'Se han recargado los últimos valores de la caja',
+      });
+    } catch (error) {
+      console.error('Error al recargar caja:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error al recargar',
+        text2: 'No se pudieron obtener los últimos valores',
+      });
+    } finally {
+      setIsReloading(false);
+    }
+  };
 
   const handleAutoCuadreClick = async () => {
     setSaving(true);
@@ -1305,6 +1336,26 @@ setSaving(false);
             </View>
           </View>
           <View className="flex-row items-center">
+            {!isNew && (
+              <TouchableOpacity
+                onPress={handleManualReload}
+                disabled={isReloading}
+                className="bg-white/20 px-3 py-2 rounded-lg mr-2 flex-row items-center"
+                style={{ minWidth: 36, alignItems: 'center', justifyContent: 'center' }}
+                accessibilityLabel="Recargar caja"
+              >
+                {isReloading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Ionicons name="refresh" size={18} color="#fff" />
+                )}
+                {Platform.OS === 'web' && (
+                  <Text className="text-white font-bold text-sm ml-1.5">
+                    {isReloading ? 'Recargando...' : 'Recargar'}
+                  </Text>
+                )}
+              </TouchableOpacity>
+            )}
             {!isNew && canDelete && (
               <TouchableOpacity onPress={handleDeleteCaja} className="bg-red-500/90 p-2 rounded-lg mr-2" style={{ minWidth: 36, alignItems: 'center' }}>
                 <Ionicons name="trash" size={18} color="#fff" />

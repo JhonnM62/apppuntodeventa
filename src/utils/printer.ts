@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import { getConfiguracion } from '../services/configuracion';
+import { getConfiguracion, getCachedConfiguracion } from '../services/configuracion';
 import { APP_CONFIG } from '../constants/app.config';
 
 let BLEPrinter: any = null;
@@ -25,6 +25,8 @@ export interface TicketProduct {
   subtotal: number;
   modifiers?: TicketProductModifier[];
   cantidadPreparada?: number;
+  seccionCocinaId?: string | null;
+  gramosPapa?: number;
 }
 
 export interface TicketData {
@@ -56,6 +58,7 @@ export interface TicketData {
   seccionNombre?: string | null;
   seccionColor?: string | null;
   seccionIcono?: string | null;
+  porcentajeMermaPapa?: number;
 }
 
 // Helpers para alinear texto de forma manual (evita fallos de comandos ESC/POS en algunas impresoras)
@@ -317,6 +320,17 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
   const width = paperSize === 58 ? 32 : 48;
   const separator = '-'.repeat(width);
 
+  const config = getCachedConfiguracion()?.data || getCachedConfiguracion() || cachedConfig;
+  const mermaPorcentaje = data.porcentajeMermaPapa !== undefined 
+    ? Number(data.porcentajeMermaPapa) 
+    : (config?.porcentajeMermaPapa !== undefined && config?.porcentajeMermaPapa !== null 
+        ? Number(config.porcentajeMermaPapa) 
+        : 10);
+
+  let totalBaseGramosPapa = 0;
+  let totalGramosPapaConMerma = 0;
+  let tieneProductosConPapa = false;
+
   let payload = '';
 
   // HEADER (TICKET DE PREPARACIÓN)
@@ -418,6 +432,22 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
       }
     }
 
+    if (p.gramosPapa && p.gramosPapa > 0) {
+      tieneProductosConPapa = true;
+      const baseGramos = p.cantidad * p.gramosPapa;
+      const conMerma = Math.round(baseGramos * (1 + (mermaPorcentaje / 100)));
+      totalBaseGramosPapa += baseGramos;
+      totalGramosPapaConMerma += conMerma;
+
+      const textoPapa = mermaPorcentaje > 0 
+        ? `  * Papa: ${baseGramos}g (+${mermaPorcentaje}%: ${conMerma}g)`
+        : `  * Papa: ${baseGramos}g`;
+      const papaLines = wordWrap(cleanText(textoPapa), nameW - 1);
+      for (const line of papaLines) {
+        payload += alignLeft(`${emptyQty}${line}`, width) + '\n';
+      }
+    }
+
     if (index < data.productos.length - 1) {
       payload += '\n' + separator + '\n';
     }
@@ -472,10 +502,40 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
         });
       }
 
+      if (p.gramosPapa && p.gramosPapa > 0) {
+        const baseGramos = p.cantidad * p.gramosPapa;
+        const conMerma = Math.round(baseGramos * (1 + (mermaPorcentaje / 100)));
+        const textoPapa = mermaPorcentaje > 0 
+          ? `  * Papa: ${baseGramos}g (+${mermaPorcentaje}%: ${conMerma}g)`
+          : `  * Papa: ${baseGramos}g`;
+        const papaLines = wordWrap(cleanText(textoPapa), nameW - 1);
+        for (const line of papaLines) {
+          payload += alignLeft(`${emptyQty}${line}`, width) + '\n';
+        }
+      }
+
       if (index < data.productosAnteriores!.length - 1) {
         payload += separator + '\n';
       }
     });
+  }
+
+  if (tieneProductosConPapa && totalBaseGramosPapa > 0) {
+    payload += '\n' + separator + '\n';
+    payload += ESC_CMD.ALIGN_CT;
+    payload += ESC_CMD.TXT_BOLD_ON;
+    payload += cleanText('TOTAL PAPA (FREIDORA)') + '\n';
+    payload += ESC_CMD.TXT_NORMAL;
+    payload += ESC_CMD.ALIGN_LT;
+    payload += separator + '\n';
+    payload += alignLeft(cleanText(`Base requerida: ${totalBaseGramosPapa}g`), width) + '\n';
+    payload += ESC_CMD.TXT_BOLD_ON;
+    if (mermaPorcentaje > 0) {
+      payload += alignLeft(cleanText(`Total a freir (+${mermaPorcentaje}%): ${totalGramosPapaConMerma}g`), width) + '\n';
+    } else {
+      payload += alignLeft(cleanText(`Total a freir: ${totalBaseGramosPapa}g`), width) + '\n';
+    }
+    payload += ESC_CMD.TXT_BOLD_OFF;
   }
 
   payload += separator + '\n';

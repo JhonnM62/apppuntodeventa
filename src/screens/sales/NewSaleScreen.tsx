@@ -48,6 +48,7 @@ type ProductItem = {
   categoria?: string;
   mostrarDisponibilidad?: boolean;
   disponibilidadCalculada?: number;
+  gramosPapa?: number;
 };
 
 const CATEGORIES_ORDER = ['LO MAS VENDIDO', 'GRANIZADOS', 'BEBIDAS', 'COMIDAS', 'COMBOS', 'OTROS'];
@@ -621,7 +622,10 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         if (p.insumosRequeridos && p.insumosRequeridos.length > 0) {
           // Si el producto depende de insumos, su disponibilidad es el cuello de botella de sus insumos restantes
           maxPossible = Infinity;
+          let countValidInsumos = 0;
           p.insumosRequeridos.forEach((ins: any) => {
+            if (ins.descontarCantDeVentas === false || String(ins.descontarCantDeVentas).toLowerCase() === 'no') return;
+            countValidInsumos++;
             const stockRestante = Math.max(0, ins.stockGlobal - (insumosReservadosGlobales[ins.IDinsumo] || 0));
             const cantRequerida = ins.cantidad;
             if (cantRequerida > 0) {
@@ -629,7 +633,9 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               if (possible < maxPossible) maxPossible = possible;
             }
           });
-          if (maxPossible === Infinity) maxPossible = 0;
+          if (maxPossible === Infinity || countValidInsumos === 0) {
+            maxPossible = Number(p.disponibilidadCalculada ?? p.cantidad ?? p.Stock ?? 0);
+          }
         } else {
           // Si no tiene insumos, su disponibilidad es simplemente su stock menos sus reservas
           const reservado = reservasGlobales[p.IDproductos] || 0;
@@ -948,6 +954,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             precioTotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
             estado: paymentData.estado,
             imagenUrl: item.imagenUrl || item.image,
+            gramosPapa: Number(item.gramosPapa || 0),
             comentarios: item.modifiers?.length ? JSON.stringify(item.modifiers) : undefined,
             seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
           })),
@@ -993,6 +1000,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                    subtotal: item.precio * newQty,
                    modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
                    seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
+                   gramosPapa: Number((item as any).gramosPapa || (item as any).producto?.gramosPapa || 0),
                  });
                }
 
@@ -1006,6 +1014,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                    modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
                    cantidadPreparada: preparadaQtyMap[id as string] || 0,
                    seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
+                   gramosPapa: Number((item as any).gramosPapa || (item as any).producto?.gramosPapa || 0),
                  });
                }
              });
@@ -1017,6 +1026,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                subtotal: item.precioTotal,
                modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
                seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
+               gramosPapa: Number((item as any).gramosPapa || (item as any).producto?.gramosPapa || 0),
              }));
           }
 
@@ -1143,6 +1153,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                 subtotal: item.precioTotal,
                 modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
                 seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
+                gramosPapa: Number((item as any).gramosPapa || (item as any).producto?.gramosPapa || 0),
               })),
               estado: payload.venta.estado,
               metodoPago: finalMethod,
@@ -1278,6 +1289,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                   subtotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
                   modifiers: item.modifiers,
                   seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
+                  gramosPapa: Number(item.gramosPapa || 0),
                 })),
                 estado: data.estado,
                 metodoPago: data.medioDePago || editingVenta?.medioDePago || 'PENDIENTE',

@@ -437,7 +437,27 @@ const PedidosScreen = () => {
         subtotal: Number(prod.precioTotal || ((prod.precio || 0) * (prod.cantidad || 1))),
         modifiers: getModifiers(prod.comentarios),
         cantidadPreparada: prod.cantidadPreparada ? Number(prod.cantidadPreparada) : undefined,
-        seccionCocinaId: prod.producto?.seccionCocinaId || prod.producto?.categoria?.seccionCocinaId || prod.producto?.categoriaRelacion?.seccionCocinaId || prod.seccionCocinaId || prod.categoriaSeccionCocinaId || venta?.categoriaSeccionCocinaId
+        seccionCocinaId: prod.producto?.seccionCocinaId || prod.producto?.categoria?.seccionCocinaId || prod.producto?.categoriaRelacion?.seccionCocinaId || prod.seccionCocinaId || prod.categoriaSeccionCocinaId || venta?.categoriaSeccionCocinaId,
+        gramosPapa: (() => {
+          if (prod.gramosPapa) return Number(prod.gramosPapa);
+          if (prod.producto?.gramosPapa) return Number(prod.producto.gramosPapa);
+          if (prod.producto?.recetaInsumos && Array.isArray(prod.producto.recetaInsumos)) {
+            let g = 0;
+            for (const r of prod.producto.recetaInsumos) {
+              const ins = r.insumoRelacion;
+              const n = (ins?.nombre || '').toLowerCase();
+              const u = (ins?.unidades || r.tipoDeMedida || '').trim().toLowerCase();
+              const esPapa = n.includes('papa');
+              const esG = u === 'gr' || u === 'g' || u === 'gramos';
+              const cantTeorica = Number(ins?.cantidadPorPaquete) || 0;
+              const cantR = Number(r.cantidad) || 0;
+              const gr = cantTeorica > 0 ? (cantR * cantTeorica) : (esG ? cantR : 0);
+              if (esPapa || (esG && gr > 0 && n.includes('papa'))) g += gr;
+            }
+            return g;
+          }
+          return 0;
+        })(),
       }))
     };
   };

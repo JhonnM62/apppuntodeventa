@@ -79,6 +79,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const [horaCorteDia, setHoraCorteDia] = useState('00:00');
   const [modoOperacion, setModoOperacion] = useState('GENERAL');
   const [tiempoReservaInventario, setTiempoReservaInventario] = useState('5');
+  const [porcentajeMermaPapa, setPorcentajeMermaPapa] = useState('10');
   
   // Datos comerciales
   const [nombreComercial, setNombreComercial] = useState(APP_CONFIG.ticketName);
@@ -202,6 +203,9 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         
         if (dataNegocio.habilitarPropinas !== undefined) setHabilitarPropinas(dataNegocio.habilitarPropinas);
         if (dataNegocio.habilitarDescuentos !== undefined) setHabilitarDescuentos(dataNegocio.habilitarDescuentos);
+        if (dataNegocio.porcentajeMermaPapa !== undefined && dataNegocio.porcentajeMermaPapa !== null) {
+          setPorcentajeMermaPapa(String(dataNegocio.porcentajeMermaPapa));
+        }
         if (dataNegocio.opcionesPropina) {
           try {
             const arr = typeof dataNegocio.opcionesPropina === 'string' ? JSON.parse(dataNegocio.opcionesPropina) : dataNegocio.opcionesPropina;
@@ -289,6 +293,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           minutosGraciaLlegadaTarde: minutosGraciaLlegadaTarde ? parseInt(minutosGraciaLlegadaTarde, 10) : 5,
           habilitarPropinas,
           habilitarDescuentos,
+          porcentajeMermaPapa: porcentajeMermaPapa ? parseFloat(porcentajeMermaPapa) : 10,
           opcionesPropina: JSON.stringify(opcionesPropina),
           opcionesDescuento: JSON.stringify(opcionesDescuento),
           imprimirLogo,
@@ -722,6 +727,26 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
                 <PercentageChips values={opcionesDescuento} onChange={setOpcionesDescuento} />
               </View>
             )}
+
+            {/* COCINA Y COMANDAS */}
+            <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: '#f3f4f6', paddingTop: 16 }}>
+              <Text style={[styles.sectionTitle, { marginBottom: 8 }]}>Cocina y Comandas</Text>
+              
+              <Text style={styles.label}>Margen de Error / Merma de Papa (%)</Text>
+              <Text style={{ fontSize: 12, color: '#6b7280', marginBottom: 8 }}>
+                Porcentaje adicional que se sumará a los gramos de papa en las comandas de cocina (ej. 10% para compensar merma por fritura/deshidratación).
+              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TextInput
+                  style={[styles.input, { flex: 1, marginBottom: 0 }]}
+                  value={porcentajeMermaPapa}
+                  onChangeText={(text) => setPorcentajeMermaPapa(text.replace(/[^0-9.]/g, ''))}
+                  placeholder="10"
+                  keyboardType="numeric"
+                />
+                <Text style={{ marginLeft: 10, fontSize: 16, fontWeight: 'bold', color: '#4b5563' }}>%</Text>
+              </View>
+            </View>
           </View>
         </View>
 

@@ -79,7 +79,10 @@ export const useProductStore = create<ProductStore>()(
           });
 
           maxPossible = Infinity;
+          let countValidInsumos = 0;
           p.insumosRequeridos.forEach((ins: any) => {
+            if (ins.descontarCantDeVentas === false || String(ins.descontarCantDeVentas).toLowerCase() === 'no') return;
+            countValidInsumos++;
             const stockRestante = Math.max(0, ins.stockGlobal - (insumosReservadosGlobales[ins.IDinsumo] || 0));
             const cantRequerida = ins.cantidad;
             if (cantRequerida > 0) {
@@ -87,7 +90,9 @@ export const useProductStore = create<ProductStore>()(
               if (possible < maxPossible) maxPossible = possible;
             }
           });
-          if (maxPossible === Infinity) maxPossible = 0;
+          if (maxPossible === Infinity || countValidInsumos === 0) {
+            maxPossible = Number(p.disponibilidadCalculada ?? p.cantidad ?? p.Stock ?? 0);
+          }
         } else {
           const reservado = state.reservasGlobales[p.IDproductos] || 0;
           maxPossible = Math.max(0, maxPossible - reservado);

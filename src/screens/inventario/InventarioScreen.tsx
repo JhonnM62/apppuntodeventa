@@ -2390,7 +2390,24 @@ const InventarioScreen = ({ navigation }: any) => {
                   </RNText>
 
                 </View>
-                <View style={{ flexDirection: 'row' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  {Platform.OS === 'web' && (
+                    <TouchableOpacity 
+                      onPress={async () => {
+                        if (selectedInventario) {
+                          await fetchOrdenes(selectedInventario.IDinventario, false);
+                          await fetchInventarios();
+                          await fetchInsumos();
+                          Toast.show({ type: 'success', text1: 'Actualizado', text2: 'Valores recargados' });
+                        }
+                      }} 
+                      style={{ height: 40, paddingHorizontal: 12, borderRadius: 20, backgroundColor: '#f3f4f6', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}
+                      accessibilityLabel="Recargar inventario"
+                    >
+                      <Ionicons name="refresh" size={18} color="#374151" />
+                      <RNText style={{ fontSize: 13, fontWeight: '600', color: '#374151', marginLeft: 6 }}>Recargar</RNText>
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity onPress={handleExportImage} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#eff6ff', alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
                     <Ionicons name="share-outline" size={20} color="#3b82f6" />
                   </TouchableOpacity>
