@@ -188,6 +188,7 @@ const InventarioScreen = ({ navigation }: any) => {
   const createModalScrollRef = useRef<ScrollView>(null);
   const detailModalScrollRef = useRef<any>(null);
   const addItemModalScrollRef = useRef<any>(null);
+  const pendingTogglesRef = useRef<Set<string>>(new Set());
   const [activeInputIndex, setActiveInputIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -489,7 +490,21 @@ const InventarioScreen = ({ navigation }: any) => {
     try {
       console.log('[DEBUG] Fetching ordenes for inventario:', inventarioId);
       const data = await inventarioService.getById(inventarioId);
-      setOrdenes(data?.ordenInventario || []);
+      const serverItems = data?.ordenInventario || [];
+      setOrdenes(prev => {
+        if (pendingTogglesRef.current.size === 0) {
+          return serverItems;
+        }
+        return serverItems.map(serverItem => {
+          if (pendingTogglesRef.current.has(serverItem.IDorderinventario)) {
+            const local = prev.find(p => p.IDorderinventario === serverItem.IDorderinventario);
+            if (local) {
+              return { ...serverItem, seCompro: local.seCompro };
+            }
+          }
+          return serverItem;
+        });
+      });
     } catch (error: any) {
       if (error?.code === 'NOT_FOUND' || error?.response?.status === 404) {
         console.log('[DEBUG] Inventario no encontrado (probablemente eliminado), cerrando detalle.');
@@ -1227,15 +1242,38 @@ const InventarioScreen = ({ navigation }: any) => {
   };
 
   const handleToggleOrdenComprado = async (orden: OrderInventarioItem) => {
+    const itemId = orden.IDorderinventario;
+
+    // Obtener el estado actual más reciente (en caso de clics rápidos seguidos)
+    let currentSeCompro = orden.seCompro;
+    setOrdenes(prev => {
+      const found = prev.find(o => o.IDorderinventario === itemId);
+      if (found && found.seCompro) currentSeCompro = found.seCompro;
+      return prev;
+    });
+
+    const previousSeCompro = currentSeCompro;
+    const nextSeCompro = (previousSeCompro === 'Si' || previousSeCompro === 'si') ? 'No' : 'Si';
+
+    // 1. Actualización optimista inmediata (0ms de retraso, respuesta visual instantánea)
+    setOrdenes(prev => prev.map(o => o.IDorderinventario === itemId ? { ...o, seCompro: nextSeCompro } : o));
+    setTodasLasOrdenes(prev => prev.map(o => o.IDorderinventario === itemId ? { ...o, seCompro: nextSeCompro } : o));
+    setSelectedOrdenItem(prev => (prev && prev.IDorderinventario === itemId) ? { ...prev, seCompro: nextSeCompro } : prev);
+
+    pendingTogglesRef.current.add(itemId);
+
     try {
-      await inventarioService.toggleComprado(orden.IDorderinventario, orden.seCompro === 'Si' ? 'No' : 'Si');
-      if (selectedInventario) {
-        await fetchOrdenes(selectedInventario.IDinventario);
-        await fetchInventarios();
-        await fetchInsumos(); // Refetch insumos to update prices and stock
-      }
+      // 2. Petición al backend en segundo plano sin bloquear UI ni recargar pantalla
+      await inventarioService.toggleComprado(itemId, nextSeCompro);
     } catch (error: any) {
-      Toast.show({ type: 'error', text1: 'Error', text2: getErrorMessage(error, 'No se pudo actualizar') });
+      console.error('[handleToggleOrdenComprado] Error:', error);
+      // Revertir el estado en caso de error
+      setOrdenes(prev => prev.map(o => o.IDorderinventario === itemId ? { ...o, seCompro: previousSeCompro } : o));
+      setTodasLasOrdenes(prev => prev.map(o => o.IDorderinventario === itemId ? { ...o, seCompro: previousSeCompro } : o));
+      setSelectedOrdenItem(prev => (prev && prev.IDorderinventario === itemId) ? { ...prev, seCompro: previousSeCompro } : prev);
+      Toast.show({ type: 'error', text1: 'Error', text2: getErrorMessage(error, 'No se pudo actualizar el estado') });
+    } finally {
+      pendingTogglesRef.current.delete(itemId);
     }
   };
 
@@ -1688,6 +1726,8 @@ const InventarioScreen = ({ navigation }: any) => {
 
         {isEntrada && !selectionMode && (
           <TouchableOpacity
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            activeOpacity={0.7}
             style={{
               width: 20,
               height: 20,
