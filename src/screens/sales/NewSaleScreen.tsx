@@ -19,6 +19,7 @@ import { useProductStore } from '../../store/useProductStore';
 import { useMesaStore } from '../../store/useMesaStore';
 import { useSalesStore } from '../../store/useSalesStore';
 import usePrinterStore from '../../store/usePrinterStore';
+import { getCachedConfiguracion } from '../../services/configuracion';
 import { Text } from '../../components/ui/text';
 import { Button } from '../../components/ui/button';
 import PaymentModal from '../../components/ui/PaymentModal';
@@ -197,6 +198,17 @@ const CartItemComponent = React.memo(({
     </View>
   );
 });
+
+const resolveGramosPapa = (item: any): number => {
+  if (item.gramosPapa && Number(item.gramosPapa) > 0) return Number(item.gramosPapa);
+  if (item.producto?.gramosPapa && Number(item.producto.gramosPapa) > 0) return Number(item.producto.gramosPapa);
+  const catalog = useProductStore.getState().productos;
+  const id = item.IDproductos || item.productoId || item.producto?.IDproductos;
+  const name = (item.nombre || item.nombreProducto || '').trim().toLowerCase();
+  const found = catalog.find((p: any) => (id && p.IDproductos === id) || (name && p.nombre && p.nombre.trim().toLowerCase() === name));
+  if (found?.gramosPapa && Number(found.gramosPapa) > 0) return Number(found.gramosPapa);
+  return 0;
+};
 
 const NewSaleScreen = ({ navigation, route }: Props) => {
   const { width: windowWidth } = useWindowDimensions();
@@ -968,6 +980,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         // IMPRESIÓN OPTIMISTA PARA VENTA EXISTENTE
         const finalMethod = payload.venta.medioDePago;
         const printStore = usePrinterStore.getState();
+
         if (printStore.shouldPrintComanda(paymentData.estado) || printStore.shouldPrintFactura(paymentData.estado)) {
           let cleanOrderId = editingVenta?.pedido || editingSaleId;
           if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
@@ -1000,7 +1013,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                    subtotal: item.precio * newQty,
                    modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
                    seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
-                   gramosPapa: Number((item as any).gramosPapa || (item as any).producto?.gramosPapa || 0),
+                   gramosPapa: resolveGramosPapa(item),
                  });
                }
 
@@ -1014,7 +1027,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                    modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
                    cantidadPreparada: preparadaQtyMap[id as string] || 0,
                    seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
-                   gramosPapa: Number((item as any).gramosPapa || (item as any).producto?.gramosPapa || 0),
+                   gramosPapa: resolveGramosPapa(item),
                  });
                }
              });
@@ -1026,7 +1039,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                subtotal: item.precioTotal,
                modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
                seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
-               gramosPapa: Number((item as any).gramosPapa || (item as any).producto?.gramosPapa || 0),
+               gramosPapa: resolveGramosPapa(item),
              }));
           }
 
@@ -1041,7 +1054,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             efectivoRecibido: payload.venta.efectivoRecibido,
             devueltas: payload.venta.devueltas,
             abono: paymentData.abono,
-            vendedor: useAuthStore.getState().user?.nombre || 'Caja'
+            vendedor: useAuthStore.getState().user?.nombre || 'Caja',
+            porcentajeMermaPapa: getCachedConfiguracion()?.porcentajeMermaPapa ?? 10
           };
           printStore.printTicket(ticketData);
         }
@@ -1153,7 +1167,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                 subtotal: item.precioTotal,
                 modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
                 seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
-                gramosPapa: Number((item as any).gramosPapa || (item as any).producto?.gramosPapa || 0),
+                gramosPapa: resolveGramosPapa(item),
               })),
               estado: payload.venta.estado,
               metodoPago: finalMethod,
@@ -1162,7 +1176,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               propina: payload.venta.propina,
               porcentajePropina: payload.venta.porcentajePropina,
               abono: paymentData.abono,
-              vendedor: useAuthStore.getState().user?.nombre || 'Caja'
+              vendedor: useAuthStore.getState().user?.nombre || 'Caja',
+              porcentajeMermaPapa: getCachedConfiguracion()?.porcentajeMermaPapa ?? 10
             };
             printStore.printTicket(ticketData);
           }
@@ -1289,7 +1304,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                   subtotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
                   modifiers: item.modifiers,
                   seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
-                  gramosPapa: Number(item.gramosPapa || 0),
+                  gramosPapa: resolveGramosPapa(item),
                 })),
                 estado: data.estado,
                 metodoPago: data.medioDePago || editingVenta?.medioDePago || 'PENDIENTE',
@@ -1298,7 +1313,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                 propina: editingVenta?.propina,
                 porcentajePropina: editingVenta?.porcentajePropina,
                 abono: data.abono,
-                vendedor: useAuthStore.getState().user?.nombre || 'Caja'
+                vendedor: useAuthStore.getState().user?.nombre || 'Caja',
+                porcentajeMermaPapa: getCachedConfiguracion()?.porcentajeMermaPapa ?? 10
               };
               printStore.printTicket(ticketData);
             }

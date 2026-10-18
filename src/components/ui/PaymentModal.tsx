@@ -23,6 +23,7 @@ import { executePrint, TicketData } from '../../utils/printer';
 import useCartStore from '../../store/useCartStore';
 import useAuthStore from '../../store/useAuthStore';
 import { getConfiguracion, getCachedConfiguracion } from '../../services/configuracion';
+import { useProductStore } from '../../store/useProductStore';
 import { Cliente } from '../../services/clientes.service';
 
 type PaymentMethod = 'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'EFECTIVO Y OTROS';
@@ -301,6 +302,58 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   };
 
+  const getGramosPapaForItem = (item: any): number => {
+    if (item.gramosPapa && Number(item.gramosPapa) > 0) {
+      return Number(item.gramosPapa);
+    }
+    if (item.producto?.gramosPapa && Number(item.producto.gramosPapa) > 0) {
+      return Number(item.producto.gramosPapa);
+    }
+
+    const catalog = useProductStore.getState().productos;
+    const prodId = item.IDproductos || item.productoId || item.producto?.IDproductos;
+    const prodName = (item.nombre || item.nombreProducto || '').trim().toLowerCase();
+
+    const catalogProd = catalog.find((p: any) => 
+      (prodId && p.IDproductos === prodId) ||
+      (prodName && p.nombre && p.nombre.trim().toLowerCase() === prodName)
+    );
+
+    if (catalogProd?.gramosPapa && Number(catalogProd.gramosPapa) > 0) {
+      return Number(catalogProd.gramosPapa);
+    }
+
+    const recetas = item.recetaInsumos || item.producto?.recetaInsumos || catalogProd?.recetaInsumos;
+    if (recetas && Array.isArray(recetas)) {
+      let totalG = 0;
+      for (const r of recetas) {
+        const ins = r.insumoRelacion;
+        const nombreInsumo = (ins?.nombre || r.insumo || '').toLowerCase();
+        const esPapa = nombreInsumo.includes('papa');
+        if (!esPapa) continue;
+
+        const unidades = (ins?.unidades || r.tipoDeMedida || '').trim().toLowerCase();
+        const esGramos = unidades === 'gr' || unidades === 'g' || unidades === 'gramos';
+        const cantTeorica = Number(ins?.cantidadPorPaquete) || 0;
+        const cantR = Number(r.cantidad) || 0;
+
+        const matchGramos = nombreInsumo.match(/(\d+)\s*(?:g|gr|gramos)\b/i);
+        const gramosDelNombre = matchGramos ? Number(matchGramos[1]) : 0;
+
+        if (cantTeorica > 0) {
+          totalG += cantR * cantTeorica;
+        } else if (gramosDelNombre > 0) {
+          totalG += (cantR > 0 ? cantR : 1) * gramosDelNombre;
+        } else if (esGramos && cantR > 0) {
+          totalG += cantR;
+        }
+      }
+      if (totalG > 0) return totalG;
+    }
+
+    return 0;
+  };
+
   const attemptAutoPrint = async (
     estado: string,
     orderId?: string,
@@ -310,8 +363,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   ) => {
     const printComanda = shouldPrintComanda(estado);
     const printFactura = shouldPrintFactura(estado);
-    
-    if (!printComanda && !printFactura) return;
     
     if (!printComanda && !printFactura) return;
 
@@ -334,6 +385,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       porcentajePropina: propinaPercent > 0 ? (propinaPercent * 100).toString() : undefined,
       descuento: getDiscountAmount(),
       abono: abonoTotal,
+      porcentajeMermaPapa: getCachedConfiguracion()?.porcentajeMermaPapa ?? 10,
       productos: cart.map(item => {
         const precioUnitario = Number(item.precioUnitario || item.Precio_Unitario || 0);
         const modifiersTotal = (item.modifiers || []).reduce((sum: number, mod: any) => sum + (Number(mod.price) * (mod.quantity || 1)), 0);
@@ -345,6 +397,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           subtotal: subtotal,
           modifiers: item.modifiers?.map((m: any) => ({ name: m.name, price: m.price, quantity: m.quantity })),
           seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
+          gramosPapa: getGramosPapaForItem(item),
         };
       }),
       estado: estado,

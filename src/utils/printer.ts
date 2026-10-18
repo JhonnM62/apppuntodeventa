@@ -352,7 +352,13 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
     payload += ESC_CMD.ALIGN_CT;
     payload += ESC_CMD.TXT_4SQUARE;
     payload += ESC_CMD.TXT_BOLD_ON;
-    payload += cleanText(data.orderId.toUpperCase()) + '\n';
+    // En TXT_4SQUARE el texto tiene doble ancho, por lo que el ancho máximo de línea es la mitad del papel
+    const maxOrderLen = Math.floor(width / 2);
+    const cleanId = cleanText(data.orderId.toUpperCase());
+    const orderLines = wordWrap(cleanId, maxOrderLen);
+    orderLines.forEach(line => {
+      payload += line + '\n';
+    });
     payload += ESC_CMD.TXT_NORMAL;
     payload += ESC_CMD.TXT_BOLD_OFF;
     payload += ESC_CMD.ALIGN_LT;

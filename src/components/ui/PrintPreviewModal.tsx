@@ -158,12 +158,12 @@ export default function PrintPreviewModal({
             ) : (
               <ScrollView className="max-h-96" showsVerticalScrollIndicator={true}>
                 <View className="px-5 py-6 w-full items-center">
-                  <View style={{ backgroundColor: '#fff', padding: 16, borderWidth: 1, borderColor: '#e5e7eb', borderStyle: 'dashed', alignSelf: 'center', minHeight: 150, minWidth: paperSize === 58 ? 250 : 350 }}>
+                  <View style={{ backgroundColor: '#fff', padding: 16, borderWidth: 1, borderColor: '#e5e7eb', borderStyle: 'dashed', alignSelf: 'center', minHeight: 150, width: paperSize === 58 ? 280 : 380, maxWidth: '100%', overflow: 'hidden' }}>
                     {Platform.OS === 'web' ? (
                       // @ts-ignore - React Native Web allows DOM elements
                       <div 
                         dangerouslySetInnerHTML={{ __html: previewText }}
-                        style={{ fontFamily: 'monospace', fontSize: 12, color: '#000', lineHeight: '14px', whiteSpace: 'pre' }} 
+                        style={{ fontFamily: 'monospace', fontSize: 12, color: '#000', lineHeight: '14px', whiteSpace: 'pre-wrap', wordBreak: 'break-word', width: '100%' }} 
                       />
                     ) : (
                       <Text style={{ fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace', fontSize: 11, color: '#000', lineHeight: 14 }}>
