@@ -557,8 +557,15 @@ const PedidosScreen = () => {
       newCantidadPreparada = Math.max(newCantidadPreparada - 1, 0);
       newEstado = 'PREPARANDO'; // Si decrece, por definición no están todos listos
     } else if (action === 'max') {
-      newCantidadPreparada = maxCantidad;
-      newEstado = 'LISTO';
+      // Si ya estaban todos listos, hacer toggle a 0 (PREPARANDO)
+      // Si faltan platos (0 o parcial), marcar todos como listos (LISTO)
+      if ((orderVenta.cantidadPreparada || 0) >= maxCantidad) {
+        newCantidadPreparada = 0;
+        newEstado = 'PREPARANDO';
+      } else {
+        newCantidadPreparada = maxCantidad;
+        newEstado = 'LISTO';
+      }
     } else {
       // Toggle tradicional para cantidad = 1
       newCantidadPreparada = newEstado === 'LISTO' ? maxCantidad : 0;
@@ -587,12 +594,13 @@ const PedidosScreen = () => {
             ...ov, 
             estado: newEstado, 
             cantidadPreparada: newCantidadPreparada,
-            preparadoAt: simulatedPreparadoAt 
+            preparadoAt: newEstado === 'LISTO' ? simulatedPreparadoAt : undefined 
           };
         }
         return ov;
       });
       setSelectedVenta({ ...selectedVenta, ordenVentas: updatedOrdenVentas });
+      updateVenta(venta.IDventas, { ordenVentas: updatedOrdenVentas });
     }
 
     try {
@@ -1751,7 +1759,7 @@ showAlert({
                             <PreparationTimer 
                               registroDeTiempo={selectedVenta.registroDeTiempo}
                               preparadoAt={prod.preparadoAt} 
-                              estado={prod.estado} 
+                              estado={(prod.cantidad && prod.cantidad > 1 && (prod.cantidadPreparada || 0) < prod.cantidad) ? 'PREPARANDO' : prod.estado} 
                             />
                           </View>
                           
@@ -1793,75 +1801,101 @@ showAlert({
                         </View>
                         <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
                           <RNText style={styles.productTotal}>{formatMoney(prod.precioTotal)}</RNText>
-                          {prod.cantidad && prod.cantidad > 1 ? (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+                          {(() => {
+                            const cantTotal = prod.cantidad || 1;
+                            const cantPrep = prod.cantidadPreparada || 0;
+                            const isFullyReady = cantPrep >= cantTotal;
+                            const isPartial = cantPrep > 0 && cantPrep < cantTotal;
+
+                            if (cantTotal > 1) {
+                              let pillBg = '#ffffff';
+                              let pillBorder = '#d1d5db';
+                              let pillTextColor = '#4b5563';
+
+                              if (isFullyReady) {
+                                pillBg = '#10b981';
+                                pillBorder = '#10b981';
+                                pillTextColor = '#ffffff';
+                              } else if (isPartial) {
+                                pillBg = '#fef3c7'; // Ámbar suave: claramente NO verde cuando faltan unidades
+                                pillBorder = '#f59e0b';
+                                pillTextColor = '#b45309';
+                              }
+
+                              return (
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6 }}>
+                                  <TouchableOpacity
+                                    style={{
+                                      backgroundColor: '#f3f4f6',
+                                      padding: 4,
+                                      borderRadius: 8,
+                                      borderWidth: 1,
+                                      borderColor: '#d1d5db'
+                                    }}
+                                    onPress={() => toggleProductReady(selectedVenta, prod, 'decrement')}
+                                  >
+                                    <Ionicons name="remove" size={16} color="#6b7280" />
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={{
+                                      backgroundColor: pillBg,
+                                      paddingHorizontal: 12,
+                                      paddingVertical: 4,
+                                      borderRadius: 12,
+                                      marginHorizontal: 6,
+                                      borderWidth: 1,
+                                      borderColor: pillBorder,
+                                    }}
+                                    onPress={() => toggleProductReady(selectedVenta, prod, 'max')}
+                                  >
+                                    <RNText style={{ fontSize: 11, fontWeight: 'bold', color: pillTextColor }}>
+                                      {cantPrep}/{cantTotal} {cantPrep === 1 ? 'LISTO' : 'LISTOS'}
+                                    </RNText>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={{
+                                      backgroundColor: '#f3f4f6',
+                                      padding: 4,
+                                      borderRadius: 8,
+                                      borderWidth: 1,
+                                      borderColor: '#d1d5db'
+                                    }}
+                                    onPress={() => toggleProductReady(selectedVenta, prod, 'increment')}
+                                  >
+                                    <Ionicons name="add" size={16} color="#6b7280" />
+                                  </TouchableOpacity>
+                                </View>
+                              );
+                            }
+
+                            const isSingleReady = prod.estado === 'LISTO';
+                            return (
                               <TouchableOpacity
                                 style={{
-                                  backgroundColor: '#f3f4f6',
-                                  padding: 4,
-                                  borderRadius: 8,
-                                  borderWidth: 1,
-                                  borderColor: '#d1d5db'
-                                }}
-                                onPress={() => toggleProductReady(selectedVenta, prod, 'decrement')}
-                              >
-                                <Ionicons name="remove" size={16} color="#6b7280" />
-                              </TouchableOpacity>
-                              <TouchableOpacity
-                                style={{
-                                  backgroundColor: prod.estado === 'LISTO' ? '#10b981' : '#ffffff',
+                                  marginTop: 6,
+                                  flexDirection: 'row',
+                                  alignItems: 'center',
+                                  backgroundColor: isSingleReady ? '#10b981' : '#ffffff',
                                   paddingHorizontal: 12,
-                                  paddingVertical: 4,
-                                  borderRadius: 12,
-                                  marginHorizontal: 6,
+                                  paddingVertical: 6,
+                                  borderRadius: 20,
                                   borderWidth: 1,
-                                  borderColor: prod.estado === 'LISTO' ? '#10b981' : '#d1d5db',
+                                  borderColor: isSingleReady ? '#10b981' : '#d1d5db',
+                                  shadowColor: '#000',
+                                  shadowOffset: { width: 0, height: 1 },
+                                  shadowOpacity: 0.1,
+                                  shadowRadius: 2,
+                                  elevation: 2,
                                 }}
-                                onPress={() => toggleProductReady(selectedVenta, prod, 'max')}
+                                onPress={() => toggleProductReady(selectedVenta, prod)}
                               >
-                                <RNText style={{ fontSize: 11, fontWeight: 'bold', color: prod.estado === 'LISTO' ? '#ffffff' : '#4b5563' }}>
-                                  {prod.cantidadPreparada || 0}/{prod.cantidad} {prod.estado === 'LISTO' ? 'LISTOS' : 'LISTOS'}
+                                <Ionicons name={isSingleReady ? "checkmark-circle" : "time-outline"} size={16} color={isSingleReady ? "#ffffff" : "#6b7280"} />
+                                <RNText style={{ fontSize: 11, color: isSingleReady ? '#ffffff' : '#4b5563', fontWeight: 'bold', marginLeft: 6 }}>
+                                  {isSingleReady ? 'LISTO' : 'PREPARANDO'}
                                 </RNText>
                               </TouchableOpacity>
-                              <TouchableOpacity
-                                style={{
-                                  backgroundColor: '#f3f4f6',
-                                  padding: 4,
-                                  borderRadius: 8,
-                                  borderWidth: 1,
-                                  borderColor: '#d1d5db'
-                                }}
-                                onPress={() => toggleProductReady(selectedVenta, prod, 'increment')}
-                              >
-                                <Ionicons name="add" size={16} color="#6b7280" />
-                              </TouchableOpacity>
-                            </View>
-                          ) : (
-                            <TouchableOpacity
-                              style={{
-                                marginTop: 6,
-                                flexDirection: 'row',
-                                alignItems: 'center',
-                                backgroundColor: prod.estado === 'LISTO' ? '#10b981' : '#ffffff',
-                                paddingHorizontal: 12,
-                                paddingVertical: 6,
-                                borderRadius: 20,
-                                borderWidth: 1,
-                                borderColor: prod.estado === 'LISTO' ? '#10b981' : '#d1d5db',
-                                shadowColor: '#000',
-                                shadowOffset: { width: 0, height: 1 },
-                                shadowOpacity: 0.1,
-                                shadowRadius: 2,
-                                elevation: 2,
-                              }}
-                              onPress={() => toggleProductReady(selectedVenta, prod)}
-                            >
-                              <Ionicons name={prod.estado === 'LISTO' ? "checkmark-circle" : "time-outline"} size={16} color={prod.estado === 'LISTO' ? "#ffffff" : "#6b7280"} />
-                              <RNText style={{ fontSize: 11, color: prod.estado === 'LISTO' ? '#ffffff' : '#4b5563', fontWeight: 'bold', marginLeft: 6 }}>
-                                {prod.estado === 'LISTO' ? 'LISTO' : 'PREPARANDO'}
-                              </RNText>
-                            </TouchableOpacity>
-                          )}
+                            );
+                          })()}
                         </View>
                       </View>
                     </View>
