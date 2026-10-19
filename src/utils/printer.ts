@@ -67,6 +67,7 @@ const ESC_CMD = {
   ALIGN_CT: '\x1b\x61\x01',
   ALIGN_LT: '\x1b\x61\x00',
   TXT_NORMAL: '\x1b\x21\x00',
+  TXT_SMALL: '\x1b\x21\x01',
   TXT_2HEIGHT: '\x1b\x21\x10',
   TXT_2WIDTH: '\x1b\x21\x20',
   TXT_4SQUARE: '\x1b\x21\x30',
@@ -284,14 +285,11 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
 
   // INFO DE ORDEN
   if (cleanData.orderId) {
-    payload += ESC_CMD.ALIGN_CT;
-    payload += ESC_CMD.TXT_4SQUARE;
-    payload += ESC_CMD.TXT_BOLD_ON;
-    // Eliminamos la palabra "PEDIDO:" ya que a veces viene incluida en el orderId (ej: "pedido-1...")
-    // o es redundante para el cliente.
-    payload += cleanText(cleanData.orderId.toUpperCase()) + '\n';
-    payload += ESC_CMD.TXT_NORMAL;
-    payload += ESC_CMD.TXT_BOLD_OFF;
+    const cleanId = cleanText(cleanData.orderId.toUpperCase());
+    const orderLines = wordWrap(cleanId, width);
+    orderLines.forEach(line => {
+      payload += ESC_CMD.ALIGN_CT + ESC_CMD.TXT_2HEIGHT + ESC_CMD.TXT_BOLD_ON + line + ESC_CMD.TXT_NORMAL + ESC_CMD.TXT_BOLD_OFF + '\n';
+    });
     payload += ESC_CMD.ALIGN_LT;
     payload += separator + '\n';
   }
@@ -443,7 +441,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
 
   // HEADER (TICKET DE PREPARACIÓN)
   payload += ESC_CMD.ALIGN_CT;
-  payload += ESC_CMD.TXT_4SQUARE;
+  payload += ESC_CMD.TXT_2HEIGHT;
   payload += ESC_CMD.TXT_BOLD_ON;
   if (data.seccionNombre) {
     payload += cleanText(`NUEVA ORDEN: ${data.seccionNombre.toUpperCase()}`) + '\n';
@@ -455,20 +453,13 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
   payload += ESC_CMD.ALIGN_LT;
   payload += separator + '\n';
 
-  // INFO DE ORDEN
+  // INFO DE ORDEN (ID DEL PEDIDO: MESA - INICIAL - CONSECUTIVO)
   if (data.orderId) {
-    payload += ESC_CMD.ALIGN_CT;
-    payload += ESC_CMD.TXT_4SQUARE;
-    payload += ESC_CMD.TXT_BOLD_ON;
-    // En TXT_4SQUARE el texto tiene doble ancho, por lo que el ancho máximo de línea es la mitad del papel
-    const maxOrderLen = Math.floor(width / 2);
     const cleanId = cleanText(data.orderId.toUpperCase());
-    const orderLines = wordWrap(cleanId, maxOrderLen);
+    const orderLines = wordWrap(cleanId, width);
     orderLines.forEach(line => {
-      payload += line + '\n';
+      payload += ESC_CMD.ALIGN_CT + ESC_CMD.TXT_2HEIGHT + ESC_CMD.TXT_BOLD_ON + line + ESC_CMD.TXT_NORMAL + ESC_CMD.TXT_BOLD_OFF + '\n';
     });
-    payload += ESC_CMD.TXT_NORMAL;
-    payload += ESC_CMD.TXT_BOLD_OFF;
     payload += ESC_CMD.ALIGN_LT;
     payload += separator + '\n';
   }
@@ -479,7 +470,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
   payload += separator + '\n';
 
   // PRODUCTOS (SIN PRECIOS)
-  const qtyW = 6;
+  const qtyW = 5;
   const nameW = width - qtyW;
 
   payload += alignLeft(
@@ -490,7 +481,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
 
   data.productos.forEach((p, index) => {
     const cleanName = cleanText(p.nombre);
-    const nameLines = wordWrap(cleanName, nameW - 1);
+    const nameLines = wordWrap(cleanName, nameW);
     
     const qtyStr = padRight(p.cantidad.toString(), qtyW);
     const emptyQty = padRight('', qtyW);
@@ -515,16 +506,13 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
           return;
         }
         const modQty = mod.quantity || 1;
-        const modName = cleanText(`  * ${modQty}x ${mod.name}`);
-        const modNameLines = wordWrap(modName, nameW - 1);
+        const modText = mod.name.toLowerCase().startsWith('papa:') 
+          ? `* ${mod.name}` 
+          : `* ${modQty}x ${mod.name}`;
+        const modNameLines = wordWrap(cleanText(modText), width - 3);
         
-        if (modNameLines.length === 1) {
-          payload += alignLeft(`${emptyQty}${modNameLines[0]}`, width) + '\n';
-        } else {
-          payload += alignLeft(`${emptyQty}${modNameLines[0]}`, width) + '\n';
-          for (let i = 1; i < modNameLines.length; i++) {
-            payload += alignLeft(`${emptyQty}${modNameLines[i]}`, width) + '\n';
-          }
+        for (const line of modNameLines) {
+          payload += ESC_CMD.TXT_SMALL + alignLeft('  ' + line, width) + ESC_CMD.TXT_NORMAL + '\n';
         }
       });
     }
@@ -533,20 +521,14 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
       const faltan = p.cantidad - p.cantidadPreparada;
       let infoText = '';
       if (faltan > 0) {
-        infoText = `  * ${p.cantidadPreparada} PREPARADAS, FALTA(N) ${faltan}`;
+        infoText = `* ${p.cantidadPreparada} PREPARADAS, FALTA(N) ${faltan}`;
       } else {
-        infoText = `  * TODAS PREPARADAS (${p.cantidadPreparada})`;
+        infoText = `* TODAS PREPARADAS (${p.cantidadPreparada})`;
       }
       
-      const infoStr = cleanText(infoText);
-      const infoLines = wordWrap(infoStr, nameW - 1);
-      if (infoLines.length === 1) {
-        payload += alignLeft(`${emptyQty}${infoLines[0]}`, width) + '\n';
-      } else {
-        payload += alignLeft(`${emptyQty}${infoLines[0]}`, width) + '\n';
-        for (let i = 1; i < infoLines.length; i++) {
-          payload += alignLeft(`${emptyQty}${infoLines[i]}`, width) + '\n';
-        }
+      const infoLines = wordWrap(cleanText(infoText), width - 3);
+      for (const line of infoLines) {
+        payload += ESC_CMD.TXT_SMALL + alignLeft('  ' + line, width) + ESC_CMD.TXT_NORMAL + '\n';
       }
     }
 
@@ -558,21 +540,22 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
       totalGramosPapaConMerma += conMerma;
 
       const textoPapa = mermaPorcentaje > 0 
-        ? `  * Papa: ${baseGramos}g (+${mermaPorcentaje}%: ${conMerma}g)`
-        : `  * Papa: ${baseGramos}g`;
-      const papaLines = wordWrap(cleanText(textoPapa), nameW - 1);
+        ? `* Papa: ${baseGramos}g (+${mermaPorcentaje}%: ${conMerma}g)`
+        : `* Papa: ${baseGramos}g`;
+      const papaLines = wordWrap(cleanText(textoPapa), width - 3);
       for (const line of papaLines) {
-        payload += alignLeft(`${emptyQty}${line}`, width) + '\n';
+        payload += ESC_CMD.TXT_SMALL + alignLeft('  ' + line, width) + ESC_CMD.TXT_NORMAL + '\n';
       }
     }
 
+    // Separador entre platos SIN salto de línea previo para no alargar la tirilla
     if (index < data.productos.length - 1) {
-      payload += '\n' + separator + '\n';
+      payload += separator + '\n';
     }
   });
 
   if (data.productosAnteriores && data.productosAnteriores.length > 0) {
-    payload += '\n' + separator + '\n';
+    payload += separator + '\n';
     payload += ESC_CMD.ALIGN_CT;
     payload += ESC_CMD.TXT_BOLD_ON;
     payload += 'ANTERIORES / ENTREGADOS\n';
@@ -587,7 +570,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
 
     data.productosAnteriores.forEach((p, index) => {
       const cleanName = cleanText(p.nombre);
-      const nameLines = wordWrap(cleanName, nameW - 1);
+      const nameLines = wordWrap(cleanName, nameW);
       
       const qtyStr = padRight(p.cantidad.toString(), qtyW);
       const emptyQty = padRight('', qtyW);
@@ -609,16 +592,13 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
             return;
           }
           const modQty = mod.quantity || 1;
-          const modName = cleanText(`  * ${modQty}x ${mod.name}`);
-          const modNameLines = wordWrap(modName, nameW - 1);
+          const modText = mod.name.toLowerCase().startsWith('papa:') 
+            ? `* ${mod.name}` 
+            : `* ${modQty}x ${mod.name}`;
+          const modNameLines = wordWrap(cleanText(modText), width - 3);
           
-          if (modNameLines.length === 1) {
-            payload += alignLeft(`${emptyQty}${modNameLines[0]}`, width) + '\n';
-          } else {
-            payload += alignLeft(`${emptyQty}${modNameLines[0]}`, width) + '\n';
-            for (let i = 1; i < modNameLines.length; i++) {
-              payload += alignLeft(`${emptyQty}${modNameLines[i]}`, width) + '\n';
-            }
+          for (const line of modNameLines) {
+            payload += ESC_CMD.TXT_SMALL + alignLeft('  ' + line, width) + ESC_CMD.TXT_NORMAL + '\n';
           }
         });
       }
@@ -627,11 +607,11 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
         const baseGramos = p.cantidad * p.gramosPapa;
         const conMerma = Math.round(baseGramos * (1 + (mermaPorcentaje / 100)));
         const textoPapa = mermaPorcentaje > 0 
-          ? `  * Papa: ${baseGramos}g (+${mermaPorcentaje}%: ${conMerma}g)`
-          : `  * Papa: ${baseGramos}g`;
-        const papaLines = wordWrap(cleanText(textoPapa), nameW - 1);
+          ? `* Papa: ${baseGramos}g (+${mermaPorcentaje}%: ${conMerma}g)`
+          : `* Papa: ${baseGramos}g`;
+        const papaLines = wordWrap(cleanText(textoPapa), width - 3);
         for (const line of papaLines) {
-          payload += alignLeft(`${emptyQty}${line}`, width) + '\n';
+          payload += ESC_CMD.TXT_SMALL + alignLeft('  ' + line, width) + ESC_CMD.TXT_NORMAL + '\n';
         }
       }
 
@@ -642,7 +622,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
   }
 
   if (tieneProductosConPapa && totalBaseGramosPapa > 0) {
-    payload += '\n' + separator + '\n';
+    payload += separator + '\n';
     payload += ESC_CMD.ALIGN_CT;
     payload += ESC_CMD.TXT_BOLD_ON;
     payload += cleanText('TOTAL PAPA (FREIDORA)') + '\n';
@@ -659,13 +639,13 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
     payload += ESC_CMD.TXT_BOLD_OFF;
   }
 
-  payload += separator + '\n';
   if (data.observaciones) {
     let notasUsuario = data.observaciones;
     if (tieneProductosConPapa && totalBaseGramosPapa > 0) {
       notasUsuario = notasUsuario.replace(/TOTAL PAPA \(FREIDORA\)[\s\S]*?(?=\n\n|$)/gi, '').trim();
     }
     if (notasUsuario) {
+      payload += separator + '\n';
       payload += ESC_CMD.TXT_BOLD_ON;
       const notaLines = wordWrap(cleanText(`NOTAS: ${notasUsuario}`), width);
       for (const nl of notaLines) {
@@ -676,7 +656,8 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
     }
   }
   
-  payload += '\n\n\n\n';
+  // ESPACIO FINAL PARA CORTE (Compacto sin desperdicio)
+  payload += '\n\n';
 
   return payload;
 };
@@ -910,9 +891,10 @@ export const getHtmlTicketPayload = (ticketData: TicketData, paperSize: 58 | 80,
   
   html = html.split(ESC_CMD.ALIGN_CT).join('</div><div style="text-align: center; width: 100%;">');
   html = html.split(ESC_CMD.ALIGN_LT).join('</div><div style="text-align: left; width: 100%;">');
-  html = html.split(ESC_CMD.TXT_4SQUARE).join('<span style="font-size: 1.6em; line-height: 1.2; font-weight: bold;">');
-  html = html.split(ESC_CMD.TXT_2HEIGHT).join('<span style="font-size: 1.2em; line-height: 1.2; font-weight: bold;">');
+  html = html.split(ESC_CMD.TXT_4SQUARE).join('<span style="font-size: 1.5em; line-height: 1.2; font-weight: bold;">');
+  html = html.split(ESC_CMD.TXT_2HEIGHT).join('<span style="font-size: 1.3em; line-height: 1.25; font-weight: bold;">');
   html = html.split(ESC_CMD.TXT_2WIDTH).join('<span style="font-size: 1.2em; line-height: 1.2; letter-spacing: 2px;">');
+  html = html.split(ESC_CMD.TXT_SMALL).join('<span style="font-size: 0.88em; line-height: 1.15; color: #222;">');
   html = html.split(ESC_CMD.TXT_NORMAL).join('</span>');
   html = html.split(ESC_CMD.TXT_BOLD_ON).join('<b>');
   html = html.split(ESC_CMD.TXT_BOLD_OFF).join('</b>');
