@@ -24,7 +24,7 @@ import { useCustomAlert } from '../../context/CustomAlertContext';
 import usePrinterStore from '../../store/usePrinterStore';
 import PrintPreviewModal from '../../components/ui/PrintPreviewModal';
 import { soundService } from '../../services/soundService';
-import { TicketData } from '../../utils/printer';
+import { TicketData, enrichTicketDataWithPapaFallback } from '../../utils/printer';
 import { getCachedConfiguracion } from '../../services/configuracion';
 import { FloatingScrollButtons } from '../../components/ui/FloatingScrollButtons';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
@@ -470,7 +470,7 @@ const PedidosScreen = () => {
     const fechaRaw = venta.fechaYHora || venta.fecha;
     const formattedFecha = fechaRaw ? new Date(fechaRaw).toLocaleString('es-CO') : new Date().toLocaleString('es-CO');
 
-    return {
+    return enrichTicketDataWithPapaFallback({
       orderId: cleanOrderId,
       fecha: formattedFecha,
       cliente: venta.cliente || undefined,
@@ -497,7 +497,7 @@ const PedidosScreen = () => {
         seccionCocinaId: prod.producto?.seccionCocinaId || prod.producto?.categoria?.seccionCocinaId || prod.producto?.categoriaRelacion?.seccionCocinaId || prod.seccionCocinaId || prod.categoriaSeccionCocinaId || venta?.categoriaSeccionCocinaId,
         gramosPapa: getGramosPapaForProduct(prod),
       }))
-    };
+    });
   };
 
   const [isEmittingDian, setIsEmittingDian] = useState(false);

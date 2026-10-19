@@ -1,9 +1,9 @@
 import { SeccionCocina } from '../services/seccion-cocina';
 import { ProductoPayload } from '../types/socket.types';
 
-export interface GrupoSeccion {
+export interface GrupoSeccion<T = any> {
   seccion: SeccionCocina;
-  productos: ProductoPayload[];
+  productos: T[];
 }
 
 /** Sección por defecto para productos sin sección asignada */
@@ -31,15 +31,15 @@ const SECCION_GENERAL: SeccionCocina = {
  * @param incluirGeneral Si false, los productos sin sección se omiten
  * @returns Array de grupos [{seccion, productos}] listos para imprimir
  */
-export function splitComandaPorSeccion(
-  productos: ProductoPayload[],
+export function splitComandaPorSeccion<T extends { seccionCocinaId?: string | null; nombre?: string }>(
+  productos: T[],
   secciones: SeccionCocina[],
   incluirGeneral = true,
-): GrupoSeccion[] {
+): GrupoSeccion<T>[] {
   console.log('[DEBUG-PRINTER] splitComanda - IN - productos recibidos:', JSON.stringify(productos.map(p => ({ n: p.nombre, secId: p.seccionCocinaId }))));
   console.log('[DEBUG-PRINTER] splitComanda - IN - secciones configuradas:', JSON.stringify(secciones.map(s => s.IDseccion)));
 
-  const grupos = new Map<string, GrupoSeccion>();
+  const grupos = new Map<string, GrupoSeccion<T>>();
 
   // Inicializar mapa con secciones en orden
   for (const seccion of secciones) {
@@ -47,7 +47,7 @@ export function splitComandaPorSeccion(
   }
 
   // Clasificar productos
-  const sinSeccion: ProductoPayload[] = [];
+  const sinSeccion: T[] = [];
 
   for (const producto of productos) {
     const sectionId = producto.seccionCocinaId != null ? String(producto.seccionCocinaId) : null;
@@ -62,7 +62,6 @@ export function splitComandaPorSeccion(
   // Filtrar secciones sin productos
   const resultado = [...grupos.values()].filter((g) => g.productos.length > 0);
 
-
   // Agregar grupo GENERAL al final si hay productos sin sección
   if (incluirGeneral && sinSeccion.length > 0) {
     resultado.push({ seccion: SECCION_GENERAL, productos: sinSeccion });
@@ -75,8 +74,8 @@ export function splitComandaPorSeccion(
  * Retorna true si hay secciones configuradas con productos en el pedido.
  * Útil para decidir si imprimir un solo ticket o varios.
  */
-export function haySeccionesEnPedido(
-  productos: ProductoPayload[],
+export function haySeccionesEnPedido<T extends { seccionCocinaId?: string | null }>(
+  productos: T[],
   secciones: SeccionCocina[],
 ): boolean {
   if (secciones.length === 0) return false;

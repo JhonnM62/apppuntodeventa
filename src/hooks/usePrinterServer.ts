@@ -48,8 +48,12 @@ export const usePrinterServer = () => {
     const handleJob = async (payload: PrintJobPayload) => {
       console.log(`[DEBUG- PRINTER SERVER] Received print:job jobId=${payload.jobId} type=${payload.type}`);
       try {
+        const ticketDataWithRaw = {
+          ...payload.ticketData,
+          rawPayload: payload.rawPayload || (payload.ticketData as any)?.rawPayload
+        };
         await executePrint(
-          payload.ticketData,
+          ticketDataWithRaw,
           payload.paperSize ?? paperSize,
           currentPrinter.inner_mac_address,
           payload.type,

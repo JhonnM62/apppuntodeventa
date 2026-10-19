@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPrinterConfigs } from '../services/printer-config';
-import { executePrint, executeWebPrintBatch } from '../utils/printer';
+import { executePrint, executeWebPrintBatch, enrichTicketDataWithPapaFallback, generateComandaPayload, generateTicketPayload } from '../utils/printer';
 import { splitComandaPorSeccion } from '../utils/splitComanda';
 import useSeccionesStore from './useSeccionesStore';
 import Toast from 'react-native-toast-message';
@@ -135,15 +135,20 @@ const usePrinterStore = create<PrinterState>()(
 
         const jobId = generateUUID();
         const state = get();
+        const safeTicketData = enrichTicketDataWithPapaFallback(ticketData);
+        const rawPayload = safeTicketData.rawPayload || (type === 'comanda'
+          ? generateComandaPayload(safeTicketData, state.paperSize)
+          : generateTicketPayload(safeTicketData, state.paperSize));
 
         console.log(`[DEBUG- PRINTER STORE] printRemote - emitting print:request jobId=${jobId} target=${state.targetPrintServerId || 'all'}`);
         _socket.emit('print:request', {
           jobId,
           negocioId: _negocioId,
-          ticketData,
+          ticketData: safeTicketData,
           type,
           paperSize: state.paperSize,
           targetSocketId: state.targetPrintServerId,
+          rawPayload,
         });
 
         return new Promise<boolean>((resolve) => {
@@ -170,15 +175,16 @@ const usePrinterStore = create<PrinterState>()(
       // ─────────────────────────────────────────────────────────────────
       printSmart: async (ticketData, type) => {
         const state = get();
+        const safeTicketData = enrichTicketDataWithPapaFallback(ticketData);
         if (Platform.OS === 'web' && state.webPrintMode !== 'remote') {
-          executeWebPrintBatch([{ data: ticketData, type }], state.paperSize);
+          executeWebPrintBatch([{ data: safeTicketData, type }], state.paperSize);
           return true;
         }
 
         if (state.currentPrinter) {
           // Impresión local directa
           try {
-            await executePrint(ticketData, state.paperSize, state.currentPrinter.inner_mac_address, type);
+            await executePrint(safeTicketData, state.paperSize, state.currentPrinter.inner_mac_address, type);
             set({ isConnected: true });
             return true;
           } catch (err: any) {
@@ -188,7 +194,7 @@ const usePrinterStore = create<PrinterState>()(
           }
         } else {
           // Sin BT local → delegar por socket
-          return get().printRemote(ticketData, type);
+          return get().printRemote(safeTicketData, type);
         }
       },
 
@@ -198,8 +204,9 @@ const usePrinterStore = create<PrinterState>()(
       // ─────────────────────────────────────────────────────────────────
       printTicket: async (ticketData: any) => {
         const state = get();
-        const printComanda = state.shouldPrintComanda(ticketData.estado);
-        const printFactura = state.shouldPrintFactura(ticketData.estado);
+        const safeTicketData = enrichTicketDataWithPapaFallback(ticketData);
+        const printComanda = state.shouldPrintComanda(safeTicketData.estado);
+        const printFactura = state.shouldPrintFactura(safeTicketData.estado);
 
         if (!printComanda && !printFactura) return;
 
@@ -220,21 +227,21 @@ const usePrinterStore = create<PrinterState>()(
             }
             
             if (secciones.length === 0) {
-              webTickets.push({ data: ticketData, type: 'comanda' });
+              webTickets.push({ data: safeTicketData, type: 'comanda' });
             } else {
-              const grupos = splitComandaPorSeccion(ticketData.productos ?? [], secciones, true);
+              const grupos = splitComandaPorSeccion(safeTicketData.productos ?? [], secciones, true);
               if (grupos.length === 0) {
-                webTickets.push({ data: ticketData, type: 'comanda' });
+                webTickets.push({ data: safeTicketData, type: 'comanda' });
               } else {
                 grupos.forEach((g) => {
                   webTickets.push({
-                    data: {
-                      ...ticketData,
+                    data: enrichTicketDataWithPapaFallback({
+                      ...safeTicketData,
                       productos: g.productos,
                       seccionNombre: g.seccion.IDseccion === '__general__' ? null : g.seccion.nombre,
                       seccionColor: g.seccion.color,
                       seccionIcono: g.seccion.icono,
-                    },
+                    }),
                     type: 'comanda'
                   });
                 });
@@ -243,7 +250,7 @@ const usePrinterStore = create<PrinterState>()(
           }
           
           if (printFactura) {
-            webTickets.push({ data: ticketData, type: 'factura' });
+            webTickets.push({ data: safeTicketData, type: 'factura' });
           }
           
           if (webTickets.length > 0) {
@@ -260,14 +267,14 @@ const usePrinterStore = create<PrinterState>()(
         }
 
         if (printComanda) {
-          await get().printTicketConSecciones(ticketData);
+          await get().printTicketConSecciones(safeTicketData);
         }
 
         if (printFactura) {
           if (printComanda) {
             await new Promise((r) => setTimeout(r, 1500));
           }
-          await get().printSmart(ticketData, 'factura');
+          await get().printSmart(safeTicketData, 'factura');
         }
       },
 
@@ -279,6 +286,7 @@ const usePrinterStore = create<PrinterState>()(
         let secciones = seccionesState.getSeccionesActivas();
         const pausaMs = (seccionesState.pausaEntreTickets ?? 2) * 1000;
         const state = get();
+        const safeTicketData = enrichTicketDataWithPapaFallback(ticketData);
         
         if (secciones.length === 0 && !seccionesState.loading) {
           try {
@@ -291,30 +299,30 @@ const usePrinterStore = create<PrinterState>()(
 
         if (secciones.length === 0) {
           // Sin secciones → un solo ticket (comportamiento original)
-          await get().printSmart(ticketData, 'comanda');
+          await get().printSmart(safeTicketData, 'comanda');
           return;
         }
 
         // Dividir productos por sección
-        const grupos = splitComandaPorSeccion(ticketData.productos ?? [], secciones, true);
+        const grupos = splitComandaPorSeccion(safeTicketData.productos ?? [], secciones, true);
         console.log(`[DEBUG-PRINTER] printTicketConSecciones - grupos generados: ${grupos.length}`, JSON.stringify(grupos.map(g => ({ s: g.seccion.IDseccion, p: g.productos.length }))));
 
         if (grupos.length === 0) {
           // Todos los productos sin sección y sin GENERAL → ticket único
           console.log('[DEBUG-PRINTER] printTicketConSecciones - sin grupos (0 productos), enviando ticket general.');
-          await get().printSmart(ticketData, 'comanda');
+          await get().printSmart(safeTicketData, 'comanda');
           return;
         }
 
         if (Platform.OS === 'web' && state.webPrintMode !== 'remote') {
           const ticketsParaImprimir = grupos.map((g) => ({
-            data: {
-              ...ticketData,
+            data: enrichTicketDataWithPapaFallback({
+              ...safeTicketData,
               productos: g.productos,
               seccionNombre: g.seccion.IDseccion === '__general__' ? null : g.seccion.nombre,
               seccionColor: g.seccion.color,
               seccionIcono: g.seccion.icono,
-            },
+            }),
             type: 'comanda' as const,
           }));
           executeWebPrintBatch(ticketsParaImprimir, state.paperSize);
@@ -326,13 +334,13 @@ const usePrinterStore = create<PrinterState>()(
           const { seccion, productos } = grupos[i];
           console.log(`[DEBUG-PRINTER] printTicketConSecciones - Imprimiendo grupo ${i+1}/${grupos.length} para sección: ${seccion.IDseccion}`);
 
-          const ticketSeccion = {
-            ...ticketData,
+          const ticketSeccion = enrichTicketDataWithPapaFallback({
+            ...safeTicketData,
             productos,
             seccionNombre: seccion.IDseccion === '__general__' ? null : seccion.nombre,
             seccionColor: seccion.color,
             seccionIcono: seccion.icono,
-          };
+          });
 
           // Determinar impresora para esta sección
           const configImpresora = seccionesState.getImpresoraDeSeccion(seccion.IDseccion);
@@ -357,7 +365,7 @@ const usePrinterStore = create<PrinterState>()(
           }
 
           // Pausa entre tickets (excepto el último)
-          if (i < grupos.length - 1) {
+          if (i < grupos.length - 1 && Platform.OS !== 'web') {
             await new Promise((r) => setTimeout(r, pausaMs));
           }
         }
@@ -367,11 +375,12 @@ const usePrinterStore = create<PrinterState>()(
       // printManual — impresión manual desde vista previa
       // ─────────────────────────────────────────────────────────────────
       printManual: async (ticketData: any, type: 'comanda' | 'factura') => {
+        const safeTicketData = enrichTicketDataWithPapaFallback(ticketData);
         if (type === 'comanda') {
-          await get().printTicketConSecciones(ticketData);
+          await get().printTicketConSecciones(safeTicketData);
           return true;
         }
-        return get().printSmart(ticketData, type);
+        return get().printSmart(safeTicketData, type);
       },
     }),
     {

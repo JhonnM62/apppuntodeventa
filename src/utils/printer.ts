@@ -59,6 +59,7 @@ export interface TicketData {
   seccionColor?: string | null;
   seccionIcono?: string | null;
   porcentajeMermaPapa?: number;
+  rawPayload?: string;
 }
 
 // Helpers para alinear texto de forma manual (evita fallos de comandos ESC/POS en algunas impresoras)
@@ -145,6 +146,80 @@ const wordWrap = (text: string, maxLen: number): string[] => {
     lines.push(currentLine.trim());
   }
   return lines;
+};
+
+/**
+ * Enriquece TicketData con modificador y nota de papa para compatibilidad retroactiva.
+ * Asegura que los servidores de impresión Bluetooth antiguos (APKs ya instaladas)
+ * impriman los gramos de papa en cada producto y el total para freidora en las notas,
+ * mientras que las versiones nuevas y web muestran el diseño limpio sin duplicación.
+ */
+export const enrichTicketDataWithPapaFallback = (ticketData: TicketData): TicketData => {
+  if (!ticketData) return ticketData;
+
+  const config = getCachedConfiguracion()?.data || getCachedConfiguracion() || cachedConfig;
+  const mermaPorcentaje = ticketData.porcentajeMermaPapa !== undefined 
+    ? Number(ticketData.porcentajeMermaPapa) 
+    : (config?.porcentajeMermaPapa !== undefined && config?.porcentajeMermaPapa !== null 
+        ? Number(config.porcentajeMermaPapa) 
+        : 10);
+
+  let totalBaseGramosPapa = 0;
+  let totalGramosPapaConMerma = 0;
+
+  const enrichProds = (prods: TicketProduct[] = []): TicketProduct[] => {
+    return prods.map(p => {
+      const gPapa = Number(p.gramosPapa) || 0;
+      // Limpiamos modificadores sintéticos de papa previos para no duplicar en llamadas repetidas
+      const rawModifiers = Array.isArray(p.modifiers) ? [...p.modifiers] : [];
+      const modifiers = rawModifiers.filter(m => !(m.name && m.name.toLowerCase().includes('papa:')));
+
+      if (gPapa > 0) {
+        const baseGramos = p.cantidad * gPapa;
+        const conMerma = Math.round(baseGramos * (1 + (mermaPorcentaje / 100)));
+        totalBaseGramosPapa += baseGramos;
+        totalGramosPapaConMerma += conMerma;
+
+        const textoPapa = mermaPorcentaje > 0 
+          ? `Papa: ${baseGramos}g (+${mermaPorcentaje}%: ${conMerma}g)`
+          : `Papa: ${baseGramos}g`;
+
+        modifiers.push({ name: textoPapa, price: 0, quantity: 1 });
+      }
+
+      return {
+        ...p,
+        modifiers: modifiers.length > 0 ? modifiers : undefined,
+        gramosPapa: gPapa
+      };
+    });
+  };
+
+  const productos = enrichProds(ticketData.productos);
+  const productosAnteriores = ticketData.productosAnteriores 
+    ? enrichProds(ticketData.productosAnteriores) 
+    : undefined;
+
+  // Limpiar cualquier bloque previo de TOTAL PAPA (FREIDORA) en observaciones para recalcular con precisión
+  let observaciones = (ticketData.observaciones || '')
+    .replace(/\n*\s*TOTAL PAPA \(FREIDORA\)[\s\S]*?(?=\n\n|$)/gi, '')
+    .trim();
+
+  if (totalBaseGramosPapa > 0) {
+    const papaSummary = mermaPorcentaje > 0
+      ? `TOTAL PAPA (FREIDORA):\nBase requerida: ${totalBaseGramosPapa}g\nTotal a freir (+${mermaPorcentaje}%): ${totalGramosPapaConMerma}g`
+      : `TOTAL PAPA (FREIDORA):\nTotal a freir: ${totalBaseGramosPapa}g`;
+
+    observaciones = observaciones ? `${observaciones}\n\n${papaSummary}` : papaSummary;
+  }
+
+  return {
+    ...ticketData,
+    productos,
+    productosAnteriores,
+    observaciones: observaciones || undefined,
+    porcentajeMermaPapa: mermaPorcentaje,
+  };
 };
 
 export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): string => {
@@ -402,6 +477,10 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
 
     if (p.modifiers && p.modifiers.length > 0) {
       p.modifiers.forEach(mod => {
+        // En versiones con soporte nativo de gramosPapa, omitimos el modificador de compatibilidad
+        if (p.gramosPapa && p.gramosPapa > 0 && mod.name && mod.name.toLowerCase().includes('papa:')) {
+          return;
+        }
         const modQty = mod.quantity || 1;
         const modName = cleanText(`  * ${modQty}x ${mod.name}`);
         const modNameLines = wordWrap(modName, nameW - 1);
@@ -493,6 +572,9 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
 
       if (p.modifiers && p.modifiers.length > 0) {
         p.modifiers.forEach(mod => {
+          if (p.gramosPapa && p.gramosPapa > 0 && mod.name && mod.name.toLowerCase().includes('papa:')) {
+            return;
+          }
           const modQty = mod.quantity || 1;
           const modName = cleanText(`  * ${modQty}x ${mod.name}`);
           const modNameLines = wordWrap(modName, nameW - 1);
@@ -531,7 +613,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
     payload += ESC_CMD.ALIGN_CT;
     payload += ESC_CMD.TXT_BOLD_ON;
     payload += cleanText('TOTAL PAPA (FREIDORA)') + '\n';
-    payload += ESC_CMD.TXT_NORMAL;
+    payload += ESC_CMD.TXT_BOLD_OFF;
     payload += ESC_CMD.ALIGN_LT;
     payload += separator + '\n';
     payload += alignLeft(cleanText(`Base requerida: ${totalBaseGramosPapa}g`), width) + '\n';
@@ -546,10 +628,19 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
 
   payload += separator + '\n';
   if (data.observaciones) {
-    payload += ESC_CMD.TXT_BOLD_ON;
-    payload += alignLeft(cleanText(`NOTAS: ${data.observaciones}`), width) + '\n';
-    payload += ESC_CMD.TXT_BOLD_OFF;
-    payload += separator + '\n';
+    let notasUsuario = data.observaciones;
+    if (tieneProductosConPapa && totalBaseGramosPapa > 0) {
+      notasUsuario = notasUsuario.replace(/TOTAL PAPA \(FREIDORA\)[\s\S]*?(?=\n\n|$)/gi, '').trim();
+    }
+    if (notasUsuario) {
+      payload += ESC_CMD.TXT_BOLD_ON;
+      const notaLines = wordWrap(cleanText(`NOTAS: ${notasUsuario}`), width);
+      for (const nl of notaLines) {
+        payload += alignLeft(nl, width) + '\n';
+      }
+      payload += ESC_CMD.TXT_BOLD_OFF;
+      payload += separator + '\n';
+    }
   }
   
   payload += '\n\n\n\n';
@@ -597,16 +688,19 @@ export const executeWebPrintBatch = (
         display: block !important;
         position: static;
         margin: 0; 
-        padding: 10px; 
+        padding: 0; 
         font-family: monospace; 
-        white-space: pre; 
-        font-size: 14px;
-        line-height: 1.2;
-        width: max-content;
+        white-space: pre-wrap; 
+        word-break: break-word;
+        font-size: 12px;
+        line-height: 14px;
+        width: 100%;
+        max-width: ${paperSize === 58 ? '280px' : '380px'};
         color: black;
       }
       @page {
         margin: 0;
+        size: ${paperSize === 58 ? '58mm auto' : '80mm auto'};
       }
     }
   `;
@@ -716,7 +810,7 @@ export const executePrint = async (
     if (currentConnectedMac === macAddress && timeSinceLastPrint < 1800000) {
       try {
         await printLogoIfConfigured();
-        const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
+        const payload = ticketData.rawPayload || (type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize));
         console.log(`[DEBUG- PRINTER] executePrint - BLEPrinter.printText directly`);
         await BLEPrinter.printText(payload);
         console.log(`[DEBUG- PRINTER] executePrint - BLEPrinter.printText success`);
@@ -757,7 +851,7 @@ export const executePrint = async (
       // 1) Intentar imprimir logo si está habilitado y es una factura
       await printLogoIfConfigured();
 
-      const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
+      const payload = ticketData.rawPayload || (type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize));
       await BLEPrinter.printText(payload);
       lastPrintTimes[macAddress] = Date.now();
       return true;
@@ -772,19 +866,19 @@ export const executePrint = async (
 };
 
 export const getCleanTicketPayload = (ticketData: TicketData, paperSize: 58 | 80, type: 'comanda' | 'factura'): string => {
-  const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
+  const payload = ticketData.rawPayload || (type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize));
   return Object.values(ESC_CMD).reduce((acc, cmd) => acc.split(cmd).join(''), payload);
 };
 
 export const getHtmlTicketPayload = (ticketData: TicketData, paperSize: 58 | 80, type: 'comanda' | 'factura'): string => {
-  const payload = type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize);
+  const payload = ticketData.rawPayload || (type === 'comanda' ? generateComandaPayload(ticketData, paperSize) : generateTicketPayload(ticketData, paperSize));
   
   let html = payload;
   
   html = html.split(ESC_CMD.ALIGN_CT).join('</div><div style="text-align: center; width: 100%;">');
   html = html.split(ESC_CMD.ALIGN_LT).join('</div><div style="text-align: left; width: 100%;">');
-  html = html.split(ESC_CMD.TXT_4SQUARE).join('<span style="font-size: 1.6em; line-height: 1.2;">');
-  html = html.split(ESC_CMD.TXT_2HEIGHT).join('<span style="font-size: 1.2em; line-height: 1.2;">');
+  html = html.split(ESC_CMD.TXT_4SQUARE).join('<span style="font-size: 1.6em; line-height: 1.2; font-weight: bold;">');
+  html = html.split(ESC_CMD.TXT_2HEIGHT).join('<span style="font-size: 1.2em; line-height: 1.2; font-weight: bold;">');
   html = html.split(ESC_CMD.TXT_2WIDTH).join('<span style="font-size: 1.2em; line-height: 1.2; letter-spacing: 2px;">');
   html = html.split(ESC_CMD.TXT_NORMAL).join('</span>');
   html = html.split(ESC_CMD.TXT_BOLD_ON).join('<b>');
