@@ -222,7 +222,37 @@ export const enrichTicketDataWithPapaFallback = (ticketData: TicketData): Ticket
   };
 };
 
+export const cleanTicketDataForFactura = (ticketData: TicketData): TicketData => {
+  if (!ticketData) return ticketData;
+
+  const cleanProds = (prods: TicketProduct[] = []): TicketProduct[] => {
+    return prods.map(p => {
+      const rawModifiers = Array.isArray(p.modifiers) ? [...p.modifiers] : [];
+      const modifiers = rawModifiers.filter(m => !(m.name && m.name.toLowerCase().includes('papa:')));
+      const { gramosPapa, ...rest } = p;
+      return {
+        ...rest,
+        modifiers: modifiers.length > 0 ? modifiers : undefined,
+      };
+    });
+  };
+
+  let observaciones = (ticketData.observaciones || '')
+    .replace(/\n*\s*TOTAL PAPA \(FREIDORA\)[\s\S]*?(?=\n\n|$)/gi, '')
+    .trim();
+
+  const { porcentajeMermaPapa, ...restTicket } = ticketData;
+
+  return {
+    ...restTicket,
+    productos: cleanProds(ticketData.productos),
+    productosAnteriores: ticketData.productosAnteriores ? cleanProds(ticketData.productosAnteriores) : undefined,
+    observaciones: observaciones || undefined,
+  };
+};
+
 export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): string => {
+  const cleanData = cleanTicketDataForFactura(data);
   const width = paperSize === 58 ? 32 : 48;
   const separator = '-'.repeat(width);
   const boldSeparator = '='.repeat(width);
@@ -230,8 +260,8 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
   let payload = '';
 
   // HEADER
-  if (data.comercio) {
-    const { nombre, nit, direccion, telefono } = data.comercio;
+  if (cleanData.comercio) {
+    const { nombre, nit, direccion, telefono } = cleanData.comercio;
     payload += ESC_CMD.ALIGN_CT;
     payload += ESC_CMD.TXT_BOLD_ON;
     payload += alignCenter(cleanText(nombre || APP_CONFIG.ticketName), width) + '\n';
@@ -253,23 +283,23 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
   payload += separator + '\n';
 
   // INFO DE ORDEN
-  if (data.orderId) {
+  if (cleanData.orderId) {
     payload += ESC_CMD.ALIGN_CT;
     payload += ESC_CMD.TXT_4SQUARE;
     payload += ESC_CMD.TXT_BOLD_ON;
     // Eliminamos la palabra "PEDIDO:" ya que a veces viene incluida en el orderId (ej: "pedido-1...")
     // o es redundante para el cliente.
-    payload += cleanText(data.orderId.toUpperCase()) + '\n';
+    payload += cleanText(cleanData.orderId.toUpperCase()) + '\n';
     payload += ESC_CMD.TXT_NORMAL;
     payload += ESC_CMD.TXT_BOLD_OFF;
     payload += ESC_CMD.ALIGN_LT;
     payload += separator + '\n';
   }
   
-  payload += alignLeft(cleanText(`Fecha: ${data.fecha}`), width) + '\n';
-  if (data.cliente) payload += alignLeft(cleanText(`Cliente: ${data.cliente}`), width) + '\n';
-  if (data.estado) payload += alignLeft(cleanText(`Estado: ${data.estado}`), width) + '\n';
-  if (data.vendedor) payload += alignLeft(cleanText(`Atendió: ${data.vendedor}`), width) + '\n';
+  payload += alignLeft(cleanText(`Fecha: ${cleanData.fecha}`), width) + '\n';
+  if (cleanData.cliente) payload += alignLeft(cleanText(`Cliente: ${cleanData.cliente}`), width) + '\n';
+  if (cleanData.estado) payload += alignLeft(cleanText(`Estado: ${cleanData.estado}`), width) + '\n';
+  if (cleanData.vendedor) payload += alignLeft(cleanText(`Atendió: ${cleanData.vendedor}`), width) + '\n';
   payload += separator + '\n';
 
   // ENCABEZADOS DE PRODUCTOS
@@ -287,7 +317,7 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
   payload += separator + '\n';
 
   // PRODUCTOS MULTILÍNEA
-  data.productos.forEach((p, index) => {
+  cleanData.productos.forEach((p, index) => {
     const cleanName = cleanText(p.nombre);
     const nameLines = wordWrap(cleanName, nameW - 1); // -1 para un espacio de margen
     
@@ -313,9 +343,12 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
       payload += alignLeft(`${emptyQty}${padRight(nameLines[nameLines.length - 1], nameW)}${totalStr}`, width) + '\n';
     }
 
-    // Modificadores (Adicionales/Descuentos)
+    // Modificadores (Adicionales/Descuentos) - Sin papa
     if (p.modifiers && p.modifiers.length > 0) {
       p.modifiers.forEach(mod => {
+        if (mod.name && mod.name.toLowerCase().includes('papa:')) {
+          return;
+        }
         const modQty = mod.quantity || 1;
         const modName = cleanText(`  * ${modQty}x ${mod.name}`);
         const modNameLines = wordWrap(modName, nameW - 1);
@@ -337,7 +370,7 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
     }
 
     // Separador entre productos
-    if (index < data.productos.length - 1) {
+    if (index < cleanData.productos.length - 1) {
       payload += '='.repeat(width) + '\n';
     }
   });
@@ -345,40 +378,40 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
   payload += boldSeparator + '\n';
 
   // TOTALES
-  if (data.descuento && data.descuento > 0) {
-    payload += alignRight(cleanText(`Descuento: -${formatCurrency(data.descuento)}`), width) + '\n';
+  if (cleanData.descuento && cleanData.descuento > 0) {
+    payload += alignRight(cleanText(`Descuento: -${formatCurrency(cleanData.descuento)}`), width) + '\n';
   }
-  if (data.propina && data.propina > 0) {
-    const propinaLabel = data.porcentajePropina ? `Propina (${data.porcentajePropina}%): ` : `Propina: `;
-    payload += alignRight(cleanText(`${propinaLabel}${formatCurrency(data.propina)}`), width) + '\n';
+  if (cleanData.propina && cleanData.propina > 0) {
+    const propinaLabel = cleanData.porcentajePropina ? `Propina (${cleanData.porcentajePropina}%): ` : `Propina: `;
+    payload += alignRight(cleanText(`${propinaLabel}${formatCurrency(cleanData.propina)}`), width) + '\n';
   }
-  if (data.totalGlobal !== undefined) {
-    payload += alignRight(cleanText(`TOTAL GLOBAL: ${formatCurrency(data.totalGlobal)}`), width) + '\n';
-  } else if (data.abono && data.abono > 0) {
-    payload += alignRight(cleanText(`TOTAL GLOBAL: ${formatCurrency(data.total)}`), width) + '\n';
+  if (cleanData.totalGlobal !== undefined) {
+    payload += alignRight(cleanText(`TOTAL GLOBAL: ${formatCurrency(cleanData.totalGlobal)}`), width) + '\n';
+  } else if (cleanData.abono && cleanData.abono > 0) {
+    payload += alignRight(cleanText(`TOTAL GLOBAL: ${formatCurrency(cleanData.total)}`), width) + '\n';
   }
   
-  if (data.abono && data.abono > 0) {
-    payload += alignRight(cleanText(`Abono: -${formatCurrency(data.abono)}`), width) + '\n';
-    payload += alignRight(cleanText(`TOTAL A PAGAR: ${formatCurrency(data.total - data.abono)}`), width) + '\n';
+  if (cleanData.abono && cleanData.abono > 0) {
+    payload += alignRight(cleanText(`Abono: -${formatCurrency(cleanData.abono)}`), width) + '\n';
+    payload += alignRight(cleanText(`TOTAL A PAGAR: ${formatCurrency(cleanData.total - cleanData.abono)}`), width) + '\n';
   } else {
-    payload += alignRight(cleanText(`TOTAL A PAGAR: ${formatCurrency(data.total)}`), width) + '\n';
+    payload += alignRight(cleanText(`TOTAL A PAGAR: ${formatCurrency(cleanData.total)}`), width) + '\n';
   }
   
-  if (data.metodoPago) {
-    payload += alignRight(cleanText(`Medio de Pago: ${data.metodoPago}`), width) + '\n';
+  if (cleanData.metodoPago) {
+    payload += alignRight(cleanText(`Medio de Pago: ${cleanData.metodoPago}`), width) + '\n';
   }
-  if (data.efectivoRecibido && data.efectivoRecibido > 0) {
-    payload += alignRight(cleanText(`Recibido: ${formatCurrency(data.efectivoRecibido)}`), width) + '\n';
-    if (data.devueltas !== undefined) {
-      payload += alignRight(cleanText(`Cambio: ${formatCurrency(data.devueltas)}`), width) + '\n';
+  if (cleanData.efectivoRecibido && cleanData.efectivoRecibido > 0) {
+    payload += alignRight(cleanText(`Recibido: ${formatCurrency(cleanData.efectivoRecibido)}`), width) + '\n';
+    if (cleanData.devueltas !== undefined) {
+      payload += alignRight(cleanText(`Cambio: ${formatCurrency(cleanData.devueltas)}`), width) + '\n';
     }
   }
 
   // FOOTER
   payload += separator + '\n';
-  if (data.observaciones) {
-    payload += alignLeft(cleanText(`Notas: ${data.observaciones}`), width) + '\n';
+  if (cleanData.observaciones) {
+    payload += alignLeft(cleanText(`Notas: ${cleanData.observaciones}`), width) + '\n';
     payload += separator + '\n';
   }
   

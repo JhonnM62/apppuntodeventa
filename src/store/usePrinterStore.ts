@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getPrinterConfigs } from '../services/printer-config';
-import { executePrint, executeWebPrintBatch, enrichTicketDataWithPapaFallback, generateComandaPayload, generateTicketPayload } from '../utils/printer';
+import { executePrint, executeWebPrintBatch, enrichTicketDataWithPapaFallback, cleanTicketDataForFactura, generateComandaPayload, generateTicketPayload } from '../utils/printer';
 import { splitComandaPorSeccion } from '../utils/splitComanda';
 import useSeccionesStore from './useSeccionesStore';
 import Toast from 'react-native-toast-message';
@@ -135,10 +135,11 @@ const usePrinterStore = create<PrinterState>()(
 
         const jobId = generateUUID();
         const state = get();
-        const safeTicketData = enrichTicketDataWithPapaFallback(ticketData);
-        const rawPayload = safeTicketData.rawPayload || (type === 'comanda'
-          ? generateComandaPayload(safeTicketData, state.paperSize)
-          : generateTicketPayload(safeTicketData, state.paperSize));
+        const isFactura = type === 'factura';
+        const safeTicketData = isFactura ? cleanTicketDataForFactura(ticketData) : enrichTicketDataWithPapaFallback(ticketData);
+        const rawPayload = safeTicketData.rawPayload || (isFactura
+          ? generateTicketPayload(safeTicketData, state.paperSize)
+          : generateComandaPayload(safeTicketData, state.paperSize));
 
         console.log(`[DEBUG- PRINTER STORE] printRemote - emitting print:request jobId=${jobId} target=${state.targetPrintServerId || 'all'}`);
         _socket.emit('print:request', {
@@ -175,7 +176,8 @@ const usePrinterStore = create<PrinterState>()(
       // ─────────────────────────────────────────────────────────────────
       printSmart: async (ticketData, type) => {
         const state = get();
-        const safeTicketData = enrichTicketDataWithPapaFallback(ticketData);
+        const isFactura = type === 'factura';
+        const safeTicketData = isFactura ? cleanTicketDataForFactura(ticketData) : enrichTicketDataWithPapaFallback(ticketData);
         if (Platform.OS === 'web' && state.webPrintMode !== 'remote') {
           executeWebPrintBatch([{ data: safeTicketData, type }], state.paperSize);
           return true;
@@ -204,9 +206,8 @@ const usePrinterStore = create<PrinterState>()(
       // ─────────────────────────────────────────────────────────────────
       printTicket: async (ticketData: any) => {
         const state = get();
-        const safeTicketData = enrichTicketDataWithPapaFallback(ticketData);
-        const printComanda = state.shouldPrintComanda(safeTicketData.estado);
-        const printFactura = state.shouldPrintFactura(safeTicketData.estado);
+        const printComanda = state.shouldPrintComanda(ticketData.estado);
+        const printFactura = state.shouldPrintFactura(ticketData.estado);
 
         if (!printComanda && !printFactura) return;
 
@@ -214,6 +215,7 @@ const usePrinterStore = create<PrinterState>()(
           const webTickets: { data: any; type: 'comanda' | 'factura' }[] = [];
           
           if (printComanda) {
+            const safeComandaData = enrichTicketDataWithPapaFallback(ticketData);
             const seccionesState = useSeccionesStore.getState();
             let secciones = seccionesState.getSeccionesActivas();
             
@@ -227,16 +229,16 @@ const usePrinterStore = create<PrinterState>()(
             }
             
             if (secciones.length === 0) {
-              webTickets.push({ data: safeTicketData, type: 'comanda' });
+              webTickets.push({ data: safeComandaData, type: 'comanda' });
             } else {
-              const grupos = splitComandaPorSeccion(safeTicketData.productos ?? [], secciones, true);
+              const grupos = splitComandaPorSeccion(safeComandaData.productos ?? [], secciones, true);
               if (grupos.length === 0) {
-                webTickets.push({ data: safeTicketData, type: 'comanda' });
+                webTickets.push({ data: safeComandaData, type: 'comanda' });
               } else {
                 grupos.forEach((g) => {
                   webTickets.push({
                     data: enrichTicketDataWithPapaFallback({
-                      ...safeTicketData,
+                      ...safeComandaData,
                       productos: g.productos,
                       seccionNombre: g.seccion.IDseccion === '__general__' ? null : g.seccion.nombre,
                       seccionColor: g.seccion.color,
@@ -250,7 +252,7 @@ const usePrinterStore = create<PrinterState>()(
           }
           
           if (printFactura) {
-            webTickets.push({ data: safeTicketData, type: 'factura' });
+            webTickets.push({ data: cleanTicketDataForFactura(ticketData), type: 'factura' });
           }
           
           if (webTickets.length > 0) {
@@ -267,14 +269,15 @@ const usePrinterStore = create<PrinterState>()(
         }
 
         if (printComanda) {
-          await get().printTicketConSecciones(safeTicketData);
+          const safeComandaData = enrichTicketDataWithPapaFallback(ticketData);
+          await get().printTicketConSecciones(safeComandaData);
         }
 
         if (printFactura) {
           if (printComanda) {
             await new Promise((r) => setTimeout(r, 1500));
           }
-          await get().printSmart(safeTicketData, 'factura');
+          await get().printSmart(cleanTicketDataForFactura(ticketData), 'factura');
         }
       },
 
@@ -375,12 +378,12 @@ const usePrinterStore = create<PrinterState>()(
       // printManual — impresión manual desde vista previa
       // ─────────────────────────────────────────────────────────────────
       printManual: async (ticketData: any, type: 'comanda' | 'factura') => {
-        const safeTicketData = enrichTicketDataWithPapaFallback(ticketData);
         if (type === 'comanda') {
+          const safeTicketData = enrichTicketDataWithPapaFallback(ticketData);
           await get().printTicketConSecciones(safeTicketData);
           return true;
         }
-        return get().printSmart(safeTicketData, type);
+        return get().printSmart(cleanTicketDataForFactura(ticketData), type);
       },
     }),
     {
