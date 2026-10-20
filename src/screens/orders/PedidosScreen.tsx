@@ -24,7 +24,7 @@ import { useCustomAlert } from '../../context/CustomAlertContext';
 import usePrinterStore from '../../store/usePrinterStore';
 import PrintPreviewModal from '../../components/ui/PrintPreviewModal';
 import { soundService } from '../../services/soundService';
-import { TicketData, enrichTicketDataWithPapaFallback, cleanTicketDataForFactura } from '../../utils/printer';
+import { TicketData, enrichTicketDataWithPapaFallback, cleanTicketDataForFactura, getGramosPapaForProduct } from '../../utils/printer';
 import { getCachedConfiguracion } from '../../services/configuracion';
 import { FloatingScrollButtons } from '../../components/ui/FloatingScrollButtons';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
@@ -395,60 +395,7 @@ const PedidosScreen = () => {
   const [printPreviewType, setPrintPreviewType] = useState<'comanda' | 'factura' | null>(null);
   const [printPreviewData, setPrintPreviewData] = useState<any>(null);
 
-  const getGramosPapaForProduct = (prod: any): number => {
-    if (prod.gramosPapa && Number(prod.gramosPapa) > 0) {
-      return Number(prod.gramosPapa);
-    }
-    if (prod.producto?.gramosPapa && Number(prod.producto.gramosPapa) > 0) {
-      return Number(prod.producto.gramosPapa);
-    }
 
-    // Buscar en el catálogo local de productos por ID o por nombre
-    const catalog = useProductStore.getState().productos;
-    const prodId = prod.productoId || prod.producto?.IDproductos || prod.IDproductos;
-    const prodName = (prod.nombre || prod.nombreProducto || '').trim().toLowerCase();
-    
-    const catalogProd = catalog.find((p: any) => 
-      (prodId && p.IDproductos === prodId) ||
-      (prodName && p.nombre && p.nombre.trim().toLowerCase() === prodName)
-    );
-
-    if (catalogProd?.gramosPapa && Number(catalogProd.gramosPapa) > 0) {
-      return Number(catalogProd.gramosPapa);
-    }
-
-    // Inspeccionar recetas del producto o del catálogo
-    const recetas = prod.producto?.recetaInsumos || catalogProd?.recetaInsumos;
-    if (recetas && Array.isArray(recetas)) {
-      let totalG = 0;
-      for (const r of recetas) {
-        const ins = r.insumoRelacion;
-        const nombreInsumo = (ins?.nombre || r.insumo || '').toLowerCase();
-        const esPapa = nombreInsumo.includes('papa');
-        if (!esPapa) continue;
-
-        const unidades = (ins?.unidades || r.tipoDeMedida || '').trim().toLowerCase();
-        const esGramos = unidades === 'gr' || unidades === 'g' || unidades === 'gramos';
-        const cantTeorica = Number(ins?.cantidadPorPaquete) || 0;
-        const cantR = Number(r.cantidad) || 0;
-
-        // Extraer gramos si vienen en el nombre del insumo (ej. "Porcion de papa 200 gr" -> 200)
-        const matchGramos = nombreInsumo.match(/(\d+)\s*(?:g|gr|gramos)\b/i);
-        const gramosDelNombre = matchGramos ? Number(matchGramos[1]) : 0;
-
-        if (cantTeorica > 0) {
-          totalG += cantR * cantTeorica;
-        } else if (gramosDelNombre > 0) {
-          totalG += (cantR > 0 ? cantR : 1) * gramosDelNombre;
-        } else if (esGramos && cantR > 0) {
-          totalG += cantR;
-        }
-      }
-      if (totalG > 0) return totalG;
-    }
-
-    return 0;
-  };
 
   const mapVentaToTicketData = (venta: any): TicketData => {
     let cleanOrderId = venta.pedido || venta.IDventas || '';

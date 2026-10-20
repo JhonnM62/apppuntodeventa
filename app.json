@@ -2,7 +2,7 @@
   "expo": {
     "name": "Q Hubo Mor POS",
     "slug": "qhubomor-pos-app",
-    "version": "1.0.306",
+    "version": "1.0.307",
     "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -37,7 +37,7 @@
         "android.permission.RECORD_AUDIO"
       ],
       "package": "com.anonymous.qhubomorposapp",
-      "versionCode": 306
+      "versionCode": 307
     },
     "web": {
       "favicon": "./assets/favicon.png",

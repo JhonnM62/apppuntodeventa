@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import { getConfiguracion, getCachedConfiguracion } from '../services/configuracion';
 import { APP_CONFIG } from '../constants/app.config';
+import { useProductStore } from '../store/useProductStore';
 
 let BLEPrinter: any = null;
 let currentConnectedMac: string | null = null;
@@ -150,6 +151,66 @@ const wordWrap = (text: string, maxLen: number): string[] => {
 };
 
 /**
+ * Obtiene los gramos de papa configurados para un producto.
+ * Revisa propiedades directas, el catálogo local y la receta de insumos.
+ */
+export const getGramosPapaForProduct = (prod: any): number => {
+  if (!prod) return 0;
+  if (prod.gramosPapa && Number(prod.gramosPapa) > 0) {
+    return Number(prod.gramosPapa);
+  }
+  if (prod.producto?.gramosPapa && Number(prod.producto.gramosPapa) > 0) {
+    return Number(prod.producto.gramosPapa);
+  }
+
+  // Buscar en el catálogo local de productos por ID o por nombre
+  const catalog = useProductStore.getState().productos;
+  const prodId = prod.productoId || prod.producto?.IDproductos || prod.IDproductos;
+  const prodName = (prod.nombre || prod.nombreProducto || '').trim().toLowerCase();
+  
+  const catalogProd = catalog.find((p: any) => 
+    (prodId && p.IDproductos === prodId) ||
+    (prodName && p.nombre && p.nombre.trim().toLowerCase() === prodName)
+  );
+
+  if (catalogProd?.gramosPapa && Number(catalogProd.gramosPapa) > 0) {
+    return Number(catalogProd.gramosPapa);
+  }
+
+  // Inspeccionar recetas del producto o del catálogo
+  const recetas = prod.recetaInsumos || prod.producto?.recetaInsumos || catalogProd?.recetaInsumos;
+  if (recetas && Array.isArray(recetas)) {
+    let totalG = 0;
+    for (const r of recetas) {
+      const ins = r.insumoRelacion;
+      const nombreInsumo = (ins?.nombre || r.insumo || '').toLowerCase();
+      const esPapa = nombreInsumo.includes('papa');
+      if (!esPapa) continue;
+
+      const unidades = (ins?.unidades || r.tipoDeMedida || '').trim().toLowerCase();
+      const esGramos = unidades === 'gr' || unidades === 'g' || unidades === 'gramos';
+      const cantTeorica = Number(ins?.cantidadPorPaquete) || 0;
+      const cantR = Number(r.cantidad) || 0;
+
+      // Extraer gramos si vienen en el nombre del insumo (ej. "Porcion de papa 200 gr" -> 200)
+      const matchGramos = nombreInsumo.match(/(\d+)\s*(?:g|gr|gramos)\b/i);
+      const gramosDelNombre = matchGramos ? Number(matchGramos[1]) : 0;
+
+      if (cantTeorica > 0) {
+        totalG += cantR * cantTeorica;
+      } else if (gramosDelNombre > 0) {
+        totalG += (cantR > 0 ? cantR : 1) * gramosDelNombre;
+      } else if (esGramos && cantR > 0) {
+        totalG += cantR;
+      }
+    }
+    if (totalG > 0) return totalG;
+  }
+
+  return 0;
+};
+
+/**
  * Enriquece TicketData con modificador y nota de papa para compatibilidad retroactiva.
  * Asegura que los servidores de impresión Bluetooth antiguos (APKs ya instaladas)
  * impriman los gramos de papa en cada producto y el total para freidora en las notas,
@@ -170,7 +231,9 @@ export const enrichTicketDataWithPapaFallback = (ticketData: TicketData): Ticket
 
   const enrichProds = (prods: TicketProduct[] = []): TicketProduct[] => {
     return prods.map(p => {
-      const gPapa = Number(p.gramosPapa) || 0;
+      const gPapa = (p.gramosPapa && Number(p.gramosPapa) > 0)
+        ? Number(p.gramosPapa)
+        : getGramosPapaForProduct(p);
       // Limpiamos modificadores sintéticos de papa previos para no duplicar en llamadas repetidas
       const rawModifiers = Array.isArray(p.modifiers) ? [...p.modifiers] : [];
       const modifiers = rawModifiers.filter(m => !(m.name && m.name.toLowerCase().includes('papa:')));
@@ -455,7 +518,11 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
 
   // INFO DE ORDEN (ID DEL PEDIDO: MESA - INICIAL - CONSECUTIVO)
   if (data.orderId) {
-    const cleanId = cleanText(data.orderId.toUpperCase());
+    let rawOrderId = data.orderId.trim();
+    if (rawOrderId.toLowerCase().startsWith('pedido-')) {
+      rawOrderId = rawOrderId.substring(7);
+    }
+    const cleanId = cleanText(rawOrderId.toUpperCase());
     const orderLines = wordWrap(cleanId, width);
     orderLines.forEach(line => {
       payload += ESC_CMD.ALIGN_CT + ESC_CMD.TXT_2HEIGHT + ESC_CMD.TXT_BOLD_ON + line + ESC_CMD.TXT_NORMAL + ESC_CMD.TXT_BOLD_OFF + '\n';
@@ -488,6 +555,10 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
     
     if (nameLines.length === 0) return;
 
+    const gPapa = (p.gramosPapa && Number(p.gramosPapa) > 0)
+      ? Number(p.gramosPapa)
+      : getGramosPapaForProduct(p);
+
     payload += ESC_CMD.TXT_2HEIGHT + ESC_CMD.TXT_BOLD_ON;
     if (nameLines.length === 1) {
       payload += alignLeft(`${qtyStr}${nameLines[0]}`, width) + '\n';
@@ -502,7 +573,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
     if (p.modifiers && p.modifiers.length > 0) {
       p.modifiers.forEach(mod => {
         // En versiones con soporte nativo de gramosPapa, omitimos el modificador de compatibilidad
-        if (p.gramosPapa && p.gramosPapa > 0 && mod.name && mod.name.toLowerCase().includes('papa:')) {
+        if (gPapa > 0 && mod.name && mod.name.toLowerCase().includes('papa:')) {
           return;
         }
         const modQty = mod.quantity || 1;
@@ -532,9 +603,9 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
       }
     }
 
-    if (p.gramosPapa && p.gramosPapa > 0) {
+    if (gPapa > 0) {
       tieneProductosConPapa = true;
-      const baseGramos = p.cantidad * p.gramosPapa;
+      const baseGramos = p.cantidad * gPapa;
       const conMerma = Math.round(baseGramos * (1 + (mermaPorcentaje / 100)));
       totalBaseGramosPapa += baseGramos;
       totalGramosPapaConMerma += conMerma;
@@ -577,6 +648,10 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
       
       if (nameLines.length === 0) return;
 
+      const gPapa = (p.gramosPapa && Number(p.gramosPapa) > 0)
+        ? Number(p.gramosPapa)
+        : getGramosPapaForProduct(p);
+
       if (nameLines.length === 1) {
         payload += alignLeft(`${qtyStr}${nameLines[0]}`, width) + '\n';
       } else {
@@ -588,7 +663,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
 
       if (p.modifiers && p.modifiers.length > 0) {
         p.modifiers.forEach(mod => {
-          if (p.gramosPapa && p.gramosPapa > 0 && mod.name && mod.name.toLowerCase().includes('papa:')) {
+          if (gPapa > 0 && mod.name && mod.name.toLowerCase().includes('papa:')) {
             return;
           }
           const modQty = mod.quantity || 1;
@@ -603,8 +678,8 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
         });
       }
 
-      if (p.gramosPapa && p.gramosPapa > 0) {
-        const baseGramos = p.cantidad * p.gramosPapa;
+      if (gPapa > 0) {
+        const baseGramos = p.cantidad * gPapa;
         const conMerma = Math.round(baseGramos * (1 + (mermaPorcentaje / 100)));
         const textoPapa = mermaPorcentaje > 0 
           ? `* Papa: ${baseGramos}g (+${mermaPorcentaje}%: ${conMerma}g)`

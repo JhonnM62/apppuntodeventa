@@ -20,6 +20,7 @@ import { useMesaStore } from '../../store/useMesaStore';
 import { useSalesStore } from '../../store/useSalesStore';
 import usePrinterStore from '../../store/usePrinterStore';
 import { getCachedConfiguracion } from '../../services/configuracion';
+import { getGramosPapaForProduct } from '../../utils/printer';
 import { Text } from '../../components/ui/text';
 import { Button } from '../../components/ui/button';
 import PaymentModal from '../../components/ui/PaymentModal';
@@ -200,14 +201,7 @@ const CartItemComponent = React.memo(({
 });
 
 const resolveGramosPapa = (item: any): number => {
-  if (item.gramosPapa && Number(item.gramosPapa) > 0) return Number(item.gramosPapa);
-  if (item.producto?.gramosPapa && Number(item.producto.gramosPapa) > 0) return Number(item.producto.gramosPapa);
-  const catalog = useProductStore.getState().productos;
-  const id = item.IDproductos || item.productoId || item.producto?.IDproductos;
-  const name = (item.nombre || item.nombreProducto || '').trim().toLowerCase();
-  const found = catalog.find((p: any) => (id && p.IDproductos === id) || (name && p.nombre && p.nombre.trim().toLowerCase() === name));
-  if (found?.gramosPapa && Number(found.gramosPapa) > 0) return Number(found.gramosPapa);
-  return 0;
+  return getGramosPapaForProduct(item);
 };
 
 const NewSaleScreen = ({ navigation, route }: Props) => {
@@ -261,7 +255,11 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
        if (!printTriggeredRef.current && lastTicketDataRef.current) {
          printTriggeredRef.current = true;
          console.log('[IMPRESIÓN RÁPIDA] Ticket impreso vía socket con ID:', data.pedido);
-         const ticketData = { ...lastTicketDataRef.current, orderId: data.pedido };
+         let cleanOrderId = data.pedido;
+         if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
+           cleanOrderId = cleanOrderId.substring(7);
+         }
+         const ticketData = { ...lastTicketDataRef.current, orderId: cleanOrderId };
          if (printStoreRef.current.shouldPrintComanda(ticketData.estado) || printStoreRef.current.shouldPrintFactura(ticketData.estado)) {
            printStoreRef.current.printTicket(ticketData);
          }
@@ -1046,7 +1044,11 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           const ticketData = {
             orderId: cleanOrderId,
             fecha: new Date().toLocaleString('es-CO'),
+            cliente: selectedCliente?.nombre || editingVenta?.cliente,
+            observaciones: mesaNota || editingVenta?.notas,
             total: payload.venta.totalInput,
+            totalGlobal: recalcularTotal,
+            descuento: descuento,
             productos: nuevosProductos,
             productosAnteriores: productosAnteriores,
             estado: paymentData.estado,
@@ -1055,7 +1057,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             devueltas: payload.venta.devueltas,
             abono: paymentData.abono,
             vendedor: useAuthStore.getState().user?.nombre || 'Caja',
-            porcentajeMermaPapa: getCachedConfiguracion()?.porcentajeMermaPapa ?? 10
+            porcentajeMermaPapa: getCachedConfiguracion()?.data?.porcentajeMermaPapa ?? getCachedConfiguracion()?.porcentajeMermaPapa ?? 10
           };
           printStore.printTicket(ticketData);
         }
@@ -1156,10 +1158,18 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           // IMPRESIÓN CON EL ID REAL DEL BACKEND
           const printStore = usePrinterStore.getState();
           if (printStore.shouldPrintComanda(payload.venta.estado) || printStore.shouldPrintFactura(payload.venta.estado)) {
+            let cleanOrderId = pedidoGenerado;
+            if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
+              cleanOrderId = cleanOrderId.substring(7);
+            }
             const ticketData = {
-              orderId: pedidoGenerado,
+              orderId: cleanOrderId,
               fecha: new Date().toLocaleString('es-CO'),
+              cliente: selectedCliente?.nombre,
+              observaciones: mesaNota || undefined,
               total: payload.venta.totalInput,
+              totalGlobal: recalcularTotal,
+              descuento: descuento,
               productos: payload.productos.map(item => ({
                 cantidad: item.cantidad,
                 nombre: item.nombre,
@@ -1177,7 +1187,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               porcentajePropina: payload.venta.porcentajePropina,
               abono: paymentData.abono,
               vendedor: useAuthStore.getState().user?.nombre || 'Caja',
-              porcentajeMermaPapa: getCachedConfiguracion()?.porcentajeMermaPapa ?? 10
+              porcentajeMermaPapa: getCachedConfiguracion()?.data?.porcentajeMermaPapa ?? getCachedConfiguracion()?.porcentajeMermaPapa ?? 10
             };
             printStore.printTicket(ticketData);
           }
@@ -1293,10 +1303,19 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             const pedidoGenerado = editingVenta?.pedido || 'Editando...';
             const printStore = usePrinterStore.getState();
             if (printStore.shouldPrintComanda(data.estado) || printStore.shouldPrintFactura(data.estado)) {
+              let cleanOrderId = pedidoGenerado;
+              if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
+                cleanOrderId = cleanOrderId.substring(7);
+              }
+
               const ticketData = {
-                orderId: pedidoGenerado,
+                orderId: cleanOrderId,
                 fecha: new Date().toLocaleString('es-CO'),
+                cliente: selectedCliente?.nombre || editingVenta?.cliente,
+                observaciones: mesaNota || editingVenta?.notas,
                 total: finalTotal,
+                totalGlobal: recalcularTotal,
+                descuento: descuento,
                 productos: cart.map(item => ({
                   cantidad: item.quantity,
                   nombre: item.nombre,
@@ -1314,7 +1333,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                 porcentajePropina: editingVenta?.porcentajePropina,
                 abono: data.abono,
                 vendedor: useAuthStore.getState().user?.nombre || 'Caja',
-                porcentajeMermaPapa: getCachedConfiguracion()?.porcentajeMermaPapa ?? 10
+                porcentajeMermaPapa: getCachedConfiguracion()?.data?.porcentajeMermaPapa ?? getCachedConfiguracion()?.porcentajeMermaPapa ?? 10
               };
               printStore.printTicket(ticketData);
             }
@@ -1376,7 +1395,13 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       lastTicketDataRef.current = {
         orderId: 'PROCESANDO...',
         fecha: new Date().toLocaleString('es-CO'),
+        cliente: selectedCliente?.nombre,
+        observaciones: mesaNota || undefined,
         total: finalTotal,
+        totalGlobal: recalcularTotal,
+        descuento: descuento,
+        abono: data.abono,
+        porcentajeMermaPapa: getCachedConfiguracion()?.data?.porcentajeMermaPapa ?? getCachedConfiguracion()?.porcentajeMermaPapa ?? 10,
         productos: cart.map(item => ({
           cantidad: item.quantity,
           nombre: item.nombre,
@@ -1384,12 +1409,12 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           subtotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
           modifiers: item.modifiers,
           seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
+          gramosPapa: resolveGramosPapa(item),
         })),
         estado: data.estado,
         metodoPago: data.medioDePago || 'PENDIENTE',
         efectivoRecibido: 0,
         devueltas: 0,
-        abono: data.abono,
         vendedor: useAuthStore.getState().user?.nombre || 'Caja'
       };
 
@@ -1440,7 +1465,11 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               printTriggeredRef.current = true;
               console.log('[IMPRESIÓN FALLBACK] Imprimiendo después del createSale');
               if (printStore.shouldPrintComanda(data.estado) || printStore.shouldPrintFactura(data.estado)) {
-                const ticketData = { ...lastTicketDataRef.current, orderId: pedidoGenerado };
+                let cleanOrderId = pedidoGenerado;
+                if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
+                  cleanOrderId = cleanOrderId.substring(7);
+                }
+                const ticketData = { ...lastTicketDataRef.current, orderId: cleanOrderId };
                 printStore.printTicket(ticketData);
               }
             }
