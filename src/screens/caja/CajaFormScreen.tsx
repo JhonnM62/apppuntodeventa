@@ -1336,7 +1336,7 @@ setSaving(false);
             </View>
           </View>
           <View className="flex-row items-center">
-            {!isNew && (
+            {!isNew && Platform.OS === 'web' && (
               <TouchableOpacity
                 onPress={handleManualReload}
                 disabled={isReloading}
@@ -1349,11 +1349,9 @@ setSaving(false);
                 ) : (
                   <Ionicons name="refresh" size={18} color="#fff" />
                 )}
-                {Platform.OS === 'web' && (
-                  <Text className="text-white font-bold text-sm ml-1.5">
-                    {isReloading ? 'Recargando...' : 'Recargar'}
-                  </Text>
-                )}
+                <Text className="text-white font-bold text-sm ml-1.5">
+                  {isReloading ? 'Recargando...' : 'Recargar'}
+                </Text>
               </TouchableOpacity>
             )}
             {!isNew && canDelete && (

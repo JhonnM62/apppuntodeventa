@@ -9,6 +9,7 @@ import { es } from 'date-fns/locale';
 import Toast from 'react-native-toast-message';
 import { useEstadisticasStore } from '../../store/useEstadisticasStore';
 import AuditoriaInsumosView from './AuditoriaInsumosView';
+import VariacionPreciosInsumosView from './VariacionPreciosInsumosView';
 import categoriasService, { CategoriaItem } from '../../services/categorias';
 import { getConfiguracion } from '../../services/configuracion';
 import api from '../../services/api';
@@ -26,11 +27,11 @@ try { Sharing = require('expo-sharing'); } catch (e) {}
 
 export default function EstadisticasScreen({ navigation }: any) {
   const { width } = useWindowDimensions();
-  const { data, isLoading, fetchData, fetchAuditoriaData } = useEstadisticasStore();
+  const { data, isLoading, fetchData, fetchAuditoriaData, fetchPreciosData } = useEstadisticasStore();
   const [modoOperacion, setModoOperacion] = useState('GENERAL');
   const [nombreNegocio, setNombreNegocio] = useState('');
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'graficos' | 'auditoria'>('graficos');
+  const [activeTab, setActiveTab] = useState<'graficos' | 'auditoria' | 'precios'>('graficos');
 
   // Filtros
   const [startDate, setStartDate] = useState(startOfMonth(new Date()));
@@ -50,6 +51,7 @@ export default function EstadisticasScreen({ navigation }: any) {
   // Estado del Gráfico
   const [chartType, setChartType] = useState<'diario' | 'semanal' | 'mensual'>('diario');
   const [isFullScreen, setIsFullScreen] = useState(false);
+  const [selectedBarDetail, setSelectedBarDetail] = useState<{ label: string; value: number; tipo: string } | null>(null);
 
   const loadFilters = async () => {
     try {
@@ -77,7 +79,8 @@ export default function EstadisticasScreen({ navigation }: any) {
     if (modoOperacion === 'RESTAURANTE') {
       await fetchAuditoriaData(format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'));
     }
-  }, [startDate, endDate, selectedCategoria, selectedVendedor, fetchData, fetchAuditoriaData, modoOperacion]);
+    await fetchPreciosData(format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'));
+  }, [startDate, endDate, selectedCategoria, selectedVendedor, fetchData, fetchAuditoriaData, fetchPreciosData, modoOperacion]);
 
   useEffect(() => {
     loadFilters();
@@ -95,6 +98,7 @@ export default function EstadisticasScreen({ navigation }: any) {
     if (modoOperacion === 'RESTAURANTE') {
       fetchAuditoriaData(format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'));
     }
+    fetchPreciosData(format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'));
   }, []); // Empty deps = solo una vez al montar
 
   const onRefresh = async () => {
@@ -108,6 +112,7 @@ export default function EstadisticasScreen({ navigation }: any) {
     if (modoOperacion === 'RESTAURANTE') {
       await fetchAuditoriaData(format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'));
     }
+    await fetchPreciosData(format(startDate, 'yyyy-MM-dd'), format(endDate, 'yyyy-MM-dd'));
     setRefreshing(false);
   };
 
@@ -141,6 +146,16 @@ export default function EstadisticasScreen({ navigation }: any) {
       value: item.value,
       label: chartType === 'diario' ? format(new Date(item.label + 'T12:00:00'), 'd MMM', { locale: es }) : item.label,
       frontColor: chartType === 'diario' ? '#3b82f6' : chartType === 'semanal' ? '#8b5cf6' : '#f59e0b',
+      onPress: () => {
+        const fullDate = chartType === 'diario'
+          ? format(new Date(item.label + 'T12:00:00'), "d 'de' MMMM, yyyy", { locale: es })
+          : item.label;
+        setSelectedBarDetail({
+          label: fullDate,
+          value: item.value,
+          tipo: chartType === 'diario' ? 'Venta Diaria' : chartType === 'semanal' ? 'Venta Semanal' : 'Venta Mensual',
+        });
+      },
       topLabelComponent: () => {
         const val = item.value;
         let display = '';
@@ -230,6 +245,23 @@ export default function EstadisticasScreen({ navigation }: any) {
             indicatorColor="#d1d5db"
             scrollToIndex={0}
           />
+
+        {/* Tarjeta interactiva al presionar una barra del gráfico */}
+        {selectedBarDetail && (
+          <View className="bg-blue-50 border border-blue-200 rounded-2xl p-3 mt-3 flex-row items-center justify-between shadow-sm">
+            <View className="flex-1 mr-2">
+              <Text className="text-[10px] text-blue-500 font-bold uppercase tracking-wider">{selectedBarDetail.tipo}</Text>
+              <Text className="text-xs font-black text-gray-800">{selectedBarDetail.label}</Text>
+            </View>
+            <View className="items-end mr-2">
+              <Text className="text-[10px] text-gray-400 font-bold uppercase">Total Vendido</Text>
+              <Text className="text-sm font-black text-blue-700">{formatMoney(selectedBarDetail.value)}</Text>
+            </View>
+            <TouchableOpacity onPress={() => setSelectedBarDetail(null)} className="p-1">
+              <Ionicons name="close-circle" size={18} color="#9ca3af" />
+            </TouchableOpacity>
+          </View>
+        )}
       </View>
     );
   };
@@ -422,12 +454,24 @@ export default function EstadisticasScreen({ navigation }: any) {
                 <TouchableOpacity
                   onPress={onRefresh}
                   disabled={refreshing}
-                  className={`rounded-2xl py-3 mt-3 shadow-sm flex-row justify-center items-center ${refreshing ? 'bg-blue-400' : 'bg-blue-600'}`}
+                  activeOpacity={0.8}
+                  className={`w-full py-2.5 rounded-2xl mt-3 shadow-sm flex-row justify-center items-center ${
+                    refreshing ? 'bg-blue-400' : 'bg-blue-600'
+                  }`}
+                  style={{ minHeight: 38 }}
                 >
                   {refreshing ? (
-                    <ActivityIndicator color="white" size="small" className="mr-2" />
-                  ) : null}
-                  <Text className="text-white text-center font-black text-sm">{refreshing ? 'Cargando...' : 'Aplicar Filtros'}</Text>
+                    <ActivityIndicator color="white" size="small" style={{ marginRight: 6 }} />
+                  ) : (
+                    <Ionicons name="funnel-outline" size={15} color="#ffffff" style={{ marginRight: 6 }} />
+                  )}
+                  <Text
+                    className="text-white text-center font-bold text-xs"
+                    numberOfLines={1}
+                    style={{ flexShrink: 0 }}
+                  >
+                    {refreshing ? 'Cargando...' : 'Aplicar filtros'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -465,12 +509,24 @@ export default function EstadisticasScreen({ navigation }: any) {
         <TouchableOpacity
           onPress={onRefresh}
           disabled={refreshing}
-          className={`rounded-2xl py-3 mb-4 mx-1 shadow-sm flex-row justify-center items-center ${refreshing ? 'bg-blue-400' : 'bg-blue-600'}`}
+          activeOpacity={0.8}
+          className={`w-full py-2.5 rounded-2xl mb-4 shadow-sm flex-row justify-center items-center ${
+            refreshing ? 'bg-blue-400' : 'bg-blue-600'
+          }`}
+          style={{ minHeight: 38 }}
         >
           {refreshing ? (
-            <ActivityIndicator color="white" size="small" className="mr-2" />
-          ) : null}
-          <Text className="text-white text-center font-black text-sm">{refreshing ? 'Cargando...' : 'Aplicar Filtros'}</Text>
+            <ActivityIndicator color="white" size="small" style={{ marginRight: 6 }} />
+          ) : (
+            <Ionicons name="funnel-outline" size={15} color="#ffffff" style={{ marginRight: 6 }} />
+          )}
+          <Text
+            className="text-white text-center font-bold text-xs"
+            numberOfLines={1}
+            style={{ flexShrink: 0 }}
+          >
+            {refreshing ? 'Cargando...' : 'Aplicar filtros'}
+          </Text>
         </TouchableOpacity>
 
         {/* Filtros Avanzados */}
@@ -540,26 +596,36 @@ export default function EstadisticasScreen({ navigation }: any) {
           />
         )}
 
-        {modoOperacion === 'RESTAURANTE' && (
-          <View className="flex-row bg-white rounded-xl mb-4 p-1 shadow-sm">
-            <TouchableOpacity 
-              className={`flex-1 py-2 rounded-lg items-center ${activeTab === 'graficos' ? 'bg-blue-100' : ''}`}
-              onPress={() => setActiveTab('graficos')}
-            >
-              <Text className={`font-bold ${activeTab === 'graficos' ? 'text-blue-700' : 'text-gray-500'}`}>Estadísticas</Text>
-            </TouchableOpacity>
+        <View className="flex-row bg-white rounded-xl mb-4 p-1 shadow-sm">
+          <TouchableOpacity 
+            className={`flex-1 py-2 rounded-lg items-center ${activeTab === 'graficos' ? 'bg-blue-100' : ''}`}
+            onPress={() => setActiveTab('graficos')}
+          >
+            <Text className={`font-bold text-center text-xs ${activeTab === 'graficos' ? 'text-blue-700' : 'text-gray-500'}`}>Estadísticas</Text>
+          </TouchableOpacity>
+          {modoOperacion === 'RESTAURANTE' && (
             <TouchableOpacity 
               className={`flex-1 py-2 rounded-lg items-center ${activeTab === 'auditoria' ? 'bg-blue-100' : ''}`}
               onPress={() => setActiveTab('auditoria')}
             >
-              <Text className={`font-bold ${activeTab === 'auditoria' ? 'text-blue-700' : 'text-gray-500'}`}>Auditoría Insumos</Text>
+              <Text className={`font-bold text-center text-xs ${activeTab === 'auditoria' ? 'text-blue-700' : 'text-gray-500'}`}>Auditoría Insumos</Text>
             </TouchableOpacity>
-          </View>
-        )}
+          )}
+          <TouchableOpacity 
+            className={`flex-1 py-2 rounded-lg items-center ${activeTab === 'precios' ? 'bg-blue-100' : ''}`}
+            onPress={() => setActiveTab('precios')}
+          >
+            <Text className={`font-bold text-center text-xs ${activeTab === 'precios' ? 'text-blue-700' : 'text-gray-500'}`}>Variación Precios</Text>
+          </TouchableOpacity>
+        </View>
 
         {activeTab === 'auditoria' && modoOperacion === 'RESTAURANTE' ? (
           <View style={{ flex: 1, minHeight: 400 }}>
             <AuditoriaInsumosView startDate={startDate} endDate={endDate} nombreNegocio={nombreNegocio} />
+          </View>
+        ) : activeTab === 'precios' ? (
+          <View style={{ flex: 1, minHeight: 400 }}>
+            <VariacionPreciosInsumosView startDate={startDate} endDate={endDate} nombreNegocio={nombreNegocio} />
           </View>
         ) : (
           isLoading && !data ? (
