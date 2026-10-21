@@ -341,7 +341,12 @@ export default function VariacionPreciosInsumosView({ startDate, endDate, nombre
         pointsObjMap.set(p.date, p);
       });
 
-      let lastKnownPrice = ins.precioInicial > 0 ? ins.precioInicial : ins.precioActual;
+      // Para fechas antes de la primera compra registrada en este período, usamos el primer precio real registrado
+      // Esto evita que un precioAnterior desproporcionado (ej. $10.880) dispare la línea fuera del eje Y antes de la compra
+      const firstRecordedPrice = ins.seriePuntos.length > 0
+        ? ins.seriePuntos[0].value
+        : (ins.precioActual > 0 ? ins.precioActual : (ins.precioInicial > 0 ? ins.precioInicial : 0));
+      let lastKnownPrice = firstRecordedPrice;
 
       const lineData = sortedDates.map(dateKey => {
         if (pointsMap.has(dateKey)) {
@@ -404,6 +409,8 @@ export default function VariacionPreciosInsumosView({ startDate, endDate, nombre
         dataPointsRadius: isLineSelected ? 6 : 4,
         textColor: '#374151',
         textFontSize: 9,
+        curved: true,
+        curvature: 0.12,
       };
     });
 
@@ -1237,6 +1244,7 @@ export default function VariacionPreciosInsumosView({ startDate, endDate, nombre
               indicatorColor="#d1d5db"
               formatYLabel={formatYAxisLabel}
               curved
+              curvature={0.12}
               isAnimated={false}
               renderDataPointsAfterAnimationEnds={true}
               onPress={(item: any) => {
@@ -1739,6 +1747,7 @@ export default function VariacionPreciosInsumosView({ startDate, endDate, nombre
                 indicatorColor="#d1d5db"
                 formatYLabel={formatYAxisLabel}
                 curved
+                curvature={0.12}
                 isAnimated={false}
                 renderDataPointsAfterAnimationEnds={true}
                 onPress={(item: any) => {
