@@ -127,6 +127,10 @@ export default function VariacionPreciosInsumosView({ startDate, endDate, nombre
   const chartWidth = Math.max(windowWidth - 48, 320);
   const chartCardRef = useRef<any>(null);
   const fullScreenChartCardRef = useRef<any>(null);
+  const chartScrollRef = useRef<any>(null);
+  const fullScreenChartScrollRef = useRef<any>(null);
+  const scrollPositionRef = useRef<number>(0);
+  const fullScreenScrollPositionRef = useRef<number>(0);
 
   const { preciosData, isLoading, fetchPreciosData } = useEstadisticasStore();
   const { primaryColor } = useSettingsStore();
@@ -574,30 +578,66 @@ export default function VariacionPreciosInsumosView({ startDate, endDate, nombre
     return `$${n / 1000}k`;
   }, []);
 
-  // Manejador de la ruedita del ratón en Desktop (Web) para hacer zoom
-  const handleWheel = useCallback((e: any) => {
-    if (Platform.OS === 'web') {
-      if (e.deltaY < 0) {
-        // Ruedita hacia arriba: Aumentar zoom
-        setZoomLevel(prev => Math.min(Number((prev + 0.15).toFixed(2)), 3.5));
-      } else if (e.deltaY > 0) {
-        // Ruedita hacia abajo: Disminuir zoom
-        setZoomLevel(prev => Math.max(Number((prev - 0.15).toFixed(2)), 0.6));
+  // Desplazamiento horizontal de la gráfica (para botones, arrastre y rueda del ratón)
+  const scrollChartHorizontally = useCallback((direction: 'left' | 'right', amount: number = 240) => {
+    const isFs = isFullScreen;
+    const currentRef = isFs ? fullScreenChartScrollRef : chartScrollRef;
+    const currentPosRef = isFs ? fullScreenScrollPositionRef : scrollPositionRef;
+    const cardRef = isFs ? fullScreenChartCardRef : chartCardRef;
+
+    // 1. Desplazamiento mediante ref de ScrollView
+    const nextX = Math.max(0, currentPosRef.current + (direction === 'right' ? amount : -amount));
+    currentPosRef.current = nextX;
+    if (currentRef.current?.scrollTo) {
+      currentRef.current.scrollTo({ x: nextX, animated: true });
+    }
+
+    // 2. En Web, también desplazar el contenedor DOM directamente
+    if (Platform.OS === 'web' && cardRef.current) {
+      const root = cardRef.current.nodeType ? cardRef.current : (cardRef.current.getScrollableNode?.() || cardRef.current);
+      if (root) {
+        const candidates = [root, ...Array.from(root.querySelectorAll('*'))];
+        const scrollable: any = candidates.find((el: any) => el.scrollWidth > el.clientWidth && el.clientWidth > 0);
+        if (scrollable) {
+          scrollable.scrollBy({
+            left: direction === 'right' ? amount : -amount,
+            behavior: 'smooth',
+          });
+        }
       }
     }
-  }, []);
+  }, [isFullScreen]);
 
-  // Listener nativo no pasivo para Desktop Web: zoom fluido sin desplazar la página hacia arriba/abajo
+  // Listener nativo para Desktop Web: Zoom con rueda, Desplazamiento Horizontal (Drag o Shift+Wheel)
   useEffect(() => {
     if (Platform.OS !== 'web') return;
 
-    const attachWheel = (ref: any) => {
-      if (!ref.current) return null;
-      const el = ref.current;
-      const node = el.nodeType ? el : (el.getScrollableNode ? el.getScrollableNode() : null) || el;
-      if (!node || !node.addEventListener) return null;
+    const setupWebInteractions = (cardRef: any) => {
+      if (!cardRef.current) return null;
+      const root = cardRef.current.nodeType ? cardRef.current : (cardRef.current.getScrollableNode?.() || cardRef.current);
+      if (!root || !root.addEventListener) return null;
 
+      const findScrollable = (): HTMLElement | null => {
+        const candidates = [root, ...Array.from(root.querySelectorAll('*'))];
+        return (candidates.find((el: any) => el.scrollWidth > el.clientWidth && el.clientWidth > 0) as HTMLElement) || null;
+      };
+
+      // 1. Manejo de rueda del ratón (Shift + rueda o trackpad = scroll horizontal; rueda vertical sola = zoom)
       const onWheelHandler = (e: WheelEvent) => {
+        const targetScrollable = findScrollable();
+
+        // Si es desplazamiento horizontal (Shift + rueda o movimiento horizontal de trackpad)
+        if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+          if (targetScrollable) {
+            e.preventDefault();
+            e.stopPropagation();
+            const delta = e.deltaX !== 0 ? e.deltaX : e.deltaY;
+            targetScrollable.scrollLeft += delta;
+            return;
+          }
+        }
+
+        // Si es rueda vertical estándar: Zoom
         e.preventDefault();
         e.stopPropagation();
         if (e.deltaY < 0) {
@@ -607,20 +647,63 @@ export default function VariacionPreciosInsumosView({ startDate, endDate, nombre
         }
       };
 
-      node.addEventListener('wheel', onWheelHandler, { passive: false });
+      // 2. Arrastre con clic izquierdo del ratón (Drag to Scroll / Pan)
+      let isDown = false;
+      let startX = 0;
+      let scrollLeft = 0;
+      let targetScrollable: HTMLElement | null = null;
+
+      const onMouseDown = (e: MouseEvent) => {
+        if (e.button !== 0) return; // Solo clic primario
+        const target = e.target as HTMLElement;
+        if (target && (target.closest('button') || target.closest('[role="button"]'))) return;
+
+        targetScrollable = findScrollable();
+        if (!targetScrollable) return;
+
+        isDown = true;
+        startX = e.pageX - targetScrollable.offsetLeft;
+        scrollLeft = targetScrollable.scrollLeft;
+        root.style.cursor = 'grabbing';
+      };
+
+      const onMouseMove = (e: MouseEvent) => {
+        if (!isDown || !targetScrollable) return;
+        e.preventDefault();
+        const x = e.pageX - targetScrollable.offsetLeft;
+        const walk = (x - startX) * 1.5;
+        targetScrollable.scrollLeft = scrollLeft - walk;
+      };
+
+      const onMouseUp = () => {
+        if (isDown) {
+          isDown = false;
+          root.style.cursor = 'grab';
+        }
+      };
+
+      root.style.cursor = 'grab';
+      root.addEventListener('wheel', onWheelHandler, { passive: false });
+      root.addEventListener('mousedown', onMouseDown);
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+
       return () => {
-        node.removeEventListener('wheel', onWheelHandler);
+        root.removeEventListener('wheel', onWheelHandler);
+        root.removeEventListener('mousedown', onMouseDown);
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);
       };
     };
 
-    const cleanup1 = attachWheel(chartCardRef);
-    const cleanup2 = attachWheel(fullScreenChartCardRef);
+    const cleanup1 = setupWebInteractions(chartCardRef);
+    const cleanup2 = setupWebInteractions(fullScreenChartCardRef);
 
     return () => {
       if (cleanup1) cleanup1();
       if (cleanup2) cleanup2();
     };
-  }, [isFullScreen]);
+  }, [isFullScreen, activeInsumos, zoomLevel]);
 
   // PanResponder para gesto de pellizco (pinch-to-zoom) en móvil (Android / iOS) sin bloquear scroll
   const panResponder = useMemo(() => {
@@ -1013,20 +1096,38 @@ export default function VariacionPreciosInsumosView({ startDate, endDate, nombre
       <View
         ref={chartCardRef}
         className="bg-white rounded-3xl p-4 shadow-sm border border-gray-100 mb-3"
-        {...(Platform.OS === 'web' ? { onWheel: handleWheel } : panResponder.panHandlers)}
+        {...(Platform.OS === 'web' ? {} : panResponder.panHandlers)}
       >
         <View className="flex-row justify-between items-center mb-3 flex-wrap gap-2">
           <View className="flex-1 min-w-[160px] mr-2">
             <Text className="text-sm font-black text-gray-800">Evolución Comparativa de Precios</Text>
             <Text className="text-[10px] text-gray-400 font-medium">
               {Platform.OS === 'web'
-                ? 'Ruedita para zoom • Clic en puntos para detalle'
+                ? 'Arrastra con el ratón o usa ◀ ▶ para explorar • Ruedita para zoom'
                 : 'Pellizca para zoom • Toca puntos para detalle'}
             </Text>
           </View>
 
-          {/* Botones de Control de Zoom (Desktop y Móvil) */}
+          {/* Botones de Control de Zoom y Desplazamiento (Desktop y Móvil) */}
           <View className="flex-row items-center gap-1 bg-gray-100 p-1 rounded-xl">
+            {/* Botones de Desplazamiento Horizontal (Izquierda / Derecha) */}
+            <View className="flex-row items-center gap-0.5 bg-white p-0.5 rounded-lg border border-gray-200 mr-1 shadow-xs">
+              <TouchableOpacity
+                onPress={() => scrollChartHorizontally('left')}
+                className="w-7 h-7 bg-gray-50 rounded-md items-center justify-center"
+                accessibilityLabel="Desplazar gráfica a la izquierda"
+              >
+                <Ionicons name="chevron-back" size={15} color="#374151" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => scrollChartHorizontally('right')}
+                className="w-7 h-7 bg-gray-50 rounded-md items-center justify-center"
+                accessibilityLabel="Desplazar gráfica a la derecha"
+              >
+                <Ionicons name="chevron-forward" size={15} color="#374151" />
+              </TouchableOpacity>
+            </View>
+
             {/* Botón para expandir a pantalla completa horizontal */}
             <TouchableOpacity
               onPress={() => setIsFullScreen(true)}
@@ -1101,6 +1202,12 @@ export default function VariacionPreciosInsumosView({ startDate, endDate, nombre
         {activeInsumos.length > 0 && LineChart && chartDataSet.length > 0 ? (
           <View style={{ alignItems: 'center', overflow: 'hidden' }}>
             <LineChart
+              scrollRef={chartScrollRef}
+              onScroll={(e: any) => {
+                if (e?.nativeEvent?.contentOffset?.x !== undefined) {
+                  scrollPositionRef.current = e.nativeEvent.contentOffset.x;
+                }
+              }}
               dataSet={chartDataSet}
               width={chartWidth - 56}
               height={chartHeight}
@@ -1482,6 +1589,38 @@ export default function VariacionPreciosInsumosView({ startDate, endDate, nombre
                 </TouchableOpacity>
               </View>
 
+              {/* Botones Desplazamiento Horizontal en Fullscreen */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2, marginRight: 6 }}>
+                <TouchableOpacity
+                  onPress={() => scrollChartHorizontally('left')}
+                  style={{
+                    width: 26,
+                    height: 26,
+                    backgroundColor: '#ffffff',
+                    borderRadius: 6,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  accessibilityLabel="Desplazar a la izquierda"
+                >
+                  <Ionicons name="chevron-back" size={14} color="#374151" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => scrollChartHorizontally('right')}
+                  style={{
+                    width: 26,
+                    height: 26,
+                    backgroundColor: '#ffffff',
+                    borderRadius: 6,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                  accessibilityLabel="Desplazar a la derecha"
+                >
+                  <Ionicons name="chevron-forward" size={14} color="#374151" />
+                </TouchableOpacity>
+              </View>
+
               {/* Botón Salir de Horizontal */}
               <TouchableOpacity
                 onPress={() => setIsFullScreen(false)}
@@ -1562,10 +1701,15 @@ export default function VariacionPreciosInsumosView({ startDate, endDate, nombre
           <View
             ref={fullScreenChartCardRef}
             style={{ flex: 1, width: '100%', justifyContent: 'center' }}
-            {...(Platform.OS === 'web' ? { onWheel: handleWheel } : {})}
           >
             {activeInsumos.length > 0 && LineChart && chartDataSet.length > 0 ? (
               <LineChart
+                scrollRef={fullScreenChartScrollRef}
+                onScroll={(e: any) => {
+                  if (e?.nativeEvent?.contentOffset?.x !== undefined) {
+                    fullScreenScrollPositionRef.current = e.nativeEvent.contentOffset.x;
+                  }
+                }}
                 dataSet={chartDataSet}
                 width={fullScreenVisibleWidth}
                 height={fullScreenChartHeight}
