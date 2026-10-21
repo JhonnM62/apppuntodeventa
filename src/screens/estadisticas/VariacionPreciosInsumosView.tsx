@@ -904,7 +904,7 @@ export default function VariacionPreciosInsumosView({ startDate, endDate, nombre
 
       {/* 3. Filtro Horizontal por Categoría */}
       <View className="mb-3">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="py-0.5">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="py-0.5" style={{ flexGrow: 0, maxHeight: 44 }}>
           {categoriesList.map(cat => {
             const isCatActive = selectedCategory.toUpperCase() === cat.nombre.toUpperCase();
             return (
@@ -945,7 +945,7 @@ export default function VariacionPreciosInsumosView({ startDate, endDate, nombre
 
       {/* 4. Chips de Insumos Activos en la Gráfica */}
       {activeInsumos.length > 0 ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3 py-1">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3 py-1" style={{ flexGrow: 0, maxHeight: 44 }}>
           {activeInsumos.map(ins => {
             const isHighlighted = selectedPointDetail?.insumoId === ins.id;
             return (
