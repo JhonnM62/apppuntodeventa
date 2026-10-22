@@ -411,6 +411,7 @@ const PedidosScreen = () => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [domicilios, setDomicilios] = useState<DomicilioWAItem[]>([]);
   const [loadingDomicilios, setLoadingDomicilios] = useState(false);
+  const [domisSubTab, setDomisSubTab] = useState<'NUEVOS' | 'TOMADOS' | 'DESPACHADOS' | 'PAGADOS' | 'TODOS'>('NUEVOS');
   const [selectedToDelete, setSelectedToDelete] = useState<string[]>([]);
   const [showDatePicker, setShowDatePicker] = useState<{show: boolean, type: 'desde' | 'hasta'}>({show: false, type: 'desde'});
   const [selectedVenta, setSelectedVenta] = useState<VentaItem | null>(null);
@@ -723,6 +724,29 @@ const PedidosScreen = () => {
       return { ...tab, count };
     });
   }, [cachedVentas, domicilios]);
+
+  const domisSubTabsWithCounts = useMemo(() => {
+    const list = Array.isArray(domicilios) ? domicilios : [];
+    const countNuevos = list.filter(d => d.estado === 'RECIENTE').length;
+    const countTomados = list.filter(d => d.estado === 'TOMADO' || d.ventaRelacion?.estado === 'TOMADO').length;
+    const countDespachados = list.filter(d => 
+      ['LISTO_PARA_ENTREGA', 'ENTREGADO', 'DESPACHADO', 'LISTO'].includes(d.estado) ||
+      (d.ventaRelacion && ['LISTO_PARA_ENTREGA', 'ENTREGADO', 'LISTO'].includes(d.ventaRelacion.estado))
+    ).length;
+    const countPagados = list.filter(d => 
+      d.estado === 'COBRADO' || d.estado === 'PAGADO' ||
+      (d.ventaRelacion && d.ventaRelacion.estado === 'PAGADO')
+    ).length;
+    const countTodos = list.length;
+
+    return [
+      { key: 'NUEVOS', label: 'Nuevos', count: countNuevos, color: '#f59e0b' },
+      { key: 'TOMADOS', label: 'Tomados', count: countTomados, color: '#3b82f6' },
+      { key: 'DESPACHADOS', label: 'Despachados', count: countDespachados, color: '#8b5cf6' },
+      { key: 'PAGADOS', label: 'Pagados', count: countPagados, color: '#22c55e' },
+      { key: 'TODOS', label: 'Todos', count: countTodos, color: '#6b7280' },
+    ];
+  }, [domicilios]);
 
   const fetchIdRef = useRef<number>(0);
 
@@ -1681,8 +1705,12 @@ showAlert({
         text2: `En preparación en TOMADO (#${ventaCreadaObj?.pedido || dom.orderIdWA || dom.IDdomicilio.slice(-6)})`
       });
 
-      // Pasar a la pestaña TOMADO automáticamente
-      setActiveTab('TOMADO');
+      // Si estamos en la pestaña DOMIS, mantener el flujo cambiando a la subpestaña TOMADOS; si no, ir al tab TOMADO
+      if (activeTab === 'DOMIS') {
+        setDomisSubTab('TOMADOS');
+      } else {
+        setActiveTab('TOMADO');
+      }
     } catch (e: any) {
       console.error('Error al tomar domicilio:', e);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo tomar el pedido' });
@@ -1873,23 +1901,42 @@ showAlert({
   const renderDomicilioItem = ({ item }: { item: DomicilioWAItem }) => {
     const cleanPhone = (item.clienteTelefono || '').replace(/\D/g, '');
     const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}` : null;
+    const ventaEstado = item.ventaRelacion?.estado;
     const isReciente = item.estado === 'RECIENTE';
-    const isTomado = item.estado === 'TOMADO';
-    const isCobrado = item.estado === 'COBRADO';
-    const isCancelado = item.estado === 'CANCELADO';
+    const isTomado = item.estado === 'TOMADO' || ventaEstado === 'TOMADO';
+    const isDespachado = ['LISTO_PARA_ENTREGA', 'ENTREGADO', 'DESPACHADO', 'LISTO'].includes(item.estado) ||
+      (ventaEstado && ['LISTO_PARA_ENTREGA', 'ENTREGADO', 'LISTO'].includes(ventaEstado));
+    const isCobrado = item.estado === 'COBRADO' || item.estado === 'PAGADO' || ventaEstado === 'PAGADO';
+    const isCancelado = item.estado === 'CANCELADO' || ventaEstado === 'CANCELADO';
+    const isDeudor = item.estado === 'DEUDOR' || ventaEstado === 'DEUDOR';
 
     let estadoBadgeBg = '#fef3c7';
     let estadoBadgeText = '#d97706';
     let borderColor = '#f59e0b';
-    if (isTomado) {
-      estadoBadgeBg = '#dbeafe';
-      estadoBadgeText = '#2563eb';
-      borderColor = '#3b82f6';
-    } else if (isCobrado) {
+    let estadoLabel = item.estado?.toUpperCase() || 'RECIENTE';
+
+    if (isCobrado) {
+      estadoLabel = 'PAGADO';
       estadoBadgeBg = '#d1fae5';
       estadoBadgeText = '#059669';
       borderColor = '#10b981';
+    } else if (isDeudor) {
+      estadoLabel = 'DEUDOR';
+      estadoBadgeBg = '#fee2e2';
+      estadoBadgeText = '#dc2626';
+      borderColor = '#ef4444';
+    } else if (isDespachado) {
+      estadoLabel = (ventaEstado === 'ENTREGADO' || item.estado === 'ENTREGADO') ? 'ENTREGADO' : 'LISTO';
+      estadoBadgeBg = '#ede9fe';
+      estadoBadgeText = '#7c3aed';
+      borderColor = '#8b5cf6';
+    } else if (isTomado) {
+      estadoLabel = 'TOMADO';
+      estadoBadgeBg = '#dbeafe';
+      estadoBadgeText = '#2563eb';
+      borderColor = '#3b82f6';
     } else if (isCancelado) {
+      estadoLabel = 'CANCELADO';
       estadoBadgeBg = '#f3f4f6';
       estadoBadgeText = '#6b7280';
       borderColor = '#9ca3af';
@@ -1940,7 +1987,7 @@ showAlert({
               <DomicilioTimer timestamp={item.timestampPedido || item.createdAt} estado={item.estado} />
               <View style={[styles.statusBadge, { backgroundColor: estadoBadgeBg }]}>
                 <RNText style={[styles.statusText, { color: estadoBadgeText }]}>
-                  {item.estado?.toUpperCase()}
+                  {estadoLabel}
                 </RNText>
               </View>
             </View>
@@ -2115,17 +2162,6 @@ showAlert({
                   <TouchableOpacity
                     onPress={(e) => {
                       e.stopPropagation();
-                      setActiveTab('TOMADO');
-                    }}
-                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#3b82f6', paddingVertical: 7, paddingHorizontal: 10, borderRadius: 8 }}
-                  >
-                    <Ionicons name="eye-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
-                    <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>Ver en Tomados</RNText>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
                       handleCobrarDomicilio(item);
                     }}
                     style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#10b981', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 8 }}
@@ -2136,11 +2172,28 @@ showAlert({
                 </>
               )}
 
+              {isDespachado && !isCobrado && (
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleCobrarDomicilio(item);
+                  }}
+                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#10b981', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 8 }}
+                >
+                  <Ionicons name="cash-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
+                  <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>Cobrar</RNText>
+                </TouchableOpacity>
+              )}
+
               {isCobrado && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <Ionicons name="checkmark-done" size={16} color="#10b981" />
                   <RNText style={{ fontSize: 12, fontWeight: '700', color: '#10b981' }}>Completado</RNText>
                 </View>
+              )}
+
+              {isCancelado && (
+                <RNText style={{ fontSize: 12, color: '#9ca3af', fontStyle: 'italic' }}>Cancelado</RNText>
               )}
             </View>
           </View>
@@ -2162,6 +2215,25 @@ showAlert({
   const flatListData = useMemo(() => {
     if (activeTab === 'DOMIS') {
       let filteredDomis = domicilios;
+
+      if (domisSubTab === 'NUEVOS') {
+        filteredDomis = filteredDomis.filter(d => d.estado === 'RECIENTE');
+      } else if (domisSubTab === 'TOMADOS') {
+        filteredDomis = filteredDomis.filter(d => 
+          d.estado === 'TOMADO' || d.ventaRelacion?.estado === 'TOMADO'
+        );
+      } else if (domisSubTab === 'DESPACHADOS') {
+        filteredDomis = filteredDomis.filter(d => 
+          ['LISTO_PARA_ENTREGA', 'ENTREGADO', 'DESPACHADO', 'LISTO'].includes(d.estado) ||
+          (d.ventaRelacion && ['LISTO_PARA_ENTREGA', 'ENTREGADO', 'LISTO'].includes(d.ventaRelacion.estado))
+        );
+      } else if (domisSubTab === 'PAGADOS') {
+        filteredDomis = filteredDomis.filter(d => 
+          d.estado === 'COBRADO' || d.estado === 'PAGADO' ||
+          (d.ventaRelacion && d.ventaRelacion.estado === 'PAGADO')
+        );
+      }
+
       if (filters.searchText) {
         const q = filters.searchText.toLowerCase();
         filteredDomis = filteredDomis.filter(d => 
@@ -2181,7 +2253,7 @@ showAlert({
       result.push(...section.data);
     });
     return result;
-  }, [activeTab, domicilios, filters.searchText, groupedVentas]);
+  }, [activeTab, domisSubTab, domicilios, filters.searchText, groupedVentas]);
 
   const keyExtractor = (item: any, index: number) => {
     if (item.isHeader) {
@@ -3585,7 +3657,9 @@ showAlert({
         <View style={styles.header}>
           <View>
             <RNText style={styles.headerTitle}>Pedidos</RNText>
-            <RNText style={styles.headerSubtitle}>{filteredVentas.length} registro{filteredVentas.length !== 1 ? 's' : ''}</RNText>
+            <RNText style={styles.headerSubtitle}>
+              {activeTab === 'DOMIS' ? flatListData.length : filteredVentas.length} registro{(activeTab === 'DOMIS' ? flatListData.length : filteredVentas.length) !== 1 ? 's' : ''}
+            </RNText>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             {Platform.OS === 'web' && (
@@ -3660,6 +3734,60 @@ showAlert({
           ))}
         </ScrollView>
       </View>
+
+      {/* Sub-pestañas operativas de Domicilios (Píldoras compactas) */}
+      {activeTab === 'DOMIS' && (
+        <View style={styles.domisSubTabsContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.domisSubTabsContent}
+          >
+            {domisSubTabsWithCounts.map((subTab) => {
+              const isActive = domisSubTab === subTab.key;
+              return (
+                <TouchableOpacity
+                  key={subTab.key}
+                  style={[
+                    styles.domisSubTabPill,
+                    isActive && { backgroundColor: subTab.color, borderColor: subTab.color },
+                  ]}
+                  onPress={() => setDomisSubTab(subTab.key as any)}
+                  activeOpacity={0.7}
+                >
+                  <RNText
+                    style={[
+                      styles.domisSubTabText,
+                      isActive && styles.domisSubTabTextActive,
+                    ]}
+                  >
+                    {subTab.label}
+                  </RNText>
+                  {subTab.count > 0 && (
+                    <View
+                      style={[
+                        styles.domisSubTabBadge,
+                        isActive
+                          ? { backgroundColor: 'rgba(255,255,255,0.28)' }
+                          : { backgroundColor: `${subTab.color}18` },
+                      ]}
+                    >
+                      <RNText
+                        style={[
+                          styles.domisSubTabBadgeText,
+                          { color: isActive ? '#ffffff' : subTab.color },
+                        ]}
+                      >
+                        {subTab.count}
+                      </RNText>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
 
       <View style={styles.filterBar}>
         <View style={styles.searchBarContainer}>
@@ -3853,7 +3981,13 @@ showAlert({
                 color="#d1d5db" 
               />
               <RNText style={styles.emptyText}>
-                {activeTab === 'DOMIS' ? 'No hay domicilios de WhatsApp pendientes' : 'No hay pedidos'}
+                {activeTab === 'DOMIS'
+                  ? (domisSubTab === 'NUEVOS' ? 'No hay domicilios nuevos pendientes'
+                    : domisSubTab === 'TOMADOS' ? 'No hay domicilios en preparación'
+                    : domisSubTab === 'DESPACHADOS' ? 'No hay domicilios despachados'
+                    : domisSubTab === 'PAGADOS' ? 'No hay domicilios pagados en este turno'
+                    : 'No hay domicilios de WhatsApp registrados')
+                  : 'No hay pedidos'}
               </RNText>
               {activeTab === 'DOMIS' && (
                 <TouchableOpacity style={[styles.emptyBtn, { backgroundColor: '#f59e0b' }]} onPress={fetchDomicilios}>
@@ -3958,6 +4092,47 @@ const styles = StyleSheet.create({
   tab: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#f3f4f6', marginRight: 8 },
   tabText: { fontSize: 12, fontWeight: '600', color: '#6b7280' },
   tabTextActive: { color: '#fff' },
+  domisSubTabsContainer: {
+    backgroundColor: '#f8fafc',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    paddingVertical: 8,
+  },
+  domisSubTabsContent: {
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  domisSubTabPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+  },
+  domisSubTabText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  domisSubTabTextActive: {
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  domisSubTabBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 10,
+    marginLeft: 6,
+  },
+  domisSubTabBadgeText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+  },
   filterBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
   searchBarContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3f4f6', borderRadius: 12, paddingHorizontal: 12, marginRight: 12 },
   searchBarInput: { flex: 1, paddingVertical: 10, paddingHorizontal: 8, fontSize: 14, color: '#111827' },
