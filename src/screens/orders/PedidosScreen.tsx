@@ -1347,8 +1347,11 @@ showAlert({
 
   const formatMoney = (amount?: number) => {
     if (amount == null) return '$0';
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(amount);
+    let val = Number(amount) || 0;
+    if (val > 0 && val < 100) val = val * 1000;
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0 }).format(val);
   };
+
 
   const getStatusColor = (status?: string) => {
     const s = (status || '').toUpperCase().replace(/_/g, ' ');
@@ -1683,22 +1686,57 @@ showAlert({
     }
   };
 
+  const normalizeCOP = (val?: any): number => {
+    if (val == null) return 0;
+    const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.]/g, '')) || 0;
+    if (num > 0 && num < 100) return num * 1000;
+    return num;
+  };
+
   const mapDomicilioToVenta = (dom: DomicilioWAItem): any => {
     const itemsPropios = Array.isArray(dom.itemsMapeados) ? dom.itemsMapeados : [];
     const itemsExt = Array.isArray(dom.itemsExternos) ? dom.itemsExternos : [];
 
     const ordenVentas: any[] = [
-      ...itemsPropios.map((it, idx) => ({
-        IDorderventas: `dom-item-${idx}`,
-        nombre: it.nombre,
-        nombreProducto: it.nombre,
-        cantidad: it.cantidad || 1,
-        precio: it.precioUnitario || (it.precioTotal ? it.precioTotal / (it.cantidad || 1) : 0),
-        precioTotal: it.precioTotal || (it.precioUnitario || 0) * (it.cantidad || 1),
-        estado: dom.estado === 'TOMADO' ? 'PREPARANDO' : (dom.estado === 'COBRADO' ? 'LISTO' : 'TOMADO'),
-        cantidadPreparada: dom.estado === 'COBRADO' ? (it.cantidad || 1) : 0,
-        comentarios: it.comentarios ? JSON.stringify([{ name: it.comentarios, price: 0 }]) : undefined,
-      })),
+      ...itemsPropios.map((it, idx) => {
+        let itUnit = it.precioUnitario || (it.precioTotal ? it.precioTotal / (it.cantidad || 1) : 0);
+        let itTot = it.precioTotal || (it.precioUnitario || 0) * (it.cantidad || 1);
+        if (itUnit === 0 && itTot === 0 && it.nombre) {
+          const m = it.nombre.match(/\(\$?([\d.,]+)\)/);
+          if (m) {
+            const rawVal = parseFloat(m[1].replace(/\./g, '')) || 0;
+            const norm = rawVal < 100 ? rawVal * 1000 : rawVal;
+            itTot = norm;
+            itUnit = Math.round(norm / (it.cantidad || 1));
+          }
+        }
+        if (itTot > 0 && itTot < 100) itTot = itTot * 1000;
+        if (itUnit > 0 && itUnit < 100) itUnit = itUnit * 1000;
+
+        let parsedComentarios = undefined;
+        if (it.comentarios) {
+          try {
+            const p = JSON.parse(it.comentarios);
+            parsedComentarios = JSON.stringify(Array.isArray(p) ? p : [p]);
+          } catch (e) {
+            parsedComentarios = JSON.stringify([{ name: it.comentarios, price: 0 }]);
+          }
+        }
+
+        return {
+          IDorderventas: `dom-item-${idx}`,
+          productoId: it.productoId,
+          producto: it.productoId ? { IDproductos: it.productoId, nombre: it.nombre, precioUnitario: itUnit } : undefined,
+          nombre: it.nombre,
+          nombreProducto: it.nombre,
+          cantidad: it.cantidad || 1,
+          precio: itUnit,
+          precioTotal: itTot,
+          estado: dom.estado === 'TOMADO' ? 'PREPARANDO' : (dom.estado === 'COBRADO' ? 'LISTO' : 'TOMADO'),
+          cantidadPreparada: dom.estado === 'COBRADO' ? (it.cantidad || 1) : 0,
+          comentarios: parsedComentarios,
+        };
+      }),
       ...itemsExt.map((ext, idx) => ({
         IDorderventas: `dom-ext-${idx}`,
         nombre: `[Externo] ${ext.nombre}`,
@@ -1713,14 +1751,16 @@ showAlert({
       })),
     ];
 
+    const totalVenta = normalizeCOP(dom.totalWA) || normalizeCOP(dom.totalCalculado) || 0;
+
     if (ordenVentas.length === 0 && dom.detalleTextoWA) {
       ordenVentas.push({
         IDorderventas: 'dom-raw-1',
         nombre: dom.detalleTextoWA,
         nombreProducto: dom.detalleTextoWA,
         cantidad: 1,
-        precio: dom.totalWA || dom.totalCalculado || 0,
-        precioTotal: dom.totalWA || dom.totalCalculado || 0,
+        precio: totalVenta,
+        precioTotal: totalVenta,
         estado: dom.estado,
       });
     }
@@ -1735,9 +1775,9 @@ showAlert({
       mesa: 'DOMICILIO WA',
       direccion: dom.direccion || 'Sin dirección',
       medioDePago: dom.metodoPagoWA || 'PENDIENTE',
-      totalInput: dom.totalWA || dom.totalCalculado || 0,
-      Total: dom.totalWA || dom.totalCalculado || 0,
-      totalGlobal: dom.totalWA || dom.totalCalculado || 0,
+      totalInput: totalVenta,
+      Total: totalVenta,
+      totalGlobal: totalVenta,
       notas: dom.detalleTextoWA || undefined,
       mensaje: `Chatbot WhatsApp (${dom.botNombre || 'IA'})`,
       ordenVentas,
@@ -1866,26 +1906,59 @@ showAlert({
 
           {/* Resumen de Productos */}
           <View style={{ marginBottom: 10 }}>
-            {itemsPropios.map((it, idx) => (
-              <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 2 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
-                  <RNText style={{ fontSize: 13, fontWeight: '700', color: '#111827' }}>
-                    {it.cantidad}x{' '}
-                  </RNText>
-                  <RNText style={{ fontSize: 13, color: '#374151', flexShrink: 1 }} numberOfLines={1}>
-                    {it.nombre}
-                  </RNText>
-                  {it.encontradoEnCatalogo === false && (
-                    <View style={{ marginLeft: 6, backgroundColor: '#fef3c7', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 }}>
-                      <RNText style={{ fontSize: 9, color: '#b45309', fontWeight: '600' }}>Sin ID</RNText>
+            {itemsPropios.map((it, idx) => {
+              let itPrice = it.precioTotal || (it.precioUnitario || 0) * (it.cantidad || 1);
+              if (!itPrice && it.nombre) {
+                const m = it.nombre.match(/\(\$?([\d.,]+)\)/);
+                if (m) {
+                  const rawVal = parseFloat(m[1].replace(/\./g, '')) || 0;
+                  itPrice = rawVal < 100 ? rawVal * 1000 : rawVal;
+                }
+              }
+              if (itPrice > 0 && itPrice < 100) itPrice = itPrice * 1000;
+
+              let modifiersList: Array<{ name: string; price?: number; quantity?: number }> = [];
+              if (it.comentarios) {
+                try {
+                  const parsed = JSON.parse(it.comentarios);
+                  if (Array.isArray(parsed)) modifiersList = parsed;
+                } catch (e) {}
+              }
+
+              return (
+                <View key={idx} style={{ paddingVertical: 2 }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+                      <RNText style={{ fontSize: 13, fontWeight: '700', color: '#111827' }}>
+                        {it.cantidad}x{' '}
+                      </RNText>
+                      <RNText style={{ fontSize: 13, color: '#374151', flexShrink: 1 }} numberOfLines={1}>
+                        {it.nombre}
+                      </RNText>
+                      {it.encontradoEnCatalogo === false && (
+                        <View style={{ marginLeft: 6, backgroundColor: '#fef3c7', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 }}>
+                          <RNText style={{ fontSize: 9, color: '#b45309', fontWeight: '600' }}>Sin ID</RNText>
+                        </View>
+                      )}
+                    </View>
+                    <RNText style={{ fontSize: 13, fontWeight: '600', color: '#111827' }}>
+                      {formatMoney(itPrice)}
+                    </RNText>
+                  </View>
+                  {modifiersList.length > 0 && (
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 2, paddingLeft: 16 }}>
+                      {modifiersList.map((m, mIdx) => (
+                        <View key={mIdx} style={{ backgroundColor: '#f3f4f6', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
+                          <RNText style={{ fontSize: 10, color: '#4b5563' }}>
+                            + {m.name} {m.price ? `(${formatMoney(m.price)})` : ''}
+                          </RNText>
+                        </View>
+                      ))}
                     </View>
                   )}
                 </View>
-                <RNText style={{ fontSize: 13, fontWeight: '600', color: '#111827' }}>
-                  {formatMoney(it.precioTotal || (it.precioUnitario || 0) * it.cantidad)}
-                </RNText>
-              </View>
-            ))}
+              );
+            })}
 
             {itemsExt.length > 0 && (
               <View style={{ marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#f3e8ff' }}>
@@ -1912,9 +1985,10 @@ showAlert({
             <View>
               <RNText style={{ fontSize: 10, fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase' }}>TOTAL A COBRAR</RNText>
               <RNText style={{ fontSize: 16, fontWeight: '800', color: '#111827' }}>
-                {formatMoney(item.totalWA || item.totalCalculado || 0)}
+                {formatMoney(normalizeCOP(item.totalWA) || normalizeCOP(item.totalCalculado) || 0)}
               </RNText>
             </View>
+
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               {isReciente && (
