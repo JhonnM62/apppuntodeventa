@@ -75,6 +75,8 @@ type VentaItem = {
   usuarioRelacion?: { nombre?: string; email?: string };
   registroDeTiempo?: any[];
   facturaElectronica?: any;
+  _isDomicilioWA?: boolean;
+  _rawDomicilio?: any;
 };
 
 type OrderVenta = {
@@ -643,6 +645,7 @@ const PedidosScreen = () => {
   useEffect(() => {
     if (isConnected) {
       joinRoom(Room.VENTAS);
+      joinRoom(Room.DOMICILIOS);
     }
   }, [isConnected, joinRoom]);
 
@@ -1624,10 +1627,14 @@ showAlert({
         venta: {
           mesa: 'DOMICILIO WA',
           estado: 'TOMADO',
+          cliente: dom.clienteNombre || undefined,
+          direccion: dom.direccion || undefined,
+          numeroTelefono: dom.clienteTelefono ? parseInt(dom.clienteTelefono.replace(/\D/g, ''), 10) || undefined : undefined,
           medioDePago: dom.metodoPagoWA || 'PENDIENTE',
           efectivoRecibido: 0,
           totalInput: dom.totalWA || dom.totalCalculado || 0,
-          pedido: dom.orderIdWA || undefined,
+          pedido: dom.orderIdWA ? `#${dom.orderIdWA}` : undefined,
+          mensaje: dom.detalleTextoWA || undefined,
         },
         productos: productosPayload,
       });
@@ -1644,6 +1651,69 @@ showAlert({
     }
   };
 
+  const mapDomicilioToVenta = (dom: DomicilioWAItem): any => {
+    const itemsPropios = Array.isArray(dom.itemsMapeados) ? dom.itemsMapeados : [];
+    const itemsExt = Array.isArray(dom.itemsExternos) ? dom.itemsExternos : [];
+
+    const ordenVentas: any[] = [
+      ...itemsPropios.map((it, idx) => ({
+        IDorderventas: `dom-item-${idx}`,
+        nombre: it.nombre,
+        nombreProducto: it.nombre,
+        cantidad: it.cantidad || 1,
+        precio: it.precioUnitario || (it.precioTotal ? it.precioTotal / (it.cantidad || 1) : 0),
+        precioTotal: it.precioTotal || (it.precioUnitario || 0) * (it.cantidad || 1),
+        estado: dom.estado === 'TOMADO' ? 'PREPARANDO' : (dom.estado === 'COBRADO' ? 'LISTO' : 'TOMADO'),
+        cantidadPreparada: dom.estado === 'COBRADO' ? (it.cantidad || 1) : 0,
+        comentarios: it.comentarios ? JSON.stringify([{ name: it.comentarios, price: 0 }]) : undefined,
+      })),
+      ...itemsExt.map((ext, idx) => ({
+        IDorderventas: `dom-ext-${idx}`,
+        nombre: `[Externo] ${ext.nombre}`,
+        nombreProducto: `[Externo] ${ext.nombre}`,
+        cantidad: ext.cantidad || 1,
+        precio: 0,
+        precioTotal: 0,
+        estado: 'LISTO',
+        comentarios: ext.observacion
+          ? JSON.stringify([{ name: `Otro comercio: ${ext.observacion}`, price: 0 }])
+          : JSON.stringify([{ name: 'De otro comercio / bot', price: 0 }]),
+      })),
+    ];
+
+    if (ordenVentas.length === 0 && dom.detalleTextoWA) {
+      ordenVentas.push({
+        IDorderventas: 'dom-raw-1',
+        nombre: dom.detalleTextoWA,
+        nombreProducto: dom.detalleTextoWA,
+        cantidad: 1,
+        precio: dom.totalWA || dom.totalCalculado || 0,
+        precioTotal: dom.totalWA || dom.totalCalculado || 0,
+        estado: dom.estado,
+      });
+    }
+
+    return {
+      IDventas: dom.ventaId || dom.IDdomicilio,
+      pedido: `#${dom.orderIdWA || dom.IDdomicilio.slice(-6)}`,
+      estado: dom.estado === 'RECIENTE' ? 'TOMADO' : (dom.estado === 'TOMADO' ? 'PREPARANDO' : dom.estado),
+      fechaYHora: dom.timestampPedido || dom.createdAt,
+      fecha: dom.timestampPedido || dom.createdAt,
+      cliente: dom.clienteNombre ? `${dom.clienteNombre} (${dom.clienteTelefono})` : dom.clienteTelefono,
+      mesa: 'DOMICILIO WA',
+      direccion: dom.direccion || 'Sin dirección',
+      medioDePago: dom.metodoPagoWA || 'PENDIENTE',
+      totalInput: dom.totalWA || dom.totalCalculado || 0,
+      Total: dom.totalWA || dom.totalCalculado || 0,
+      totalGlobal: dom.totalWA || dom.totalCalculado || 0,
+      notas: dom.detalleTextoWA || undefined,
+      mensaje: `Chatbot WhatsApp (${dom.botNombre || 'IA'})`,
+      ordenVentas,
+      _isDomicilioWA: true,
+      _rawDomicilio: dom,
+    };
+  };
+
   const renderDomicilioItem = ({ item }: { item: DomicilioWAItem }) => {
     const cleanPhone = (item.clienteTelefono || '').replace(/\D/g, '');
     const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}` : null;
@@ -1654,191 +1724,226 @@ showAlert({
 
     let estadoBadgeBg = '#fef3c7';
     let estadoBadgeText = '#d97706';
+    let borderColor = '#f59e0b';
     if (isTomado) {
       estadoBadgeBg = '#dbeafe';
       estadoBadgeText = '#2563eb';
+      borderColor = '#3b82f6';
     } else if (isCobrado) {
       estadoBadgeBg = '#d1fae5';
       estadoBadgeText = '#059669';
+      borderColor = '#10b981';
     } else if (isCancelado) {
       estadoBadgeBg = '#f3f4f6';
       estadoBadgeText = '#6b7280';
+      borderColor = '#9ca3af';
     }
 
+    const itemsPropios = Array.isArray(item.itemsMapeados) ? item.itemsMapeados : [];
+    const itemsExt = Array.isArray(item.itemsExternos) ? item.itemsExternos : [];
+
     return (
-      <View style={[styles.cardContainer, { borderLeftWidth: 4, borderLeftColor: isReciente ? '#f59e0b' : (isTomado ? '#3b82f6' : (isCobrado ? '#10b981' : '#9ca3af')) }]}>
-        <View style={styles.cardHeader}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <View style={{ backgroundColor: '#25D36620', padding: 5, borderRadius: 8 }}>
-              <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
-            </View>
-            <View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <RNText style={styles.cardTitle}>
-                  #{item.orderIdWA || item.IDdomicilio.slice(-6)}
-                </RNText>
-                <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6, borderWidth: 1, borderColor: '#fde68a' }}>
-                  <RNText style={{ fontSize: 10, fontWeight: '800', color: '#b45309' }}>DOMIS</RNText>
-                </View>
+      <View style={{ marginBottom: 12 }}>
+        <TouchableOpacity
+          style={[
+            styles.card,
+            {
+              borderLeftWidth: 5,
+              borderLeftColor: borderColor,
+              padding: 14,
+            }
+          ]}
+          onPress={() => {
+            setSelectedVenta(mapDomicilioToVenta(item));
+            setModalVisible(true);
+          }}
+          activeOpacity={0.7}
+        >
+          {/* Header de la tarjeta */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 200 }}>
+              <View style={{ backgroundColor: '#25D36620', padding: 6, borderRadius: 10 }}>
+                <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
               </View>
-              <RNText style={{ fontSize: 11, color: '#6b7280' }}>
-                {formatDateTime(item.timestampPedido || item.createdAt)}
-              </RNText>
-            </View>
-          </View>
-
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <DomicilioTimer timestamp={item.timestampPedido || item.createdAt} estado={item.estado} />
-            <View style={[styles.statusBadge, { backgroundColor: estadoBadgeBg }]}>
-              <RNText style={[styles.statusText, { color: estadoBadgeText }]}>
-                {item.estado?.toUpperCase()}
-              </RNText>
-            </View>
-          </View>
-        </View>
-
-        {/* Info del Cliente */}
-        <View style={styles.cardInfo}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-              <Ionicons name="person" size={15} color="#4b5563" style={{ marginRight: 6 }} />
-              <RNText style={{ fontSize: 14, fontWeight: '700', color: '#1f2937' }}>
-                {item.clienteNombre || 'Cliente WhatsApp'}
-              </RNText>
-            </View>
-            {waUrl && (
-              <TouchableOpacity
-                onPress={() => Linking.openURL(waUrl).catch(() => Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo abrir WhatsApp' }))}
-                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#25D366', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14 }}
-              >
-                <Ionicons name="logo-whatsapp" size={14} color="#fff" style={{ marginRight: 4 }} />
-                <RNText style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>Chat</RNText>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {item.direccion ? (
-            <View style={[styles.infoRow, { marginTop: 4 }]}>
-              <Ionicons name="location" size={15} color="#ef4444" style={{ marginRight: 6 }} />
-              <RNText style={[styles.infoText, { color: '#374151', fontWeight: '500' }]}>
-                {item.direccion}
-              </RNText>
-            </View>
-          ) : null}
-
-          {item.metodoPagoWA ? (
-            <View style={[styles.infoRow, { marginTop: 4 }]}>
-              <Ionicons name="wallet-outline" size={14} color="#6b7280" style={{ marginRight: 6 }} />
-              <RNText style={styles.infoText}>
-                Pago detectado: <RNText style={{ fontWeight: 'bold' }}>{item.metodoPagoWA}</RNText>
-              </RNText>
-            </View>
-          ) : null}
-        </View>
-
-        {/* Platos mapeados e items externos */}
-        <View style={{ marginHorizontal: 16, marginVertical: 8, padding: 10, backgroundColor: '#f9fafb', borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb' }}>
-          <RNText style={{ fontSize: 11, fontWeight: 'bold', color: '#6b7280', marginBottom: 6, textTransform: 'uppercase' }}>
-            Detalle del Pedido
-          </RNText>
-          {Array.isArray(item.itemsMapeados) && item.itemsMapeados.map((it, idx) => (
-            <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
-                <RNText style={{ fontSize: 13, fontWeight: '700', color: '#111827' }}>
-                  {it.cantidad}x{' '}
-                </RNText>
-                <RNText style={{ fontSize: 13, color: '#374151', flexShrink: 1 }}>
-                  {it.nombre}
-                </RNText>
-                {it.encontradoEnCatalogo === false && (
-                  <View style={{ marginLeft: 6, backgroundColor: '#fef3c7', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 }}>
-                    <RNText style={{ fontSize: 9, color: '#b45309', fontWeight: '600' }}>Sin ID</RNText>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                  <RNText style={[styles.cardTitle, { fontSize: 15 }]}>
+                    #{item.orderIdWA || item.IDdomicilio.slice(-6)}
+                  </RNText>
+                  <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6, borderWidth: 1, borderColor: '#fde68a' }}>
+                    <RNText style={{ fontSize: 10, fontWeight: '800', color: '#b45309' }}>DOMIS</RNText>
                   </View>
-                )}
-              </View>
-              <RNText style={{ fontSize: 13, fontWeight: '600', color: '#111827' }}>
-                {formatMoney(it.precioTotal || (it.precioUnitario || 0) * it.cantidad)}
-              </RNText>
-            </View>
-          ))}
-
-          {/* Items de otro negocio / bot externo */}
-          {Array.isArray(item.itemsExternos) && item.itemsExternos.length > 0 && (
-            <View style={{ marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#e5e7eb' }}>
-              <RNText style={{ fontSize: 10, fontWeight: '700', color: '#7c3aed', marginBottom: 2 }}>
-                Items adicionales (Otro comercio/bot):
-              </RNText>
-              {item.itemsExternos.map((ext, idx) => (
-                <RNText key={idx} style={{ fontSize: 12, color: '#6b21a8' }}>
-                  • {ext.cantidad}x {ext.nombre} {ext.observacion ? `(${ext.observacion})` : ''}
+                </View>
+                <RNText style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>
+                  {formatDateTime(item.timestampPedido || item.createdAt)}
                 </RNText>
-              ))}
+              </View>
             </View>
-          )}
 
-          {item.detalleTextoWA && (!item.itemsMapeados || item.itemsMapeados.length === 0) ? (
-            <RNText style={{ fontSize: 12, color: '#4b5563', fontStyle: 'italic' }}>
-              "{item.detalleTextoWA}"
-            </RNText>
-          ) : null}
-        </View>
-
-        {/* Footer y Acciones */}
-        <View style={styles.cardFooter}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <RNText style={styles.totalLabel}>TOTAL</RNText>
-            <RNText style={styles.totalAmount}>
-              {formatMoney(item.totalWA || item.totalCalculado || 0)}
-            </RNText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <DomicilioTimer timestamp={item.timestampPedido || item.createdAt} estado={item.estado} />
+              <View style={[styles.statusBadge, { backgroundColor: estadoBadgeBg }]}>
+                <RNText style={[styles.statusText, { color: estadoBadgeText }]}>
+                  {item.estado?.toUpperCase()}
+                </RNText>
+              </View>
+            </View>
           </View>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            {isReciente && (
-              <>
+          {/* Información del Cliente y Entrega */}
+          <View style={{ backgroundColor: '#f9fafb', padding: 10, borderRadius: 10, marginBottom: 10, gap: 4 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+                <Ionicons name="person" size={15} color="#4b5563" style={{ marginRight: 6 }} />
+                <RNText style={{ fontSize: 13, fontWeight: '700', color: '#1f2937' }}>
+                  {item.clienteNombre || 'Cliente WhatsApp'}
+                </RNText>
+              </View>
+              {waUrl && (
                 <TouchableOpacity
-                  onPress={() => handleCancelarDomicilio(item)}
-                  style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: '#fca5a5' }}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    Linking.openURL(waUrl).catch(() => Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo abrir WhatsApp' }));
+                  }}
+                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#25D366', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 12 }}
                 >
-                  <RNText style={{ fontSize: 12, color: '#ef4444', fontWeight: '600' }}>Rechazar</RNText>
+                  <Ionicons name="logo-whatsapp" size={13} color="#fff" style={{ marginRight: 4 }} />
+                  <RNText style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>Chat</RNText>
                 </TouchableOpacity>
+              )}
+            </View>
 
-                <TouchableOpacity
-                  onPress={() => handleTomarDomicilio(item)}
-                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#3b82f6', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 8 }}
-                >
-                  <Ionicons name="hand-right-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
-                  <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>Tomar</RNText>
-                </TouchableOpacity>
-              </>
-            )}
+            {item.direccion ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                <Ionicons name="location" size={15} color="#ef4444" style={{ marginRight: 6 }} />
+                <RNText style={{ fontSize: 12, color: '#374151', fontWeight: '500', flex: 1 }}>
+                  {item.direccion}
+                </RNText>
+              </View>
+            ) : null}
 
-            {isTomado && (
-              <>
-                <TouchableOpacity
-                  onPress={() => handleCancelarDomicilio(item)}
-                  style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: '#fca5a5' }}
-                >
-                  <RNText style={{ fontSize: 12, color: '#ef4444', fontWeight: '600' }}>Cancelar</RNText>
-                </TouchableOpacity>
+            {item.metodoPagoWA ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                <Ionicons name="wallet-outline" size={14} color="#6b7280" style={{ marginRight: 6 }} />
+                <RNText style={{ fontSize: 12, color: '#4b5563' }}>
+                  Pago detectado: <RNText style={{ fontWeight: 'bold', color: '#111827' }}>{item.metodoPagoWA}</RNText>
+                </RNText>
+              </View>
+            ) : null}
+          </View>
 
-                <TouchableOpacity
-                  onPress={() => handleCobrarDomicilio(item)}
-                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#10b981', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 8 }}
-                >
-                  <Ionicons name="cash-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
-                  <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>Cobrar</RNText>
-                </TouchableOpacity>
-              </>
-            )}
+          {/* Resumen de Productos */}
+          <View style={{ marginBottom: 10 }}>
+            {itemsPropios.map((it, idx) => (
+              <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 2 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+                  <RNText style={{ fontSize: 13, fontWeight: '700', color: '#111827' }}>
+                    {it.cantidad}x{' '}
+                  </RNText>
+                  <RNText style={{ fontSize: 13, color: '#374151', flexShrink: 1 }} numberOfLines={1}>
+                    {it.nombre}
+                  </RNText>
+                  {it.encontradoEnCatalogo === false && (
+                    <View style={{ marginLeft: 6, backgroundColor: '#fef3c7', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 }}>
+                      <RNText style={{ fontSize: 9, color: '#b45309', fontWeight: '600' }}>Sin ID</RNText>
+                    </View>
+                  )}
+                </View>
+                <RNText style={{ fontSize: 13, fontWeight: '600', color: '#111827' }}>
+                  {formatMoney(it.precioTotal || (it.precioUnitario || 0) * it.cantidad)}
+                </RNText>
+              </View>
+            ))}
 
-            {isCobrado && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <Ionicons name="checkmark-done" size={16} color="#10b981" />
-                <RNText style={{ fontSize: 12, fontWeight: '700', color: '#10b981' }}>Completado</RNText>
+            {itemsExt.length > 0 && (
+              <View style={{ marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#f3e8ff' }}>
+                <RNText style={{ fontSize: 10, fontWeight: '700', color: '#7c3aed', marginBottom: 2 }}>
+                  Items para otro comercio / bot:
+                </RNText>
+                {itemsExt.map((ext, idx) => (
+                  <RNText key={idx} style={{ fontSize: 12, color: '#6b21a8' }} numberOfLines={1}>
+                    • {ext.cantidad}x {ext.nombre} {ext.observacion ? `(${ext.observacion})` : ''}
+                  </RNText>
+                ))}
               </View>
             )}
+
+            {itemsPropios.length === 0 && itemsExt.length === 0 && item.detalleTextoWA ? (
+              <RNText style={{ fontSize: 12, color: '#4b5563', fontStyle: 'italic' }}>
+                "{item.detalleTextoWA}"
+              </RNText>
+            ) : null}
           </View>
-        </View>
+
+          {/* Footer de la tarjeta con Total y Acciones */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTopWidth: 1, borderTopColor: '#f3f4f6' }}>
+            <View>
+              <RNText style={{ fontSize: 10, fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase' }}>TOTAL A COBRAR</RNText>
+              <RNText style={{ fontSize: 16, fontWeight: '800', color: '#111827' }}>
+                {formatMoney(item.totalWA || item.totalCalculado || 0)}
+              </RNText>
+            </View>
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              {isReciente && (
+                <>
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleCancelarDomicilio(item);
+                    }}
+                    style={{ paddingVertical: 7, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: '#fca5a5' }}
+                  >
+                    <RNText style={{ fontSize: 12, color: '#ef4444', fontWeight: '600' }}>Rechazar</RNText>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleTomarDomicilio(item);
+                    }}
+                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#3b82f6', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 8 }}
+                  >
+                    <Ionicons name="hand-right-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
+                    <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>Tomar</RNText>
+                  </TouchableOpacity>
+                </>
+              )}
+
+              {isTomado && (
+                <>
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleCancelarDomicilio(item);
+                    }}
+                    style={{ paddingVertical: 7, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: '#fca5a5' }}
+                  >
+                    <RNText style={{ fontSize: 12, color: '#ef4444', fontWeight: '600' }}>Cancelar</RNText>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleCobrarDomicilio(item);
+                    }}
+                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#10b981', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 8 }}
+                  >
+                    <Ionicons name="cash-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
+                    <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>Cobrar</RNText>
+                  </TouchableOpacity>
+                </>
+              )}
+
+              {isCobrado && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <Ionicons name="checkmark-done" size={16} color="#10b981" />
+                  <RNText style={{ fontSize: 12, fontWeight: '700', color: '#10b981' }}>Completado</RNText>
+                </View>
+              )}
+            </View>
+          </View>
+        </TouchableOpacity>
       </View>
     );
   };
@@ -2035,6 +2140,12 @@ showAlert({
                   <View style={styles.detailRow}>
                     <RNText style={styles.detailLabel}>Cliente:</RNText>
                     <RNText style={styles.detailValue}>{selectedVenta.cliente}</RNText>
+                  </View>
+                )}
+                {selectedVenta.direccion && (
+                  <View style={styles.detailRow}>
+                    <RNText style={styles.detailLabel}>Dirección:</RNText>
+                    <RNText style={styles.detailValue}>{selectedVenta.direccion}</RNText>
                   </View>
                 )}
                 {selectedVenta.mesa && (
@@ -2350,205 +2461,266 @@ showAlert({
                 </View>
                 {(isAdminApp || user?.permisos?.ventas?.edit) ? (
                   <View style={styles.actionsGrid}>
-                    {selectedVenta.estado === 'EN_EL_CARRITO' && (
+                    {selectedVenta._isDomicilioWA ? (
                       <>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#f59e0b' }]}
-                          onPress={() => {
-                            if (selectedVenta.ordenVentas && selectedVenta.ordenVentas.length > 0) {
-                              useCartStore.getState().loadCartFromVenta(selectedVenta.ordenVentas);
-                            } else {
-                              useCartStore.getState().clearCart();
-                            }
-                            useCartStore.getState().setEditingSale(selectedVenta.IDventas, selectedVenta);
-                            closeModal();
-                            navigation.navigate('Sales', { screen: 'NewSale' } as any);
-                          }}
-                        >
-                          <Ionicons name="cart-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Continuar Editando</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
-                          onPress={() => {
-                            useCartStore.getState().clearCart();
-                            handleChangeEstado('TOMADO');
-                          }}
-                        >
-                          <Ionicons name="close-circle-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Descartar Edición</RNText>
-                        </TouchableOpacity>
+                        {selectedVenta._rawDomicilio?.clienteTelefono ? (
+                          <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: '#25D366' }]}
+                            onPress={() => {
+                              const tel = (selectedVenta._rawDomicilio.clienteTelefono || '').replace(/[^0-9]/g, '');
+                              const url = `https://wa.me/${tel}?text=Hola%20${encodeURIComponent(selectedVenta._rawDomicilio.clienteNombre || '')},%20te%20escribimos%20de%20Q%27hubo%20Mor%20sobre%20tu%20pedido%20%23${selectedVenta._rawDomicilio.orderIdWA || ''}`;
+                              Linking.openURL(url).catch(() => Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo abrir WhatsApp' }));
+                            }}
+                          >
+                            <Ionicons name="logo-whatsapp" size={20} color="#fff" />
+                            <RNText style={styles.actionBtnText}>Abrir WhatsApp</RNText>
+                          </TouchableOpacity>
+                        ) : null}
+
+                        {selectedVenta._rawDomicilio?.estado === 'RECIENTE' && (
+                          <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: '#3b82f6' }]}
+                            onPress={() => {
+                              handleTomarDomicilio(selectedVenta._rawDomicilio);
+                              setSelectedVenta((prev: any) => ({ ...prev, estado: 'TOMADO', _rawDomicilio: { ...prev._rawDomicilio, estado: 'TOMADO' } }));
+                            }}
+                          >
+                            <Ionicons name="hand-right-outline" size={20} color="#fff" />
+                            <RNText style={styles.actionBtnText}>Tomar Domicilio</RNText>
+                          </TouchableOpacity>
+                        )}
+
+                        {(selectedVenta._rawDomicilio?.estado === 'RECIENTE' || selectedVenta._rawDomicilio?.estado === 'TOMADO') && (
+                          <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
+                            onPress={() => {
+                              const rawDom = selectedVenta._rawDomicilio;
+                              closeModal();
+                              handleCobrarDomicilio(rawDom);
+                            }}
+                          >
+                            <Ionicons name="cash-outline" size={20} color="#fff" />
+                            <RNText style={styles.actionBtnText}>Cobrar en Caja</RNText>
+                          </TouchableOpacity>
+                        )}
+
+                        {selectedVenta._rawDomicilio?.estado !== 'COBRADO' && selectedVenta._rawDomicilio?.estado !== 'CANCELADO' && (
+                          <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
+                            onPress={() => {
+                              const rawDom = selectedVenta._rawDomicilio;
+                              closeModal();
+                              handleCancelarDomicilio(rawDom);
+                            }}
+                          >
+                            <Ionicons name="close-circle-outline" size={20} color="#fff" />
+                            <RNText style={styles.actionBtnText}>Rechazar / Cancelar</RNText>
+                          </TouchableOpacity>
+                        )}
                       </>
-                    )}
-                    {selectedVenta.estado === 'TOMADO' && (
+                    ) : (
                       <>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#8b5cf6' }]}
-                          onPress={() => handleChangeEstado('LISTO_PARA_ENTREGA')}
-                        >
-                          <Ionicons name="checkmark-done-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Marcar Listo</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
-                          onPress={() => handleChangeEstado('ENTREGADO')}
-                        >
-                          <Ionicons name="home-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Marcar Entregado</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#6b7280' }]}
-                          onPress={handleVolverCarrito}
-                        >
-                          <Ionicons name="cart-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Volver a Carrito</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
-                          onPress={handleOpenCobrar}
-                        >
-                          <Ionicons name="cash-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Cobrar</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
-                          onPress={() => handleChangeEstado('DEUDOR')}
-                        >
-                          <Ionicons name="alert-circle-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Marcar Deudor</RNText>
-                        </TouchableOpacity>
-                      </>
-                    )}
-                    {selectedVenta.estado === 'LISTO_PARA_ENTREGA' && (
-                      <>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
-                          onPress={() => handleChangeEstado('ENTREGADO')}
-                        >
-                          <Ionicons name="paper-plane-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Marcar Entregado</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#f59e0b' }]}
-                          onPress={() => handleChangeEstado('TOMADO')}
-                        >
-                          <Ionicons name="hand-left-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Volver a Tomado</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
-                          onPress={handleOpenCobrar}
-                        >
-                          <Ionicons name="cash-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Cobrar</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
-                          onPress={() => handleChangeEstado('DEUDOR')}
-                        >
-                          <Ionicons name="alert-circle-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Marcar Deudor</RNText>
-                        </TouchableOpacity>
-                      </>
-                    )}
-                    {selectedVenta.estado === 'PAGADO' && (
-                      <>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
-                          onPress={() => handleChangeEstado('ENTREGADO')}
-                        >
-                          <Ionicons name="paper-plane-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Marcar Entregado</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
-                          onPress={() => handleChangeEstado('DEUDOR')}
-                        >
-                          <Ionicons name="alert-circle-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Marcar Deudor</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#6b7280' }]}
-                          onPress={handleVolverCarrito}
-                        >
-                          <Ionicons name="cart-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Volver a Carrito</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
-                          onPress={handleOpenCobrar}
-                        >
-                          <Ionicons name="cash-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Cobrar / Pago</RNText>
-                        </TouchableOpacity>
-                      </>
-                    )}
-                    {selectedVenta.estado === 'ENTREGADO' && (
-                      <>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
-                          onPress={() => handleChangeEstado('DEUDOR')}
-                        >
-                          <Ionicons name="alert-circle-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Marcar Deudor</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#6b7280' }]}
-                          onPress={handleVolverCarrito}
-                        >
-                          <Ionicons name="cart-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Volver a Carrito</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
-                          onPress={handleOpenCobrar}
-                        >
-                          <Ionicons name="cash-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Cobrar / Pago</RNText>
-                        </TouchableOpacity>
-                      </>
-                    )}
-                    {selectedVenta.estado === 'DEUDOR' && (
-                      <>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
-                          onPress={handleOpenCobrar}
-                        >
-                          <Ionicons name="cash-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Cobrar</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#6b7280' }]}
-                          onPress={handleVolverCarrito}
-                        >
-                          <Ionicons name="cart-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Volver a Carrito</RNText>
-                        </TouchableOpacity>
-                      </>
-                    )}
-                    {selectedVenta.estado === 'RESERVA' && (
-                      <>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#f59e0b' }]}
-                          onPress={() => handleChangeEstado('TOMADO')}
-                        >
-                          <Ionicons name="hand-left-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Pasar a Tomado</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
-                          onPress={handleOpenCobrar}
-                        >
-                          <Ionicons name="cash-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Cobrar / Pago</RNText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: '#6b7280' }]}
-                          onPress={handleVolverCarrito}
-                        >
-                          <Ionicons name="cart-outline" size={20} color="#fff" />
-                          <RNText style={styles.actionBtnText}>Volver a Carrito</RNText>
-                        </TouchableOpacity>
+                        {selectedVenta.estado === 'EN_EL_CARRITO' && (
+                          <>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#f59e0b' }]}
+                              onPress={() => {
+                                if (selectedVenta.ordenVentas && selectedVenta.ordenVentas.length > 0) {
+                                  useCartStore.getState().loadCartFromVenta(selectedVenta.ordenVentas);
+                                } else {
+                                  useCartStore.getState().clearCart();
+                                }
+                                useCartStore.getState().setEditingSale(selectedVenta.IDventas, selectedVenta);
+                                closeModal();
+                                navigation.navigate('Sales', { screen: 'NewSale' } as any);
+                              }}
+                            >
+                              <Ionicons name="cart-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Continuar Editando</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
+                              onPress={() => {
+                                useCartStore.getState().clearCart();
+                                handleChangeEstado('TOMADO');
+                              }}
+                            >
+                              <Ionicons name="close-circle-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Descartar Edición</RNText>
+                            </TouchableOpacity>
+                          </>
+                        )}
+                        {selectedVenta.estado === 'TOMADO' && (
+                          <>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#8b5cf6' }]}
+                              onPress={() => handleChangeEstado('LISTO_PARA_ENTREGA')}
+                            >
+                              <Ionicons name="checkmark-done-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Marcar Listo</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
+                              onPress={() => handleChangeEstado('ENTREGADO')}
+                            >
+                              <Ionicons name="home-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Marcar Entregado</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#6b7280' }]}
+                              onPress={handleVolverCarrito}
+                            >
+                              <Ionicons name="cart-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Volver a Carrito</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
+                              onPress={handleOpenCobrar}
+                            >
+                              <Ionicons name="cash-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Cobrar</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
+                              onPress={() => handleChangeEstado('DEUDOR')}
+                            >
+                              <Ionicons name="alert-circle-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Marcar Deudor</RNText>
+                            </TouchableOpacity>
+                          </>
+                        )}
+                        {selectedVenta.estado === 'LISTO_PARA_ENTREGA' && (
+                          <>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
+                              onPress={() => handleChangeEstado('ENTREGADO')}
+                            >
+                              <Ionicons name="paper-plane-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Marcar Entregado</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#f59e0b' }]}
+                              onPress={() => handleChangeEstado('TOMADO')}
+                            >
+                              <Ionicons name="hand-left-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Volver a Tomado</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
+                              onPress={handleOpenCobrar}
+                            >
+                              <Ionicons name="cash-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Cobrar</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
+                              onPress={() => handleChangeEstado('DEUDOR')}
+                            >
+                              <Ionicons name="alert-circle-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Marcar Deudor</RNText>
+                            </TouchableOpacity>
+                          </>
+                        )}
+                        {selectedVenta.estado === 'PAGADO' && (
+                          <>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
+                              onPress={() => handleChangeEstado('ENTREGADO')}
+                            >
+                              <Ionicons name="paper-plane-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Marcar Entregado</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
+                              onPress={() => handleChangeEstado('DEUDOR')}
+                            >
+                              <Ionicons name="alert-circle-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Marcar Deudor</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#6b7280' }]}
+                              onPress={handleVolverCarrito}
+                            >
+                              <Ionicons name="cart-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Volver a Carrito</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
+                              onPress={handleOpenCobrar}
+                            >
+                              <Ionicons name="cash-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Cobrar / Pago</RNText>
+                            </TouchableOpacity>
+                          </>
+                        )}
+                        {selectedVenta.estado === 'ENTREGADO' && (
+                          <>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
+                              onPress={() => handleChangeEstado('DEUDOR')}
+                            >
+                              <Ionicons name="alert-circle-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Marcar Deudor</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#6b7280' }]}
+                              onPress={handleVolverCarrito}
+                            >
+                              <Ionicons name="cart-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Volver a Carrito</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
+                              onPress={handleOpenCobrar}
+                            >
+                              <Ionicons name="cash-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Cobrar / Pago</RNText>
+                            </TouchableOpacity>
+                          </>
+                        )}
+                        {selectedVenta.estado === 'DEUDOR' && (
+                          <>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
+                              onPress={handleOpenCobrar}
+                            >
+                              <Ionicons name="cash-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Cobrar</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#6b7280' }]}
+                              onPress={handleVolverCarrito}
+                            >
+                              <Ionicons name="cart-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Volver a Carrito</RNText>
+                            </TouchableOpacity>
+                          </>
+                        )}
+                        {selectedVenta.estado === 'RESERVA' && (
+                          <>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#f59e0b' }]}
+                              onPress={() => handleChangeEstado('TOMADO')}
+                            >
+                              <Ionicons name="hand-left-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Pasar a Tomado</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
+                              onPress={handleOpenCobrar}
+                            >
+                              <Ionicons name="cash-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Cobrar / Pago</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#6b7280' }]}
+                              onPress={handleVolverCarrito}
+                            >
+                              <Ionicons name="cart-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Volver a Carrito</RNText>
+                            </TouchableOpacity>
+                          </>
+                        )}
                       </>
                     )}
                   </View>

@@ -33,6 +33,10 @@ export interface SalePayload {
     pedido?: string;
     cartStartTime?: string;
     clienteId?: number;
+    cliente?: string;
+    direccion?: string;
+    numeroTelefono?: number;
+    mensaje?: string;
     temporalId?: string;
     abono?: number;
   };

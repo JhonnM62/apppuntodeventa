@@ -23,6 +23,7 @@ export interface DomicilioWAItem {
   clienteTelefono: string;
   clienteNombre?: string;
   direccion?: string;
+  botNombre?: string;
   detalleTextoWA: string;
   itemsMapeados: DomicilioItemMapeado[];
   itemsExternos?: DomicilioItemExterno[];
