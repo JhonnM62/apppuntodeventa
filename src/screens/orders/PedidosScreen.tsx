@@ -411,7 +411,7 @@ const PedidosScreen = () => {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [domicilios, setDomicilios] = useState<DomicilioWAItem[]>([]);
   const [loadingDomicilios, setLoadingDomicilios] = useState(false);
-  const [domisSubTab, setDomisSubTab] = useState<'NUEVOS' | 'TOMADOS' | 'DESPACHADOS' | 'PAGADOS' | 'TODOS'>('NUEVOS');
+  const [domisSubTab, setDomisSubTab] = useState<'NUEVOS' | 'TOMADOS' | 'PAGADOS' | 'TODOS'>('NUEVOS');
   const [selectedToDelete, setSelectedToDelete] = useState<string[]>([]);
   const [showDatePicker, setShowDatePicker] = useState<{show: boolean, type: 'desde' | 'hasta'}>({show: false, type: 'desde'});
   const [selectedVenta, setSelectedVenta] = useState<VentaItem | null>(null);
@@ -727,22 +727,22 @@ const PedidosScreen = () => {
 
   const domisSubTabsWithCounts = useMemo(() => {
     const list = Array.isArray(domicilios) ? domicilios : [];
-    const countNuevos = list.filter(d => d.estado === 'RECIENTE').length;
-    const countTomados = list.filter(d => d.estado === 'TOMADO' || d.ventaRelacion?.estado === 'TOMADO').length;
-    const countDespachados = list.filter(d => 
-      ['LISTO_PARA_ENTREGA', 'ENTREGADO', 'DESPACHADO', 'LISTO'].includes(d.estado) ||
-      (d.ventaRelacion && ['LISTO_PARA_ENTREGA', 'ENTREGADO', 'LISTO'].includes(d.ventaRelacion.estado))
+    const isDomCobrado = (d: DomicilioWAItem) =>
+      d.estado === 'COBRADO' || d.estado === 'PAGADO' || d.ventaRelacion?.estado === 'PAGADO';
+
+    const countNuevos = list.filter(d => d.estado === 'RECIENTE' && d.ventaRelacion?.estado !== 'PAGADO').length;
+    const countTomados = list.filter(d => 
+      (d.estado === 'TOMADO' || d.ventaRelacion?.estado === 'TOMADO') &&
+      !isDomCobrado(d) &&
+      d.estado !== 'CANCELADO' &&
+      d.ventaRelacion?.estado !== 'CANCELADO'
     ).length;
-    const countPagados = list.filter(d => 
-      d.estado === 'COBRADO' || d.estado === 'PAGADO' ||
-      (d.ventaRelacion && d.ventaRelacion.estado === 'PAGADO')
-    ).length;
+    const countPagados = list.filter(d => isDomCobrado(d)).length;
     const countTodos = list.length;
 
     return [
       { key: 'NUEVOS', label: 'Nuevos', count: countNuevos, color: '#f59e0b' },
       { key: 'TOMADOS', label: 'Tomados', count: countTomados, color: '#3b82f6' },
-      { key: 'DESPACHADOS', label: 'Despachados', count: countDespachados, color: '#8b5cf6' },
       { key: 'PAGADOS', label: 'Pagados', count: countPagados, color: '#22c55e' },
       { key: 'TODOS', label: 'Todos', count: countTodos, color: '#6b7280' },
     ];
@@ -1737,35 +1737,33 @@ showAlert({
       }
     };
 
-    if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined' && window.confirm) {
-        if (window.confirm(`¿Deseas cancelar el domicilio #${dom.orderIdWA || dom.IDdomicilio.slice(-6)} de ${dom.clienteNombre || dom.clienteTelefono || 'WhatsApp'}?`)) {
-          doCancel();
-        }
-      } else {
-        doCancel();
-      }
-      return;
-    }
-
-    Alert.alert(
-      'Cancelar Domicilio',
-      `¿Deseas cancelar el domicilio de ${dom.clienteNombre || dom.clienteTelefono || 'WhatsApp'}?`,
-      [
-        { text: 'No', style: 'cancel' },
-        {
-          text: 'Sí, Cancelar',
-          style: 'destructive',
-          onPress: doCancel,
-        }
-      ]
-    );
+    showAlert({
+      type: 'confirm',
+      title: 'Cancelar Domicilio',
+      message: `¿Deseas cancelar el domicilio #${dom.orderIdWA || dom.IDdomicilio.slice(-6)} de ${dom.clienteNombre || dom.clienteTelefono || 'WhatsApp'}?`,
+      confirmText: 'Sí, Cancelar',
+      cancelText: 'Volver',
+      onConfirm: doCancel,
+      onCancel: () => {},
+    });
   };
 
   const handleCobrarDomicilio = async (dom: DomicilioWAItem) => {
     if (dom.ventaId) {
       const allVentas = useSalesStore.getState().ventas || [];
-      const existingVenta = allVentas.find(v => v.IDventas === dom.ventaId);
+      let existingVenta = allVentas.find(v => v.IDventas === dom.ventaId);
+      if (!existingVenta) {
+        try {
+          const { getVentaById } = await import('../../services/sales');
+          const resp = await getVentaById(dom.ventaId);
+          existingVenta = resp?.data || resp;
+          if (existingVenta) {
+            addVenta(existingVenta);
+          }
+        } catch (e) {
+          console.warn('No se pudo recuperar venta vinculada:', e);
+        }
+      }
       if (existingVenta) {
         handleCobrarPedido(existingVenta);
         return;
@@ -1902,13 +1900,11 @@ showAlert({
     const cleanPhone = (item.clienteTelefono || '').replace(/\D/g, '');
     const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}` : null;
     const ventaEstado = item.ventaRelacion?.estado;
-    const isReciente = item.estado === 'RECIENTE';
-    const isTomado = item.estado === 'TOMADO' || ventaEstado === 'TOMADO';
-    const isDespachado = ['LISTO_PARA_ENTREGA', 'ENTREGADO', 'DESPACHADO', 'LISTO'].includes(item.estado) ||
-      (ventaEstado && ['LISTO_PARA_ENTREGA', 'ENTREGADO', 'LISTO'].includes(ventaEstado));
     const isCobrado = item.estado === 'COBRADO' || item.estado === 'PAGADO' || ventaEstado === 'PAGADO';
     const isCancelado = item.estado === 'CANCELADO' || ventaEstado === 'CANCELADO';
-    const isDeudor = item.estado === 'DEUDOR' || ventaEstado === 'DEUDOR';
+    const isTomado = (item.estado === 'TOMADO' || ventaEstado === 'TOMADO') && !isCobrado && !isCancelado;
+    const isReciente = item.estado === 'RECIENTE' && !isCobrado && !isCancelado;
+    const isDeudor = (item.estado === 'DEUDOR' || ventaEstado === 'DEUDOR') && !isCobrado;
 
     let estadoBadgeBg = '#fef3c7';
     let estadoBadgeText = '#d97706';
@@ -1925,11 +1921,6 @@ showAlert({
       estadoBadgeBg = '#fee2e2';
       estadoBadgeText = '#dc2626';
       borderColor = '#ef4444';
-    } else if (isDespachado) {
-      estadoLabel = (ventaEstado === 'ENTREGADO' || item.estado === 'ENTREGADO') ? 'ENTREGADO' : 'LISTO';
-      estadoBadgeBg = '#ede9fe';
-      estadoBadgeText = '#7c3aed';
-      borderColor = '#8b5cf6';
     } else if (isTomado) {
       estadoLabel = 'TOMADO';
       estadoBadgeBg = '#dbeafe';
@@ -2172,19 +2163,6 @@ showAlert({
                 </>
               )}
 
-              {isDespachado && !isCobrado && (
-                <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    handleCobrarDomicilio(item);
-                  }}
-                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#10b981', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 8 }}
-                >
-                  <Ionicons name="cash-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
-                  <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>Cobrar</RNText>
-                </TouchableOpacity>
-              )}
-
               {isCobrado && (
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <Ionicons name="checkmark-done" size={16} color="#10b981" />
@@ -2217,15 +2195,14 @@ showAlert({
       let filteredDomis = domicilios;
 
       if (domisSubTab === 'NUEVOS') {
-        filteredDomis = filteredDomis.filter(d => d.estado === 'RECIENTE');
+        filteredDomis = filteredDomis.filter(d => 
+          d.estado === 'RECIENTE' && d.ventaRelacion?.estado !== 'PAGADO'
+        );
       } else if (domisSubTab === 'TOMADOS') {
         filteredDomis = filteredDomis.filter(d => 
-          d.estado === 'TOMADO' || d.ventaRelacion?.estado === 'TOMADO'
-        );
-      } else if (domisSubTab === 'DESPACHADOS') {
-        filteredDomis = filteredDomis.filter(d => 
-          ['LISTO_PARA_ENTREGA', 'ENTREGADO', 'DESPACHADO', 'LISTO'].includes(d.estado) ||
-          (d.ventaRelacion && ['LISTO_PARA_ENTREGA', 'ENTREGADO', 'LISTO'].includes(d.ventaRelacion.estado))
+          (d.estado === 'TOMADO' || d.ventaRelacion?.estado === 'TOMADO') &&
+          !(d.estado === 'COBRADO' || d.estado === 'PAGADO' || d.ventaRelacion?.estado === 'PAGADO') &&
+          d.estado !== 'CANCELADO' && d.ventaRelacion?.estado !== 'CANCELADO'
         );
       } else if (domisSubTab === 'PAGADOS') {
         filteredDomis = filteredDomis.filter(d => 
@@ -3984,7 +3961,6 @@ showAlert({
                 {activeTab === 'DOMIS'
                   ? (domisSubTab === 'NUEVOS' ? 'No hay domicilios nuevos pendientes'
                     : domisSubTab === 'TOMADOS' ? 'No hay domicilios en preparación'
-                    : domisSubTab === 'DESPACHADOS' ? 'No hay domicilios despachados'
                     : domisSubTab === 'PAGADOS' ? 'No hay domicilios pagados en este turno'
                     : 'No hay domicilios de WhatsApp registrados')
                   : 'No hay pedidos'}

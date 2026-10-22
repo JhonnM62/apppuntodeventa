@@ -1043,7 +1043,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             precioTotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
             estado: paymentData.estado,
             imagenUrl: item.imagenUrl || item.image,
-            gramosPapa: Number(item.gramosPapa || 0),
             comentarios: item.modifiers?.length ? JSON.stringify(item.modifiers) : undefined,
             seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
           })),
@@ -1159,7 +1158,20 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               productos: payload.productos 
             });
 
-            
+            // Sincronizar DomicilioWA si la venta proviene de un domicilio
+            if (paymentData.estado === 'PAGADO') {
+              try {
+                const { updateDomicilioEstado, getDomicilios } = await import('../../services/domicilios.service');
+                const doms = await getDomicilios();
+                const domList = Array.isArray(doms) ? doms : [];
+                const linkedDom = domList.find((d: any) => d.ventaId === editingSaleId || d.IDdomicilio === editingSaleId);
+                if (linkedDom) {
+                  await updateDomicilioEstado(linkedDom.IDdomicilio, 'COBRADO');
+                }
+              } catch (e) {
+                console.error('Error al actualizar domicilio vinculado tras cobro en carrito:', e);
+              }
+            }
 
             setTimeout(() => {
               Toast.show({
