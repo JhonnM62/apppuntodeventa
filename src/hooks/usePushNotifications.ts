@@ -31,7 +31,7 @@ export function usePushNotifications() {
   const { incrementUnread } = useNotificationStore();
 
   useEffect(() => {
-    if (!user || (user.rol !== 'Admin app' && user.rol !== 'Admin negocio')) {
+    if (!user) {
       return;
     }
 
@@ -53,8 +53,13 @@ export function usePushNotifications() {
 
     responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
       const data = response.notification.request.content.data;
-      if (data && data.ventaId) {
-        if (navigationRef.isReady()) {
+      if (navigationRef.isReady()) {
+        if (data && (data.domicilioId || data.orderIdWA || data.eventType === 'NUEVO_DOMICILIO' || data.eventType === 'DOMICILIO_TIMEOUT')) {
+          (navigationRef as any).navigate('Main', { 
+            screen: 'Pedidos', 
+            params: { tab: 'DOMIS' } 
+          });
+        } else if (data && data.ventaId) {
           (navigationRef as any).navigate('Main', { 
             screen: 'Pedidos', 
             params: { ventaId: data.ventaId } 

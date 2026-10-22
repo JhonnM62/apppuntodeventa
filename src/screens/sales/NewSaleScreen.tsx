@@ -337,6 +337,20 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     });
   });
 
+  useSocketEvent<DomicilioWAItem>(SocketEvent.DOMICILIO_TIMEOUT, (domTimeout) => {
+    if (!domTimeout) return;
+    if (configNegocio?.domisAlertaSonora) {
+      soundService.playDeliveryAlert();
+    }
+    Toast.show({
+      type: 'error',
+      text1: '⏰ ¡Domicilio sin atender!',
+      text2: `Pedido #${domTimeout.orderIdWA || ''} superó el tiempo límite.`,
+      position: 'top',
+      visibilityTime: 8000,
+    });
+  });
+
   const [mesaSearchQuery, setMesaSearchQuery] = useState('');
   const [mesaNota, setMesaNota] = useState('');
   

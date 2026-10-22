@@ -888,6 +888,21 @@ const PedidosScreen = () => {
     }
   );
 
+  useSocketEvent<DomicilioWAItem>(
+    SocketEvent.DOMICILIO_TIMEOUT,
+    (domTimeout) => {
+      if (!domTimeout) return;
+      soundService.playDeliveryAlert();
+      Toast.show({
+        type: 'error',
+        text1: '⏰ ¡Domicilio sin atender!',
+        text2: `Pedido #${domTimeout.orderIdWA || ''} (${domTimeout.clienteNombre || domTimeout.clienteTelefono || 'Cliente'}) superó el tiempo límite`,
+        position: 'top',
+        visibilityTime: 8000,
+      });
+    }
+  );
+
   const handleSocketUpdateFallback = useCallback(() => {
     // Legacy fallback. Only keep for explicit manual refreshes if needed.
     // fetchVentas(true);
