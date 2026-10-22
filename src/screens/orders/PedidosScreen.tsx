@@ -712,7 +712,7 @@ const PedidosScreen = () => {
       if (tab.key === 'todos') {
         count = arraySeguro.length;
       } else if (tab.key === 'DOMIS') {
-        count = domicilios.filter(d => d.estado === 'RECIENTE' || d.estado === 'TOMADO').length;
+        count = domicilios.filter(d => d.estado === 'RECIENTE').length;
       } else {
         const tabUpper = tab.key.toUpperCase().replace(/_/g, ' ');
         count = arraySeguro.filter(v => {
@@ -1597,18 +1597,129 @@ showAlert({
     setPaymentModalVisible(true);
   };
 
+  const normalizeCOP = (val?: any): number => {
+    if (val == null) return 0;
+    const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.]/g, '')) || 0;
+    if (num > 0 && num < 100) return num * 1000;
+    return num;
+  };
+
+  const buildProductosPayloadFromDomicilio = (dom: DomicilioWAItem) => {
+    const rawItems = Array.isArray(dom.itemsMapeados) && dom.itemsMapeados.length > 0
+      ? dom.itemsMapeados
+      : [{ nombre: dom.detalleTextoWA || 'Domicilio WhatsApp', cantidad: 1, precioUnitario: dom.totalWA || 0, precioTotal: dom.totalWA || 0 }];
+
+    return rawItems.map((it) => {
+      let unitPrice = it.precioUnitario || 0;
+      let totPrice = it.precioTotal || 0;
+      if (!unitPrice && !totPrice && it.nombre) {
+        const m = it.nombre.match(/\(\$?([\d.,]+)\)/);
+        if (m) {
+          const rawVal = parseFloat(m[1].replace(/\./g, '')) || 0;
+          totPrice = normalizeCOP(rawVal);
+          unitPrice = Math.round(totPrice / (it.cantidad || 1));
+        }
+      }
+      unitPrice = normalizeCOP(unitPrice);
+      totPrice = normalizeCOP(totPrice);
+      if (totPrice === 0 && unitPrice > 0) totPrice = unitPrice * (it.cantidad || 1);
+      if (unitPrice === 0 && totPrice > 0) unitPrice = Math.round(totPrice / (it.cantidad || 1));
+
+      return {
+        productoId: (it.productoId && it.productoId.trim() !== '') ? it.productoId : undefined,
+        nombre: it.nombre,
+        nombreProducto: it.nombre,
+        categoria: 'DOMICILIOS',
+        categoriaProducto: 'DOMICILIOS',
+        cantidad: it.cantidad || 1,
+        precio: unitPrice,
+        precioTotal: totPrice,
+        estado: 'TOMADO',
+        comentarios: it.comentarios || '',
+      };
+    });
+  };
+
   const handleTomarDomicilio = async (dom: DomicilioWAItem) => {
     try {
+      let ventaId = dom.ventaId;
+      let ventaCreadaObj: any = null;
+
+      if (!ventaId) {
+        const productosPayload = buildProductosPayloadFromDomicilio(dom);
+        const totalVenta = normalizeCOP(dom.totalWA) || normalizeCOP(dom.totalCalculado) || productosPayload.reduce((s, p) => s + (p.precioTotal || 0), 0);
+
+        const newSale = await createSale({
+          venta: {
+            mesa: 'DOMICILIO WA',
+            estado: 'TOMADO',
+            cliente: dom.clienteNombre || undefined,
+            direccion: dom.direccion || undefined,
+            numeroTelefono: dom.clienteTelefono ? parseInt(dom.clienteTelefono.replace(/\D/g, ''), 10) || undefined : undefined,
+            medioDePago: dom.metodoPagoWA || 'PENDIENTE',
+            efectivoRecibido: 0,
+            totalInput: totalVenta,
+            pedido: dom.orderIdWA ? `#${dom.orderIdWA}` : undefined,
+            mensaje: dom.detalleTextoWA || undefined,
+          },
+          productos: productosPayload,
+        });
+
+        ventaCreadaObj = (newSale as any)?.data || newSale;
+        if (ventaCreadaObj && ventaCreadaObj.IDventas) {
+          ventaId = ventaCreadaObj.IDventas;
+          await vincularVentaDomicilio(dom.IDdomicilio, ventaId, 'TOMADO');
+          addVenta(ventaCreadaObj);
+        }
+      }
+
       await updateDomicilioEstado(dom.IDdomicilio, 'TOMADO');
-      setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, estado: 'TOMADO', atendidoAt: new Date().toISOString() } : d));
-      Toast.show({ type: 'success', text1: 'Pedido Tomado', text2: `Domicilio #${dom.orderIdWA || dom.IDdomicilio.slice(-6)} en preparación` });
+      setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, estado: 'TOMADO', ventaId: ventaId || d.ventaId, atendidoAt: new Date().toISOString() } : d));
+      Toast.show({
+        type: 'success',
+        text1: 'Pedido Tomado',
+        text2: `En preparación en TOMADO (#${ventaCreadaObj?.pedido || dom.orderIdWA || dom.IDdomicilio.slice(-6)})`
+      });
+
+      // Pasar a la pestaña TOMADO automáticamente
+      setActiveTab('TOMADO');
     } catch (e: any) {
-      console.error(e);
+      console.error('Error al tomar domicilio:', e);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo tomar el pedido' });
     }
   };
 
   const handleCancelarDomicilio = (dom: DomicilioWAItem) => {
+    const doCancel = async () => {
+      try {
+        await updateDomicilioEstado(dom.IDdomicilio, 'CANCELADO');
+        setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, estado: 'CANCELADO' } : d));
+        if (dom.ventaId) {
+          try {
+            await updateVentaEstado(dom.ventaId, 'CANCELADO');
+            removeVenta(dom.ventaId);
+          } catch (err) {
+            console.error('Error al cancelar venta vinculada:', err);
+          }
+        }
+        Toast.show({ type: 'info', text1: 'Domicilio cancelado' });
+      } catch (e) {
+        console.error('Error al cancelar domicilio:', e);
+        Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cancelar el domicilio' });
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm) {
+        if (window.confirm(`¿Deseas cancelar el domicilio #${dom.orderIdWA || dom.IDdomicilio.slice(-6)} de ${dom.clienteNombre || dom.clienteTelefono || 'WhatsApp'}?`)) {
+          doCancel();
+        }
+      } else {
+        doCancel();
+      }
+      return;
+    }
+
     Alert.alert(
       'Cancelar Domicilio',
       `¿Deseas cancelar el domicilio de ${dom.clienteNombre || dom.clienteTelefono || 'WhatsApp'}?`,
@@ -1617,15 +1728,7 @@ showAlert({
         {
           text: 'Sí, Cancelar',
           style: 'destructive',
-          onPress: async () => {
-            try {
-              await updateDomicilioEstado(dom.IDdomicilio, 'CANCELADO');
-              setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, estado: 'CANCELADO' } : d));
-              Toast.show({ type: 'info', text1: 'Domicilio cancelado' });
-            } catch (e) {
-              Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cancelar el domicilio' });
-            }
-          }
+          onPress: doCancel,
         }
       ]
     );
@@ -1633,7 +1736,8 @@ showAlert({
 
   const handleCobrarDomicilio = async (dom: DomicilioWAItem) => {
     if (dom.ventaId) {
-      const existingVenta = (Array.isArray(cachedVentas) ? cachedVentas : []).find(v => v.IDventas === dom.ventaId);
+      const allVentas = useSalesStore.getState().ventas || [];
+      const existingVenta = allVentas.find(v => v.IDventas === dom.ventaId);
       if (existingVenta) {
         handleCobrarPedido(existingVenta);
         return;
@@ -1641,22 +1745,8 @@ showAlert({
     }
 
     try {
-      const items = Array.isArray(dom.itemsMapeados) && dom.itemsMapeados.length > 0
-        ? dom.itemsMapeados
-        : [{ nombre: dom.detalleTextoWA || 'Domicilio WhatsApp', cantidad: 1, precioUnitario: dom.totalWA || 0, precioTotal: dom.totalWA || 0 }];
-
-      const productosPayload = items.map((it) => ({
-        productoId: it.productoId || '',
-        nombre: it.nombre,
-        nombreProducto: it.nombre,
-        categoria: 'DOMICILIOS',
-        categoriaProducto: 'DOMICILIOS',
-        cantidad: it.cantidad || 1,
-        precio: it.precioUnitario || ((it.precioTotal || dom.totalWA) / (it.cantidad || 1)),
-        precioTotal: it.precioTotal || (it.precioUnitario || 0) * (it.cantidad || 1),
-        estado: 'TOMADO',
-        comentarios: it.comentarios || '',
-      }));
+      const productosPayload = buildProductosPayloadFromDomicilio(dom);
+      const totalVenta = normalizeCOP(dom.totalWA) || normalizeCOP(dom.totalCalculado) || productosPayload.reduce((s, p) => s + (p.precioTotal || 0), 0);
 
       const newSale = await createSale({
         venta: {
@@ -1667,7 +1757,7 @@ showAlert({
           numeroTelefono: dom.clienteTelefono ? parseInt(dom.clienteTelefono.replace(/\D/g, ''), 10) || undefined : undefined,
           medioDePago: dom.metodoPagoWA || 'PENDIENTE',
           efectivoRecibido: 0,
-          totalInput: dom.totalWA || dom.totalCalculado || 0,
+          totalInput: totalVenta,
           pedido: dom.orderIdWA ? `#${dom.orderIdWA}` : undefined,
           mensaje: dom.detalleTextoWA || undefined,
         },
@@ -1676,21 +1766,15 @@ showAlert({
 
       const ventaCreada = (newSale as any)?.data || newSale;
       if (ventaCreada && ventaCreada.IDventas) {
-        await vincularVentaDomicilio(dom.IDdomicilio, ventaCreada.IDventas);
-        setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, ventaId: ventaCreada.IDventas } : d));
+        await vincularVentaDomicilio(dom.IDdomicilio, ventaCreada.IDventas, 'COBRADO');
+        addVenta(ventaCreada);
+        setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, ventaId: ventaCreada.IDventas, estado: 'COBRADO' } : d));
         handleCobrarPedido(ventaCreada);
       }
     } catch (e: any) {
       console.error('Error al preparar venta de domicilio:', e);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo crear la orden para cobrar' });
     }
-  };
-
-  const normalizeCOP = (val?: any): number => {
-    if (val == null) return 0;
-    const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.]/g, '')) || 0;
-    if (num > 0 && num < 100) return num * 1000;
-    return num;
   };
 
   const mapDomicilioToVenta = (dom: DomicilioWAItem): any => {
@@ -2031,9 +2115,20 @@ showAlert({
                   <TouchableOpacity
                     onPress={(e) => {
                       e.stopPropagation();
+                      setActiveTab('TOMADO');
+                    }}
+                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#3b82f6', paddingVertical: 7, paddingHorizontal: 10, borderRadius: 8 }}
+                  >
+                    <Ionicons name="eye-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
+                    <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>Ver en Tomados</RNText>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
                       handleCobrarDomicilio(item);
                     }}
-                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#10b981', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 8 }}
+                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#10b981', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 8 }}
                   >
                     <Ionicons name="cash-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
                     <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>Cobrar</RNText>

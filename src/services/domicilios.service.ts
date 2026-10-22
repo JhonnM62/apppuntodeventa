@@ -57,8 +57,8 @@ export const updateDomicilioEstado = async (id: string, estado: string): Promise
   return (res as any)?.data || res;
 };
 
-export const vincularVentaDomicilio = async (id: string, ventaId: string): Promise<DomicilioWAItem> => {
-  const res = await api.post(`/domicilios/${id}/vincular-venta`, { ventaId });
+export const vincularVentaDomicilio = async (id: string, ventaId: string, estado?: string): Promise<DomicilioWAItem> => {
+  const res = await api.post(`/domicilios/${id}/vincular-venta`, { ventaId, estado });
   return (res as any)?.data || res;
 };
 
