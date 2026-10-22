@@ -70,6 +70,23 @@ class SoundService {
     }
   }
 
+  async playDeliveryAlert() {
+    const enableSound = useSettingsStore.getState().enableSound;
+    if (!enableSound) return;
+
+    try {
+      await this.loadSounds();
+      // Reproducir sonido de alerta para nuevo domicilio
+      if (this.successSound) {
+        await this.successSound.stopAsync();
+        await this.successSound.setVolumeAsync(1.0);
+        await this.successSound.playAsync();
+      }
+    } catch (error) {
+      console.warn('Error playing delivery alert sound', error);
+    }
+  }
+
   async unloadSounds() {
     if (this.beepSound) await this.beepSound.unloadAsync();
     if (this.successSound) await this.successSound.unloadAsync();

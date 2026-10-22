@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput, KeyboardAvoidingView, Platform, AppState, AppStateStatus, Linking } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput, KeyboardAvoidingView, Platform, AppState, AppStateStatus, Linking, Alert } from 'react-native';
 // Removed FlashList import because it causes layout bugs on mobile web viewports.
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -7,7 +7,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { getSales, updateVentaEstado, updateVentaPago, deleteSale, deleteSalesBulk, getVentaById, updateOrderItemState } from '../../services/sales';
+import { getSales, updateVentaEstado, updateVentaPago, deleteSale, deleteSalesBulk, getVentaById, updateOrderItemState, createSale } from '../../services/sales';
+import { getDomicilios, updateDomicilioEstado, vincularVentaDomicilio, DomicilioWAItem } from '../../services/domicilios.service';
 import { emitirFacturaDian, eliminarFacturaDian } from '../../services/facturacion';
 import { useSocket, useSocketEvent, useSocketEmitter } from '../../hooks';
 import { Room, SocketEvent } from '../../types/socket.types';
@@ -31,6 +32,7 @@ import { useScrollDirection } from '../../hooks/useScrollDirection';
 
 const TABS = [
   { key: 'todos', label: 'TODOS', color: '#6366f1' },
+  { key: 'DOMIS', label: 'DOMIS', color: '#f59e0b' },
   { key: 'PAGADO', label: 'PAGADO', color: '#22c55e' },
   { key: 'TOMADO', label: 'TOMADO', color: '#3b82f6' },
   { key: 'LISTO_PARA_ENTREGA', label: 'LISTO PARA ENTREGA', color: '#8b5cf6' },
@@ -339,6 +341,60 @@ const RealtimeDurationTimer = React.memo(({ selectedVenta }: { selectedVenta: an
   );
 });
 
+const DomicilioTimer = ({ timestamp, estado }: { timestamp: string; estado: string }) => {
+  const [elapsed, setElapsed] = useState('');
+  const [diffMs, setDiffMs] = useState(0);
+
+  useEffect(() => {
+    const calc = () => {
+      if (!timestamp) {
+        setElapsed('00:00');
+        return;
+      }
+      const start = new Date(timestamp).getTime();
+      const now = Date.now();
+      const diff = Math.max(0, now - start);
+      setDiffMs(diff);
+      const diffInSeconds = Math.floor(diff / 1000);
+      const m = Math.floor(diffInSeconds / 60).toString().padStart(2, '0');
+      const s = (diffInSeconds % 60).toString().padStart(2, '0');
+      setElapsed(`${m}:${s}`);
+    };
+
+    calc();
+    if (estado !== 'COBRADO' && estado !== 'CANCELADO') {
+      const interval = setInterval(calc, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [timestamp, estado]);
+
+  const diffMins = diffMs / (1000 * 60);
+  let color = '#10b981';
+  let bg = '#d1fae5';
+  if (diffMins >= 20) {
+    color = '#ef4444';
+    bg = '#fee2e2';
+  } else if (diffMins >= 10) {
+    color = '#f59e0b';
+    bg = '#fef3c7';
+  }
+
+  if (estado === 'COBRADO') {
+    color = '#10b981';
+    bg = '#d1fae5';
+  } else if (estado === 'CANCELADO') {
+    color = '#6b7280';
+    bg = '#f3f4f6';
+  }
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: bg, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 12 }}>
+      <Ionicons name="time-outline" size={13} color={color} style={{ marginRight: 4 }} />
+      <RNText style={{ fontSize: 12, fontWeight: '700', color }}>{elapsed}</RNText>
+    </View>
+  );
+};
+
 const PedidosScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { showAlert } = useCustomAlert();
@@ -351,6 +407,8 @@ const PedidosScreen = () => {
   const [hasNextPage, setHasNextPage] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [domicilios, setDomicilios] = useState<DomicilioWAItem[]>([]);
+  const [loadingDomicilios, setLoadingDomicilios] = useState(false);
   const [selectedToDelete, setSelectedToDelete] = useState<string[]>([]);
   const [showDatePicker, setShowDatePicker] = useState<{show: boolean, type: 'desde' | 'hasta'}>({show: false, type: 'desde'});
   const [selectedVenta, setSelectedVenta] = useState<VentaItem | null>(null);
@@ -629,21 +687,29 @@ const PedidosScreen = () => {
   const removeVenta = useSalesStore((state) => state.removeVenta);
   const forceFetchRef = useRef<() => void>(() => {});
 
+  const fetchDomicilios = useCallback(async () => {
+    try {
+      setLoadingDomicilios(true);
+      const data = await getDomicilios();
+      if (Array.isArray(data)) {
+        setDomicilios(data);
+      }
+    } catch (err) {
+      console.error('Error fetching domicilios:', err);
+    } finally {
+      setLoadingDomicilios(false);
+    }
+  }, []);
+
   const tabsWithCounts = useMemo(() => {
     const arraySeguro = Array.isArray(cachedVentas) ? cachedVentas : [];
-    
-    // Check if there are any non-PAGADO/ENTREGADO orders
-    const pendingOrdersCount = arraySeguro.filter(v => 
-      v.estado && v.estado !== 'PAGADO' && v.estado !== 'ENTREGADO'
-    ).length;
-
-    // Dispatch global event or update global store for floating dock badge?
-    // The FloatingDock can be notified via useSalesStore or we can just keep the logic here for the Tabs
     
     return TABS.map(tab => {
       let count = 0;
       if (tab.key === 'todos') {
         count = arraySeguro.length;
+      } else if (tab.key === 'DOMIS') {
+        count = domicilios.filter(d => d.estado === 'RECIENTE' || d.estado === 'TOMADO').length;
       } else {
         const tabUpper = tab.key.toUpperCase().replace(/_/g, ' ');
         count = arraySeguro.filter(v => {
@@ -653,7 +719,7 @@ const PedidosScreen = () => {
       }
       return { ...tab, count };
     });
-  }, [cachedVentas]);
+  }, [cachedVentas, domicilios]);
 
   const fetchIdRef = useRef<number>(0);
 
@@ -714,23 +780,28 @@ const PedidosScreen = () => {
   }, [shouldRefetchVentas, setCachedVentas]);
 
   useEffect(() => {
-    forceFetchRef.current = () => fetchVentas(true);
-  }, [fetchVentas]);
+    forceFetchRef.current = () => {
+      fetchVentas(true);
+      fetchDomicilios();
+    };
+  }, [fetchVentas, fetchDomicilios]);
 
   useEffect(() => {
     fetchVentas();
+    fetchDomicilios();
 
     const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
       if (nextAppState === 'active') {
-        // App has come to the foreground, fetch latest sales
+        // App has come to the foreground, fetch latest sales & domicilios
         fetchVentas(true);
+        fetchDomicilios();
       }
     });
 
     return () => {
       subscription.remove();
     };
-  }, [fetchVentas]);
+  }, [fetchVentas, fetchDomicilios]);
 
   // ── Sockets: escuchar REFRESH_VENTAS del backend ──────────────────────────
   useSocketEvent<{ action: string; venta?: any; ventaId?: string; ventaIds?: string[] }>(
@@ -760,6 +831,33 @@ const PedidosScreen = () => {
         // Fallback para acciones desconocidas: re-fetch completo
         fetchVentas(true);
       }
+    }
+  );
+
+  // ── Sockets: Domicilios WhatsApp ──────────────────────────────────────────
+  useSocketEvent<DomicilioWAItem>(
+    SocketEvent.NUEVO_DOMICILIO,
+    (nuevoDom) => {
+      if (!nuevoDom) return;
+      soundService.playDeliveryAlert();
+      Toast.show({
+        type: 'info',
+        text1: '🛵 ¡Nuevo Domicilio de WhatsApp!',
+        text2: `${nuevoDom.clienteNombre || nuevoDom.clienteTelefono || 'Cliente'}: $${(nuevoDom.totalWA || 0).toLocaleString()}`,
+        position: 'top',
+        visibilityTime: 6000,
+      });
+      setDomicilios((prev) => [nuevoDom, ...prev.filter((d) => d.IDdomicilio !== nuevoDom.IDdomicilio)]);
+    }
+  );
+
+  useSocketEvent<DomicilioWAItem>(
+    SocketEvent.DOMICILIO_ACTUALIZADO,
+    (domActualizado) => {
+      if (!domActualizado) return;
+      setDomicilios((prev) =>
+        prev.map((d) => (d.IDdomicilio === domActualizado.IDdomicilio ? { ...d, ...domActualizado } : d))
+      );
     }
   );
 
@@ -1072,9 +1170,8 @@ const PedidosScreen = () => {
 
   const onRefresh = () => {
     setRefreshing(true);
-    // force=true garantiza que setRefreshing(false) siempre se llame
-    // incluso si la caché todavía es válida
     fetchVentas(true);
+    fetchDomicilios();
   };
 
   const handleDeleteSingle = (venta: VentaItem) => {
@@ -1337,6 +1434,11 @@ showAlert({
                   <RNText style={{ fontSize: 10, color: '#6d28d9', fontWeight: 'bold', marginLeft: 4 }}>IA</RNText>
                 </View>
               )}
+              {(item.mesa === 'DOMICILIO WA' || (item.costoDelDomicilio && item.costoDelDomicilio > 0)) ? (
+                <View style={{ marginLeft: 8, backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                  <RNText style={{ fontSize: 10, color: '#b45309', fontWeight: 'bold' }}>DOMIS</RNText>
+                </View>
+              ) : null}
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
               <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.estado) + '20', flexDirection: 'row', alignItems: 'center' }]}>
@@ -1446,14 +1548,326 @@ showAlert({
     );
   };
 
+  const handleCobrarPedido = (venta: any) => {
+    if (!venta) return;
+    if (venta.ordenVentas && venta.ordenVentas.length > 0) {
+      useCartStore.getState().loadCartFromVenta(venta.ordenVentas);
+    } else {
+      useCartStore.getState().clearCart();
+    }
+    setCobrarVenta(venta);
+    setPaymentModalVisible(true);
+  };
+
+  const handleTomarDomicilio = async (dom: DomicilioWAItem) => {
+    try {
+      await updateDomicilioEstado(dom.IDdomicilio, 'TOMADO');
+      setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, estado: 'TOMADO', atendidoAt: new Date().toISOString() } : d));
+      Toast.show({ type: 'success', text1: 'Pedido Tomado', text2: `Domicilio #${dom.orderIdWA || dom.IDdomicilio.slice(-6)} en preparación` });
+    } catch (e: any) {
+      console.error(e);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo tomar el pedido' });
+    }
+  };
+
+  const handleCancelarDomicilio = (dom: DomicilioWAItem) => {
+    Alert.alert(
+      'Cancelar Domicilio',
+      `¿Deseas cancelar el domicilio de ${dom.clienteNombre || dom.clienteTelefono || 'WhatsApp'}?`,
+      [
+        { text: 'No', style: 'cancel' },
+        {
+          text: 'Sí, Cancelar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await updateDomicilioEstado(dom.IDdomicilio, 'CANCELADO');
+              setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, estado: 'CANCELADO' } : d));
+              Toast.show({ type: 'info', text1: 'Domicilio cancelado' });
+            } catch (e) {
+              Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cancelar el domicilio' });
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleCobrarDomicilio = async (dom: DomicilioWAItem) => {
+    if (dom.ventaId) {
+      const existingVenta = (Array.isArray(cachedVentas) ? cachedVentas : []).find(v => v.IDventas === dom.ventaId);
+      if (existingVenta) {
+        handleCobrarPedido(existingVenta);
+        return;
+      }
+    }
+
+    try {
+      const items = Array.isArray(dom.itemsMapeados) && dom.itemsMapeados.length > 0
+        ? dom.itemsMapeados
+        : [{ nombre: dom.detalleTextoWA || 'Domicilio WhatsApp', cantidad: 1, precioUnitario: dom.totalWA || 0, precioTotal: dom.totalWA || 0 }];
+
+      const productosPayload = items.map((it) => ({
+        productoId: it.productoId || '',
+        nombre: it.nombre,
+        nombreProducto: it.nombre,
+        categoria: 'DOMICILIOS',
+        categoriaProducto: 'DOMICILIOS',
+        cantidad: it.cantidad || 1,
+        precio: it.precioUnitario || ((it.precioTotal || dom.totalWA) / (it.cantidad || 1)),
+        precioTotal: it.precioTotal || (it.precioUnitario || 0) * (it.cantidad || 1),
+        estado: 'TOMADO',
+        comentarios: it.comentarios || '',
+      }));
+
+      const newSale = await createSale({
+        venta: {
+          mesa: 'DOMICILIO WA',
+          estado: 'TOMADO',
+          medioDePago: dom.metodoPagoWA || 'PENDIENTE',
+          efectivoRecibido: 0,
+          totalInput: dom.totalWA || dom.totalCalculado || 0,
+          pedido: dom.orderIdWA || undefined,
+        },
+        productos: productosPayload,
+      });
+
+      const ventaCreada = (newSale as any)?.data || newSale;
+      if (ventaCreada && ventaCreada.IDventas) {
+        await vincularVentaDomicilio(dom.IDdomicilio, ventaCreada.IDventas);
+        setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, ventaId: ventaCreada.IDventas } : d));
+        handleCobrarPedido(ventaCreada);
+      }
+    } catch (e: any) {
+      console.error('Error al preparar venta de domicilio:', e);
+      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo crear la orden para cobrar' });
+    }
+  };
+
+  const renderDomicilioItem = ({ item }: { item: DomicilioWAItem }) => {
+    const cleanPhone = (item.clienteTelefono || '').replace(/\D/g, '');
+    const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}` : null;
+    const isReciente = item.estado === 'RECIENTE';
+    const isTomado = item.estado === 'TOMADO';
+    const isCobrado = item.estado === 'COBRADO';
+    const isCancelado = item.estado === 'CANCELADO';
+
+    let estadoBadgeBg = '#fef3c7';
+    let estadoBadgeText = '#d97706';
+    if (isTomado) {
+      estadoBadgeBg = '#dbeafe';
+      estadoBadgeText = '#2563eb';
+    } else if (isCobrado) {
+      estadoBadgeBg = '#d1fae5';
+      estadoBadgeText = '#059669';
+    } else if (isCancelado) {
+      estadoBadgeBg = '#f3f4f6';
+      estadoBadgeText = '#6b7280';
+    }
+
+    return (
+      <View style={[styles.cardContainer, { borderLeftWidth: 4, borderLeftColor: isReciente ? '#f59e0b' : (isTomado ? '#3b82f6' : (isCobrado ? '#10b981' : '#9ca3af')) }]}>
+        <View style={styles.cardHeader}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ backgroundColor: '#25D36620', padding: 5, borderRadius: 8 }}>
+              <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
+            </View>
+            <View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <RNText style={styles.cardTitle}>
+                  #{item.orderIdWA || item.IDdomicilio.slice(-6)}
+                </RNText>
+                <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6, borderWidth: 1, borderColor: '#fde68a' }}>
+                  <RNText style={{ fontSize: 10, fontWeight: '800', color: '#b45309' }}>DOMIS</RNText>
+                </View>
+              </View>
+              <RNText style={{ fontSize: 11, color: '#6b7280' }}>
+                {formatDateTime(item.timestampPedido || item.createdAt)}
+              </RNText>
+            </View>
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <DomicilioTimer timestamp={item.timestampPedido || item.createdAt} estado={item.estado} />
+            <View style={[styles.statusBadge, { backgroundColor: estadoBadgeBg }]}>
+              <RNText style={[styles.statusText, { color: estadoBadgeText }]}>
+                {item.estado?.toUpperCase()}
+              </RNText>
+            </View>
+          </View>
+        </View>
+
+        {/* Info del Cliente */}
+        <View style={styles.cardInfo}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+              <Ionicons name="person" size={15} color="#4b5563" style={{ marginRight: 6 }} />
+              <RNText style={{ fontSize: 14, fontWeight: '700', color: '#1f2937' }}>
+                {item.clienteNombre || 'Cliente WhatsApp'}
+              </RNText>
+            </View>
+            {waUrl && (
+              <TouchableOpacity
+                onPress={() => Linking.openURL(waUrl).catch(() => Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo abrir WhatsApp' }))}
+                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#25D366', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 14 }}
+              >
+                <Ionicons name="logo-whatsapp" size={14} color="#fff" style={{ marginRight: 4 }} />
+                <RNText style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>Chat</RNText>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {item.direccion ? (
+            <View style={[styles.infoRow, { marginTop: 4 }]}>
+              <Ionicons name="location" size={15} color="#ef4444" style={{ marginRight: 6 }} />
+              <RNText style={[styles.infoText, { color: '#374151', fontWeight: '500' }]}>
+                {item.direccion}
+              </RNText>
+            </View>
+          ) : null}
+
+          {item.metodoPagoWA ? (
+            <View style={[styles.infoRow, { marginTop: 4 }]}>
+              <Ionicons name="wallet-outline" size={14} color="#6b7280" style={{ marginRight: 6 }} />
+              <RNText style={styles.infoText}>
+                Pago detectado: <RNText style={{ fontWeight: 'bold' }}>{item.metodoPagoWA}</RNText>
+              </RNText>
+            </View>
+          ) : null}
+        </View>
+
+        {/* Platos mapeados e items externos */}
+        <View style={{ marginHorizontal: 16, marginVertical: 8, padding: 10, backgroundColor: '#f9fafb', borderRadius: 10, borderWidth: 1, borderColor: '#e5e7eb' }}>
+          <RNText style={{ fontSize: 11, fontWeight: 'bold', color: '#6b7280', marginBottom: 6, textTransform: 'uppercase' }}>
+            Detalle del Pedido
+          </RNText>
+          {Array.isArray(item.itemsMapeados) && item.itemsMapeados.map((it, idx) => (
+            <View key={idx} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+                <RNText style={{ fontSize: 13, fontWeight: '700', color: '#111827' }}>
+                  {it.cantidad}x{' '}
+                </RNText>
+                <RNText style={{ fontSize: 13, color: '#374151', flexShrink: 1 }}>
+                  {it.nombre}
+                </RNText>
+                {it.encontradoEnCatalogo === false && (
+                  <View style={{ marginLeft: 6, backgroundColor: '#fef3c7', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 }}>
+                    <RNText style={{ fontSize: 9, color: '#b45309', fontWeight: '600' }}>Sin ID</RNText>
+                  </View>
+                )}
+              </View>
+              <RNText style={{ fontSize: 13, fontWeight: '600', color: '#111827' }}>
+                {formatMoney(it.precioTotal || (it.precioUnitario || 0) * it.cantidad)}
+              </RNText>
+            </View>
+          ))}
+
+          {/* Items de otro negocio / bot externo */}
+          {Array.isArray(item.itemsExternos) && item.itemsExternos.length > 0 && (
+            <View style={{ marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#e5e7eb' }}>
+              <RNText style={{ fontSize: 10, fontWeight: '700', color: '#7c3aed', marginBottom: 2 }}>
+                Items adicionales (Otro comercio/bot):
+              </RNText>
+              {item.itemsExternos.map((ext, idx) => (
+                <RNText key={idx} style={{ fontSize: 12, color: '#6b21a8' }}>
+                  • {ext.cantidad}x {ext.nombre} {ext.observacion ? `(${ext.observacion})` : ''}
+                </RNText>
+              ))}
+            </View>
+          )}
+
+          {item.detalleTextoWA && (!item.itemsMapeados || item.itemsMapeados.length === 0) ? (
+            <RNText style={{ fontSize: 12, color: '#4b5563', fontStyle: 'italic' }}>
+              "{item.detalleTextoWA}"
+            </RNText>
+          ) : null}
+        </View>
+
+        {/* Footer y Acciones */}
+        <View style={styles.cardFooter}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <RNText style={styles.totalLabel}>TOTAL</RNText>
+            <RNText style={styles.totalAmount}>
+              {formatMoney(item.totalWA || item.totalCalculado || 0)}
+            </RNText>
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {isReciente && (
+              <>
+                <TouchableOpacity
+                  onPress={() => handleCancelarDomicilio(item)}
+                  style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: '#fca5a5' }}
+                >
+                  <RNText style={{ fontSize: 12, color: '#ef4444', fontWeight: '600' }}>Rechazar</RNText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => handleTomarDomicilio(item)}
+                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#3b82f6', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 8 }}
+                >
+                  <Ionicons name="hand-right-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
+                  <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>Tomar</RNText>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {isTomado && (
+              <>
+                <TouchableOpacity
+                  onPress={() => handleCancelarDomicilio(item)}
+                  style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: '#fca5a5' }}
+                >
+                  <RNText style={{ fontSize: 12, color: '#ef4444', fontWeight: '600' }}>Cancelar</RNText>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  onPress={() => handleCobrarDomicilio(item)}
+                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#10b981', paddingVertical: 7, paddingHorizontal: 14, borderRadius: 8 }}
+                >
+                  <Ionicons name="cash-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
+                  <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>Cobrar</RNText>
+                </TouchableOpacity>
+              </>
+            )}
+
+            {isCobrado && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Ionicons name="checkmark-done" size={16} color="#10b981" />
+                <RNText style={{ fontSize: 12, fontWeight: '700', color: '#10b981' }}>Completado</RNText>
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   const renderListItem = ({ item }: { item: any }) => {
     if (item.isHeader) {
       return renderSectionHeader({ title: item.title, count: item.count, date: item.date, total: item.total });
+    }
+    if (item.isDomicilio) {
+      return renderDomicilioItem({ item: item as DomicilioWAItem });
     }
     return renderVentaItem({ item: item as VentaItem });
   };
 
   const flatListData = useMemo(() => {
+    if (activeTab === 'DOMIS') {
+      let filteredDomis = domicilios;
+      if (filters.searchText) {
+        const q = filters.searchText.toLowerCase();
+        filteredDomis = filteredDomis.filter(d => 
+          (d.clienteNombre && d.clienteNombre.toLowerCase().includes(q)) ||
+          (d.clienteTelefono && d.clienteTelefono.includes(q)) ||
+          (d.direccion && d.direccion.toLowerCase().includes(q)) ||
+          (d.orderIdWA && d.orderIdWA.toLowerCase().includes(q))
+        );
+      }
+      return filteredDomis.map(d => ({ ...d, isDomicilio: true }));
+    }
+
     const result: (VentaItem | { isHeader: boolean; title: string; date: Date; count: number; total?: number })[] = [];
     groupedVentas.forEach(section => {
       const totalAmount = section.data.reduce((sum, item) => sum + getVentaTotal(item), 0);
@@ -1461,11 +1875,14 @@ showAlert({
       result.push(...section.data);
     });
     return result;
-  }, [groupedVentas]);
+  }, [activeTab, domicilios, filters.searchText, groupedVentas]);
 
-  const keyExtractor = (item: VentaItem | { isHeader: boolean; title: string; date: Date; count: number; total?: number }, index: number) => {
-    if ('isHeader' in item) {
+  const keyExtractor = (item: any, index: number) => {
+    if (item.isHeader) {
       return `header-${item.title}`;
+    }
+    if (item.isDomicilio) {
+      return `domicilio-${item.IDdomicilio || index}`;
     }
     return (item as VentaItem).IDventas || `venta-${index}`;
   };
@@ -2651,6 +3068,13 @@ showAlert({
       // Actualizamos la tienda local inmediatamente para que desaparezca de TOMADO y pase a PAGADO
       updateVenta(cobrarVenta.IDventas, updatedVenta);
 
+      // Si la venta estaba vinculada a un domicilio de WhatsApp, actualizarlo a COBRADO
+      const linkedDom = domicilios.find(d => d.ventaId === cobrarVenta.IDventas);
+      if (linkedDom) {
+        updateDomicilioEstado(linkedDom.IDdomicilio, 'COBRADO').catch(console.error);
+        setDomicilios(prev => prev.map(d => d.IDdomicilio === linkedDom.IDdomicilio ? { ...d, estado: 'COBRADO' } : d));
+      }
+
       emitOrdenActualizada({
         ventaId: cobrarVenta.IDventas,
         IDventas: cobrarVenta.IDventas,
@@ -2956,15 +3380,27 @@ showAlert({
           }
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <MaterialCommunityIcons name="clipboard-text-off-outline" size={64} color="#d1d5db" />
-              <RNText style={styles.emptyText}>No hay pedidos</RNText>
-              {isFiltering && (
+              <MaterialCommunityIcons 
+                name={activeTab === 'DOMIS' ? "bike-fast" : "clipboard-text-off-outline"} 
+                size={64} 
+                color="#d1d5db" 
+              />
+              <RNText style={styles.emptyText}>
+                {activeTab === 'DOMIS' ? 'No hay domicilios de WhatsApp pendientes' : 'No hay pedidos'}
+              </RNText>
+              {activeTab === 'DOMIS' && (
+                <TouchableOpacity style={[styles.emptyBtn, { backgroundColor: '#f59e0b' }]} onPress={fetchDomicilios}>
+                  <Ionicons name="refresh" size={18} color="#fff" />
+                  <RNText style={styles.emptyBtnText}>Actualizar DOMIS</RNText>
+                </TouchableOpacity>
+              )}
+              {activeTab !== 'DOMIS' && isFiltering && (
                 <TouchableOpacity style={styles.emptyBtn} onPress={clearAllFilters}>
                   <Ionicons name="close-circle" size={20} color="#fff" />
                   <RNText style={styles.emptyBtnText}>Limpiar filtros</RNText>
                 </TouchableOpacity>
               )}
-              {!isFiltering && canCreateVenta && (
+              {activeTab !== 'DOMIS' && !isFiltering && canCreateVenta && (
                 <TouchableOpacity
                   style={styles.emptyBtn}
                   onPress={() => navigation.navigate('Sales', { screen: 'NewSale' } as any)}

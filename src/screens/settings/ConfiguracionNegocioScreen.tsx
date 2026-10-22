@@ -145,6 +145,17 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     factusMunicipioCodigo: '52356',
     factusEntorno: 'SANDBOX'
   });
+
+  // Estados para Domicilios WhatsApp (wa-queue-api-v2)
+  const [domisConfig, setDomisConfig] = useState({
+    domisHabilitado: false,
+    domisBloqueoVentas: false,
+    domisTimeoutMinutos: '10',
+    domisAlertaSonora: true,
+    domisPromptMapeo: '',
+    domisWebhookSecret: '',
+    domisWaQueueUrl: '',
+  });
   
   const [selectedDepto, setSelectedDepto] = useState<string>('');
   
@@ -235,6 +246,16 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           factusEntorno: dataNegocio.factusEntorno || 'SANDBOX'
         });
 
+        setDomisConfig({
+          domisHabilitado: dataNegocio.domisHabilitado ?? false,
+          domisBloqueoVentas: dataNegocio.domisBloqueoVentas ?? false,
+          domisTimeoutMinutos: String(dataNegocio.domisTimeoutMinutos ?? 10),
+          domisAlertaSonora: dataNegocio.domisAlertaSonora ?? true,
+          domisPromptMapeo: dataNegocio.domisPromptMapeo || '',
+          domisWebhookSecret: dataNegocio.domisWebhookSecret || '',
+          domisWaQueueUrl: dataNegocio.domisWaQueueUrl || '',
+        });
+
         // Initialize Department based on municipality
         const munCode = dataNegocio.factusMunicipioCodigo || '52356';
         const depto = divipolaData.find(d => d.municipios.some(m => m.codigo_dane === munCode));
@@ -299,6 +320,13 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           imprimirLogo,
           logoSize58: logoSize58 ? parseInt(logoSize58, 10) : 380,
           logoSize80: logoSize80 ? parseInt(logoSize80, 10) : 500,
+          domisHabilitado: domisConfig.domisHabilitado,
+          domisBloqueoVentas: domisConfig.domisBloqueoVentas,
+          domisTimeoutMinutos: parseInt(domisConfig.domisTimeoutMinutos, 10) || 10,
+          domisAlertaSonora: domisConfig.domisAlertaSonora,
+          domisPromptMapeo: domisConfig.domisPromptMapeo,
+          domisWebhookSecret: domisConfig.domisWebhookSecret,
+          domisWaQueueUrl: domisConfig.domisWaQueueUrl,
           ...factusToSave
         } as any),
         updateConfiguracionIA({
@@ -1188,6 +1216,117 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
               )}
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* DOMICILIOS WHATSAPP (WA-QUEUE-API-V2) */}
+        <View style={[styles.card, { marginTop: 20, borderColor: '#fef08a', borderWidth: 1 }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={[styles.iaIconContainer, { backgroundColor: '#fef3c7' }]}>
+                <Ionicons name="bicycle" size={20} color="#d97706" />
+              </View>
+              <Text style={[styles.sectionTitleIA, { color: '#d97706' }]}>
+                Domicilios WhatsApp (IA)
+              </Text>
+            </View>
+            <Switch
+              value={domisConfig.domisHabilitado}
+              onValueChange={(val) => setDomisConfig({ ...domisConfig, domisHabilitado: val })}
+              trackColor={{ false: '#d1d5db', true: '#fde68a' }}
+              thumbColor={domisConfig.domisHabilitado ? '#d97706' : '#f3f4f6'}
+            />
+          </View>
+
+          <View style={[styles.infoCardIA, { backgroundColor: '#fffbeb' }]}>
+            <Ionicons name="information-circle" size={24} color="#d97706" />
+            <Text style={[styles.infoTextIA, { color: '#b45309' }]}>
+              Integra los pedidos tomados por tu Chatbot de WhatsApp con IA en la pestaña "DOMIS" de Pedidos.
+            </Text>
+          </View>
+
+          {/* Webhook URL para copiar */}
+          <Text style={styles.label}>URL del Webhook (Para configurar en el Bot / Panel)</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f3f4f6', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 12, borderWidth: 1, borderColor: '#e5e7eb' }}>
+            <TextInput
+              style={{ flex: 1, fontSize: 13, color: '#374151', fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace' }}
+              value={`${(api.defaults.baseURL || '').replace(/\/api\/v1\/?$/, '')}/api/v1/domicilios/webhook`}
+              editable={false}
+              selectTextOnFocus
+            />
+            <TouchableOpacity
+              onPress={() => {
+                const url = `${(api.defaults.baseURL || '').replace(/\/api\/v1\/?$/, '')}/api/v1/domicilios/webhook`;
+                if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.clipboard) {
+                  navigator.clipboard.writeText(url);
+                }
+                Toast.show({ type: 'info', text1: 'URL de Webhook', text2: 'Copia esta URL en los endpoints POS del bot' });
+              }}
+              style={{ marginLeft: 8, padding: 6, backgroundColor: '#e5e7eb', borderRadius: 6 }}
+            >
+              <Ionicons name="copy-outline" size={18} color="#4b5563" />
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.label}>Token Secreto de Webhook (Opcional)</Text>
+          <TextInput
+            style={styles.input}
+            value={domisConfig.domisWebhookSecret}
+            onChangeText={(text) => setDomisConfig({ ...domisConfig, domisWebhookSecret: text })}
+            placeholder="Ej. mi-secreto-seguro"
+            autoCapitalize="none"
+          />
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, marginBottom: 8 }}>
+            <View style={{ flex: 1, paddingRight: 16 }}>
+              <Text style={styles.label}>Bloquear Ventas por Domicilios Desatendidos</Text>
+              <Text style={{ fontSize: 12, color: '#6b7280' }}>
+                Si un pedido de WhatsApp supera el tiempo límite sin ser atendido (Tomado), se bloquea el cobro en Nueva Venta.
+              </Text>
+            </View>
+            <Switch
+              value={domisConfig.domisBloqueoVentas}
+              onValueChange={(val) => setDomisConfig({ ...domisConfig, domisBloqueoVentas: val })}
+              trackColor={{ false: '#d1d5db', true: '#fca5a5' }}
+              thumbColor={domisConfig.domisBloqueoVentas ? '#ef4444' : '#f3f4f6'}
+            />
+          </View>
+
+          <Text style={styles.label}>Tiempo Límite de Atención (Minutos)</Text>
+          <TextInput
+            style={styles.input}
+            value={domisConfig.domisTimeoutMinutos}
+            onChangeText={(text) => setDomisConfig({ ...domisConfig, domisTimeoutMinutos: text.replace(/[^0-9]/g, '') })}
+            keyboardType="numeric"
+            placeholder="10"
+          />
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8, marginBottom: 8 }}>
+            <View style={{ flex: 1, paddingRight: 16 }}>
+              <Text style={styles.label}>Alerta Sonora al Recibir Domicilio</Text>
+              <Text style={{ fontSize: 12, color: '#6b7280' }}>
+                Reproduce un sonido de campana de entrega al ingresar un nuevo pedido desde WhatsApp.
+              </Text>
+            </View>
+            <Switch
+              value={domisConfig.domisAlertaSonora}
+              onValueChange={(val) => setDomisConfig({ ...domisConfig, domisAlertaSonora: val })}
+              trackColor={{ false: '#d1d5db', true: '#fde68a' }}
+              thumbColor={domisConfig.domisAlertaSonora ? '#d97706' : '#f3f4f6'}
+            />
+          </View>
+
+          <Text style={[styles.label, { marginTop: 12 }]}>Prompt del Sistema para Mapeo de Platos y Promos (IA)</Text>
+          <Text style={{ fontSize: 12, color: '#6b7280', marginBottom: 6 }}>
+            Instrucciones para Gemini al interpretar los pedidos del bot. Puedes definir combos, promociones, sustituciones o sinónimos.
+          </Text>
+          <TextInput
+            style={[styles.input, { minHeight: 90, textAlignVertical: 'top' }]}
+            value={domisConfig.domisPromptMapeo}
+            onChangeText={(text) => setDomisConfig({ ...domisConfig, domisPromptMapeo: text })}
+            placeholder="Ej: Si el cliente pide 'promo alitas 2x1', mapear a 2 unidades del producto 'Porción Alitas' aplicando 50% de descuento..."
+            multiline
+            numberOfLines={4}
+          />
         </View>
 
       </ScrollView>

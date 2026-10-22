@@ -19,7 +19,8 @@ import { useProductStore } from '../../store/useProductStore';
 import { useMesaStore } from '../../store/useMesaStore';
 import { useSalesStore } from '../../store/useSalesStore';
 import usePrinterStore from '../../store/usePrinterStore';
-import { getCachedConfiguracion } from '../../services/configuracion';
+import { getCachedConfiguracion, getConfiguracion } from '../../services/configuracion';
+import { getDomicilios, DomicilioWAItem } from '../../services/domicilios.service';
 import { getGramosPapaForProduct } from '../../utils/printer';
 import { Text } from '../../components/ui/text';
 import { Button } from '../../components/ui/button';
@@ -267,6 +268,74 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
        activeTemporalIdRef.current = null;
     }
   }, []));
+
+  // ── Domicilios WhatsApp & Bloqueo de Ventas ──────────────────────────────
+  const [recentDomis, setRecentDomis] = useState<DomicilioWAItem[]>([]);
+  const [isSalesBlocked, setIsSalesBlocked] = useState(false);
+  const [desatendidosCount, setDesatendidosCount] = useState(0);
+  const [configNegocio, setConfigNegocio] = useState<any>(null);
+
+  const loadDomiciliosBloqueo = useCallback(async () => {
+    try {
+      const cfgRes = await getConfiguracion();
+      const cfg = (cfgRes as any)?.data || cfgRes;
+      setConfigNegocio(cfg);
+
+      if (cfg?.domisHabilitado && cfg?.domisBloqueoVentas) {
+        const domis = await getDomicilios('RECIENTE');
+        if (Array.isArray(domis)) {
+          setRecentDomis(domis);
+        }
+      } else {
+        setRecentDomis([]);
+        setIsSalesBlocked(false);
+        setDesatendidosCount(0);
+      }
+    } catch (e) {
+      console.error('Error loading domicilios bloqueo:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadDomiciliosBloqueo();
+    const interval = setInterval(() => {
+      const cfg = configNegocio || getCachedConfiguracion()?.data || getCachedConfiguracion();
+      if (!cfg?.domisHabilitado || !cfg?.domisBloqueoVentas) {
+        setIsSalesBlocked(false);
+        setDesatendidosCount(0);
+        return;
+      }
+      const timeoutMs = (Number(cfg.domisTimeoutMinutos) || 10) * 60 * 1000;
+      const now = Date.now();
+      const overdues = recentDomis.filter((d) => {
+        if (d.estado !== 'RECIENTE') return false;
+        const created = new Date(d.timestampPedido || d.createdAt).getTime();
+        return now - created >= timeoutMs;
+      });
+      setDesatendidosCount(overdues.length);
+      setIsSalesBlocked(overdues.length > 0);
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [configNegocio, recentDomis, loadDomiciliosBloqueo]);
+
+  useSocketEvent<DomicilioWAItem>(SocketEvent.NUEVO_DOMICILIO, (nuevoDom) => {
+    if (!nuevoDom) return;
+    if (configNegocio?.domisAlertaSonora) {
+      soundService.playDeliveryAlert();
+    }
+    setRecentDomis((prev) => [nuevoDom, ...prev.filter((d) => d.IDdomicilio !== nuevoDom.IDdomicilio)]);
+  });
+
+  useSocketEvent<DomicilioWAItem>(SocketEvent.DOMICILIO_ACTUALIZADO, (domActualizado) => {
+    if (!domActualizado) return;
+    setRecentDomis((prev) => {
+      if (domActualizado.estado !== 'RECIENTE') {
+        return prev.filter((d) => d.IDdomicilio !== domActualizado.IDdomicilio);
+      }
+      return prev.map((d) => (d.IDdomicilio === domActualizado.IDdomicilio ? { ...d, ...domActualizado } : d));
+    });
+  });
 
   const [mesaSearchQuery, setMesaSearchQuery] = useState('');
   const [mesaNota, setMesaNota] = useState('');
@@ -891,6 +960,16 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   };
 
   const handleCheckout = async () => {
+    if (isSalesBlocked) {
+      Toast.show({
+        type: 'error',
+        text1: '⛔ Ventas Bloqueadas',
+        text2: `Tienes ${desatendidosCount} domicilio(s) sin atender en la pestaña DOMIS`,
+        position: 'top',
+        visibilityTime: 4000,
+      });
+      return;
+    }
     if (cart.length === 0) return;
     Keyboard.dismiss();
     setTimeout(() => {
@@ -1926,6 +2005,29 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         </TouchableOpacity>
       </View>
 
+      {/* BANNER DE BLOQUEO DE VENTAS POR DOMICILIOS DESATENDIDOS */}
+      {isSalesBlocked && (
+        <View style={{ backgroundColor: '#dc2626', paddingVertical: 10, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', zIndex: 20 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+            <Ionicons name="warning" size={22} color="#fff" style={{ marginRight: 8 }} />
+            <View style={{ flex: 1 }}>
+              <RNText style={{ color: '#fff', fontWeight: 'bold', fontSize: 13 }}>
+                ⛔ VENTAS BLOQUEADAS: {desatendidosCount} DOMI(S) SIN ATENDER
+              </RNText>
+              <RNText style={{ color: '#fecaca', fontSize: 11 }}>
+                Hay domicilios de WhatsApp desatendidos por más de {configNegocio?.domisTimeoutMinutos || 10} min. Debes gestionarlos para continuar.
+              </RNText>
+            </View>
+          </View>
+          <TouchableOpacity
+            onPress={() => navigation.navigate('Main', { screen: 'Pedidos', params: { tab: 'DOMIS' } })}
+            style={{ backgroundColor: '#fff', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8 }}
+          >
+            <RNText style={{ color: '#dc2626', fontWeight: 'bold', fontSize: 12 }}>Ir a DOMIS</RNText>
+          </TouchableOpacity>
+        </View>
+      )}
+
       <ScrollView 
         style={styles.mainContent} 
         keyboardShouldPersistTaps="handled"
@@ -2172,13 +2274,17 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               <Text style={styles.cartBarTotal}>${useCartStore.getState().getFinalTotalPrice().toLocaleString()}</Text>
             </View>
           </View>
-          <Button style={[styles.checkoutButton, { backgroundColor: primaryColor }]} onPress={handleCheckout} disabled={isSubmitting}>
+          <Button 
+            style={[styles.checkoutButton, { backgroundColor: isSalesBlocked ? '#dc2626' : primaryColor }]} 
+            onPress={handleCheckout} 
+            disabled={isSubmitting || isSalesBlocked}
+          >
             {isSubmitting ? (
               <ActivityIndicator color="#fff" />
             ) : (
               <View style={styles.checkoutContent}>
-                <Text style={styles.checkoutText}>Cobrar</Text>
-                <Ionicons name="checkmark-circle" size={20} color="white" />
+                <Text style={styles.checkoutText}>{isSalesBlocked ? 'Bloqueado' : 'Cobrar'}</Text>
+                <Ionicons name={isSalesBlocked ? "lock-closed" : "checkmark-circle"} size={20} color="white" />
               </View>
             )}
           </Button>
