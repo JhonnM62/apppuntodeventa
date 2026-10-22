@@ -26,6 +26,8 @@ export interface NotificationSettings {
   notifyTurnoOpened: boolean;
   notifyTurnoClosed: boolean;
   notifyTurnoDescanso: boolean;
+  notifyDomicilioNuevo?: boolean;
+  notifyDomicilioTimeout?: boolean;
 }
 
 export interface NotificationHistoryItem {

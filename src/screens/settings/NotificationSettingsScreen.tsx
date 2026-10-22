@@ -20,10 +20,16 @@ export default function NotificationSettingsScreen() {
     }
   }, [user]);
 
+  const isAdmin = user?.rol === 'Admin app' || user?.rol === 'Admin negocio';
+
   const loadSettings = async () => {
     try {
       const data = await getNotificationSettings(user?.id || user?.IDusuarios);
-      setSettings(data);
+      setSettings({
+        notifyDomicilioNuevo: true,
+        notifyDomicilioTimeout: true,
+        ...data,
+      });
     } catch (error) {
       console.error('Error loading notification settings:', error);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudieron cargar las configuraciones.' });
@@ -56,22 +62,30 @@ export default function NotificationSettingsScreen() {
     );
   }
 
-  const renderSwitch = (label: string, key: keyof NotificationSettings, isCritical: boolean = false) => (
-    <View key={key as string} className="flex-row justify-between items-center py-3 border-b border-gray-100">
-      <View className="flex-1 pr-4">
-        <Text className="text-gray-800 text-base font-medium">{label}</Text>
-        {isCritical && (
-          <Text className="text-red-500 text-xs font-bold mt-0.5">ALERTA CRÍTICA</Text>
-        )}
+  const renderSwitch = (
+    label: string,
+    key: keyof NotificationSettings,
+    isCritical: boolean = false,
+    defaultValue: boolean = false
+  ) => {
+    const isChecked = settings?.[key] !== undefined ? Boolean(settings[key]) : defaultValue;
+    return (
+      <View key={key as string} className="flex-row justify-between items-center py-3 border-b border-gray-100">
+        <View className="flex-1 pr-4">
+          <Text className="text-gray-800 text-base font-medium">{label}</Text>
+          {isCritical && (
+            <Text className="text-red-500 text-xs font-bold mt-0.5">ALERTA CRÍTICA</Text>
+          )}
+        </View>
+        <Switch
+          trackColor={{ false: '#d1d5db', true: '#86efac' }}
+          thumbColor={isChecked ? '#16a34a' : '#f3f4f6'}
+          onValueChange={(val) => handleToggle(key, val)}
+          value={isChecked}
+        />
       </View>
-      <Switch
-        trackColor={{ false: '#d1d5db', true: '#86efac' }}
-        thumbColor={settings?.[key] ? '#16a34a' : '#f3f4f6'}
-        onValueChange={(val) => handleToggle(key, val)}
-        value={Boolean(settings?.[key])}
-      />
-    </View>
-  );
+    );
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f9fafb' }} edges={['top']}>
@@ -91,63 +105,93 @@ export default function NotificationSettingsScreen() {
           Configura de qué eventos deseas recibir notificaciones Push en tu dispositivo. Los cambios se guardan automáticamente.
         </Text>
 
-        {/* Sección Ventas */}
-        <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-100">
-          <View className="flex-row items-center mb-2">
-            <MaterialCommunityIcons name="receipt" size={22} color="#16a34a" />
-            <Text className="text-lg font-bold text-gray-800 ml-2">Ventas / Pedidos</Text>
+        {/* Sección Domicilios WhatsApp - Disponible para TODOS los usuarios (meseros, cajeros, admin) */}
+        <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-emerald-100">
+          <View className="flex-row items-center mb-1">
+            <MaterialCommunityIcons name="moped" size={24} color="#16a34a" />
+            <Text className="text-lg font-bold text-gray-800 ml-2">Domicilios WhatsApp</Text>
           </View>
-          {renderSwitch('Nueva Venta Creada', 'notifyVentaCreated')}
-          {renderSwitch('Venta Modificada', 'notifyVentaUpdated')}
-          {renderSwitch('Venta Eliminada / Anulada', 'notifyVentaDeleted', true)}
-          {renderSwitch('Papelera de Ventas Vaciada', 'notifyVentaTrashEmpty')}
+          <Text className="text-xs text-gray-500 mb-2">
+            Alertas para atender pedidos de WhatsApp en tiempo real (activo para todos los roles del equipo).
+          </Text>
+          {renderSwitch('Nuevo Domicilio Recibido', 'notifyDomicilioNuevo', false, true)}
+          {renderSwitch('Alerta Domicilio sin Atender (Tiempo Límite)', 'notifyDomicilioTimeout', true, true)}
         </View>
 
-        {/* Sección Caja */}
-        <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-100">
-          <View className="flex-row items-center mb-2">
-            <MaterialCommunityIcons name="cash-register" size={22} color="#16a34a" />
-            <Text className="text-lg font-bold text-gray-800 ml-2">Caja y Flujo de Efectivo</Text>
+        {!isAdmin && (
+          <View className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-4">
+            <View className="flex-row items-center mb-1">
+              <Ionicons name="information-circle" size={20} color="#2563eb" />
+              <Text className="text-sm font-bold text-blue-900 ml-1.5">Rol Operativo ({user?.rol || 'Usuario'})</Text>
+            </View>
+            <Text className="text-xs text-blue-700 leading-4">
+              Tu dispositivo está configurado para recibir alertas de Domicilios WhatsApp. Las alertas de caja, ventas, inventario y nómina están reservadas para administradores.
+            </Text>
           </View>
-          {renderSwitch('Apertura de Caja', 'notifyCajaOpened')}
-          {renderSwitch('Cierre de Caja (Cuadre Perfecto)', 'notifyCajaClosedPerfect')}
-          {renderSwitch('Cierre de Caja con Descuadre', 'notifyCajaClosedMismatch', true)}
-          {renderSwitch('Caja Eliminada', 'notifyCajaDeleted')}
-          {renderSwitch('Modificación en Insumos', 'notifyOrderInventarioUpdated', true)}
-        </View>
+        )}
 
-        {/* Sección Productos */}
-        <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-100">
-          <View className="flex-row items-center mb-2">
-            <MaterialCommunityIcons name="hamburger" size={22} color="#16a34a" />
-            <Text className="text-lg font-bold text-gray-800 ml-2">Productos (Menú)</Text>
-          </View>
-          {renderSwitch('Nuevo Producto Creado', 'notifyProductoCreated')}
-          {renderSwitch('Cambio de Precio', 'notifyProductoPriceChanged', true)}
-          {renderSwitch('Modificación de Receta', 'notifyProductoRecipeChanged', true)}
-          {renderSwitch('Producto Eliminado', 'notifyProductoDeleted')}
-        </View>
+        {/* Secciones exclusivas para Administradores */}
+        {isAdmin && (
+          <>
+            {/* Sección Ventas */}
+            <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-100">
+              <View className="flex-row items-center mb-2">
+                <MaterialCommunityIcons name="receipt" size={22} color="#16a34a" />
+                <Text className="text-lg font-bold text-gray-800 ml-2">Ventas / Pedidos</Text>
+              </View>
+              {renderSwitch('Nueva Venta Creada', 'notifyVentaCreated')}
+              {renderSwitch('Venta Modificada', 'notifyVentaUpdated')}
+              {renderSwitch('Venta Eliminada / Anulada', 'notifyVentaDeleted', true)}
+              {renderSwitch('Papelera de Ventas Vaciada', 'notifyVentaTrashEmpty')}
+            </View>
 
-        {/* Sección Nómina */}
-        <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-100">
-          <View className="flex-row items-center mb-2">
-            <MaterialCommunityIcons name="account-clock" size={22} color="#16a34a" />
-            <Text className="text-lg font-bold text-gray-800 ml-2">Nómina y Turnos</Text>
-          </View>
-          {renderSwitch('Apertura de Turno (Check-in)', 'notifyTurnoOpened', true)}
-          {renderSwitch('Cierre de Turno (Check-out)', 'notifyTurnoClosed', true)}
-          {renderSwitch('Inicio / Fin / Exceso de Descanso', 'notifyTurnoDescanso', true)}
-        </View>
+            {/* Sección Caja */}
+            <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-100">
+              <View className="flex-row items-center mb-2">
+                <MaterialCommunityIcons name="cash-register" size={22} color="#16a34a" />
+                <Text className="text-lg font-bold text-gray-800 ml-2">Caja y Flujo de Efectivo</Text>
+              </View>
+              {renderSwitch('Apertura de Caja', 'notifyCajaOpened')}
+              {renderSwitch('Cierre de Caja (Cuadre Perfecto)', 'notifyCajaClosedPerfect')}
+              {renderSwitch('Cierre de Caja con Descuadre', 'notifyCajaClosedMismatch', true)}
+              {renderSwitch('Caja Eliminada', 'notifyCajaDeleted')}
+              {renderSwitch('Modificación en Insumos', 'notifyOrderInventarioUpdated', true)}
+            </View>
 
-        {/* Sección Dinero Guardado */}
-        <View className="bg-white rounded-2xl p-4 mb-8 shadow-sm border border-gray-100">
-          <View className="flex-row items-center mb-2">
-            <MaterialCommunityIcons name="safe" size={22} color="#16a34a" />
-            <Text className="text-lg font-bold text-gray-800 ml-2">Dinero / Gastos</Text>
-          </View>
-          {renderSwitch('Retiro de Dinero Guardado', 'notifyDineroRetirado', true)}
-          {renderSwitch('Nuevo Gasto Registrado', 'notifyGastoCreated')}
-        </View>
+            {/* Sección Productos */}
+            <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-100">
+              <View className="flex-row items-center mb-2">
+                <MaterialCommunityIcons name="hamburger" size={22} color="#16a34a" />
+                <Text className="text-lg font-bold text-gray-800 ml-2">Productos (Menú)</Text>
+              </View>
+              {renderSwitch('Nuevo Producto Creado', 'notifyProductoCreated')}
+              {renderSwitch('Cambio de Precio', 'notifyProductoPriceChanged', true)}
+              {renderSwitch('Modificación de Receta', 'notifyProductoRecipeChanged', true)}
+              {renderSwitch('Producto Eliminado', 'notifyProductoDeleted')}
+            </View>
+
+            {/* Sección Nómina */}
+            <View className="bg-white rounded-2xl p-4 mb-4 shadow-sm border border-gray-100">
+              <View className="flex-row items-center mb-2">
+                <MaterialCommunityIcons name="account-clock" size={22} color="#16a34a" />
+                <Text className="text-lg font-bold text-gray-800 ml-2">Nómina y Turnos</Text>
+              </View>
+              {renderSwitch('Apertura de Turno (Check-in)', 'notifyTurnoOpened', true)}
+              {renderSwitch('Cierre de Turno (Check-out)', 'notifyTurnoClosed', true)}
+              {renderSwitch('Inicio / Fin / Exceso de Descanso', 'notifyTurnoDescanso', true)}
+            </View>
+
+            {/* Sección Dinero Guardado */}
+            <View className="bg-white rounded-2xl p-4 mb-8 shadow-sm border border-gray-100">
+              <View className="flex-row items-center mb-2">
+                <MaterialCommunityIcons name="safe" size={22} color="#16a34a" />
+                <Text className="text-lg font-bold text-gray-800 ml-2">Dinero / Gastos</Text>
+              </View>
+              {renderSwitch('Retiro de Dinero Guardado', 'notifyDineroRetirado', true)}
+              {renderSwitch('Nuevo Gasto Registrado', 'notifyGastoCreated')}
+            </View>
+          </>
+        )}
 
       </ScrollView>
     </SafeAreaView>
