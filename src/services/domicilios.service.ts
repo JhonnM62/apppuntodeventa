@@ -61,3 +61,8 @@ export const vincularVentaDomicilio = async (id: string, ventaId: string): Promi
   const res = await api.post(`/domicilios/${id}/vincular-venta`, { ventaId });
   return (res as any)?.data || res;
 };
+
+export const deleteDomicilio = async (id: string): Promise<any> => {
+  const res = await api.delete(`/domicilios/${id}`);
+  return (res as any)?.data || res;
+};

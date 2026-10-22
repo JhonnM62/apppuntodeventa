@@ -8,7 +8,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { getSales, updateVentaEstado, updateVentaPago, deleteSale, deleteSalesBulk, getVentaById, updateOrderItemState, createSale } from '../../services/sales';
-import { getDomicilios, updateDomicilioEstado, vincularVentaDomicilio, DomicilioWAItem } from '../../services/domicilios.service';
+import { getDomicilios, updateDomicilioEstado, vincularVentaDomicilio, deleteDomicilio, DomicilioWAItem } from '../../services/domicilios.service';
 import { emitirFacturaDian, eliminarFacturaDian } from '../../services/facturacion';
 import { useSocket, useSocketEvent, useSocketEmitter } from '../../hooks';
 import { Room, SocketEvent } from '../../types/socket.types';
@@ -1178,6 +1178,38 @@ const PedidosScreen = () => {
   };
 
   const handleDeleteSingle = (venta: VentaItem) => {
+    if (venta._isDomicilioWA) {
+      const dom = venta._rawDomicilio;
+      showAlert({
+        type: 'confirm',
+        title: 'Eliminar Domicilio',
+        message: `¿Estás seguro de que deseas eliminar el domicilio #${dom?.orderIdWA || venta.pedido}?`,
+        confirmText: 'Eliminar',
+        onConfirm: async () => {
+          setLoading(true);
+          try {
+            if (dom?.IDdomicilio) {
+              await deleteDomicilio(dom.IDdomicilio);
+              setDomicilios(prev => prev.filter(d => d.IDdomicilio !== dom.IDdomicilio));
+            }
+            if (venta.IDventas && venta.IDventas !== dom?.IDdomicilio) {
+              await deleteSale(venta.IDventas).catch(() => {});
+              removeVenta(venta.IDventas);
+            }
+            closeModal();
+            Toast.show({ type: 'success', text1: 'Eliminado', text2: 'El domicilio fue eliminado exitosamente' });
+          } catch (e) {
+            console.error('Error al eliminar domicilio:', e);
+            Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo eliminar el domicilio' });
+          } finally {
+            setLoading(false);
+          }
+        },
+        onCancel: () => {},
+      });
+      return;
+    }
+
     if (venta.estado === 'PAGADO' || venta.estado === 'ENTREGADO') {
       showAlert({
         type: 'confirm',
@@ -2463,6 +2495,100 @@ showAlert({
                   <View style={styles.actionsGrid}>
                     {selectedVenta._isDomicilioWA ? (
                       <>
+                        {/* Volver al carrito / Agregar otros productos */}
+                        <TouchableOpacity
+                          style={[styles.actionBtn, { backgroundColor: '#6366f1' }]}
+                          onPress={handleVolverCarrito}
+                        >
+                          <Ionicons name="cart-outline" size={20} color="#fff" />
+                          <RNText style={styles.actionBtnText}>Volver al Carrito</RNText>
+                        </TouchableOpacity>
+
+                        {/* Pasar de estado */}
+                        {selectedVenta._rawDomicilio?.estado === 'RECIENTE' && (
+                          <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: '#3b82f6' }]}
+                            onPress={() => {
+                              handleTomarDomicilio(selectedVenta._rawDomicilio);
+                              setSelectedVenta((prev: any) => ({ ...prev, estado: 'TOMADO', _rawDomicilio: { ...prev._rawDomicilio, estado: 'TOMADO' } }));
+                            }}
+                          >
+                            <Ionicons name="hand-right-outline" size={20} color="#fff" />
+                            <RNText style={styles.actionBtnText}>Pasar a Tomado</RNText>
+                          </TouchableOpacity>
+                        )}
+
+                        {selectedVenta._rawDomicilio?.estado === 'TOMADO' && (
+                          <>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#8b5cf6' }]}
+                              onPress={() => handleChangeEstado('LISTO_PARA_ENTREGA')}
+                            >
+                              <Ionicons name="checkmark-done-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Marcar Listo</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
+                              onPress={() => handleChangeEstado('ENTREGADO')}
+                            >
+                              <Ionicons name="home-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Marcar Entregado</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#f59e0b' }]}
+                              onPress={() => handleChangeEstado('RECIENTE')}
+                            >
+                              <Ionicons name="arrow-undo-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Volver a Reciente</RNText>
+                            </TouchableOpacity>
+                          </>
+                        )}
+
+                        {selectedVenta._rawDomicilio?.estado === 'LISTO_PARA_ENTREGA' && (
+                          <>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
+                              onPress={() => handleChangeEstado('ENTREGADO')}
+                            >
+                              <Ionicons name="paper-plane-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Marcar Entregado</RNText>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, { backgroundColor: '#3b82f6' }]}
+                              onPress={() => handleChangeEstado('TOMADO')}
+                            >
+                              <Ionicons name="arrow-undo-outline" size={20} color="#fff" />
+                              <RNText style={styles.actionBtnText}>Volver a Tomado</RNText>
+                            </TouchableOpacity>
+                          </>
+                        )}
+
+                        {selectedVenta._rawDomicilio?.estado === 'ENTREGADO' && (
+                          <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: '#8b5cf6' }]}
+                            onPress={() => handleChangeEstado('LISTO_PARA_ENTREGA')}
+                          >
+                            <Ionicons name="arrow-undo-outline" size={20} color="#fff" />
+                            <RNText style={styles.actionBtnText}>Volver a Listo</RNText>
+                          </TouchableOpacity>
+                        )}
+
+                        {/* Cobro en caja */}
+                        {selectedVenta._rawDomicilio?.estado !== 'COBRADO' && (
+                          <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: '#22c55e' }]}
+                            onPress={() => {
+                              const rawDom = selectedVenta._rawDomicilio;
+                              closeModal();
+                              handleCobrarDomicilio(rawDom);
+                            }}
+                          >
+                            <Ionicons name="cash-outline" size={20} color="#fff" />
+                            <RNText style={styles.actionBtnText}>Cobrar en Caja</RNText>
+                          </TouchableOpacity>
+                        )}
+
+                        {/* Chat directo de WhatsApp */}
                         {selectedVenta._rawDomicilio?.clienteTelefono ? (
                           <TouchableOpacity
                             style={[styles.actionBtn, { backgroundColor: '#25D366' }]}
@@ -2477,33 +2603,7 @@ showAlert({
                           </TouchableOpacity>
                         ) : null}
 
-                        {selectedVenta._rawDomicilio?.estado === 'RECIENTE' && (
-                          <TouchableOpacity
-                            style={[styles.actionBtn, { backgroundColor: '#3b82f6' }]}
-                            onPress={() => {
-                              handleTomarDomicilio(selectedVenta._rawDomicilio);
-                              setSelectedVenta((prev: any) => ({ ...prev, estado: 'TOMADO', _rawDomicilio: { ...prev._rawDomicilio, estado: 'TOMADO' } }));
-                            }}
-                          >
-                            <Ionicons name="hand-right-outline" size={20} color="#fff" />
-                            <RNText style={styles.actionBtnText}>Tomar Domicilio</RNText>
-                          </TouchableOpacity>
-                        )}
-
-                        {(selectedVenta._rawDomicilio?.estado === 'RECIENTE' || selectedVenta._rawDomicilio?.estado === 'TOMADO') && (
-                          <TouchableOpacity
-                            style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
-                            onPress={() => {
-                              const rawDom = selectedVenta._rawDomicilio;
-                              closeModal();
-                              handleCobrarDomicilio(rawDom);
-                            }}
-                          >
-                            <Ionicons name="cash-outline" size={20} color="#fff" />
-                            <RNText style={styles.actionBtnText}>Cobrar en Caja</RNText>
-                          </TouchableOpacity>
-                        )}
-
+                        {/* Cancelar / Rechazar */}
                         {selectedVenta._rawDomicilio?.estado !== 'COBRADO' && selectedVenta._rawDomicilio?.estado !== 'CANCELADO' && (
                           <TouchableOpacity
                             style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
@@ -2514,7 +2614,7 @@ showAlert({
                             }}
                           >
                             <Ionicons name="close-circle-outline" size={20} color="#fff" />
-                            <RNText style={styles.actionBtnText}>Rechazar / Cancelar</RNText>
+                            <RNText style={styles.actionBtnText}>Cancelar Domicilio</RNText>
                           </TouchableOpacity>
                         )}
                       </>
@@ -3110,6 +3210,22 @@ showAlert({
     if (!selectedVenta) return;
     try {
       soundService.playSuccess();
+
+      if (selectedVenta._isDomicilioWA) {
+        const rawDom = selectedVenta._rawDomicilio;
+        if (rawDom?.IDdomicilio) {
+          updateDomicilioEstado(rawDom.IDdomicilio, newEstado).catch(e => console.error(e));
+          setDomicilios(prev => prev.map(d => d.IDdomicilio === rawDom.IDdomicilio ? { ...d, estado: newEstado } : d));
+        }
+        if (selectedVenta.IDventas && selectedVenta.IDventas !== rawDom?.IDdomicilio) {
+          updateVentaEstado(selectedVenta.IDventas, newEstado).catch(e => console.error(e));
+          updateVenta(selectedVenta.IDventas, { estado: newEstado });
+        }
+        closeModal();
+        Toast.show({ type: 'success', text1: 'Estado Actualizado', text2: `El domicilio pasó a ${newEstado.replace(/_/g, ' ')}`, position: 'top' });
+        return;
+      }
+
       // Optimizacion: Actualizar UI y emitir en background
       setTimeout(() => {
         updateVentaEstado(selectedVenta.IDventas, newEstado).catch(e => console.error(e));
@@ -3154,17 +3270,27 @@ showAlert({
     if (!selectedVenta) return;
     showAlert({
       type: 'confirm',
-      title: 'Editar Pedido',
-      message: 'El pedido pasará a EN EL CARRITO y podrás agregar o quitar productos. ¿Deseas continuar?',
+      title: 'Editar Pedido / Volver al Carrito',
+      message: 'El pedido pasará al carrito y podrás agregar o quitar productos. ¿Deseas continuar?',
       confirmText: 'Sí, Editar',
       cancelText: 'Cancelar',
       onConfirm: async () => {
-        await handleChangeEstado('EN_EL_CARRITO');
+        if (!selectedVenta._isDomicilioWA) {
+          await handleChangeEstado('EN_EL_CARRITO');
+        } else {
+          const rawDom = selectedVenta._rawDomicilio;
+          if (rawDom && rawDom.estado === 'RECIENTE') {
+            await updateDomicilioEstado(rawDom.IDdomicilio, 'TOMADO').catch(() => {});
+            setDomicilios(prev => prev.map(d => d.IDdomicilio === rawDom.IDdomicilio ? { ...d, estado: 'TOMADO' } : d));
+          }
+        }
+
         if (selectedVenta.ordenVentas && selectedVenta.ordenVentas.length > 0) {
           useCartStore.getState().loadCartFromVenta(selectedVenta.ordenVentas);
         } else {
           useCartStore.getState().clearCart();
         }
+
         useCartStore.getState().setEditingSale(selectedVenta.IDventas, selectedVenta);
         closeModal();
         navigation.navigate('Sales', { screen: 'NewSale' } as any);
