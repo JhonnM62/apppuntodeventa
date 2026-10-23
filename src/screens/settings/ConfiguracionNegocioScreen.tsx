@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, TextInput, ScrollView, Platform, Switch, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -9,7 +9,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getConfiguracion, updateConfiguracion, getConfiguracionWhatsapp, updateConfiguracionWhatsapp, uploadLogo } from '../../services/configuracion';
 import api, { getConfiguracionIA, updateConfiguracionIA } from '../../services/api';
-import { Picker } from '@react-native-picker/picker';
+import { SearchableSelect, SelectOption } from '../../components/ui/SearchableSelect';
+import categoriasService from '../../services/categorias';
 import divipolaData from '../../data/divipola';
 import { APP_CONFIG } from '../../constants/app.config';
 import * as ImagePicker from 'expo-image-picker';
@@ -177,6 +178,79 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   const [categoriasDisponibles, setCategoriasDisponibles] = useState<string[]>([]);
   const [searchEmpaque, setSearchEmpaque] = useState('');
   const [searchPlato, setSearchPlato] = useState('');
+
+  // Opciones optimizadas y elegantes para los selectores
+  const categoriaOptions: SelectOption[] = useMemo(() => {
+    return categoriasDisponibles.map((cat) => ({
+      label: cat,
+      value: cat,
+      icon: 'pricetag-outline',
+      subtitle: 'Categoría de catálogo',
+    }));
+  }, [categoriasDisponibles]);
+
+  const platoOptions: SelectOption[] = useMemo(() => {
+    return productosDisponibles.map((p) => ({
+      label: p.nombre,
+      value: p.IDproductos,
+      subtitle: p.categoriaNombre || p.categoria || 'Sin categoría',
+      price: Number(p.precioUnitario || 0),
+      icon: 'restaurant-outline',
+      category: p.categoriaNombre || p.categoria || '',
+    }));
+  }, [productosDisponibles]);
+
+  const empaqueOptions: SelectOption[] = useMemo(() => {
+    return productosDisponibles
+      .map((p) => {
+        const isEmpaque =
+          (p.categoriaNombre && p.categoriaNombre.toUpperCase() === 'DESECHABLES') ||
+          /caja|vaso|tapa|empaque|desechable|bolsa|envase|cubierto|domicilio/i.test(p.nombre || '');
+        return {
+          label: p.nombre,
+          value: p.IDproductos,
+          subtitle: p.categoriaNombre || p.categoria || 'Sin categoría',
+          price: Number(p.precioUnitario || 0),
+          isEmpaque,
+          icon: isEmpaque ? 'cube' : 'pricetag-outline',
+          category: p.categoriaNombre || p.categoria || '',
+        };
+      })
+      .sort((a, b) => {
+        if (a.isEmpaque && !b.isEmpaque) return -1;
+        if (!a.isEmpaque && b.isEmpaque) return 1;
+        return a.label.localeCompare(b.label, 'es', { sensitivity: 'base' });
+      });
+  }, [productosDisponibles]);
+
+  const [selectedDepto, setSelectedDepto] = useState<string>('');
+
+  const deptoOptions: SelectOption[] = useMemo(() => {
+    return divipolaData.map((d) => ({
+      label: d.nombre,
+      value: d.codigo_dane,
+      icon: 'map-outline',
+    }));
+  }, []);
+
+  const municipioOptions: SelectOption[] = useMemo(() => {
+    const depto = divipolaData.find((d) => d.codigo_dane === selectedDepto);
+    if (!depto) return [];
+    return depto.municipios.map((m) => ({
+      label: m.nombre,
+      value: m.codigo_dane,
+      icon: 'location-outline',
+    }));
+  }, [selectedDepto]);
+
+  const empleadoOptions: SelectOption[] = useMemo(() => {
+    return empleadosEnDescanso.map((emp: any) => ({
+      label: emp.nombre,
+      value: emp.id,
+      subtitle: emp.telefono ? `Tel: ${emp.telefono}` : undefined,
+      icon: 'person-outline',
+    }));
+  }, [empleadosEnDescanso]);
   const [nuevaRegla, setNuevaRegla] = useState<{
     tipoDestino: 'CATEGORIA' | 'PRODUCTO';
     categoriaNombre: string;
@@ -196,8 +270,6 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     cantidadPorPlato: '1',
     cobrarAlCliente: false,
   });
-  
-  const [selectedDepto, setSelectedDepto] = useState<string>('');
   
   // Para el Time Picker
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -308,15 +380,30 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
         }
 
         try {
-          const prodRes = await getProducts();
+          const [prodRes, catsRes] = await Promise.all([
+            getProducts({ limit: 1000 }),
+            categoriasService.getAll().catch((e) => {
+              console.error('Error cargando categorias desde servicio:', e);
+              return [];
+            }),
+          ]);
           const prods = Array.isArray(prodRes?.data) ? prodRes.data : [];
           setProductosDisponibles(prods);
-          const cats = Array.from(
-            new Set(prods.map((p: any) => (p.categoriaNombre || p.categoria || '').trim()).filter(Boolean))
-          ).sort() as string[];
-          setCategoriasDisponibles(cats);
+
+          const catNamesFromDb = Array.isArray(catsRes)
+            ? catsRes.map((c: any) => (c.nombre || '').trim()).filter(Boolean)
+            : [];
+          const catNamesFromProds = prods
+            .map((p: any) => (p.categoriaNombre || p.categoria || '').trim())
+            .filter(Boolean);
+
+          const allCats = Array.from(new Set([...catNamesFromDb, ...catNamesFromProds]))
+            .filter(Boolean)
+            .sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+
+          setCategoriasDisponibles(allCats);
         } catch (e) {
-          console.error('Error cargando productos para empaques:', e);
+          console.error('Error cargando productos y categorias para empaques:', e);
         }
 
         // Initialize Department based on municipality
@@ -428,7 +515,8 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     const firstCat = categoriasDisponibles[0] || '';
     const firstProd = productosDisponibles[0];
     const defaultEmpaque = productosDisponibles.find((p) =>
-      /empaque|desechable|caja|tapa|vaso|icopor|recipiente/i.test(p.nombre || '')
+      (p.categoriaNombre && p.categoriaNombre.toUpperCase() === 'DESECHABLES') ||
+      /empaque|desechable|caja|tapa|vaso|icopor|recipiente|bolsa|envase/i.test(p.nombre || '')
     ) || firstProd;
 
     setSearchEmpaque('');
@@ -1068,30 +1156,29 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           />
 
           <Text style={styles.label}>Ubicación (Facturación Electrónica)</Text>
-          <View style={[styles.input, { paddingHorizontal: 0, paddingVertical: 0, marginBottom: 8 }]}>
-            <Picker
-              selectedValue={selectedDepto}
-              onValueChange={(itemValue) => setSelectedDepto(itemValue)}
-            >
-              <Picker.Item label="Seleccione Departamento" value="" />
-              {divipolaData.map(d => (
-                <Picker.Item key={d.codigo_dane} label={d.nombre} value={d.codigo_dane} />
-              ))}
-            </Picker>
-          </View>
+          <SearchableSelect
+            placeholder="Seleccione Departamento"
+            title="Seleccionar Departamento"
+            searchPlaceholder="Buscar departamento..."
+            options={deptoOptions}
+            selectedValue={selectedDepto}
+            onSelect={(val) => {
+              setSelectedDepto(val);
+              setFactusConfig((prev) => ({ ...prev, factusMunicipioCodigo: '' }));
+            }}
+            leadingIcon="map-outline"
+          />
 
-          <View style={[styles.input, { paddingHorizontal: 0, paddingVertical: 0, marginBottom: 12 }]}>
-            <Picker
-              selectedValue={factusConfig.factusMunicipioCodigo}
-              onValueChange={(itemValue) => setFactusConfig({...factusConfig, factusMunicipioCodigo: itemValue})}
-              enabled={!!selectedDepto}
-            >
-              <Picker.Item label="Seleccione Municipio" value="" />
-              {divipolaData.find(d => d.codigo_dane === selectedDepto)?.municipios.map(m => (
-                <Picker.Item key={m.codigo_dane} label={m.nombre} value={m.codigo_dane} />
-              ))}
-            </Picker>
-          </View>
+          <SearchableSelect
+            placeholder={selectedDepto ? "Seleccione Municipio" : "Primero seleccione un departamento"}
+            title="Seleccionar Municipio"
+            searchPlaceholder="Buscar municipio (ej. Medellín, Pasto, Cali)..."
+            options={municipioOptions}
+            selectedValue={factusConfig.factusMunicipioCodigo}
+            onSelect={(val) => setFactusConfig((prev) => ({ ...prev, factusMunicipioCodigo: val }))}
+            leadingIcon="location-outline"
+            disabled={!selectedDepto}
+          />
 
           <Text style={styles.label}>Entorno (API Factus)</Text>
           <View style={{ flexDirection: 'row', marginTop: 4, marginBottom: 12 }}>
@@ -1607,17 +1694,16 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             <Text style={styles.modalTitle}>Probar Configuración de WhatsApp</Text>
             <Text style={{ marginBottom: 12, color: '#4b5563', fontSize: 14 }}>Selecciona cualquier empleado con teléfono configurado para enviarle un mensaje de prueba genérico de conexión.</Text>
             
-            <View style={styles.pickerContainer}>
-              <Picker
-                selectedValue={selectedEmpleadoId}
-                onValueChange={(itemValue) => setSelectedEmpleadoId(itemValue)}
-                style={{ height: 50, width: '100%' }}
-              >
-                {empleadosEnDescanso.map((emp) => (
-                  <Picker.Item key={emp.id} label={emp.nombre} value={emp.id} />
-                ))}
-              </Picker>
-            </View>
+            <SearchableSelect
+              label="Empleado Destino"
+              placeholder="Seleccione un empleado"
+              title="Seleccionar Empleado para Prueba"
+              searchPlaceholder="Buscar empleado por nombre o teléfono..."
+              options={empleadoOptions}
+              selectedValue={selectedEmpleadoId}
+              onSelect={(val) => setSelectedEmpleadoId(val)}
+              leadingIcon="person-outline"
+            />
 
             {testApiError && (
               <View style={{ marginTop: 15, padding: 10, backgroundColor: '#fef2f2', borderRadius: 8, borderWidth: 1, borderColor: '#fca5a5' }}>
@@ -1693,88 +1779,53 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
 
               {/* Si es por Categoría */}
               {nuevaRegla.tipoDestino === 'CATEGORIA' ? (
-                <>
-                  <Text style={styles.label}>Selecciona la Categoría</Text>
-                  <View style={[styles.input, { paddingHorizontal: 0, paddingVertical: 0, marginBottom: 14 }]}>
-                    <Picker
-                      selectedValue={nuevaRegla.categoriaNombre}
-                      onValueChange={(val) => setNuevaRegla({ ...nuevaRegla, categoriaNombre: val })}
-                    >
-                      <Picker.Item label="-- Seleccionar Categoría --" value="" />
-                      {categoriasDisponibles.map((cat) => (
-                        <Picker.Item key={cat} label={cat} value={cat} />
-                      ))}
-                    </Picker>
-                  </View>
-                </>
+                <SearchableSelect
+                  label="Selecciona la Categoría"
+                  title="Seleccionar Categoría del Catálogo"
+                  placeholder="-- Seleccionar Categoría --"
+                  searchPlaceholder="Buscar categoría (ej. Hamburguesas, Salchipapas)..."
+                  options={categoriaOptions}
+                  selectedValue={nuevaRegla.categoriaNombre}
+                  onSelect={(val) => setNuevaRegla({ ...nuevaRegla, categoriaNombre: val })}
+                  leadingIcon="pricetag-outline"
+                />
               ) : (
-                <>
-                  <Text style={styles.label}>Selecciona el Plato</Text>
-                  <TextInput
-                    style={[styles.input, { marginBottom: 6, fontSize: 13 }]}
-                    placeholder="Filtrar platos..."
-                    value={searchPlato}
-                    onChangeText={setSearchPlato}
-                  />
-                  <View style={[styles.input, { paddingHorizontal: 0, paddingVertical: 0, marginBottom: 14 }]}>
-                    <Picker
-                      selectedValue={nuevaRegla.productoId}
-                      onValueChange={(val) => {
-                        const prod = productosDisponibles.find((p) => p.IDproductos === val);
-                        setNuevaRegla({
-                          ...nuevaRegla,
-                          productoId: val,
-                          productoNombre: prod?.nombre || '',
-                        });
-                      }}
-                    >
-                      <Picker.Item label="-- Seleccionar Plato --" value="" />
-                      {productosDisponibles
-                        .filter((p) => !searchPlato.trim() || (p.nombre || '').toLowerCase().includes(searchPlato.toLowerCase()))
-                        .map((p) => (
-                          <Picker.Item
-                            key={p.IDproductos}
-                            label={`${p.nombre} (${p.categoriaNombre || p.categoria || 'Sin cat.'})`}
-                            value={p.IDproductos}
-                          />
-                        ))}
-                    </Picker>
-                  </View>
-                </>
+                <SearchableSelect
+                  label="Selecciona el Plato Específico"
+                  title="Seleccionar Plato del Catálogo"
+                  placeholder="-- Seleccionar Plato --"
+                  searchPlaceholder="Buscar plato por nombre o categoría..."
+                  options={platoOptions}
+                  selectedValue={nuevaRegla.productoId}
+                  onSelect={(val, opt) => {
+                    setNuevaRegla({
+                      ...nuevaRegla,
+                      productoId: val,
+                      productoNombre: opt?.label || '',
+                    });
+                  }}
+                  leadingIcon="restaurant-outline"
+                />
               )}
 
               {/* Producto de Empaque / Acompañamiento */}
-              <Text style={styles.label}>Producto de Empaque / Acompañamiento (del catálogo)</Text>
-              <TextInput
-                style={[styles.input, { marginBottom: 6, fontSize: 13 }]}
-                placeholder="Filtrar empaques (ej. caja, tapa, vaso)..."
-                value={searchEmpaque}
-                onChangeText={setSearchEmpaque}
+              <SearchableSelect
+                label="Producto de Empaque / Acompañamiento (del catálogo)"
+                title="Seleccionar Producto de Empaque"
+                placeholder="-- Seleccionar Producto de Empaque --"
+                searchPlaceholder="Buscar empaque (caja, vaso, tapa, bolsa)..."
+                options={empaqueOptions}
+                selectedValue={nuevaRegla.empaqueProductoId}
+                onSelect={(val, opt) => {
+                  setNuevaRegla({
+                    ...nuevaRegla,
+                    empaqueProductoId: val,
+                    empaqueProductoNombre: opt?.label || '',
+                  });
+                }}
+                leadingIcon="cube-outline"
+                showQuickEmpaquesFilter={true}
               />
-              <View style={[styles.input, { paddingHorizontal: 0, paddingVertical: 0, marginBottom: 14 }]}>
-                <Picker
-                  selectedValue={nuevaRegla.empaqueProductoId}
-                  onValueChange={(val) => {
-                    const prod = productosDisponibles.find((p) => p.IDproductos === val);
-                    setNuevaRegla({
-                      ...nuevaRegla,
-                      empaqueProductoId: val,
-                      empaqueProductoNombre: prod?.nombre || '',
-                    });
-                  }}
-                >
-                  <Picker.Item label="-- Seleccionar Producto de Empaque --" value="" />
-                  {productosDisponibles
-                    .filter((p) => !searchEmpaque.trim() || (p.nombre || '').toLowerCase().includes(searchEmpaque.toLowerCase()))
-                    .map((p) => (
-                      <Picker.Item
-                        key={p.IDproductos}
-                        label={`${p.nombre} - $${Number(p.precioUnitario || 0).toLocaleString('es-CO')}`}
-                        value={p.IDproductos}
-                      />
-                    ))}
-                </Picker>
-              </View>
 
               {/* Cantidad por plato */}
               <Text style={styles.label}>Cantidad de empaque por cada plato</Text>
