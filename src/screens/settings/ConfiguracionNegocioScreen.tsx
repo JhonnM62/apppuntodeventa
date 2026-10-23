@@ -15,6 +15,19 @@ import { APP_CONFIG } from '../../constants/app.config';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'react-native';
 import { useSettingsStore } from '../../store/useSettingsStore';
+import { getProducts } from '../../services/products';
+
+export interface ReglaEmpaqueDomi {
+  id: string;
+  tipoDestino: 'CATEGORIA' | 'PRODUCTO';
+  categoriaNombre?: string;
+  productoId?: string;
+  productoNombre?: string;
+  empaqueProductoId: string;
+  empaqueProductoNombre: string;
+  cantidadPorPlato: number;
+  cobrarAlCliente: boolean;
+}
 
 let Location: any;
 try {
@@ -156,6 +169,33 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     domisWebhookSecret: '',
     domisWaQueueUrl: '',
   });
+
+  // Reglas de empaque y adicionales para Domicilios IA
+  const [reglasEmpaque, setReglasEmpaque] = useState<ReglaEmpaqueDomi[]>([]);
+  const [modalReglaVisible, setModalReglaVisible] = useState(false);
+  const [productosDisponibles, setProductosDisponibles] = useState<any[]>([]);
+  const [categoriasDisponibles, setCategoriasDisponibles] = useState<string[]>([]);
+  const [searchEmpaque, setSearchEmpaque] = useState('');
+  const [searchPlato, setSearchPlato] = useState('');
+  const [nuevaRegla, setNuevaRegla] = useState<{
+    tipoDestino: 'CATEGORIA' | 'PRODUCTO';
+    categoriaNombre: string;
+    productoId: string;
+    productoNombre: string;
+    empaqueProductoId: string;
+    empaqueProductoNombre: string;
+    cantidadPorPlato: string;
+    cobrarAlCliente: boolean;
+  }>({
+    tipoDestino: 'CATEGORIA',
+    categoriaNombre: '',
+    productoId: '',
+    productoNombre: '',
+    empaqueProductoId: '',
+    empaqueProductoNombre: '',
+    cantidadPorPlato: '1',
+    cobrarAlCliente: false,
+  });
   
   const [selectedDepto, setSelectedDepto] = useState<string>('');
   
@@ -256,6 +296,29 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           domisWaQueueUrl: dataNegocio.domisWaQueueUrl || '',
         });
 
+        if (dataNegocio.domisReglasEmpaque) {
+          try {
+            const arr = typeof dataNegocio.domisReglasEmpaque === 'string'
+              ? JSON.parse(dataNegocio.domisReglasEmpaque)
+              : dataNegocio.domisReglasEmpaque;
+            if (Array.isArray(arr)) setReglasEmpaque(arr);
+          } catch (e) {
+            console.error('Error parseando domisReglasEmpaque:', e);
+          }
+        }
+
+        try {
+          const prodRes = await getProducts();
+          const prods = Array.isArray(prodRes?.data) ? prodRes.data : [];
+          setProductosDisponibles(prods);
+          const cats = Array.from(
+            new Set(prods.map((p: any) => (p.categoriaNombre || p.categoria || '').trim()).filter(Boolean))
+          ).sort() as string[];
+          setCategoriasDisponibles(cats);
+        } catch (e) {
+          console.error('Error cargando productos para empaques:', e);
+        }
+
         // Initialize Department based on municipality
         const munCode = dataNegocio.factusMunicipioCodigo || '52356';
         const depto = divipolaData.find(d => d.municipios.some(m => m.codigo_dane === munCode));
@@ -327,6 +390,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
           domisPromptMapeo: domisConfig.domisPromptMapeo,
           domisWebhookSecret: domisConfig.domisWebhookSecret,
           domisWaQueueUrl: domisConfig.domisWaQueueUrl,
+          domisReglasEmpaque: JSON.stringify(reglasEmpaque),
           ...factusToSave
         } as any),
         updateConfiguracionIA({
@@ -358,6 +422,64 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleOpenModalRegla = () => {
+    const firstCat = categoriasDisponibles[0] || '';
+    const firstProd = productosDisponibles[0];
+    const defaultEmpaque = productosDisponibles.find((p) =>
+      /empaque|desechable|caja|tapa|vaso|icopor|recipiente/i.test(p.nombre || '')
+    ) || firstProd;
+
+    setSearchEmpaque('');
+    setSearchPlato('');
+    setNuevaRegla({
+      tipoDestino: 'CATEGORIA',
+      categoriaNombre: firstCat,
+      productoId: firstProd?.IDproductos || '',
+      productoNombre: firstProd?.nombre || '',
+      empaqueProductoId: defaultEmpaque?.IDproductos || '',
+      empaqueProductoNombre: defaultEmpaque?.nombre || '',
+      cantidadPorPlato: '1',
+      cobrarAlCliente: false,
+    });
+    setModalReglaVisible(true);
+  };
+
+  const handleGuardarNuevaRegla = () => {
+    if (nuevaRegla.tipoDestino === 'CATEGORIA' && !nuevaRegla.categoriaNombre) {
+      Toast.show({ type: 'error', text1: 'Dato requerido', text2: 'Debes seleccionar una categoría' });
+      return;
+    }
+    if (nuevaRegla.tipoDestino === 'PRODUCTO' && !nuevaRegla.productoId) {
+      Toast.show({ type: 'error', text1: 'Dato requerido', text2: 'Debes seleccionar un plato del catálogo' });
+      return;
+    }
+    if (!nuevaRegla.empaqueProductoId) {
+      Toast.show({ type: 'error', text1: 'Dato requerido', text2: 'Debes seleccionar el producto de empaque' });
+      return;
+    }
+
+    const empaqueProd = productosDisponibles.find((p) => p.IDproductos === nuevaRegla.empaqueProductoId);
+    const targetProd = nuevaRegla.tipoDestino === 'PRODUCTO'
+      ? productosDisponibles.find((p) => p.IDproductos === nuevaRegla.productoId)
+      : undefined;
+
+    const regla: ReglaEmpaqueDomi = {
+      id: `regla_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      tipoDestino: nuevaRegla.tipoDestino,
+      categoriaNombre: nuevaRegla.tipoDestino === 'CATEGORIA' ? nuevaRegla.categoriaNombre : undefined,
+      productoId: nuevaRegla.tipoDestino === 'PRODUCTO' ? nuevaRegla.productoId : undefined,
+      productoNombre: nuevaRegla.tipoDestino === 'PRODUCTO' ? (targetProd?.nombre || nuevaRegla.productoNombre) : undefined,
+      empaqueProductoId: nuevaRegla.empaqueProductoId,
+      empaqueProductoNombre: empaqueProd?.nombre || nuevaRegla.empaqueProductoNombre || 'Empaque',
+      cantidadPorPlato: Math.max(1, parseInt(nuevaRegla.cantidadPorPlato, 10) || 1),
+      cobrarAlCliente: nuevaRegla.cobrarAlCliente,
+    };
+
+    setReglasEmpaque((prev) => [...prev, regla]);
+    setModalReglaVisible(false);
+    Toast.show({ type: 'success', text1: 'Regla agregada', text2: 'Pulsa "Guardar Configuración" para aplicar los cambios.' });
   };
 
   const onChangeTime = (event: any, selectedDate?: Date) => {
@@ -1327,6 +1449,135 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             multiline
             numberOfLines={4}
           />
+
+          {/* SECCIÓN REGLAS DE EMPAQUES Y DESECHABLES (IA) */}
+          <View style={{ marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#fef08a' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 8 }}>
+                <Ionicons name="cube-outline" size={18} color="#d97706" style={{ marginRight: 6 }} />
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#1f2937' }}>
+                  Reglas de Empaques y Desechables (IA)
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={handleOpenModalRegla}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: '#fef3c7',
+                  borderWidth: 1,
+                  borderColor: '#f59e0b',
+                  paddingHorizontal: 12,
+                  paddingVertical: 6,
+                  borderRadius: 8,
+                }}
+              >
+                <Ionicons name="add-circle" size={16} color="#b45309" style={{ marginRight: 4 }} />
+                <Text style={{ fontSize: 12, fontWeight: '700', color: '#b45309' }}>+ Agregar Regla</Text>
+              </TouchableOpacity>
+            </View>
+
+            <Text style={{ fontSize: 12, color: '#6b7280', marginBottom: 12, lineHeight: 16 }}>
+              Define qué producto de empaque (caja, tapa, desechable) usa cada categoría o plato al ingresar un domicilio por WhatsApp y si se cobra como ítem adicional o va incluido.
+            </Text>
+
+            {reglasEmpaque.length === 0 ? (
+              <View style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 14, alignItems: 'center', marginVertical: 4 }}>
+                <Ionicons name="cube" size={28} color="#9ca3af" style={{ marginBottom: 4 }} />
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#4b5563', textAlign: 'center' }}>
+                  No hay reglas de empaque configuradas
+                </Text>
+                <Text style={{ fontSize: 11, color: '#9ca3af', textAlign: 'center', marginTop: 2 }}>
+                  Pulsa "+ Agregar Regla" para asociar un empaque a una categoría o plato.
+                </Text>
+              </View>
+            ) : (
+              <View style={{ gap: 8 }}>
+                {reglasEmpaque.map((regla) => (
+                  <View
+                    key={regla.id}
+                    style={{
+                      backgroundColor: '#ffffff',
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: '#e5e7eb',
+                      padding: 12,
+                    }}
+                  >
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <View style={{ flex: 1, paddingRight: 8 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 4 }}>
+                          <View
+                            style={{
+                              backgroundColor: regla.tipoDestino === 'CATEGORIA' ? '#e0e7ff' : '#ecfdf5',
+                              paddingHorizontal: 8,
+                              paddingVertical: 2,
+                              borderRadius: 6,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: 11,
+                                fontWeight: '700',
+                                color: regla.tipoDestino === 'CATEGORIA' ? '#3730a3' : '#065f46',
+                              }}
+                            >
+                              {regla.tipoDestino === 'CATEGORIA' ? `📁 CATEGORÍA: ${regla.categoriaNombre}` : `🍔 PLATO: ${regla.productoNombre}`}
+                            </Text>
+                          </View>
+
+                          <View
+                            style={{
+                              backgroundColor: regla.cobrarAlCliente ? '#fef3c7' : '#f3f4f6',
+                              paddingHorizontal: 8,
+                              paddingVertical: 2,
+                              borderRadius: 6,
+                            }}
+                          >
+                            <Text
+                              style={{
+                                fontSize: 11,
+                                fontWeight: '700',
+                                color: regla.cobrarAlCliente ? '#b45309' : '#4b5563',
+                              }}
+                            >
+                              {regla.cobrarAlCliente ? '💰 Cobrar al cliente (Ítem extra)' : '🆓 Incluido en plato (Nota $0)'}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <Text style={{ fontSize: 13, color: '#1f2937', marginTop: 2 }}>
+                          Lleva <Text style={{ fontWeight: '700', color: '#d97706' }}>{regla.cantidadPorPlato}x</Text> {regla.empaqueProductoNombre}
+                        </Text>
+                      </View>
+
+                      <TouchableOpacity
+                        onPress={() => {
+                          if (Platform.OS === 'web') {
+                            if (window.confirm('¿Eliminar esta regla de empaque?')) {
+                              setReglasEmpaque((prev) => prev.filter((r) => r.id !== regla.id));
+                            }
+                          } else {
+                            Alert.alert('Eliminar Regla', '¿Deseas eliminar esta regla de empaque?', [
+                              { text: 'Cancelar', style: 'cancel' },
+                              {
+                                text: 'Eliminar',
+                                style: 'destructive',
+                                onPress: () => setReglasEmpaque((prev) => prev.filter((r) => r.id !== regla.id)),
+                              },
+                            ]);
+                          }
+                        }}
+                        style={{ padding: 6, borderRadius: 6, backgroundColor: '#fee2e2' }}
+                      >
+                        <Ionicons name="trash-outline" size={16} color="#ef4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
         </View>
 
       </ScrollView>
@@ -1390,6 +1641,186 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
                 )}
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal para Agregar Regla de Empaque / Acompañamiento */}
+      <Modal visible={modalReglaVisible} transparent={true} animationType="fade" onRequestClose={() => setModalReglaVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '88%', padding: 20 }]}>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                <View style={[styles.iaIconContainer, { backgroundColor: '#fef3c7', marginRight: 10 }]}>
+                  <Ionicons name="cube" size={20} color="#d97706" />
+                </View>
+                <Text style={styles.modalTitle}>Nueva Regla de Empaque (IA)</Text>
+              </View>
+
+              <Text style={{ fontSize: 13, color: '#4b5563', marginBottom: 14, lineHeight: 18 }}>
+                Asocia qué producto de catálogo (caja, vaso, tapa, desechable) debe acompañar a tus pedidos cuando entren por WhatsApp.
+              </Text>
+
+              {/* Selector de Destino: Categoría vs Plato */}
+              <Text style={styles.label}>Aplicar a:</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 14 }}>
+                <TouchableOpacity
+                  style={[
+                    styles.modelBtn,
+                    { flex: 1, alignItems: 'center' },
+                    nuevaRegla.tipoDestino === 'CATEGORIA' && styles.modelBtnActive,
+                  ]}
+                  onPress={() => setNuevaRegla({ ...nuevaRegla, tipoDestino: 'CATEGORIA' })}
+                >
+                  <Text style={[styles.modelBtnText, nuevaRegla.tipoDestino === 'CATEGORIA' && styles.modelBtnTextActive]}>
+                    Por Categoría
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.modelBtn,
+                    { flex: 1, alignItems: 'center' },
+                    nuevaRegla.tipoDestino === 'PRODUCTO' && styles.modelBtnActive,
+                  ]}
+                  onPress={() => setNuevaRegla({ ...nuevaRegla, tipoDestino: 'PRODUCTO' })}
+                >
+                  <Text style={[styles.modelBtnText, nuevaRegla.tipoDestino === 'PRODUCTO' && styles.modelBtnTextActive]}>
+                    Por Plato Específico
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Si es por Categoría */}
+              {nuevaRegla.tipoDestino === 'CATEGORIA' ? (
+                <>
+                  <Text style={styles.label}>Selecciona la Categoría</Text>
+                  <View style={[styles.input, { paddingHorizontal: 0, paddingVertical: 0, marginBottom: 14 }]}>
+                    <Picker
+                      selectedValue={nuevaRegla.categoriaNombre}
+                      onValueChange={(val) => setNuevaRegla({ ...nuevaRegla, categoriaNombre: val })}
+                    >
+                      <Picker.Item label="-- Seleccionar Categoría --" value="" />
+                      {categoriasDisponibles.map((cat) => (
+                        <Picker.Item key={cat} label={cat} value={cat} />
+                      ))}
+                    </Picker>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.label}>Selecciona el Plato</Text>
+                  <TextInput
+                    style={[styles.input, { marginBottom: 6, fontSize: 13 }]}
+                    placeholder="Filtrar platos..."
+                    value={searchPlato}
+                    onChangeText={setSearchPlato}
+                  />
+                  <View style={[styles.input, { paddingHorizontal: 0, paddingVertical: 0, marginBottom: 14 }]}>
+                    <Picker
+                      selectedValue={nuevaRegla.productoId}
+                      onValueChange={(val) => {
+                        const prod = productosDisponibles.find((p) => p.IDproductos === val);
+                        setNuevaRegla({
+                          ...nuevaRegla,
+                          productoId: val,
+                          productoNombre: prod?.nombre || '',
+                        });
+                      }}
+                    >
+                      <Picker.Item label="-- Seleccionar Plato --" value="" />
+                      {productosDisponibles
+                        .filter((p) => !searchPlato.trim() || (p.nombre || '').toLowerCase().includes(searchPlato.toLowerCase()))
+                        .map((p) => (
+                          <Picker.Item
+                            key={p.IDproductos}
+                            label={`${p.nombre} (${p.categoriaNombre || p.categoria || 'Sin cat.'})`}
+                            value={p.IDproductos}
+                          />
+                        ))}
+                    </Picker>
+                  </View>
+                </>
+              )}
+
+              {/* Producto de Empaque / Acompañamiento */}
+              <Text style={styles.label}>Producto de Empaque / Acompañamiento (del catálogo)</Text>
+              <TextInput
+                style={[styles.input, { marginBottom: 6, fontSize: 13 }]}
+                placeholder="Filtrar empaques (ej. caja, tapa, vaso)..."
+                value={searchEmpaque}
+                onChangeText={setSearchEmpaque}
+              />
+              <View style={[styles.input, { paddingHorizontal: 0, paddingVertical: 0, marginBottom: 14 }]}>
+                <Picker
+                  selectedValue={nuevaRegla.empaqueProductoId}
+                  onValueChange={(val) => {
+                    const prod = productosDisponibles.find((p) => p.IDproductos === val);
+                    setNuevaRegla({
+                      ...nuevaRegla,
+                      empaqueProductoId: val,
+                      empaqueProductoNombre: prod?.nombre || '',
+                    });
+                  }}
+                >
+                  <Picker.Item label="-- Seleccionar Producto de Empaque --" value="" />
+                  {productosDisponibles
+                    .filter((p) => !searchEmpaque.trim() || (p.nombre || '').toLowerCase().includes(searchEmpaque.toLowerCase()))
+                    .map((p) => (
+                      <Picker.Item
+                        key={p.IDproductos}
+                        label={`${p.nombre} - $${Number(p.precioUnitario || 0).toLocaleString('es-CO')}`}
+                        value={p.IDproductos}
+                      />
+                    ))}
+                </Picker>
+              </View>
+
+              {/* Cantidad por plato */}
+              <Text style={styles.label}>Cantidad de empaque por cada plato</Text>
+              <TextInput
+                style={[styles.input, { marginBottom: 14 }]}
+                value={nuevaRegla.cantidadPorPlato}
+                onChangeText={(text) => setNuevaRegla({ ...nuevaRegla, cantidadPorPlato: text.replace(/[^0-9]/g, '') })}
+                keyboardType="numeric"
+                placeholder="1"
+              />
+
+              {/* Modo de cobro */}
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ flex: 1, paddingRight: 16 }}>
+                  <Text style={styles.label}>¿Cobrar este empaque al cliente?</Text>
+                  <Text style={{ fontSize: 12, color: '#6b7280' }}>
+                    {nuevaRegla.cobrarAlCliente
+                      ? 'Sí: Se agregará como producto independiente con su precio de catálogo en la orden.'
+                      : 'No: Viene incluido en el plato. La IA lo anotará como referencia de empaque con precio $0 en observaciones.'}
+                  </Text>
+                </View>
+                <Switch
+                  value={nuevaRegla.cobrarAlCliente}
+                  onValueChange={(val) => setNuevaRegla({ ...nuevaRegla, cobrarAlCliente: val })}
+                  trackColor={{ false: '#d1d5db', true: '#fde68a' }}
+                  thumbColor={nuevaRegla.cobrarAlCliente ? '#d97706' : '#f3f4f6'}
+                />
+              </View>
+
+              {/* Botones de acción del Modal */}
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={styles.modalCancelBtn}
+                  onPress={() => setModalReglaVisible(false)}
+                >
+                  <Text style={styles.modalCancelBtnText}>Cancelar</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.modalSubmitBtn, { backgroundColor: '#d97706' }]}
+                  onPress={handleGuardarNuevaRegla}
+                >
+                  <Text style={styles.modalSubmitBtnText}>Guardar Regla</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
         </View>
       </Modal>
