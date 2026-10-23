@@ -132,8 +132,9 @@ const HomeTabs = () => {
     ).length;
   });
 
-  const bottomPadding = Math.max(insets.bottom, 10);
-  const tabHeight = 60 + bottomPadding;
+  const isWeb = Platform.OS === 'web';
+  const bottomPadding = isWeb ? 4 : Math.max(insets.bottom, 10);
+  const tabHeight = isWeb ? 46 : (60 + bottomPadding);
 
   const canSeePedidos = 
     user?.rol === 'Admin app' || 
@@ -150,14 +151,14 @@ const HomeTabs = () => {
           backgroundColor: primaryColor || '#4CAF50',
           borderTopWidth: 0,
           elevation: 10,
-          paddingTop: 8,
+          paddingTop: isWeb ? 4 : 8,
           paddingBottom: bottomPadding,
           height: tabHeight,
         },
         tabBarLabelStyle: {
           fontWeight: 'bold',
-          fontSize: 11,
-          paddingBottom: 4,
+          fontSize: isWeb ? 10 : 11,
+          paddingBottom: isWeb ? 2 : 4,
         },
         tabBarActiveTintColor: '#FFF',
         tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
@@ -170,21 +171,21 @@ const HomeTabs = () => {
           }
           return (
             <View>
-              <Ionicons name={iconName} size={24} color={color} style={{ marginBottom: -4 }} />
+              <Ionicons name={iconName} size={isWeb ? 20 : 24} color={color} style={{ marginBottom: isWeb ? -2 : -4 }} />
               {route.name === 'Pedidos' && pendingOrders > 0 && (
                 <View style={{
                   position: 'absolute',
-                  right: -8,
-                  top: -2,
+                  right: isWeb ? -10 : -8,
+                  top: isWeb ? -3 : -2,
                   backgroundColor: 'red',
                   borderRadius: 10,
-                  minWidth: 18,
-                  height: 18,
+                  minWidth: isWeb ? 16 : 18,
+                  height: isWeb ? 16 : 18,
                   justifyContent: 'center',
                   alignItems: 'center',
-                  paddingHorizontal: 4
+                  paddingHorizontal: isWeb ? 3 : 4
                 }}>
-                  <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>{pendingOrders}</Text>
+                  <Text style={{ color: 'white', fontSize: isWeb ? 9 : 10, fontWeight: 'bold' }}>{pendingOrders}</Text>
                 </View>
               )}
             </View>

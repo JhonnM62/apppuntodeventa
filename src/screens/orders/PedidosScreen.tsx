@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput, KeyboardAvoidingView, Platform, AppState, AppStateStatus, Linking, Alert } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput, KeyboardAvoidingView, Platform, AppState, AppStateStatus, Linking, Alert, useWindowDimensions } from 'react-native';
 // Removed FlashList import because it causes layout bugs on mobile web viewports.
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -398,6 +398,8 @@ const DomicilioTimer = ({ timestamp, estado }: { timestamp: string; estado: stri
 };
 
 const PedidosScreen = () => {
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktopWeb = Platform.OS === 'web' && windowWidth >= 768;
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { showAlert } = useCustomAlert();
   const { canCreate: canCreatePedido } = usePermissions('pedidos');
@@ -1540,69 +1542,74 @@ showAlert({
             </View>
           </View>
 
-        <View style={styles.cardInfo}>
-          <View style={styles.infoRow}>
-            <Ionicons name="time-outline" size={14} color="#6b7280" />
-            <RNText style={styles.infoText}>{formatDateTime(item.fechaYHora)}</RNText>
-          </View>
-          <View style={styles.infoRow}>
-            <MaterialCommunityIcons name="counter" size={14} color="#6b7280" />
-            <RNText style={styles.infoText}>{totalItems} item{totalItems !== 1 ? 's' : ''}</RNText>
-          </View>
-          {item.cliente && (
+        {/* Cuerpo de venta: horizontal en desktop web para ahorrar altura vertical */}
+        <View style={isDesktopWeb ? { flexDirection: 'row', gap: 14, alignItems: 'center' } : undefined}>
+          <View style={[styles.cardInfo, isDesktopWeb && { flex: 3.5, marginBottom: 0, alignSelf: 'stretch', justifyContent: 'center' }]}>
             <View style={styles.infoRow}>
-              <Ionicons name="person-outline" size={14} color="#6b7280" />
-              <RNText style={styles.infoText}>{item.cliente}</RNText>
+              <Ionicons name="time-outline" size={13} color="#6b7280" />
+              <RNText style={[styles.infoText, isDesktopWeb && { fontSize: 12 }]}>{formatDateTime(item.fechaYHora)}</RNText>
             </View>
-          )}
-          {item.medioDePago && item.medioDePago !== 'PENDIENTE' && (
             <View style={styles.infoRow}>
-              <Ionicons name="wallet-outline" size={14} color="#6b7280" />
-              <RNText style={styles.infoText}>{item.medioDePago}</RNText>
+              <MaterialCommunityIcons name="counter" size={13} color="#6b7280" />
+              <RNText style={[styles.infoText, isDesktopWeb && { fontSize: 12 }]}>{totalItems} item{totalItems !== 1 ? 's' : ''}</RNText>
             </View>
-          )}
-        </View>
-
-        {productos.length > 0 && (
-          <View style={styles.productsPreview}>
-            {productos.slice(0, 3).map((prod, idx) => {
-              const nombre = prod.nombreProducto || prod.nombre || '';
-              const label = `${prod.cantidad}x ${nombre}`;
-              return (
-                <View key={prod.IDorderventas || prod.producto?.IDproductos || idx} style={styles.productChip}>
-                  <RNText style={styles.productChipText}>
-                    {label}
-                  </RNText>
-                </View>
-              );
-            })}
-            {productos.length > 3 && (
-              <View style={styles.moreProductsChip}>
-                <RNText style={styles.moreProductsText}>+{productos.length - 3}</RNText>
+            {item.cliente && (
+              <View style={styles.infoRow}>
+                <Ionicons name="person-outline" size={13} color="#6b7280" />
+                <RNText style={[styles.infoText, isDesktopWeb && { fontSize: 12 }]}>{item.cliente}</RNText>
+              </View>
+            )}
+            {item.medioDePago && item.medioDePago !== 'PENDIENTE' && (
+              <View style={styles.infoRow}>
+                <Ionicons name="wallet-outline" size={13} color="#6b7280" />
+                <RNText style={[styles.infoText, isDesktopWeb && { fontSize: 12 }]}>{item.medioDePago}</RNText>
               </View>
             )}
           </View>
-        )}
 
-        <View style={styles.cardFooter}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <RNText style={styles.totalLabel}>TOTAL</RNText>
-            <RNText style={styles.totalAmount}>{formatMoney(getVentaTotal(item))}</RNText>
-          </View>
-          
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <TouchableOpacity 
-              onPress={(e) => { e.stopPropagation(); handleManualPrint(item, 'comanda'); }}
-              style={{ padding: 6, backgroundColor: '#fef3c7', borderRadius: 8 }}
-            >
-              <Ionicons name="restaurant-outline" size={18} color="#d97706" />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={(e) => { e.stopPropagation(); handleManualPrint(item, 'factura'); }}
-              style={{ padding: 6, backgroundColor: '#e0f2fe', borderRadius: 8 }}
-            >
-              <Ionicons name="receipt-outline" size={18} color="#0369a1" />
-            </TouchableOpacity>
+          {productos.length > 0 && (
+            <View style={[styles.productsPreview, isDesktopWeb && { flex: 5, marginBottom: 0, alignSelf: 'stretch', justifyContent: 'center' }]}>
+              {productos.slice(0, 3).map((prod, idx) => {
+                const nombre = prod.nombreProducto || prod.nombre || '';
+                const label = `${prod.cantidad}x ${nombre}`;
+                return (
+                  <View key={prod.IDorderventas || prod.producto?.IDproductos || idx} style={[styles.productChip, isDesktopWeb && { paddingVertical: 2, paddingHorizontal: 6 }]}>
+                    <RNText style={[styles.productChipText, isDesktopWeb && { fontSize: 11 }]}>
+                      {label}
+                    </RNText>
+                  </View>
+                );
+              })}
+              {productos.length > 3 && (
+                <View style={[styles.moreProductsChip, isDesktopWeb && { paddingVertical: 2, paddingHorizontal: 6 }]}>
+                  <RNText style={[styles.moreProductsText, isDesktopWeb && { fontSize: 11 }]}>+{productos.length - 3}</RNText>
+                </View>
+              )}
+            </View>
+          )}
+
+          <View style={[
+            styles.cardFooter,
+            isDesktopWeb && { flex: 2.8, borderTopWidth: 0, borderLeftWidth: 1, borderLeftColor: '#f3f4f6', paddingLeft: 12, paddingTop: 0, alignSelf: 'stretch', justifyContent: 'center' }
+          ]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <RNText style={styles.totalLabel}>TOTAL</RNText>
+              <RNText style={[styles.totalAmount, isDesktopWeb && { fontSize: 16 }]}>{formatMoney(getVentaTotal(item))}</RNText>
+            </View>
+            
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <TouchableOpacity 
+                onPress={(e) => { e.stopPropagation(); handleManualPrint(item, 'comanda'); }}
+                style={{ padding: 5, backgroundColor: '#fef3c7', borderRadius: 6 }}
+              >
+                <Ionicons name="restaurant-outline" size={16} color="#d97706" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={(e) => { e.stopPropagation(); handleManualPrint(item, 'factura'); }}
+                style={{ padding: 5, backgroundColor: '#e0f2fe', borderRadius: 6 }}
+              >
+                <Ionicons name="receipt-outline" size={16} color="#0369a1" />
+              </TouchableOpacity>
             <TouchableOpacity 
               onPress={(e) => { 
                 e.stopPropagation(); 
@@ -1619,6 +1626,7 @@ showAlert({
               <Ionicons name="cash-outline" size={18} color="#16a34a" />
             </TouchableOpacity>
           </View>
+        </View>
         </View>
         </TouchableOpacity>
       </View>
@@ -1952,14 +1960,14 @@ showAlert({
     const itemsExt = Array.isArray(item.itemsExternos) ? item.itemsExternos : [];
 
     return (
-      <View style={{ marginBottom: 12 }}>
+      <View style={{ marginBottom: isDesktopWeb ? 8 : 12 }}>
         <TouchableOpacity
           style={[
             styles.card,
             {
               borderLeftWidth: 5,
               borderLeftColor: borderColor,
-              padding: 14,
+              padding: isDesktopWeb ? 10 : 14,
             }
           ]}
           onPress={() => {
@@ -1969,21 +1977,21 @@ showAlert({
           activeOpacity={0.7}
         >
           {/* Header de la tarjeta */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10, flexWrap: 'wrap', gap: 6 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, minWidth: 200 }}>
-              <View style={{ backgroundColor: '#25D36620', padding: 6, borderRadius: 10 }}>
-                <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: isDesktopWeb ? 6 : 10, flexWrap: 'wrap', gap: 6 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1, minWidth: 180 }}>
+              <View style={{ backgroundColor: '#25D36620', padding: isDesktopWeb ? 4 : 6, borderRadius: 8 }}>
+                <Ionicons name="logo-whatsapp" size={isDesktopWeb ? 16 : 20} color="#25D366" />
               </View>
               <View style={{ flex: 1 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                  <RNText style={[styles.cardTitle, { fontSize: 15 }]}>
+                  <RNText style={[styles.cardTitle, { fontSize: isDesktopWeb ? 13 : 15 }]}>
                     #{item.orderIdWA || item.IDdomicilio.slice(-6)}
                   </RNText>
-                  <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6, borderWidth: 1, borderColor: '#fde68a' }}>
-                    <RNText style={{ fontSize: 10, fontWeight: '800', color: '#b45309' }}>DOMIS</RNText>
+                  <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4, borderWidth: 1, borderColor: '#fde68a' }}>
+                    <RNText style={{ fontSize: 9, fontWeight: '800', color: '#b45309' }}>DOMIS</RNText>
                   </View>
                 </View>
-                <RNText style={{ fontSize: 11, color: '#6b7280', marginTop: 1 }}>
+                <RNText style={{ fontSize: 10, color: '#6b7280', marginTop: 1 }}>
                   {formatDateTime(item.timestampPedido || item.createdAt)}
                 </RNText>
               </View>
@@ -1991,203 +1999,214 @@ showAlert({
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
               <DomicilioTimer timestamp={item.timestampPedido || item.createdAt} estado={item.estado} />
-              <View style={[styles.statusBadge, { backgroundColor: estadoBadgeBg }]}>
-                <RNText style={[styles.statusText, { color: estadoBadgeText }]}>
+              <View style={[styles.statusBadge, { backgroundColor: estadoBadgeBg, paddingVertical: isDesktopWeb ? 2 : 4, paddingHorizontal: isDesktopWeb ? 8 : 10 }]}>
+                <RNText style={[styles.statusText, { color: estadoBadgeText, fontSize: isDesktopWeb ? 10 : 11 }]}>
                   {estadoLabel}
                 </RNText>
               </View>
             </View>
           </View>
 
-          {/* Información del Cliente y Entrega */}
-          <View style={{ backgroundColor: '#f9fafb', padding: 10, borderRadius: 10, marginBottom: 10, gap: 4 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
-                <Ionicons name="person" size={15} color="#4b5563" style={{ marginRight: 6 }} />
-                <RNText style={{ fontSize: 13, fontWeight: '700', color: '#1f2937' }}>
-                  {item.clienteNombre || 'Cliente WhatsApp'}
-                </RNText>
-              </View>
-              {waUrl && (
-                <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    Linking.openURL(waUrl).catch(() => Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo abrir WhatsApp' }));
-                  }}
-                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#25D366', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 12 }}
-                >
-                  <Ionicons name="logo-whatsapp" size={13} color="#fff" style={{ marginRight: 4 }} />
-                  <RNText style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>Chat</RNText>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {item.direccion ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                <Ionicons name="location" size={15} color="#ef4444" style={{ marginRight: 6 }} />
-                <RNText style={{ fontSize: 12, color: '#374151', fontWeight: '500', flex: 1 }}>
-                  {item.direccion}
-                </RNText>
-              </View>
-            ) : null}
-
-            {item.metodoPagoWA ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                <Ionicons name="wallet-outline" size={14} color="#6b7280" style={{ marginRight: 6 }} />
-                <RNText style={{ fontSize: 12, color: '#4b5563' }}>
-                  Pago detectado: <RNText style={{ fontWeight: 'bold', color: '#111827' }}>{item.metodoPagoWA}</RNText>
-                </RNText>
-              </View>
-            ) : null}
-          </View>
-
-          {/* Resumen de Productos */}
-          <View style={{ marginBottom: 10 }}>
-            {itemsPropios.map((it, idx) => {
-              let itPrice = it.precioTotal || (it.precioUnitario || 0) * (it.cantidad || 1);
-              if (!itPrice && it.nombre) {
-                const m = it.nombre.match(/\(\$?([\d.,]+)\)/);
-                if (m) {
-                  const rawVal = parseFloat(m[1].replace(/\./g, '')) || 0;
-                  itPrice = rawVal < 100 ? rawVal * 1000 : rawVal;
-                }
-              }
-              if (itPrice > 0 && itPrice < 100) itPrice = itPrice * 1000;
-
-              let modifiersList: Array<{ name: string; price?: number; quantity?: number }> = [];
-              if (it.comentarios) {
-                try {
-                  const parsed = JSON.parse(it.comentarios);
-                  if (Array.isArray(parsed)) modifiersList = parsed;
-                } catch (e) {}
-              }
-
-              return (
-                <View key={idx} style={{ paddingVertical: 2 }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
-                      <RNText style={{ fontSize: 13, fontWeight: '700', color: '#111827' }}>
-                        {it.cantidad}x{' '}
-                      </RNText>
-                      <RNText style={{ fontSize: 13, color: '#374151', flexShrink: 1 }} numberOfLines={1}>
-                        {it.nombre}
-                      </RNText>
-                      {it.encontradoEnCatalogo === false && (
-                        <View style={{ marginLeft: 6, backgroundColor: '#fef3c7', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 }}>
-                          <RNText style={{ fontSize: 9, color: '#b45309', fontWeight: '600' }}>Sin ID</RNText>
-                        </View>
-                      )}
-                    </View>
-                    <RNText style={{ fontSize: 13, fontWeight: '600', color: '#111827' }}>
-                      {formatMoney(itPrice)}
-                    </RNText>
-                  </View>
-                  {modifiersList.length > 0 && (
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 2, paddingLeft: 16 }}>
-                      {modifiersList.map((m, mIdx) => (
-                        <View key={mIdx} style={{ backgroundColor: '#f3f4f6', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
-                          <RNText style={{ fontSize: 10, color: '#4b5563' }}>
-                            + {m.name} {m.price ? `(${formatMoney(m.price)})` : ''}
-                          </RNText>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                </View>
-              );
-            })}
-
-            {itemsExt.length > 0 && (
-              <View style={{ marginTop: 6, paddingTop: 6, borderTopWidth: 1, borderTopColor: '#f3e8ff' }}>
-                <RNText style={{ fontSize: 10, fontWeight: '700', color: '#7c3aed', marginBottom: 2 }}>
-                  Items para otro comercio / bot:
-                </RNText>
-                {itemsExt.map((ext, idx) => (
-                  <RNText key={idx} style={{ fontSize: 12, color: '#6b21a8' }} numberOfLines={1}>
-                    • {ext.cantidad}x {ext.nombre} {ext.observacion ? `(${ext.observacion})` : ''}
+          {/* Cuerpo de la tarjeta: en Desktop Web es fila horizontal para no recortar la vista */}
+          <View style={isDesktopWeb ? { flexDirection: 'row', gap: 12, alignItems: 'center' } : undefined}>
+            {/* Columna 1: Información del Cliente y Entrega */}
+            <View style={[
+              { backgroundColor: '#f9fafb', padding: isDesktopWeb ? 8 : 10, borderRadius: 8, marginBottom: isDesktopWeb ? 0 : 10, gap: 3 },
+              isDesktopWeb ? { flex: 3.2, alignSelf: 'stretch', justifyContent: 'center' } : undefined
+            ]}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 6 }}>
+                  <Ionicons name="person" size={isDesktopWeb ? 13 : 15} color="#4b5563" style={{ marginRight: 5 }} />
+                  <RNText style={{ fontSize: isDesktopWeb ? 12 : 13, fontWeight: '700', color: '#1f2937' }} numberOfLines={1}>
+                    {item.clienteNombre || 'Cliente WhatsApp'}
                   </RNText>
-                ))}
+                </View>
+                {waUrl && (
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      Linking.openURL(waUrl).catch(() => Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo abrir WhatsApp' }));
+                    }}
+                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#25D366', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10 }}
+                  >
+                    <Ionicons name="logo-whatsapp" size={11} color="#fff" style={{ marginRight: 3 }} />
+                    <RNText style={{ color: '#fff', fontSize: 10, fontWeight: 'bold' }}>Chat</RNText>
+                  </TouchableOpacity>
+                )}
               </View>
-            )}
 
-            {itemsPropios.length === 0 && itemsExt.length === 0 && item.detalleTextoWA ? (
-              <RNText style={{ fontSize: 12, color: '#4b5563', fontStyle: 'italic' }}>
-                "{item.detalleTextoWA}"
-              </RNText>
-            ) : null}
-          </View>
+              {item.direccion ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1 }}>
+                  <Ionicons name="location" size={isDesktopWeb ? 13 : 15} color="#ef4444" style={{ marginRight: 5 }} />
+                  <RNText style={{ fontSize: isDesktopWeb ? 11 : 12, color: '#374151', fontWeight: '500', flex: 1 }} numberOfLines={isDesktopWeb ? 2 : undefined}>
+                    {item.direccion}
+                  </RNText>
+                </View>
+              ) : null}
 
-          {/* Footer de la tarjeta con Total y Acciones */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTopWidth: 1, borderTopColor: '#f3f4f6' }}>
-            <View>
-              <RNText style={{ fontSize: 10, fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase' }}>TOTAL A COBRAR</RNText>
-              <RNText style={{ fontSize: 16, fontWeight: '800', color: '#111827' }}>
-                {formatMoney(normalizeCOP(item.totalWA) || normalizeCOP(item.totalCalculado) || 0)}
-              </RNText>
+              {item.metodoPagoWA ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1 }}>
+                  <Ionicons name="wallet-outline" size={isDesktopWeb ? 12 : 14} color="#6b7280" style={{ marginRight: 5 }} />
+                  <RNText style={{ fontSize: isDesktopWeb ? 11 : 12, color: '#4b5563' }} numberOfLines={1}>
+                    Pago: <RNText style={{ fontWeight: 'bold', color: '#111827' }}>{item.metodoPagoWA}</RNText>
+                  </RNText>
+                </View>
+              ) : null}
             </View>
 
+            {/* Columna 2: Resumen de Productos */}
+            <View style={[
+              { marginBottom: isDesktopWeb ? 0 : 10 },
+              isDesktopWeb ? { flex: 5, paddingHorizontal: 6, alignSelf: 'stretch', justifyContent: 'center' } : undefined
+            ]}>
+              {itemsPropios.map((it, idx) => {
+                let itPrice = it.precioTotal || (it.precioUnitario || 0) * (it.cantidad || 1);
+                if (!itPrice && it.nombre) {
+                  const m = it.nombre.match(/\(\$?([\d.,]+)\)/);
+                  if (m) {
+                    const rawVal = parseFloat(m[1].replace(/\./g, '')) || 0;
+                    itPrice = rawVal < 100 ? rawVal * 1000 : rawVal;
+                  }
+                }
+                if (itPrice > 0 && itPrice < 100) itPrice = itPrice * 1000;
 
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              {isReciente && (
-                <>
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleCancelarDomicilio(item);
-                    }}
-                    style={{ paddingVertical: 7, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: '#fca5a5' }}
-                  >
-                    <RNText style={{ fontSize: 12, color: '#ef4444', fontWeight: '600' }}>Rechazar</RNText>
-                  </TouchableOpacity>
+                let modifiersList: Array<{ name: string; price?: number; quantity?: number }> = [];
+                if (it.comentarios) {
+                  try {
+                    const parsed = JSON.parse(it.comentarios);
+                    if (Array.isArray(parsed)) modifiersList = parsed;
+                  } catch (e) {}
+                }
 
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleTomarDomicilio(item);
-                    }}
-                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#3b82f6', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 8 }}
-                  >
-                    <Ionicons name="hand-right-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
-                    <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>Tomar</RNText>
-                  </TouchableOpacity>
-                </>
-              )}
+                return (
+                  <View key={idx} style={{ paddingVertical: isDesktopWeb ? 1 : 2 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 8 }}>
+                        <RNText style={{ fontSize: isDesktopWeb ? 12 : 13, fontWeight: '700', color: '#111827' }}>
+                          {it.cantidad}x{' '}
+                        </RNText>
+                        <RNText style={{ fontSize: isDesktopWeb ? 12 : 13, color: '#374151', flexShrink: 1 }} numberOfLines={1}>
+                          {it.nombre}
+                        </RNText>
+                        {it.encontradoEnCatalogo === false && (
+                          <View style={{ marginLeft: 6, backgroundColor: '#fef3c7', paddingHorizontal: 4, paddingVertical: 1, borderRadius: 4 }}>
+                            <RNText style={{ fontSize: 9, color: '#b45309', fontWeight: '600' }}>Sin ID</RNText>
+                          </View>
+                        )}
+                      </View>
+                      <RNText style={{ fontSize: isDesktopWeb ? 12 : 13, fontWeight: '600', color: '#111827' }}>
+                        {formatMoney(itPrice)}
+                      </RNText>
+                    </View>
+                    {modifiersList.length > 0 && (
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 1, paddingLeft: 12 }}>
+                        {modifiersList.map((m, mIdx) => (
+                          <View key={mIdx} style={{ backgroundColor: '#f3f4f6', paddingHorizontal: 5, paddingVertical: 1, borderRadius: 4 }}>
+                            <RNText style={{ fontSize: 9, color: '#4b5563' }}>
+                              + {m.name} {m.price ? `(${formatMoney(m.price)})` : ''}
+                            </RNText>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
 
-              {isTomado && (
-                <>
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleCancelarDomicilio(item);
-                    }}
-                    style={{ paddingVertical: 7, paddingHorizontal: 10, borderRadius: 8, borderWidth: 1, borderColor: '#fca5a5' }}
-                  >
-                    <RNText style={{ fontSize: 12, color: '#ef4444', fontWeight: '600' }}>Cancelar</RNText>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleCobrarDomicilio(item);
-                    }}
-                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#10b981', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 8 }}
-                  >
-                    <Ionicons name="cash-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
-                    <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>Cobrar</RNText>
-                  </TouchableOpacity>
-                </>
-              )}
-
-              {isCobrado && (
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                  <Ionicons name="checkmark-done" size={16} color="#10b981" />
-                  <RNText style={{ fontSize: 12, fontWeight: '700', color: '#10b981' }}>Completado</RNText>
+              {itemsExt.length > 0 && (
+                <View style={{ marginTop: 4, paddingTop: 4, borderTopWidth: 1, borderTopColor: '#f3e8ff' }}>
+                  <RNText style={{ fontSize: 9, fontWeight: '700', color: '#7c3aed', marginBottom: 1 }}>
+                    Items para otro comercio / bot:
+                  </RNText>
+                  {itemsExt.map((ext, idx) => (
+                    <RNText key={idx} style={{ fontSize: 11, color: '#6b21a8' }} numberOfLines={1}>
+                      • {ext.cantidad}x {ext.nombre} {ext.observacion ? `(${ext.observacion})` : ''}
+                    </RNText>
+                  ))}
                 </View>
               )}
 
-              {isCancelado && (
-                <RNText style={{ fontSize: 12, color: '#9ca3af', fontStyle: 'italic' }}>Cancelado</RNText>
-              )}
+              {itemsPropios.length === 0 && itemsExt.length === 0 && item.detalleTextoWA ? (
+                <RNText style={{ fontSize: 12, color: '#4b5563', fontStyle: 'italic' }}>
+                  "{item.detalleTextoWA}"
+                </RNText>
+              ) : null}
+            </View>
+
+            {/* Columna 3 (en Desktop) / Footer (en Mobile): Total y Acciones */}
+            <View style={[
+              { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
+              isDesktopWeb ? { flex: 2.8, flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', borderTopWidth: 0, borderLeftWidth: 1, borderLeftColor: '#f3f4f6', paddingLeft: 12, paddingTop: 0, alignSelf: 'stretch', gap: 6 } : undefined
+            ]}>
+              <View style={isDesktopWeb ? { alignItems: 'flex-end' } : undefined}>
+                <RNText style={{ fontSize: 9, fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase' }}>TOTAL A COBRAR</RNText>
+                <RNText style={{ fontSize: isDesktopWeb ? 16 : 16, fontWeight: '800', color: '#111827' }}>
+                  {formatMoney(normalizeCOP(item.totalWA) || normalizeCOP(item.totalCalculado) || 0)}
+                </RNText>
+              </View>
+
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                {isReciente && (
+                  <>
+                    <TouchableOpacity
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleCancelarDomicilio(item);
+                      }}
+                      style={{ paddingVertical: isDesktopWeb ? 5 : 7, paddingHorizontal: isDesktopWeb ? 8 : 10, borderRadius: 8, borderWidth: 1, borderColor: '#fca5a5' }}
+                    >
+                      <RNText style={{ fontSize: 11, color: '#ef4444', fontWeight: '600' }}>Rechazar</RNText>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleTomarDomicilio(item);
+                      }}
+                      style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#3b82f6', paddingVertical: isDesktopWeb ? 5 : 7, paddingHorizontal: isDesktopWeb ? 10 : 12, borderRadius: 8 }}
+                    >
+                      <Ionicons name="hand-right-outline" size={13} color="#fff" style={{ marginRight: 4 }} />
+                      <RNText style={{ fontSize: 11, color: '#fff', fontWeight: 'bold' }}>Tomar</RNText>
+                    </TouchableOpacity>
+                  </>
+                )}
+
+                {isTomado && (
+                  <>
+                    <TouchableOpacity
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleCancelarDomicilio(item);
+                      }}
+                      style={{ paddingVertical: isDesktopWeb ? 5 : 7, paddingHorizontal: isDesktopWeb ? 8 : 10, borderRadius: 8, borderWidth: 1, borderColor: '#fca5a5' }}
+                    >
+                      <RNText style={{ fontSize: 11, color: '#ef4444', fontWeight: '600' }}>Cancelar</RNText>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleCobrarDomicilio(item);
+                      }}
+                      style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#10b981', paddingVertical: isDesktopWeb ? 5 : 7, paddingHorizontal: isDesktopWeb ? 10 : 12, borderRadius: 8 }}
+                    >
+                      <Ionicons name="cash-outline" size={13} color="#fff" style={{ marginRight: 4 }} />
+                      <RNText style={{ fontSize: 11, color: '#fff', fontWeight: 'bold' }}>Cobrar</RNText>
+                    </TouchableOpacity>
+                  </>
+                )}
+
+                {isCobrado && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Ionicons name="checkmark-done" size={15} color="#10b981" />
+                    <RNText style={{ fontSize: 11, fontWeight: '700', color: '#10b981' }}>Completado</RNText>
+                  </View>
+                )}
+
+                {isCancelado && (
+                  <RNText style={{ fontSize: 11, color: '#9ca3af', fontStyle: 'italic' }}>Cancelado</RNText>
+                )}
+              </View>
             </View>
           </View>
         </TouchableOpacity>
@@ -3646,38 +3665,44 @@ showAlert({
     <View style={styles.container}>
       <StatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
       <SafeAreaView style={{ backgroundColor: '#ffffff' }} edges={['top']}>
-        <View style={styles.header}>
-          <View>
-            <RNText style={styles.headerTitle}>Pedidos</RNText>
-            <RNText style={styles.headerSubtitle}>
+        <View style={[styles.header, isDesktopWeb && styles.headerCompact]}>
+          <View style={isDesktopWeb ? { flexDirection: 'row', alignItems: 'baseline', gap: 8 } : undefined}>
+            <RNText style={[styles.headerTitle, isDesktopWeb && styles.headerTitleCompact]}>Pedidos</RNText>
+            <RNText style={[styles.headerSubtitle, isDesktopWeb && styles.headerSubtitleCompact]}>
               {activeTab === 'DOMIS' ? flatListData.length : filteredVentas.length} registro{(activeTab === 'DOMIS' ? flatListData.length : filteredVentas.length) !== 1 ? 's' : ''}
             </RNText>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             {Platform.OS === 'web' && (
               <TouchableOpacity
-                style={[styles.newSaleBtn, { backgroundColor: '#3b82f6', marginRight: 10 }]}
+                style={[
+                  styles.newSaleBtn,
+                  { backgroundColor: '#3b82f6', marginRight: 8 },
+                  isDesktopWeb && styles.newSaleBtnCompact
+                ]}
                 onPress={onRefresh}
                 disabled={refreshing}
               >
                 {refreshing ? (
-                  <ActivityIndicator size="small" color="#fff" style={{ marginRight: 5 }} />
+                  <ActivityIndicator size="small" color="#fff" style={{ marginRight: 4 }} />
                 ) : (
-                  <Ionicons name="refresh" size={20} color="#fff" />
+                  <Ionicons name="refresh" size={isDesktopWeb ? 15 : 20} color="#fff" />
                 )}
-                <RNText style={styles.newSaleBtnText}>{refreshing ? 'Recargando...' : 'Recargar'}</RNText>
+                <RNText style={[styles.newSaleBtnText, isDesktopWeb && styles.newSaleBtnTextCompact]}>
+                  {refreshing ? 'Recargando...' : 'Recargar'}
+                </RNText>
               </TouchableOpacity>
             )}
             {canCreateVenta && (
               <TouchableOpacity
-                style={styles.newSaleBtn}
+                style={[styles.newSaleBtn, isDesktopWeb && styles.newSaleBtnCompact]}
                 onPress={() => {
                   useCartStore.getState().clearCart();
                   navigation.navigate('Sales', { screen: 'NewSale' } as any);
                 }}
               >
-                <Ionicons name="add" size={20} color="#fff" />
-                <RNText style={styles.newSaleBtnText}>Nueva Venta</RNText>
+                <Ionicons name="add" size={isDesktopWeb ? 16 : 20} color="#fff" />
+                <RNText style={[styles.newSaleBtnText, isDesktopWeb && styles.newSaleBtnTextCompact]}>Nueva Venta</RNText>
               </TouchableOpacity>
             )}
           </View>
@@ -3685,13 +3710,14 @@ showAlert({
       </SafeAreaView>
 
       <View style={styles.tabsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContent}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.tabsContent, isDesktopWeb && { paddingVertical: 6, paddingHorizontal: 12 }]}>
           {tabsWithCounts.map((tab) => (
             <TouchableOpacity
               key={tab.key}
               style={[
                 styles.tab, 
                 activeTab === tab.key && { backgroundColor: tab.color },
+                isDesktopWeb && { paddingVertical: 5, paddingHorizontal: 10, marginRight: 6 },
                 { flexDirection: 'row', alignItems: 'center' }
               ]}
               onPress={() => setActiveTab(tab.key)}
@@ -3706,9 +3732,9 @@ showAlert({
                   style={{
                     backgroundColor: activeTab === tab.key ? 'rgba(255,255,255,0.3)' : `${tab.color}20`,
                     paddingHorizontal: 6,
-                    paddingVertical: 2,
+                    paddingVertical: 1,
                     borderRadius: 10,
-                    marginLeft: 6
+                    marginLeft: 5
                   }}
                 >
                   <RNText
@@ -3729,11 +3755,11 @@ showAlert({
 
       {/* Sub-pestañas operativas de Domicilios (Píldoras compactas) */}
       {activeTab === 'DOMIS' && (
-        <View style={styles.domisSubTabsContainer}>
+        <View style={[styles.domisSubTabsContainer, isDesktopWeb && { paddingVertical: 4 }]}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.domisSubTabsContent}
+            contentContainerStyle={[styles.domisSubTabsContent, isDesktopWeb && { paddingHorizontal: 12, gap: 6 }]}
           >
             {domisSubTabsWithCounts.map((subTab) => {
               const isActive = domisSubTab === subTab.key;
@@ -3743,6 +3769,7 @@ showAlert({
                   style={[
                     styles.domisSubTabPill,
                     isActive && { backgroundColor: subTab.color, borderColor: subTab.color },
+                    isDesktopWeb && { paddingVertical: 3, paddingHorizontal: 9 }
                   ]}
                   onPress={() => setDomisSubTab(subTab.key as any)}
                   activeOpacity={0.7}
@@ -3781,11 +3808,11 @@ showAlert({
         </View>
       )}
 
-      <View style={styles.filterBar}>
-        <View style={styles.searchBarContainer}>
-          <Ionicons name="search" size={18} color="#6b7280" />
+      <View style={[styles.filterBar, isDesktopWeb && { paddingVertical: 4, paddingHorizontal: 12 }]}>
+        <View style={[styles.searchBarContainer, isDesktopWeb && { borderRadius: 8, paddingHorizontal: 10, marginRight: 8 }]}>
+          <Ionicons name="search" size={16} color="#6b7280" />
           <TextInput
-            style={styles.searchBarInput}
+            style={[styles.searchBarInput, isDesktopWeb && { paddingVertical: 6, fontSize: 13 }]}
             placeholder="Buscar pedido, cliente..."
             placeholderTextColor="#9ca3af"
             value={filters.searchText}
@@ -3794,10 +3821,10 @@ showAlert({
           {isSearchingRemote && <ActivityIndicator size="small" color="#6366f1" style={{ marginLeft: 8 }} />}
         </View>
         <TouchableOpacity
-          style={[styles.filterBtn, activeFiltersCount > 0 && styles.filterBtnActive]}
+          style={[styles.filterBtn, activeFiltersCount > 0 && styles.filterBtnActive, isDesktopWeb && { width: 34, height: 34, borderRadius: 8 }]}
           onPress={() => setFilterModalVisible(true)}
         >
-          <Ionicons name="options-outline" size={20} color={activeFiltersCount > 0 ? '#fff' : '#6b7280'} />
+          <Ionicons name="options-outline" size={isDesktopWeb ? 18 : 20} color={activeFiltersCount > 0 ? '#fff' : '#6b7280'} />
           {activeFiltersCount > 0 && (
             <View style={styles.filterBadge}>
               <RNText style={styles.filterBadgeText}>{activeFiltersCount}</RNText>
@@ -4074,10 +4101,15 @@ showAlert({
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f3f4f6' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingVertical: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
+  headerCompact: { paddingHorizontal: 16, paddingVertical: 8 },
   headerTitle: { fontSize: 24, fontWeight: '800', color: '#111827' },
+  headerTitleCompact: { fontSize: 18, fontWeight: '800' },
   headerSubtitle: { fontSize: 13, color: '#6b7280', marginTop: 2 },
+  headerSubtitleCompact: { fontSize: 12, marginTop: 0, marginLeft: 8 },
   newSaleBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#4CAF50', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12 },
+  newSaleBtnCompact: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8 },
   newSaleBtnText: { color: '#fff', fontWeight: '700', fontSize: 14, marginLeft: 6 },
+  newSaleBtnTextCompact: { fontSize: 12, marginLeft: 4 },
   tabsContainer: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
   tabsContent: { paddingHorizontal: 16, paddingVertical: 12, flexDirection: 'row' },
   tab: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20, backgroundColor: '#f3f4f6', marginRight: 8 },
