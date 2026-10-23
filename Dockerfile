@@ -1,21 +1,17 @@
-# syntax=docker/dockerfile:1
 # Etapa 1: Construcción (Build)
 FROM node:20-slim AS builder
 
 WORKDIR /app
 
-# Instalar dependencias reutilizando la caché persistente de npm en el host
+# Instalar dependencias (ignorando husky para evitar error de .git faltante)
 COPY package*.json ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm install --legacy-peer-deps --ignore-scripts --no-audit --prefer-offline
+RUN npm install --legacy-peer-deps --ignore-scripts
 
 # Copiar el código fuente y las variables de entorno
 COPY . .
 
-# Construir la aplicación para web con caché persistente de transformaciones de Metro y Babel
-RUN --mount=type=cache,target=/app/node_modules/.cache \
-    --mount=type=cache,target=/tmp/metro-cache \
-    NODE_OPTIONS=--max-old-space-size=4096 npx expo export -p web
+# Construir la aplicación para web
+RUN NODE_OPTIONS=--max-old-space-size=4096 npx expo export -p web
 
 # Etapa 2: Servidor Web (Nginx)
 FROM nginx:alpine
