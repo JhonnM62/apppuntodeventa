@@ -28,7 +28,7 @@ import PaymentModal from '../../components/ui/PaymentModal';
 import useCartStore, { CartItem } from '../../store/useCartStore';
 import useAuthStore from '../../store/useAuthStore';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RouteProp } from '@react-navigation/native';
+import { RouteProp, useFocusEffect } from '@react-navigation/native';
 import { RootStackParamList } from '../../navigation/RootNavigator';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 import { soundService } from '../../services/soundService';
@@ -245,12 +245,6 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const activeTemporalIdRef = useRef<string | null>(null);
   const lastTicketDataRef = useRef<any>(null);
   const printTriggeredRef = useRef<boolean>(false);
-  const printStoreRef = useRef(usePrinterStore.getState());
-
-  useEffect(() => {
-    printStoreRef.current = usePrinterStore.getState();
-  }, [usePrinterStore.getState()]);
-
   useSocketEvent(SocketEvent.VENTA_ID_GENERATED, useCallback((data: any) => {
     if (data && activeTemporalIdRef.current && data.temporalId === activeTemporalIdRef.current) {
        if (!printTriggeredRef.current && lastTicketDataRef.current) {
@@ -261,8 +255,9 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
            cleanOrderId = cleanOrderId.substring(7);
          }
          const ticketData = { ...lastTicketDataRef.current, orderId: cleanOrderId };
-         if (printStoreRef.current.shouldPrintComanda(ticketData.estado) || printStoreRef.current.shouldPrintFactura(ticketData.estado)) {
-           printStoreRef.current.printTicket(ticketData);
+         const printer = usePrinterStore.getState();
+         if (printer.shouldPrintComanda(ticketData.estado) || printer.shouldPrintFactura(ticketData.estado)) {
+           printer.printTicket(ticketData);
          }
        }
        activeTemporalIdRef.current = null;
@@ -296,15 +291,24 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     }
   }, []);
 
+  // Carga inicial y al enfocar la pantalla (sin bucles de dependencias)
+  useFocusEffect(
+    useCallback(() => {
+      loadDomiciliosBloqueo();
+    }, [loadDomiciliosBloqueo])
+  );
+
+  // Ticker local (en memoria) cada 4 segundos: evalúa si algún pedido superó el tiempo límite.
+  // NO hace llamadas de red para no provocar bucles de peticiones ni saturar el servidor (Error 429).
   useEffect(() => {
-    loadDomiciliosBloqueo();
-    const interval = setInterval(() => {
-      const cfg = configNegocio || getCachedConfiguracion()?.data || getCachedConfiguracion();
-      if (!cfg?.domisHabilitado || !cfg?.domisBloqueoVentas) {
-        setIsSalesBlocked(false);
-        setDesatendidosCount(0);
-        return;
-      }
+    const cfg = configNegocio || getCachedConfiguracion()?.data || getCachedConfiguracion();
+    if (!cfg?.domisHabilitado || !cfg?.domisBloqueoVentas) {
+      setIsSalesBlocked(false);
+      setDesatendidosCount(0);
+      return;
+    }
+
+    const checkOverdues = () => {
       const timeoutMs = (Number(cfg.domisTimeoutMinutos) || 10) * 60 * 1000;
       const now = Date.now();
       const overdues = recentDomis.filter((d) => {
@@ -314,10 +318,13 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       });
       setDesatendidosCount(overdues.length);
       setIsSalesBlocked(overdues.length > 0);
-    }, 4000);
+    };
+
+    checkOverdues();
+    const interval = setInterval(checkOverdues, 4000);
 
     return () => clearInterval(interval);
-  }, [configNegocio, recentDomis, loadDomiciliosBloqueo]);
+  }, [configNegocio, recentDomis]);
 
   useSocketEvent<DomicilioWAItem>(SocketEvent.NUEVO_DOMICILIO, (nuevoDom) => {
     if (!nuevoDom) return;
