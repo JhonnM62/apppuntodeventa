@@ -1,0 +1,34 @@
+# Dependencies and build outputs
+node_modules
+dist
+web-build
+.expo
+
+# Git and CI
+.git
+.github
+.husky
+.agents
+
+# Heavy binary bundles, archives and executables
+bundle*.js
+test_bundle*.js
+*.zip*
+*.exe
+*.apk
+*.aab
+*.ipa
+
+# Native mobile folders (not needed for web export)
+android
+ios
+
+# Logs, docs, and temporary scratch files
+*.log
+*.txt
+*.csv
+*.md
+docs
+scratch
+pdfdineroguardado
+logos

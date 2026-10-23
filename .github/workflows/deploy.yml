@@ -32,10 +32,10 @@ jobs:
           script: |
             set -e
             
-            # 0. Limpiar imagenes viejas del proyecto y caché de construcción
+            # 0. Limpiar imagenes viejas del proyecto preservando la caché útil de construcción
             echo "Limpiando espacio en disco de imagenes viejas..."
             docker image prune -f || true
-            docker builder prune -f || true
+            docker builder prune --filter "until=168h" --keep-storage 10GB -f || true
             
             # 1. Crear directorio del proyecto si no existe
             mkdir -p /root/frontend-qhubomor
@@ -58,9 +58,9 @@ jobs:
             # 3. Inyectar las variables de entorno desde los secretos de GitHub
             echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
             
-            # 4. Construir la nueva imagen de Docker
+            # 4. Construir la nueva imagen de Docker con BuildKit activo
             echo "Construyendo imagen Docker para web..."
-            docker build -t qhubomor-frontend .
+            DOCKER_BUILDKIT=1 docker build -t qhubomor-frontend .
             
             # 5. Detener y eliminar el contenedor anterior si existe
             echo "Deteniendo contenedor anterior..."
@@ -102,10 +102,10 @@ jobs:
               # Copiar el .env al directorio raíz para que Docker lo tome en el build
               cp /root/frontend-qhubomor/.env.$CLIENT_ID /root/frontend-qhubomor/.env
 
-              # Compilar imagen única para este cliente (con su API URL)
+              # Compilar imagen única para este cliente (con su API URL) reutilizando caché de Metro
               echo "Compilando imagen para $CLIENT_ID..."
               cd /root/frontend-qhubomor
-              docker build -t frontend-$CLIENT_ID .
+              DOCKER_BUILDKIT=1 docker build -t frontend-$CLIENT_ID .
 
               # Detener y eliminar contenedor anterior de este cliente
               docker stop frontend-$CLIENT_ID || true
