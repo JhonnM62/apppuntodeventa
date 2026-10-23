@@ -1144,6 +1144,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             orderId: cleanOrderId,
             fecha: new Date().toLocaleString('es-CO'),
             cliente: selectedCliente?.nombre || editingVenta?.cliente,
+            telefono: selectedCliente?.whatsapp || (selectedCliente as any)?.telefono || (editingVenta?.numeroTelefono ? String(editingVenta.numeroTelefono) : undefined),
+            direccion: (selectedCliente as any)?.direccion || editingVenta?.direccion,
             observaciones: mesaNota || editingVenta?.notas,
             total: payload.venta.totalInput,
             totalGlobal: recalcularTotal,

@@ -34,6 +34,8 @@ export interface TicketData {
   orderId?: string;
   fecha: string;
   cliente?: string;
+  telefono?: string;
+  direccion?: string;
   productos: TicketProduct[];
   productosAnteriores?: TicketProduct[];
   total: number;
@@ -359,6 +361,13 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
   
   payload += alignLeft(cleanText(`Fecha: ${cleanData.fecha}`), width) + '\n';
   if (cleanData.cliente) payload += alignLeft(cleanText(`Cliente: ${cleanData.cliente}`), width) + '\n';
+  if (cleanData.telefono) payload += alignLeft(cleanText(`Teléfono: ${cleanData.telefono}`), width) + '\n';
+  if (cleanData.direccion) {
+    const dirLines = wordWrap(cleanText(`Dirección: ${cleanData.direccion}`), width);
+    for (const dl of dirLines) {
+      payload += alignLeft(dl, width) + '\n';
+    }
+  }
   if (cleanData.estado) payload += alignLeft(cleanText(`Estado: ${cleanData.estado}`), width) + '\n';
   if (cleanData.vendedor) payload += alignLeft(cleanText(`Atendió: ${cleanData.vendedor}`), width) + '\n';
   payload += separator + '\n';
@@ -533,6 +542,13 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
   
   payload += alignLeft(cleanText(`Fecha: ${data.fecha}`), width) + '\n';
   if (data.cliente) payload += alignLeft(cleanText(`Cliente: ${data.cliente}`), width) + '\n';
+  if (data.telefono) payload += alignLeft(cleanText(`Teléfono: ${data.telefono}`), width) + '\n';
+  if (data.direccion) {
+    const dirLines = wordWrap(cleanText(`Dirección: ${data.direccion}`), width);
+    for (const dl of dirLines) {
+      payload += alignLeft(dl, width) + '\n';
+    }
+  }
   if (data.vendedor) payload += alignLeft(cleanText(`Atendió: ${data.vendedor}`), width) + '\n';
   payload += separator + '\n';
 

@@ -478,10 +478,17 @@ const PedidosScreen = () => {
     const fechaRaw = venta.fechaYHora || venta.fecha;
     const formattedFecha = fechaRaw ? new Date(fechaRaw).toLocaleString('es-CO') : new Date().toLocaleString('es-CO');
 
+    const rawDom = venta._rawDomicilio;
+    const clienteNombre = venta.cliente || rawDom?.clienteNombre || undefined;
+    const clienteTelefono = venta.numeroTelefono ? String(venta.numeroTelefono) : (venta.telefono || rawDom?.clienteTelefono || undefined);
+    const clienteDireccion = venta.direccion || rawDom?.direccion || undefined;
+
     return {
       orderId: cleanOrderId,
       fecha: formattedFecha,
-      cliente: venta.cliente || undefined,
+      cliente: clienteNombre,
+      telefono: clienteTelefono,
+      direccion: clienteDireccion,
       total: Number(venta.totalInput || venta.total || venta.Total || (venta.ordenVentas?.reduce((s: number, p: any) => s + (Number(p.precioTotal) || 0), 0)) || 0),
       efectivoRecibido: venta.efectivoRecibido ? Number(venta.efectivoRecibido) : undefined,
       devueltas: venta.devueltas ? Number(venta.devueltas) : undefined,
@@ -1200,6 +1207,58 @@ const PedidosScreen = () => {
     }).sort((a, b) => b.date.getTime() - a.date.getTime());
   }, []);
 
+  const groupDomisByDate = useCallback((domisList: DomicilioWAItem[]) => {
+    const grupos: { [key: string]: DomicilioWAItem[] } = {};
+
+    domisList.forEach(dom => {
+      let fechaStr = 'Sin Fecha';
+      
+      if (dom.ventaRelacion?.fecha) {
+        const datePart = String(dom.ventaRelacion.fecha).substring(0, 10);
+        const [year, month, day] = datePart.split('-');
+        if (year && month && day) {
+          const localDate = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          fechaStr = localDate.toLocaleDateString('es-CO', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          });
+        }
+      } else {
+        const rawDate = dom.timestampPedido || dom.createdAt;
+        if (rawDate) {
+          const fecha = new Date(rawDate);
+          if (!isNaN(fecha.getTime())) {
+            fechaStr = fecha.toLocaleDateString('es-CO', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+            });
+          }
+        }
+      }
+
+      if (!grupos[fechaStr]) {
+        grupos[fechaStr] = [];
+      }
+      grupos[fechaStr].push(dom);
+    });
+
+    return Object.keys(grupos).map(key => {
+      const firstItem = grupos[key][0];
+      const rawDate = firstItem.timestampPedido || firstItem.createdAt || firstItem.ventaRelacion?.fecha || Date.now();
+      const sortDate = new Date(rawDate);
+
+      return {
+        title: key,
+        date: sortDate,
+        data: grupos[key],
+      };
+    }).sort((a, b) => b.date.getTime() - a.date.getTime());
+  }, []);
+
   const filteredVentas = useMemo(() => {
     const dataSource = (activeFiltersCount > 0 && remoteSearchResults !== null) ? remoteSearchResults : (Array.isArray(cachedVentas) ? cachedVentas : []);
     const filtered = applyFilters(dataSource);
@@ -1413,7 +1472,7 @@ showAlert({
 
   const renderSectionHeader = (section: { title: string; count: number; date: Date; total?: number }) => {
     // Check if all items in this section are selected
-    const itemsInSection = groupedVentas.find(g => g.title === section.title)?.data || [];
+    const itemsInSection = (activeTab === 'DOMIS' ? [] : (groupedVentas.find(g => g.title === section.title)?.data || []));
     const allSelected = itemsInSection.length > 0 && itemsInSection.every(item => selectedToDelete.includes(item.IDventas));
     const someSelected = itemsInSection.some(item => selectedToDelete.includes(item.IDventas));
 
@@ -1511,7 +1570,7 @@ showAlert({
                   <RNText style={{ fontSize: 10, color: '#6d28d9', fontWeight: 'bold', marginLeft: 4 }}>IA</RNText>
                 </View>
               )}
-              {(item.mesa === 'DOMICILIO WA' || (item.costoDelDomicilio && item.costoDelDomicilio > 0)) ? (
+              {(item.mesa?.startsWith('DOMICILIO WA') || (item.costoDelDomicilio && item.costoDelDomicilio > 0)) ? (
                 <View style={{ marginLeft: 8, backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
                   <RNText style={{ fontSize: 10, color: '#b45309', fontWeight: 'bold' }}>DOMIS</RNText>
                 </View>
@@ -1684,17 +1743,20 @@ showAlert({
       let ventaId = dom.ventaId;
       let ventaCreadaObj: any = null;
 
+      const cleanPhone = dom.clienteTelefono ? dom.clienteTelefono.replace(/\D/g, '') : '';
+      const mesaStr = cleanPhone ? `DOMICILIO WA ${cleanPhone}` : 'DOMICILIO WA';
+
       if (!ventaId) {
         const productosPayload = buildProductosPayloadFromDomicilio(dom);
         const totalVenta = normalizeCOP(dom.totalWA) || normalizeCOP(dom.totalCalculado) || productosPayload.reduce((s, p) => s + (p.precioTotal || 0), 0);
 
         const newSale = await createSale({
           venta: {
-            mesa: 'DOMICILIO WA',
+            mesa: mesaStr,
             estado: 'TOMADO',
-            cliente: dom.clienteNombre || undefined,
+            cliente: dom.clienteNombre || (cleanPhone ? `Cliente WA (${cleanPhone})` : 'Cliente WhatsApp'),
             direccion: dom.direccion || undefined,
-            numeroTelefono: dom.clienteTelefono ? parseInt(dom.clienteTelefono.replace(/\D/g, ''), 10) || undefined : undefined,
+            numeroTelefono: cleanPhone ? (parseInt(cleanPhone.slice(-9), 10) || undefined) : undefined,
             medioDePago: dom.metodoPagoWA || 'PENDIENTE',
             efectivoRecibido: 0,
             totalInput: totalVenta,
@@ -1714,6 +1776,22 @@ showAlert({
 
       await updateDomicilioEstado(dom.IDdomicilio, 'TOMADO');
       setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, estado: 'TOMADO', ventaId: ventaId || d.ventaId, atendidoAt: new Date().toISOString() } : d));
+
+      // Auto-imprimir comanda con datos completos del cliente al pasar a TOMADO
+      const printStore = usePrinterStore.getState();
+      if (ventaCreadaObj && (printStore.shouldPrintComanda('TOMADO') || printStore.shouldPrintFactura('TOMADO'))) {
+        const ticketData = mapVentaToTicketData({
+          ...ventaCreadaObj,
+          _rawDomicilio: dom,
+          direccion: dom.direccion || ventaCreadaObj.direccion,
+          cliente: dom.clienteNombre || ventaCreadaObj.cliente,
+          telefono: dom.clienteTelefono,
+        });
+        printStore.printTicket(ticketData).catch(err => {
+          console.error('[PedidosScreen] Error imprimiendo comanda al tomar domicilio:', err);
+        });
+      }
+
       Toast.show({
         type: 'success',
         text1: 'Pedido Tomado',
@@ -1789,13 +1867,16 @@ showAlert({
       const productosPayload = buildProductosPayloadFromDomicilio(dom);
       const totalVenta = normalizeCOP(dom.totalWA) || normalizeCOP(dom.totalCalculado) || productosPayload.reduce((s, p) => s + (p.precioTotal || 0), 0);
 
+      const cleanPhone = dom.clienteTelefono ? dom.clienteTelefono.replace(/\D/g, '') : '';
+      const mesaStr = cleanPhone ? `DOMICILIO WA ${cleanPhone}` : 'DOMICILIO WA';
+
       const newSale = await createSale({
         venta: {
-          mesa: 'DOMICILIO WA',
+          mesa: mesaStr,
           estado: 'TOMADO',
-          cliente: dom.clienteNombre || undefined,
+          cliente: dom.clienteNombre || (cleanPhone ? `Cliente WA (${cleanPhone})` : 'Cliente WhatsApp'),
           direccion: dom.direccion || undefined,
-          numeroTelefono: dom.clienteTelefono ? parseInt(dom.clienteTelefono.replace(/\D/g, ''), 10) || undefined : undefined,
+          numeroTelefono: cleanPhone ? (parseInt(cleanPhone.slice(-9), 10) || undefined) : undefined,
           medioDePago: dom.metodoPagoWA || 'PENDIENTE',
           efectivoRecibido: 0,
           totalInput: totalVenta,
@@ -1890,6 +1971,9 @@ showAlert({
       });
     }
 
+    const cleanPhone = dom.clienteTelefono ? dom.clienteTelefono.replace(/\D/g, '') : '';
+    const mesaStr = cleanPhone ? `DOMICILIO WA ${cleanPhone}` : 'DOMICILIO WA';
+
     return {
       IDventas: dom.ventaId || dom.IDdomicilio,
       pedido: `#${dom.orderIdWA || dom.IDdomicilio.slice(-6)}`,
@@ -1897,8 +1981,9 @@ showAlert({
       fechaYHora: dom.timestampPedido || dom.createdAt,
       fecha: dom.timestampPedido || dom.createdAt,
       cliente: dom.clienteNombre ? `${dom.clienteNombre} (${dom.clienteTelefono})` : dom.clienteTelefono,
-      mesa: 'DOMICILIO WA',
+      mesa: mesaStr,
       direccion: dom.direccion || 'Sin dirección',
+      telefono: dom.clienteTelefono,
       medioDePago: dom.metodoPagoWA || 'PENDIENTE',
       totalInput: totalVenta,
       Total: totalVenta,
@@ -2235,7 +2320,24 @@ showAlert({
           (d.orderIdWA && d.orderIdWA.toLowerCase().includes(q))
         );
       }
-      return filteredDomis.map(d => ({ ...d, isDomicilio: true }));
+
+      const grouped = groupDomisByDate(filteredDomis);
+      const result: (any)[] = [];
+      grouped.forEach(section => {
+        const totalAmount = section.data.reduce((sum, item) => {
+          const itemTotal = normalizeCOP(item.totalWA) || normalizeCOP(item.totalCalculado) || 0;
+          return sum + itemTotal;
+        }, 0);
+        result.push({
+          isHeader: true,
+          title: section.title,
+          date: section.date,
+          count: section.data.length,
+          total: totalAmount,
+        });
+        result.push(...section.data.map(d => ({ ...d, isDomicilio: true })));
+      });
+      return result;
     }
 
     const result: (VentaItem | { isHeader: boolean; title: string; date: Date; count: number; total?: number })[] = [];
@@ -2245,7 +2347,7 @@ showAlert({
       result.push(...section.data);
     });
     return result;
-  }, [activeTab, domisSubTab, domicilios, filters.searchText, groupedVentas]);
+  }, [activeTab, domisSubTab, domicilios, filters.searchText, groupedVentas, groupDomisByDate]);
 
   const keyExtractor = (item: any, index: number) => {
     if (item.isHeader) {
@@ -3650,7 +3752,7 @@ showAlert({
           <View>
             <RNText style={styles.headerTitle}>Pedidos</RNText>
             <RNText style={styles.headerSubtitle}>
-              {activeTab === 'DOMIS' ? flatListData.length : filteredVentas.length} registro{(activeTab === 'DOMIS' ? flatListData.length : filteredVentas.length) !== 1 ? 's' : ''}
+              {activeTab === 'DOMIS' ? flatListData.filter((it: any) => !it.isHeader).length : filteredVentas.length} registro{(activeTab === 'DOMIS' ? flatListData.filter((it: any) => !it.isHeader).length : filteredVentas.length) !== 1 ? 's' : ''}
             </RNText>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
