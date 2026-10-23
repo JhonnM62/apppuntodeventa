@@ -31,8 +31,11 @@ interface SearchableSelectProps {
   placeholder?: string;
   searchPlaceholder?: string;
   options: SelectOption[];
-  selectedValue: string;
-  onSelect: (value: string, option?: SelectOption) => void;
+  selectedValue?: string;
+  onSelect?: (value: string, option?: SelectOption) => void;
+  isMultiSelect?: boolean;
+  selectedValues?: string[];
+  onSelectMultiple?: (values: string[], options: SelectOption[]) => void;
   leadingIcon?: keyof typeof Ionicons.glyphMap;
   disabled?: boolean;
   showQuickEmpaquesFilter?: boolean;
@@ -46,12 +49,16 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   options,
   selectedValue,
   onSelect,
+  isMultiSelect = false,
+  selectedValues = [],
+  onSelectMultiple,
   leadingIcon,
   disabled = false,
   showQuickEmpaquesFilter = false,
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [search, setSearch] = useState('');
+  const [tempSelected, setTempSelected] = useState<string[]>([]);
   const [activeTab, setActiveTab] = useState<'TODOS' | 'EMPAQUES'>('TODOS');
   const { width: windowWidth } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && windowWidth >= 768;
@@ -59,6 +66,11 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   const selectedOption = useMemo(() => {
     return options.find((opt) => opt.value === selectedValue);
   }, [options, selectedValue]);
+
+  const multiSelectedOptions = useMemo(() => {
+    if (!isMultiSelect || !selectedValues) return [];
+    return options.filter((opt) => selectedValues.includes(opt.value));
+  }, [options, isMultiSelect, selectedValues]);
 
   const empaquesCount = useMemo(() => {
     return options.filter((opt) => opt.isEmpaque).length;
@@ -83,6 +95,9 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   const handleOpen = () => {
     if (disabled) return;
     setSearch('');
+    if (isMultiSelect) {
+      setTempSelected(selectedValues || []);
+    }
     // Si hay empaques sugeridos y estamos en selector de empaque, abrir directamente con el tab de empaques si hay
     if (showQuickEmpaquesFilter && empaquesCount > 0) {
       setActiveTab('EMPAQUES');
@@ -93,8 +108,16 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
   };
 
   const handleSelect = (option: SelectOption) => {
-    onSelect(option.value, option);
-    setModalVisible(false);
+    if (isMultiSelect) {
+      setTempSelected((prev) =>
+        prev.includes(option.value)
+          ? prev.filter((v) => v !== option.value)
+          : [...prev, option.value]
+      );
+    } else {
+      if (onSelect) onSelect(option.value, option);
+      setModalVisible(false);
+    }
   };
 
   return (
@@ -120,7 +143,24 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
           )}
 
           <View style={styles.triggerTextContainer}>
-            {selectedOption ? (
+            {isMultiSelect ? (
+              multiSelectedOptions.length > 0 ? (
+                <View>
+                  <Text style={styles.selectedLabel} numberOfLines={1}>
+                    {multiSelectedOptions.length === 1
+                      ? multiSelectedOptions[0].label
+                      : `${multiSelectedOptions.length} seleccionados`}
+                  </Text>
+                  <Text style={styles.selectedSubtitle} numberOfLines={1}>
+                    {multiSelectedOptions.map((o) => o.label).join(', ')}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.placeholderText} numberOfLines={1}>
+                  {placeholder}
+                </Text>
+              )
+            ) : selectedOption ? (
               <View>
                 <Text style={styles.selectedLabel} numberOfLines={1}>
                   {selectedOption.label}
@@ -140,7 +180,13 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
         </View>
 
         <View style={styles.triggerRight}>
-          {selectedOption?.badge ? (
+          {isMultiSelect && multiSelectedOptions.length > 0 ? (
+            <View style={[styles.badgeContainer, { backgroundColor: '#e0e7ff' }]}>
+              <Text style={[styles.badgeText, { color: '#3730a3' }]}>
+                {multiSelectedOptions.length}
+              </Text>
+            </View>
+          ) : selectedOption?.badge ? (
             <View
               style={[
                 styles.badgeContainer,
@@ -153,7 +199,7 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
             </View>
           ) : null}
 
-          {selectedOption?.price !== undefined && selectedOption.price > 0 ? (
+          {!isMultiSelect && selectedOption?.price !== undefined && selectedOption.price > 0 ? (
             <View style={styles.priceBadge}>
               <Text style={styles.priceBadgeText}>
                 ${Number(selectedOption.price).toLocaleString('es-CO')}
@@ -195,7 +241,9 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                   {title || label || 'Selecciona una opción'}
                 </Text>
                 <Text style={styles.modalCounter}>
-                  {filteredOptions.length} de {options.length} disponibles
+                  {isMultiSelect
+                    ? `${tempSelected.length} seleccionados • ${filteredOptions.length} de ${options.length} disponibles`
+                    : `${filteredOptions.length} de ${options.length} disponibles`}
                 </Text>
               </View>
 
@@ -233,6 +281,36 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 </TouchableOpacity>
               ) : null}
             </View>
+
+            {/* Acciones Rápidas de Selección Múltiple */}
+            {isMultiSelect ? (
+              <View style={styles.multiActionsBar}>
+                <TouchableOpacity
+                  style={styles.multiActionBtn}
+                  onPress={() => {
+                    const allVisibleVals = filteredOptions.map((o) => o.value);
+                    setTempSelected((prev) => Array.from(new Set([...prev, ...allVisibleVals])));
+                  }}
+                >
+                  <Ionicons name="checkbox-outline" size={14} color="#4f46e5" style={{ marginRight: 4 }} />
+                  <Text style={styles.multiActionBtnText}>
+                    Seleccionar todos ({filteredOptions.length})
+                  </Text>
+                </TouchableOpacity>
+
+                {tempSelected.length > 0 ? (
+                  <TouchableOpacity
+                    style={[styles.multiActionBtn, { backgroundColor: '#fee2e2', borderColor: '#fca5a5' }]}
+                    onPress={() => setTempSelected([])}
+                  >
+                    <Ionicons name="close-circle-outline" size={14} color="#ef4444" style={{ marginRight: 4 }} />
+                    <Text style={[styles.multiActionBtnText, { color: '#ef4444' }]}>
+                      Deseleccionar todo
+                    </Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            ) : null}
 
             {/* Filtros Rápidos (si aplica a empaques) */}
             {showQuickEmpaquesFilter && empaquesCount > 0 ? (
@@ -305,7 +383,9 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 </View>
               }
               renderItem={({ item }) => {
-                const isSelected = item.value === selectedValue;
+                const isSelected = isMultiSelect
+                  ? tempSelected.includes(item.value)
+                  : item.value === selectedValue;
                 return (
                   <TouchableOpacity
                     style={[
@@ -351,7 +431,14 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                         </Text>
                       ) : null}
 
-                      {isSelected ? (
+                      {isMultiSelect ? (
+                        <Ionicons
+                          name={isSelected ? 'checkbox' : 'square-outline'}
+                          size={22}
+                          color={isSelected ? '#4f46e5' : '#94a3b8'}
+                          style={{ marginLeft: 8 }}
+                        />
+                      ) : isSelected ? (
                         <Ionicons
                           name="checkmark-circle"
                           size={20}
@@ -366,6 +453,42 @@ export const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 );
               }}
             />
+
+            {/* Footer de Confirmación para Selección Múltiple */}
+            {isMultiSelect ? (
+              <View style={styles.multiFooter}>
+                <TouchableOpacity
+                  style={styles.multiCancelBtn}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Text style={styles.multiCancelBtnText}>Cancelar</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.multiConfirmBtn,
+                    tempSelected.length === 0 && styles.multiConfirmBtnDisabled,
+                  ]}
+                  onPress={() => {
+                    if (onSelectMultiple) {
+                      const chosen = options.filter((o) => tempSelected.includes(o.value));
+                      onSelectMultiple(tempSelected, chosen);
+                    }
+                    setModalVisible(false);
+                  }}
+                >
+                  <Ionicons
+                    name="checkmark-done"
+                    size={16}
+                    color="#ffffff"
+                    style={{ marginRight: 6 }}
+                  />
+                  <Text style={styles.multiConfirmBtnText}>
+                    Aplicar Selección ({tempSelected.length})
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : null}
           </Pressable>
         </Pressable>
       </Modal>
@@ -648,6 +771,66 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: '#4f46e5',
+  },
+  multiActionsBar: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  multiActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#eef2ff',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#c7d2fe',
+  },
+  multiActionBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#4f46e5',
+  },
+  multiFooter: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  multiCancelBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#f1f5f9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  multiCancelBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  multiConfirmBtn: {
+    flex: 2,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: '#4f46e5',
+  },
+  multiConfirmBtnDisabled: {
+    opacity: 0.5,
+  },
+  multiConfirmBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#ffffff',
   },
 });
 

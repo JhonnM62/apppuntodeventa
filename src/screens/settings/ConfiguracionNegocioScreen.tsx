@@ -174,6 +174,9 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
   // Reglas de empaque y adicionales para Domicilios IA
   const [reglasEmpaque, setReglasEmpaque] = useState<ReglaEmpaqueDomi[]>([]);
   const [modalReglaVisible, setModalReglaVisible] = useState(false);
+  const [reglaEditandoId, setReglaEditandoId] = useState<string | null>(null);
+  const [categoriasSeleccionadas, setCategoriasSeleccionadas] = useState<string[]>([]);
+  const [productosSeleccionados, setProductosSeleccionados] = useState<string[]>([]);
   const [productosDisponibles, setProductosDisponibles] = useState<any[]>([]);
   const [categoriasDisponibles, setCategoriasDisponibles] = useState<string[]>([]);
   const [searchEmpaque, setSearchEmpaque] = useState('');
@@ -184,7 +187,7 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     return categoriasDisponibles.map((cat) => ({
       label: cat,
       value: cat,
-      icon: 'pricetag-outline',
+      icon: 'folder-outline',
       subtitle: 'Categoría de catálogo',
     }));
   }, [categoriasDisponibles]);
@@ -519,13 +522,16 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
       /empaque|desechable|caja|tapa|vaso|icopor|recipiente|bolsa|envase/i.test(p.nombre || '')
     ) || firstProd;
 
+    setReglaEditandoId(null);
+    setCategoriasSeleccionadas([]);
+    setProductosSeleccionados([]);
     setSearchEmpaque('');
     setSearchPlato('');
     setNuevaRegla({
       tipoDestino: 'CATEGORIA',
-      categoriaNombre: firstCat,
-      productoId: firstProd?.IDproductos || '',
-      productoNombre: firstProd?.nombre || '',
+      categoriaNombre: '',
+      productoId: '',
+      productoNombre: '',
       empaqueProductoId: defaultEmpaque?.IDproductos || '',
       empaqueProductoNombre: defaultEmpaque?.nombre || '',
       cantidadPorPlato: '1',
@@ -534,40 +540,183 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
     setModalReglaVisible(true);
   };
 
+  const handleEditarRegla = (regla: ReglaEmpaqueDomi) => {
+    setReglaEditandoId(regla.id);
+    setSearchEmpaque('');
+    setSearchPlato('');
+    if (regla.tipoDestino === 'CATEGORIA') {
+      setCategoriasSeleccionadas(regla.categoriaNombre ? [regla.categoriaNombre] : []);
+      setProductosSeleccionados([]);
+    } else {
+      setProductosSeleccionados(regla.productoId ? [regla.productoId] : []);
+      setCategoriasSeleccionadas([]);
+    }
+    setNuevaRegla({
+      tipoDestino: regla.tipoDestino,
+      categoriaNombre: regla.categoriaNombre || '',
+      productoId: regla.productoId || '',
+      productoNombre: regla.productoNombre || '',
+      empaqueProductoId: regla.empaqueProductoId,
+      empaqueProductoNombre: regla.empaqueProductoNombre,
+      cantidadPorPlato: String(regla.cantidadPorPlato || 1),
+      cobrarAlCliente: Boolean(regla.cobrarAlCliente),
+    });
+    setModalReglaVisible(true);
+  };
+
   const handleGuardarNuevaRegla = () => {
-    if (nuevaRegla.tipoDestino === 'CATEGORIA' && !nuevaRegla.categoriaNombre) {
-      Toast.show({ type: 'error', text1: 'Dato requerido', text2: 'Debes seleccionar una categoría' });
-      return;
-    }
-    if (nuevaRegla.tipoDestino === 'PRODUCTO' && !nuevaRegla.productoId) {
-      Toast.show({ type: 'error', text1: 'Dato requerido', text2: 'Debes seleccionar un plato del catálogo' });
-      return;
-    }
     if (!nuevaRegla.empaqueProductoId) {
       Toast.show({ type: 'error', text1: 'Dato requerido', text2: 'Debes seleccionar el producto de empaque' });
       return;
     }
 
+    const cantidadNum = Math.max(1, parseInt(nuevaRegla.cantidadPorPlato, 10) || 1);
     const empaqueProd = productosDisponibles.find((p) => p.IDproductos === nuevaRegla.empaqueProductoId);
-    const targetProd = nuevaRegla.tipoDestino === 'PRODUCTO'
-      ? productosDisponibles.find((p) => p.IDproductos === nuevaRegla.productoId)
-      : undefined;
+    const empaqueNombre = empaqueProd?.nombre || nuevaRegla.empaqueProductoNombre || 'Empaque';
 
-    const regla: ReglaEmpaqueDomi = {
-      id: `regla_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      tipoDestino: nuevaRegla.tipoDestino,
-      categoriaNombre: nuevaRegla.tipoDestino === 'CATEGORIA' ? nuevaRegla.categoriaNombre : undefined,
-      productoId: nuevaRegla.tipoDestino === 'PRODUCTO' ? nuevaRegla.productoId : undefined,
-      productoNombre: nuevaRegla.tipoDestino === 'PRODUCTO' ? (targetProd?.nombre || nuevaRegla.productoNombre) : undefined,
-      empaqueProductoId: nuevaRegla.empaqueProductoId,
-      empaqueProductoNombre: empaqueProd?.nombre || nuevaRegla.empaqueProductoNombre || 'Empaque',
-      cantidadPorPlato: Math.max(1, parseInt(nuevaRegla.cantidadPorPlato, 10) || 1),
-      cobrarAlCliente: nuevaRegla.cobrarAlCliente,
-    };
+    // MODO EDICIÓN
+    if (reglaEditandoId) {
+      if (nuevaRegla.tipoDestino === 'CATEGORIA' && !nuevaRegla.categoriaNombre && categoriasSeleccionadas.length === 0) {
+        Toast.show({ type: 'error', text1: 'Dato requerido', text2: 'Debes seleccionar una categoría' });
+        return;
+      }
+      if (nuevaRegla.tipoDestino === 'PRODUCTO' && !nuevaRegla.productoId && productosSeleccionados.length === 0) {
+        Toast.show({ type: 'error', text1: 'Dato requerido', text2: 'Debes seleccionar un plato del catálogo' });
+        return;
+      }
 
-    setReglasEmpaque((prev) => [...prev, regla]);
-    setModalReglaVisible(false);
-    Toast.show({ type: 'success', text1: 'Regla agregada', text2: 'Pulsa "Guardar Configuración" para aplicar los cambios.' });
+      const catFinal = nuevaRegla.tipoDestino === 'CATEGORIA'
+        ? (categoriasSeleccionadas[0] || nuevaRegla.categoriaNombre)
+        : undefined;
+      const prodIdFinal = nuevaRegla.tipoDestino === 'PRODUCTO'
+        ? (productosSeleccionados[0] || nuevaRegla.productoId)
+        : undefined;
+      const prodObj = prodIdFinal ? productosDisponibles.find((p) => p.IDproductos === prodIdFinal) : undefined;
+      const prodNombreFinal = prodObj?.nombre || nuevaRegla.productoNombre || undefined;
+
+      setReglasEmpaque((prev) =>
+        prev.map((r) => {
+          if (r.id !== reglaEditandoId) return r;
+          return {
+            ...r,
+            tipoDestino: nuevaRegla.tipoDestino,
+            categoriaNombre: catFinal,
+            productoId: prodIdFinal,
+            productoNombre: prodNombreFinal,
+            empaqueProductoId: nuevaRegla.empaqueProductoId,
+            empaqueProductoNombre: empaqueNombre,
+            cantidadPorPlato: cantidadNum,
+            cobrarAlCliente: nuevaRegla.cobrarAlCliente,
+          };
+        })
+      );
+
+      setModalReglaVisible(false);
+      setReglaEditandoId(null);
+      Toast.show({
+        type: 'success',
+        text1: 'Regla actualizada',
+        text2: 'Pulsa "Guardar Configuración" para aplicar los cambios.',
+      });
+      return;
+    }
+
+    // MODO CREACIÓN (con selección múltiple)
+    if (nuevaRegla.tipoDestino === 'CATEGORIA') {
+      const catsToApply = categoriasSeleccionadas.length > 0
+        ? categoriasSeleccionadas
+        : (nuevaRegla.categoriaNombre ? [nuevaRegla.categoriaNombre] : []);
+
+      if (catsToApply.length === 0) {
+        Toast.show({ type: 'error', text1: 'Dato requerido', text2: 'Debes seleccionar al menos una categoría' });
+        return;
+      }
+
+      setReglasEmpaque((prev) => {
+        let current = [...prev];
+        for (const cat of catsToApply) {
+          const existingIndex = current.findIndex(
+            (r) => r.tipoDestino === 'CATEGORIA' && r.categoriaNombre === cat && r.empaqueProductoId === nuevaRegla.empaqueProductoId
+          );
+          if (existingIndex >= 0) {
+            current[existingIndex] = {
+              ...current[existingIndex],
+              cantidadPorPlato: cantidadNum,
+              cobrarAlCliente: nuevaRegla.cobrarAlCliente,
+              empaqueProductoNombre: empaqueNombre,
+            };
+          } else {
+            current.push({
+              id: `regla_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+              tipoDestino: 'CATEGORIA',
+              categoriaNombre: cat,
+              empaqueProductoId: nuevaRegla.empaqueProductoId,
+              empaqueProductoNombre: empaqueNombre,
+              cantidadPorPlato: cantidadNum,
+              cobrarAlCliente: nuevaRegla.cobrarAlCliente,
+            });
+          }
+        }
+        return current;
+      });
+
+      setModalReglaVisible(false);
+      Toast.show({
+        type: 'success',
+        text1: catsToApply.length === 1 ? 'Regla agregada' : `${catsToApply.length} reglas agregadas`,
+        text2: 'Pulsa "Guardar Configuración" para aplicar los cambios.',
+      });
+    } else {
+      // PRODUCTO
+      const prodsToApply = productosSeleccionados.length > 0
+        ? productosSeleccionados
+        : (nuevaRegla.productoId ? [nuevaRegla.productoId] : []);
+
+      if (prodsToApply.length === 0) {
+        Toast.show({ type: 'error', text1: 'Dato requerido', text2: 'Debes seleccionar al menos un plato' });
+        return;
+      }
+
+      setReglasEmpaque((prev) => {
+        let current = [...prev];
+        for (const pId of prodsToApply) {
+          const prodObj = productosDisponibles.find((p) => p.IDproductos === pId);
+          const pNombre = prodObj?.nombre || 'Plato';
+
+          const existingIndex = current.findIndex(
+            (r) => r.tipoDestino === 'PRODUCTO' && r.productoId === pId && r.empaqueProductoId === nuevaRegla.empaqueProductoId
+          );
+          if (existingIndex >= 0) {
+            current[existingIndex] = {
+              ...current[existingIndex],
+              productoNombre: pNombre,
+              cantidadPorPlato: cantidadNum,
+              cobrarAlCliente: nuevaRegla.cobrarAlCliente,
+              empaqueProductoNombre: empaqueNombre,
+            };
+          } else {
+            current.push({
+              id: `regla_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+              tipoDestino: 'PRODUCTO',
+              productoId: pId,
+              productoNombre: pNombre,
+              empaqueProductoId: nuevaRegla.empaqueProductoId,
+              empaqueProductoNombre: empaqueNombre,
+              cantidadPorPlato: cantidadNum,
+              cobrarAlCliente: nuevaRegla.cobrarAlCliente,
+            });
+          }
+        }
+        return current;
+      });
+
+      setModalReglaVisible(false);
+      Toast.show({
+        type: 'success',
+        text1: prodsToApply.length === 1 ? 'Regla agregada' : `${prodsToApply.length} reglas agregadas`,
+        text2: 'Pulsa "Guardar Configuración" para aplicar los cambios.',
+      });
+    }
   };
 
   const onChangeTime = (event: any, selectedDate?: Date) => {
@@ -1585,23 +1734,39 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
                     key={regla.id}
                     style={{
                       backgroundColor: '#ffffff',
-                      borderRadius: 8,
+                      borderRadius: 10,
                       borderWidth: 1,
-                      borderColor: '#e5e7eb',
+                      borderColor: '#e2e8f0',
                       padding: 12,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.04,
+                      shadowRadius: 2,
+                      elevation: 1,
                     }}
                   >
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                       <View style={{ flex: 1, paddingRight: 8 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 4 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 6, marginBottom: 6 }}>
+                          {/* Destino: Categoría vs Plato con iconos vectoriales elegantes */}
                           <View
                             style={{
-                              backgroundColor: regla.tipoDestino === 'CATEGORIA' ? '#e0e7ff' : '#ecfdf5',
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              backgroundColor: regla.tipoDestino === 'CATEGORIA' ? '#eef2ff' : '#ecfdf5',
+                              borderWidth: 1,
+                              borderColor: regla.tipoDestino === 'CATEGORIA' ? '#c7d2fe' : '#a7f3d0',
                               paddingHorizontal: 8,
-                              paddingVertical: 2,
+                              paddingVertical: 3,
                               borderRadius: 6,
                             }}
                           >
+                            <Ionicons
+                              name={regla.tipoDestino === 'CATEGORIA' ? 'folder-outline' : 'restaurant-outline'}
+                              size={13}
+                              color={regla.tipoDestino === 'CATEGORIA' ? '#4f46e5' : '#059669'}
+                              style={{ marginRight: 4 }}
+                            />
                             <Text
                               style={{
                                 fontSize: 11,
@@ -1609,56 +1774,102 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
                                 color: regla.tipoDestino === 'CATEGORIA' ? '#3730a3' : '#065f46',
                               }}
                             >
-                              {regla.tipoDestino === 'CATEGORIA' ? `📁 CATEGORÍA: ${regla.categoriaNombre}` : `🍔 PLATO: ${regla.productoNombre}`}
+                              {regla.tipoDestino === 'CATEGORIA'
+                                ? `CATEGORÍA: ${regla.categoriaNombre}`
+                                : `PLATO: ${regla.productoNombre}`}
                             </Text>
                           </View>
 
+                          {/* Cobro: Incluido vs Extra con icono vectorial */}
                           <View
                             style={{
-                              backgroundColor: regla.cobrarAlCliente ? '#fef3c7' : '#f3f4f6',
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              backgroundColor: regla.cobrarAlCliente ? '#fffbeb' : '#f8fafc',
+                              borderWidth: 1,
+                              borderColor: regla.cobrarAlCliente ? '#fde68a' : '#e2e8f0',
                               paddingHorizontal: 8,
-                              paddingVertical: 2,
+                              paddingVertical: 3,
                               borderRadius: 6,
                             }}
                           >
+                            <Ionicons
+                              name={regla.cobrarAlCliente ? 'cash-outline' : 'checkmark-circle-outline'}
+                              size={13}
+                              color={regla.cobrarAlCliente ? '#d97706' : '#64748b'}
+                              style={{ marginRight: 4 }}
+                            />
                             <Text
                               style={{
                                 fontSize: 11,
                                 fontWeight: '700',
-                                color: regla.cobrarAlCliente ? '#b45309' : '#4b5563',
+                                color: regla.cobrarAlCliente ? '#b45309' : '#475569',
                               }}
                             >
-                              {regla.cobrarAlCliente ? '💰 Cobrar al cliente (Ítem extra)' : '🆓 Incluido en plato (Nota $0)'}
+                              {regla.cobrarAlCliente
+                                ? 'Cobrar al cliente (Ítem extra)'
+                                : 'Incluido en plato (Nota $0)'}
                             </Text>
                           </View>
                         </View>
 
-                        <Text style={{ fontSize: 13, color: '#1f2937', marginTop: 2 }}>
-                          Lleva <Text style={{ fontWeight: '700', color: '#d97706' }}>{regla.cantidadPorPlato}x</Text> {regla.empaqueProductoNombre}
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                          <Ionicons name="cube-outline" size={14} color="#d97706" style={{ marginRight: 5 }} />
+                          <Text style={{ fontSize: 13, color: '#1f2937' }}>
+                            Lleva <Text style={{ fontWeight: '700', color: '#d97706' }}>{regla.cantidadPorPlato}x</Text> {regla.empaqueProductoNombre}
+                          </Text>
+                        </View>
                       </View>
 
-                      <TouchableOpacity
-                        onPress={() => {
-                          if (Platform.OS === 'web') {
-                            if (window.confirm('¿Eliminar esta regla de empaque?')) {
-                              setReglasEmpaque((prev) => prev.filter((r) => r.id !== regla.id));
+                      {/* Botones de Acción: Editar y Eliminar */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <TouchableOpacity
+                          onPress={() => handleEditarRegla(regla)}
+                          style={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            paddingHorizontal: 8,
+                            paddingVertical: 6,
+                            borderRadius: 6,
+                            backgroundColor: '#eef2ff',
+                            borderWidth: 1,
+                            borderColor: '#c7d2fe',
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="create-outline" size={15} color="#4f46e5" style={{ marginRight: 3 }} />
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: '#4f46e5' }}>Editar</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          onPress={() => {
+                            if (Platform.OS === 'web') {
+                              if (window.confirm('¿Eliminar esta regla de empaque?')) {
+                                setReglasEmpaque((prev) => prev.filter((r) => r.id !== regla.id));
+                              }
+                            } else {
+                              Alert.alert('Eliminar Regla', '¿Deseas eliminar esta regla de empaque?', [
+                                { text: 'Cancelar', style: 'cancel' },
+                                {
+                                  text: 'Eliminar',
+                                  style: 'destructive',
+                                  onPress: () => setReglasEmpaque((prev) => prev.filter((r) => r.id !== regla.id)),
+                                },
+                              ]);
                             }
-                          } else {
-                            Alert.alert('Eliminar Regla', '¿Deseas eliminar esta regla de empaque?', [
-                              { text: 'Cancelar', style: 'cancel' },
-                              {
-                                text: 'Eliminar',
-                                style: 'destructive',
-                                onPress: () => setReglasEmpaque((prev) => prev.filter((r) => r.id !== regla.id)),
-                              },
-                            ]);
-                          }
-                        }}
-                        style={{ padding: 6, borderRadius: 6, backgroundColor: '#fee2e2' }}
-                      >
-                        <Ionicons name="trash-outline" size={16} color="#ef4444" />
-                      </TouchableOpacity>
+                          }}
+                          style={{
+                            padding: 6,
+                            borderRadius: 6,
+                            backgroundColor: '#fee2e2',
+                            borderWidth: 1,
+                            borderColor: '#fca5a5',
+                          }}
+                          activeOpacity={0.7}
+                        >
+                          <Ionicons name="trash-outline" size={15} color="#ef4444" />
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
                 ))}
@@ -1738,13 +1949,17 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
             <ScrollView showsVerticalScrollIndicator={false}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
                 <View style={[styles.iaIconContainer, { backgroundColor: '#fef3c7', marginRight: 10 }]}>
-                  <Ionicons name="cube" size={20} color="#d97706" />
+                  <Ionicons name={reglaEditandoId ? "create" : "cube"} size={20} color="#d97706" />
                 </View>
-                <Text style={styles.modalTitle}>Nueva Regla de Empaque (IA)</Text>
+                <Text style={styles.modalTitle}>
+                  {reglaEditandoId ? 'Editar Regla de Empaque (IA)' : 'Nueva Regla de Empaque (IA)'}
+                </Text>
               </View>
 
               <Text style={{ fontSize: 13, color: '#4b5563', marginBottom: 14, lineHeight: 18 }}>
-                Asocia qué producto de catálogo (caja, vaso, tapa, desechable) debe acompañar a tus pedidos cuando entren por WhatsApp.
+                {reglaEditandoId
+                  ? 'Modifica los parámetros de empaque, cantidades y modo de cobro para esta regla.'
+                  : 'Asocia qué producto de catálogo (caja, vaso, tapa, desechable) debe acompañar a tus pedidos cuando entren por WhatsApp. Puedes seleccionar múltiples ítems para aplicarles la regla en lote.'}
               </Text>
 
               {/* Selector de Destino: Categoría vs Plato */}
@@ -1780,29 +1995,54 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
               {/* Si es por Categoría */}
               {nuevaRegla.tipoDestino === 'CATEGORIA' ? (
                 <SearchableSelect
-                  label="Selecciona la Categoría"
-                  title="Seleccionar Categoría del Catálogo"
-                  placeholder="-- Seleccionar Categoría --"
+                  label={reglaEditandoId ? "Selecciona la Categoría" : "Selecciona las Categorías (Selección múltiple)"}
+                  title="Seleccionar Categorías del Catálogo"
+                  placeholder={reglaEditandoId ? "-- Seleccionar Categoría --" : "-- Seleccionar Categorías (puedes elegir varias) --"}
                   searchPlaceholder="Buscar categoría (ej. Hamburguesas, Salchipapas)..."
                   options={categoriaOptions}
+                  isMultiSelect={!reglaEditandoId}
+                  selectedValues={categoriasSeleccionadas}
+                  onSelectMultiple={(vals) => {
+                    setCategoriasSeleccionadas(vals);
+                    if (vals.length > 0) {
+                      setNuevaRegla((prev) => ({ ...prev, categoriaNombre: vals[0] }));
+                    }
+                  }}
                   selectedValue={nuevaRegla.categoriaNombre}
-                  onSelect={(val) => setNuevaRegla({ ...nuevaRegla, categoriaNombre: val })}
-                  leadingIcon="pricetag-outline"
+                  onSelect={(val) => {
+                    setNuevaRegla((prev) => ({ ...prev, categoriaNombre: val }));
+                    setCategoriasSeleccionadas([val]);
+                  }}
+                  leadingIcon="folder-outline"
                 />
               ) : (
                 <SearchableSelect
-                  label="Selecciona el Plato Específico"
-                  title="Seleccionar Plato del Catálogo"
-                  placeholder="-- Seleccionar Plato --"
+                  label={reglaEditandoId ? "Selecciona el Plato Específico" : "Selecciona los Platos (Selección múltiple)"}
+                  title="Seleccionar Platos del Catálogo"
+                  placeholder={reglaEditandoId ? "-- Seleccionar Plato --" : "-- Seleccionar Platos (puedes elegir varios) --"}
                   searchPlaceholder="Buscar plato por nombre o categoría..."
                   options={platoOptions}
+                  isMultiSelect={!reglaEditandoId}
+                  selectedValues={productosSeleccionados}
+                  onSelectMultiple={(vals, opts) => {
+                    setProductosSeleccionados(vals);
+                    if (vals.length > 0) {
+                      const firstOpt = opts[0];
+                      setNuevaRegla((prev) => ({
+                        ...prev,
+                        productoId: vals[0],
+                        productoNombre: firstOpt?.label || '',
+                      }));
+                    }
+                  }}
                   selectedValue={nuevaRegla.productoId}
                   onSelect={(val, opt) => {
-                    setNuevaRegla({
-                      ...nuevaRegla,
+                    setNuevaRegla((prev) => ({
+                      ...prev,
                       productoId: val,
                       productoNombre: opt?.label || '',
-                    });
+                    }));
+                    setProductosSeleccionados([val]);
                   }}
                   leadingIcon="restaurant-outline"
                 />
@@ -1868,7 +2108,9 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
                   style={[styles.modalSubmitBtn, { backgroundColor: '#d97706' }]}
                   onPress={handleGuardarNuevaRegla}
                 >
-                  <Text style={styles.modalSubmitBtnText}>Guardar Regla</Text>
+                  <Text style={styles.modalSubmitBtnText}>
+                    {reglaEditandoId ? 'Actualizar Regla' : 'Guardar Regla(s)'}
+                  </Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
