@@ -134,7 +134,7 @@ const HomeTabs = () => {
 
   const isWeb = Platform.OS === 'web';
   const bottomPadding = isWeb ? 0 : Math.max(insets.bottom, 10);
-  const tabHeight = isWeb ? 40 : 60 + bottomPadding;
+  const tabHeight = isWeb ? 48 : 60 + bottomPadding;
 
   const canSeePedidos = 
     user?.rol === 'Admin app' || 
@@ -155,11 +155,11 @@ const HomeTabs = () => {
           paddingTop: isWeb ? 0 : 8,
           paddingBottom: bottomPadding,
           height: tabHeight,
-          ...(isWeb ? { minHeight: 38, maxHeight: 42 } : {}),
+          ...(isWeb ? { minHeight: 46, maxHeight: 50 } : {}),
         },
         tabBarLabelStyle: {
           fontWeight: 'bold',
-          fontSize: isWeb ? 11 : 11,
+          fontSize: isWeb ? 12 : 11,
           paddingBottom: isWeb ? 0 : 4,
           marginLeft: isWeb ? 6 : 0,
         },
@@ -174,7 +174,7 @@ const HomeTabs = () => {
           }
           return (
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Ionicons name={iconName} size={isWeb ? 18 : 24} color={color} style={{ marginBottom: isWeb ? 0 : -4 }} />
+              <Ionicons name={iconName} size={isWeb ? 20 : 24} color={color} style={{ marginBottom: isWeb ? 0 : -4 }} />
               {route.name === 'Pedidos' && pendingOrders > 0 && (
                 <View style={{
                   position: isWeb ? 'relative' : 'absolute',

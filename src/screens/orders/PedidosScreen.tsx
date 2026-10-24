@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput, KeyboardAvoidingView, Platform, AppState, AppStateStatus, Linking, Alert } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Text as RNText, StyleSheet, FlatList, RefreshControl, Modal, ScrollView, Pressable, Image, TextInput, KeyboardAvoidingView, Platform, AppState, AppStateStatus, Linking, Alert, useWindowDimensions } from 'react-native';
 // Removed FlashList import because it causes layout bugs on mobile web viewports.
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -542,6 +542,8 @@ const DomicilioTimer = ({ timestamp, estado }: { timestamp: string; estado: stri
 const isWeb = Platform.OS === 'web';
 
 const PedidosScreen = () => {
+  const { width: windowWidth } = useWindowDimensions();
+  const isMobileWeb = isWeb && windowWidth < 640;
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { showAlert } = useCustomAlert();
   const { canCreate: canCreatePedido } = usePermissions('pedidos');
@@ -4439,16 +4441,26 @@ showAlert({
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             {Platform.OS === 'web' && (
               <TouchableOpacity
-                style={[styles.newSaleBtn, styles.refreshBtnWeb, { backgroundColor: '#3b82f6', marginRight: isWeb ? 8 : 10 }]}
+                style={[
+                  styles.newSaleBtn, 
+                  styles.refreshBtnWeb, 
+                  isMobileWeb && styles.refreshBtnMobileWeb, 
+                  { backgroundColor: '#3b82f6', marginRight: isWeb ? 6 : 10 }
+                ]}
                 onPress={onRefresh}
                 disabled={refreshing}
+                accessibilityLabel="Recargar pedidos"
               >
                 {refreshing ? (
-                  <ActivityIndicator size="small" color="#fff" style={{ marginRight: 4 }} />
+                  <ActivityIndicator size="small" color="#fff" style={isMobileWeb ? undefined : { marginRight: 3 }} />
                 ) : (
-                  <Ionicons name="refresh" size={isWeb ? 16 : 20} color="#fff" />
+                  <Ionicons name="refresh" size={isMobileWeb ? 15 : 14} color="#fff" />
                 )}
-                <RNText style={[styles.newSaleBtnText, isWeb && styles.newSaleBtnTextWeb]}>{refreshing ? 'Recargando...' : 'Recargar'}</RNText>
+                {!isMobileWeb && (
+                  <RNText style={styles.refreshBtnTextWeb}>
+                    {refreshing ? '...' : 'Recargar'}
+                  </RNText>
+                )}
               </TouchableOpacity>
             )}
             {canCreateVenta && (
@@ -5275,9 +5287,22 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   refreshBtnWeb: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
     borderRadius: 8,
+  },
+  refreshBtnMobileWeb: {
+    paddingVertical: 5,
+    paddingHorizontal: 7,
+    minWidth: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  refreshBtnTextWeb: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#fff',
+    marginLeft: 3,
   },
   newSaleBtnTextWeb: {
     fontSize: 12,
