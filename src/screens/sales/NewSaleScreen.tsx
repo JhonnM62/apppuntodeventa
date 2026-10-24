@@ -445,6 +445,59 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const isEditing = editingSaleId !== null;
   const saleIdFromRoute = route?.params?.saleId;
 
+  // ── Verificación inteligente de mesa ocupada (solo pedidos ABIERTOS y PENDIENTES DE PAGO) ──
+  const isMesaOccupied = useCallback(
+    (targetId?: string, targetName?: string): boolean => {
+      if (!targetName && !targetId) return false;
+      const activeVentas = useSalesStore.getState().ventas;
+      const clean = (s?: string) => (s || '').replace(/\s+/g, '').toLowerCase();
+      const targetNameClean = clean(targetName);
+
+      return (Array.isArray(activeVentas) ? activeVentas : []).some((v) => {
+        // 1. Verificar si coincide con la mesa (por ID o por Nombre)
+        const vMesaClean = clean(typeof v.mesa === 'string' ? v.mesa : '');
+        const matches =
+          (targetId && v.mesa === targetId) ||
+          (targetName && v.mesa === targetName) ||
+          (targetNameClean && vMesaClean === targetNameClean) ||
+          (targetNameClean && vMesaClean === `mesa${targetNameClean}`) ||
+          (targetNameClean && `mesa${vMesaClean}` === targetNameClean);
+        if (!matches) return false;
+
+        // 2. Si estamos editando este mismo pedido, no cuenta como conflicto
+        if (editingVenta) {
+          const editId = (editingVenta as any).IDventas || (editingVenta as any).id;
+          const editPedido = (editingVenta as any).pedido;
+          if (editId && (v.IDventas === editId || v.id === editId)) return false;
+          if (editPedido && v.pedido === editPedido) return false;
+        }
+
+        // 3. Ventas canceladas o anuladas nunca ocupan mesa
+        const est = (v.estado || '').toUpperCase();
+        if (est === 'CANCELADO' || est === 'ANULADO') return false;
+
+        // 4. Si la venta ya está cobrada/pagada (PAGADO o medio de pago asignado diferente a PENDIENTE), la mesa está LIBERADA
+        const isPaid = est === 'PAGADO' || (!!v.medioDePago && v.medioDePago !== 'PENDIENTE');
+        if (isPaid) return false;
+
+        // 5. Si ya fue despejada, no ocupa mesa
+        if (v.despejadoAt != null) return false;
+
+        // 6. Ignorar pedidos antiguos de días anteriores (> 24 horas)
+        const fechaStr = v.fechaYHora || v.fecha;
+        if (fechaStr) {
+          const diffHours = (Date.now() - new Date(fechaStr).getTime()) / 3600000;
+          if (diffHours > 24) return false;
+        }
+
+        // 7. Únicamente pedidos ABIERTOS y PENDIENTES DE PAGO ocupan la mesa
+        const openUnpaidStates = ['TOMADO', 'PREPARANDO', 'LISTO_PARA_ENTREGA', 'EN_EL_CARRITO', 'ENTREGADO', 'DEUDOR'];
+        return openUnpaidStates.includes(est);
+      });
+    },
+    [editingVenta]
+  );
+
   // ── Quantity Numpad state ────────────────────────────────────────────────
   const [numpadVisible, setNumpadVisible] = useState(false);
   const [numpadItem, setNumpadItem] = useState<CartItem | null>(null);
@@ -2288,16 +2341,10 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                       style={[styles.mesaOption, { backgroundColor: '#fef3c7', borderColor: '#fde68a', borderWidth: 1 }]}
                       onPress={() => { 
                         const mesaName = mesaSearchQuery.trim();
-                        const activeVentas = useSalesStore.getState().ventas;
-                        const isOccupied = activeVentas.some(v => 
-                          (v.mesa === mesaName || v.mesa?.toLowerCase() === mesaName.toLowerCase()) && 
-                          (v.estado === 'TOMADO' || v.estado === 'ENTREGADO')
-                        );
-
-                        if (isOccupied && (!editingVenta || (editingVenta.mesa !== mesaName && editingVenta.mesa?.toLowerCase() !== mesaName.toLowerCase()))) {
+                        if (isMesaOccupied(undefined, mesaName)) {
                           showAlert({
                             title: 'Mesa Ocupada',
-                            message: `La mesa "${mesaName}" ya tiene un pedido abierto. Por favor, factura o cierra el pedido actual antes de usar esta mesa nuevamente.`,
+                            message: `La mesa "${mesaName}" ya tiene un pedido abierto y pendiente de cobro. Por favor, factura o cierra el pedido actual antes de usar esta mesa nuevamente.`,
                             type: 'warning'
                           });
                           return;
@@ -2316,36 +2363,48 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                       </Text>
                     </TouchableOpacity>
                   )}
-                  {mesas.filter(m => m.nombre.toLowerCase().includes(mesaSearchQuery.toLowerCase())).map((mesa) => (
-                    <TouchableOpacity
-                      key={mesa.IdMesas}
-                      style={[styles.mesaOption, selectedMesa?.IdMesas === mesa.IdMesas && styles.mesaOptionActive]}
-                      onPress={() => { 
-                        const activeVentas = useSalesStore.getState().ventas;
-                        const isOccupied = activeVentas.some(v => 
-                          (v.mesa === mesa.IdMesas || v.mesa === mesa.nombre) && 
-                          (v.estado === 'TOMADO' || v.estado === 'ENTREGADO')
-                        );
+                  {mesas.filter(m => m.nombre.toLowerCase().includes(mesaSearchQuery.toLowerCase())).map((mesa) => {
+                    const isOccupied = isMesaOccupied(mesa.IdMesas, mesa.nombre);
+                    const isSelected = selectedMesa?.IdMesas === mesa.IdMesas || selectedMesa?.nombre === mesa.nombre;
+                    return (
+                      <TouchableOpacity
+                        key={mesa.IdMesas}
+                        style={[
+                          styles.mesaOption, 
+                          isSelected && styles.mesaOptionActive,
+                          isOccupied && !isSelected && { backgroundColor: '#fee2e2', borderColor: '#fca5a5', borderWidth: 1 }
+                        ]}
+                        onPress={() => { 
+                          if (isOccupied) {
+                            showAlert({
+                              title: 'Mesa Ocupada',
+                              message: `La mesa "${mesa.nombre}" tiene un pedido abierto y pendiente de cobro. Por favor, factura o cierra el pedido actual antes de usar esta mesa nuevamente.`,
+                              type: 'warning'
+                            });
+                            return;
+                          }
 
-                        if (isOccupied && (!editingVenta || (editingVenta.mesa !== mesa.IdMesas && editingVenta.mesa !== mesa.nombre))) {
-                          showAlert({
-                            title: 'Mesa Ocupada',
-                            message: `La mesa "${mesa.nombre}" tiene un pedido abierto. Por favor, factura o cierra el pedido actual antes de usar esta mesa nuevamente.`,
-                            type: 'warning'
-                          });
-                          return;
-                        }
-
-                        setSelectedMesa(mesa);
-                        setMesaModalVisible(false); 
-                      }}
-                    >
-                      <MaterialCommunityIcons name="table-furniture" size={20} color={selectedMesa?.IdMesas === mesa.IdMesas ? '#fff' : '#6b7280'} />
-                      <RNText style={[styles.mesaOptionText, selectedMesa?.IdMesas === mesa.IdMesas && styles.mesaOptionTextActive]}>
-                        {mesa.nombre}
-                      </RNText>
-                    </TouchableOpacity>
-                  ))}
+                          setSelectedMesa(mesa);
+                          setMesaModalVisible(false); 
+                        }}
+                      >
+                        <MaterialCommunityIcons 
+                          name="table-furniture" 
+                          size={20} 
+                          color={isSelected ? '#fff' : (isOccupied ? '#ef4444' : '#6b7280')} 
+                        />
+                        <RNText 
+                          style={[
+                            styles.mesaOptionText, 
+                            isSelected && styles.mesaOptionTextActive,
+                            isOccupied && !isSelected && { color: '#b91c1c' }
+                          ]}
+                        >
+                          {mesa.nombre} {isOccupied ? '(Ocupada)' : ''}
+                        </RNText>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </ScrollView>
               </TouchableOpacity>
             </TouchableOpacity>
