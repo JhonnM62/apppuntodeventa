@@ -43,6 +43,8 @@ export const useGlobalSalesSync = () => {
   useEffect(() => {
     if (isConnected) {
       joinRoom(Room.KITCHEN);
+      joinRoom(Room.VENTAS);
+      joinRoom(Room.CAJA);
     }
   }, [isConnected, joinRoom]);
 

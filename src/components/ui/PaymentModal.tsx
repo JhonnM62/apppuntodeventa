@@ -245,7 +245,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         if (!isNaN(p)) setPropinaPercent(p);
       }
 
-      setSelectedEstado(initialEstado || (isCobrarMode ? 'PAGADO' : 'EN_EL_CARRITO'));
+      const cfg = getCachedConfiguracion()?.data || getCachedConfiguracion();
+      const esModoRest = String(cfg?.modoOperacion || '').toUpperCase() === 'RESTAURANTE';
+      const defaultEstado: OrderStatus = initialEstado || (esModoRest ? 'TOMADO' : (isCobrarMode ? 'PAGADO' : 'EN_EL_CARRITO'));
+      setSelectedEstado(defaultEstado);
       Animated.parallel([
         Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
         Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 65, friction: 11 }),

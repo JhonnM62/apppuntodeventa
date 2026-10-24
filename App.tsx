@@ -20,6 +20,7 @@ import useSeccionesStore from './src/store/useSeccionesStore';
 import { useSocket } from './src/context/SocketContext';
 import { LogBox } from 'react-native';
 import useAuthStore from './src/store/useAuthStore';
+import { getConfiguracion } from './src/services/configuracion';
 
 LogBox.ignoreLogs(['[expo-av]: Expo AV has been deprecated']);
 
@@ -51,16 +52,17 @@ function AppInitializer({ children }: { children: React.ReactNode }) {
     setPrinterSocket(socket, negocioId);
   }, [socket, (user as any)?.negocioId ?? (user as any)?.IDnegocio]);
 
-  // Cargar secciones de cocina al iniciar
+  // Cargar secciones de cocina y configuración de negocio al iniciar
   const fetchSecciones = useSeccionesStore((s) => s.fetchSecciones);
   useEffect(() => {
-    const loadSecciones = async () => {
+    const loadInitData = async () => {
       try {
+        getConfiguracion().catch(() => {});
         const token = await AsyncStorage.getItem('token');
         if (token) fetchSecciones();
       } catch {}
     };
-    loadSecciones();
+    loadInitData();
   }, []);
 
   // Auto-connect printer state

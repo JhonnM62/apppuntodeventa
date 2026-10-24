@@ -26,7 +26,7 @@ import usePrinterStore from '../../store/usePrinterStore';
 import PrintPreviewModal from '../../components/ui/PrintPreviewModal';
 import { soundService } from '../../services/soundService';
 import { TicketData, enrichTicketDataWithPapaFallback, cleanTicketDataForFactura, getGramosPapaForProduct } from '../../utils/printer';
-import { getCachedConfiguracion } from '../../services/configuracion';
+import { getCachedConfiguracion, getConfiguracion } from '../../services/configuracion';
 import { FloatingScrollButtons } from '../../components/ui/FloatingScrollButtons';
 import { useScrollDirection } from '../../hooks/useScrollDirection';
 
@@ -153,10 +153,30 @@ export const getVentaTotal = (venta: VentaItem | null): number => {
   return 0;
 };
 
+let lastKnownConfig: any = null;
+
+export const setPedidosScreenConfig = (cfg: any) => {
+  if (cfg) lastKnownConfig = cfg?.data || cfg;
+};
+
 const isModoRestaurante = (): boolean => {
-  const config = getCachedConfiguracion();
-  const modo = config?.data?.modoOperacion || config?.modoOperacion || 'GENERAL';
+  const config = lastKnownConfig || getCachedConfiguracion()?.data || getCachedConfiguracion();
+  const modo = config?.modoOperacion || 'GENERAL';
   return String(modo).toUpperCase() === 'RESTAURANTE';
+};
+
+export const extractVentaFecha = (v: any): string => {
+  if (v?.fecha) {
+    return String(v.fecha).substring(0, 10);
+  }
+  if (v?.fechaYHora) {
+    const d = new Date(v.fechaYHora);
+    if (!isNaN(d.getTime())) {
+      const col = new Date(d.getTime() - 5 * 3600 * 1000);
+      return col.toISOString().substring(0, 10);
+    }
+  }
+  return '';
 };
 
 const computeActiveMs = (
@@ -232,8 +252,8 @@ const formatDurationStr = (diff: number, formatAsStopwatch: boolean = false) => 
 };
 
 export const getFechaContableActual = (horaCorteDiaStr?: string): string => {
-  const config = getCachedConfiguracion();
-  const corteStr = horaCorteDiaStr || config?.horaCorteDia || config?.data?.horaCorteDia || '00:00';
+  const config = lastKnownConfig || getCachedConfiguracion()?.data || getCachedConfiguracion();
+  const corteStr = horaCorteDiaStr || config?.horaCorteDia || '00:00';
   const [corteHours, corteMinutes] = (corteStr || '00:00').split(':').map(Number);
   
   const now = new Date();
@@ -807,8 +827,22 @@ const PedidosScreen = () => {
     if (isConnected) {
       joinRoom(Room.VENTAS);
       joinRoom(Room.DOMICILIOS);
+      joinRoom(Room.KITCHEN);
+      joinRoom(Room.CAJA);
     }
   }, [isConnected, joinRoom]);
+
+  const [configNegocio, setConfigNegocio] = useState<any>(() => getCachedConfiguracion()?.data || getCachedConfiguracion());
+
+  useEffect(() => {
+    getConfiguracion()
+      .then((cfg: any) => {
+        const data = cfg?.data || cfg;
+        setConfigNegocio(data);
+        setPedidosScreenConfig(data);
+      })
+      .catch((e) => console.log('[PedidosScreen] Error loading config:', e));
+  }, []);
 
 
   const productCategorias = useProductStore((state) => state.categorias);
@@ -924,21 +958,25 @@ const PedidosScreen = () => {
           return est === 'PAGADO' || (!!v.medioDePago && v.medioDePago !== 'PENDIENTE' && est !== 'CANCELADO' && est !== 'ANULADO');
         }).length;
       } else if (tab.key === 'TOMADO') {
-        // Pestaña operativa TOMADO: jornada actual y pedidos activos en cocina (incluyendo pagados al inicio aún sin entregar)
+        // Pestaña operativa TOMADO: jornada actual y pedidos activos en cocina (incluyendo pagados al inicio aún sin entregar en modo restaurante)
         count = arraySeguro.filter(v => {
-          const vDate = (v.fecha || v.fechaYHora || '').substring(0, 10);
-          if (vDate && vDate !== fechaContable) return false;
           const est = (v.estado || '').toUpperCase();
           const isActivoCocina = est === 'TOMADO' || est === 'PREPARANDO' || (isModoRestaurante() && est === 'PAGADO' && !v.cocinaFinAt);
-          return isActivoCocina;
+          if (!isActivoCocina) return false;
+          const vDate = extractVentaFecha(v);
+          if (vDate && vDate !== fechaContable) {
+            const diffHours = (Date.now() - new Date(v.fechaYHora || v.fecha || Date.now()).getTime()) / 3600000;
+            if (diffHours > 24) return false;
+          }
+          return true;
         }).length;
       } else if (tab.key === 'ENTREGADO') {
-        // Pestaña operativa ENTREGADO: jornada actual y pedidos entregados activos (no despejados)
+        // Pestaña operativa ENTREGADO: pedidos entregados de la jornada actual (no despejados)
         count = arraySeguro.filter(v => {
-          const vDate = (v.fecha || v.fechaYHora || '').substring(0, 10);
+          const vDate = extractVentaFecha(v);
           if (vDate && vDate !== fechaContable) return false;
           const est = (v.estado || '').toUpperCase();
-          const isEntregado = est === 'ENTREGADO' || v.cocinaFinAt != null;
+          const isEntregado = est === 'ENTREGADO';
           return isEntregado && !v.despejadoAt;
         }).length;
       } else {
@@ -1098,6 +1136,43 @@ const PedidosScreen = () => {
       }
     }
   );
+
+  // ── Sockets: eventos directos de órdenes entre dispositivos (móvil <-> web) ──
+  useSocketEvent<any>(SocketEvent.NUEVA_ORDEN, (data) => {
+    if (!data) return;
+    const v = data.venta || (data.IDventas ? data : null);
+    if (v) {
+      const vConProductos = data.productos ? { ...v, ordenVentas: data.productos } : v;
+      addVenta(vConProductos);
+    }
+  });
+
+  useSocketEvent<any>(SocketEvent.ORDEN_RECIBIDA, (data) => {
+    if (!data) return;
+    const v = data.venta || (data.IDventas ? data : null);
+    if (v) {
+      const vConProductos = data.productos ? { ...v, ordenVentas: data.productos } : v;
+      addVenta(vConProductos);
+    }
+  });
+
+  useSocketEvent<any>(SocketEvent.ORDEN_ACTUALIZADA, (data) => {
+    if (!data) return;
+    const v = data.venta || (data.IDventas ? data : null);
+    const id = data.ventaId || data.IDventas || v?.IDventas;
+    if (id && v) {
+      const vConProductos = data.productos ? { ...v, ordenVentas: data.productos } : v;
+      updateVenta(id, vConProductos);
+      setSelectedVenta((prev) =>
+        prev && prev.IDventas === id ? { ...prev, ...vConProductos } : prev
+      );
+    } else if (id && data.estado) {
+      updateVenta(id, { estado: data.estado });
+      setSelectedVenta((prev) =>
+        prev && prev.IDventas === id ? { ...prev, estado: data.estado } : prev
+      );
+    }
+  });
 
   // ── Sockets: Domicilios WhatsApp ──────────────────────────────────────────
   useSocketEvent<DomicilioWAItem>(
@@ -1259,21 +1334,25 @@ const PedidosScreen = () => {
           return est === 'PAGADO' || (!!v.medioDePago && v.medioDePago !== 'PENDIENTE' && est !== 'CANCELADO' && est !== 'ANULADO');
         });
       } else if (activeTab === 'TOMADO') {
-        // Pestaña TOMADO: solo pedidos activos en preparación de la jornada actual
+        // Pestaña TOMADO: solo pedidos activos en preparación de la jornada actual (incluyendo pagados al inicio aún sin entregar en modo restaurante)
         filtered = filtered.filter(v => {
-          const vDate = (v.fecha || v.fechaYHora || '').substring(0, 10);
-          if (vDate && vDate !== fechaContable && !filters.fechaDesde && !filters.fechaHasta) return false;
           const est = (v.estado || '').toUpperCase();
           const isActivoCocina = est === 'TOMADO' || est === 'PREPARANDO' || (isModoRestaurante() && est === 'PAGADO' && !v.cocinaFinAt);
-          return isActivoCocina;
+          if (!isActivoCocina) return false;
+          const vDate = extractVentaFecha(v);
+          if (vDate && vDate !== fechaContable && !filters.fechaDesde && !filters.fechaHasta) {
+            const diffHours = (Date.now() - new Date(v.fechaYHora || v.fecha || Date.now()).getTime()) / 3600000;
+            if (diffHours > 24) return false;
+          }
+          return true;
         });
       } else if (activeTab === 'ENTREGADO') {
         // Pestaña ENTREGADO: pedidos entregados de la jornada actual (despejados según toggle)
         filtered = filtered.filter(v => {
-          const vDate = (v.fecha || v.fechaYHora || '').substring(0, 10);
+          const vDate = extractVentaFecha(v);
           if (vDate && vDate !== fechaContable && !filters.fechaDesde && !filters.fechaHasta) return false;
           const est = (v.estado || '').toUpperCase();
-          const isEntregado = est === 'ENTREGADO' || v.cocinaFinAt != null;
+          const isEntregado = est === 'ENTREGADO';
           if (!isEntregado) return false;
           return showDespejados ? !!v.despejadoAt : !v.despejadoAt;
         });
@@ -3728,13 +3807,22 @@ showAlert({
                         {selectedVenta.estado === 'PAGADO' && (
                           <>
                             {isModoRestaurante() && (
-                              <TouchableOpacity
-                                style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
-                                onPress={() => handleChangeEstado('ENTREGADO')}
-                              >
-                                <Ionicons name="paper-plane-outline" size={20} color="#fff" />
-                                <RNText style={styles.actionBtnText}>Marcar Entregado</RNText>
-                              </TouchableOpacity>
+                              <>
+                                <TouchableOpacity
+                                  style={[styles.actionBtn, { backgroundColor: '#8b5cf6' }]}
+                                  onPress={() => handleChangeEstado('LISTO_PARA_ENTREGA')}
+                                >
+                                  <Ionicons name="checkmark-done-outline" size={20} color="#fff" />
+                                  <RNText style={styles.actionBtnText}>Marcar Listo</RNText>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
+                                  onPress={() => handleChangeEstado('ENTREGADO')}
+                                >
+                                  <Ionicons name="paper-plane-outline" size={20} color="#fff" />
+                                  <RNText style={styles.actionBtnText}>Marcar Entregado</RNText>
+                                </TouchableOpacity>
+                              </>
                             )}
                             <TouchableOpacity
                               style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
@@ -4625,10 +4713,10 @@ showAlert({
                   ]}
                 >
                   {(Array.isArray(cachedVentas) ? cachedVentas : []).filter(v => {
-                    const vDate = (v.fecha || v.fechaYHora || '').substring(0, 10);
+                    const vDate = extractVentaFecha(v);
                     if (vDate && vDate !== getFechaContableActual()) return false;
                     const est = (v.estado || '').toUpperCase();
-                    return (est === 'ENTREGADO' || v.cocinaFinAt != null) && !v.despejadoAt;
+                    return est === 'ENTREGADO' && !v.despejadoAt;
                   }).length}
                 </RNText>
               </View>
@@ -4672,10 +4760,10 @@ showAlert({
                   ]}
                 >
                   {(Array.isArray(cachedVentas) ? cachedVentas : []).filter(v => {
-                    const vDate = (v.fecha || v.fechaYHora || '').substring(0, 10);
+                    const vDate = extractVentaFecha(v);
                     if (vDate && vDate !== getFechaContableActual()) return false;
                     const est = (v.estado || '').toUpperCase();
-                    return (est === 'ENTREGADO' || v.cocinaFinAt != null) && !!v.despejadoAt;
+                    return est === 'ENTREGADO' && !!v.despejadoAt;
                   }).length}
                 </RNText>
               </View>
