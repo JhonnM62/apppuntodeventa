@@ -131,11 +131,18 @@ type SectionData = {
 
 export const getVentaTotal = (venta: VentaItem | null): number => {
   if (!venta) return 0;
+  if (venta.ordenVentas && Array.isArray(venta.ordenVentas) && venta.ordenVentas.length > 0) {
+    const sumProducts = venta.ordenVentas.reduce((sum, p) => {
+      let tot = Number(p.precioTotal);
+      if (isNaN(tot) || tot === 0) {
+        tot = (Number(p.precio || (p as any).precioUnitario || 0)) * (Number(p.cantidad) || 1);
+      }
+      return sum + (isNaN(tot) ? 0 : tot);
+    }, 0);
+    if (sumProducts > 0) return sumProducts;
+  }
   const t = typeof venta.totalInput === 'number' ? venta.totalInput : (parseFloat(venta.totalInput as any) || 0);
   if (t > 0) return t;
-  if (venta.ordenVentas && Array.isArray(venta.ordenVentas)) {
-    return venta.ordenVentas.reduce((sum, p) => sum + (Number(p.precioTotal) || 0), 0);
-  }
   return 0;
 };
 
@@ -489,7 +496,7 @@ const PedidosScreen = () => {
       cliente: clienteNombre,
       telefono: clienteTelefono,
       direccion: clienteDireccion,
-      total: Number(venta.totalInput || venta.total || venta.Total || (venta.ordenVentas?.reduce((s: number, p: any) => s + (Number(p.precioTotal) || 0), 0)) || 0),
+      total: getVentaTotal(venta),
       efectivoRecibido: venta.efectivoRecibido ? Number(venta.efectivoRecibido) : undefined,
       devueltas: venta.devueltas ? Number(venta.devueltas) : undefined,
       metodoPago: venta.medioDePago,
@@ -2304,25 +2311,23 @@ showAlert({
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTopWidth: 1, borderTopColor: '#f3f4f6' }}>
             <View>
               {(() => {
+                const totalPedido = normalizeCOP(item.totalWA) || normalizeCOP(item.totalCalculado) || 0;
                 const totalLocal = itemsPropios.reduce((sum, it) => {
                   let itPrice = it.precioTotal || (it.precioUnitario || 0) * (it.cantidad || 1);
                   return sum + normalizeCOP(itPrice);
                 }, 0);
-                const displayTotal = totalLocal > 0
-                  ? totalLocal
-                  : (normalizeCOP(item.totalCalculado) || normalizeCOP(item.totalWA) || 0);
 
                 return (
                   <>
                     <RNText style={{ fontSize: 10, fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase' }}>
-                      {itemsExt.length > 0 ? 'TOTAL ESTE LOCAL' : 'TOTAL A COBRAR'}
+                      TOTAL PEDIDO
                     </RNText>
                     <RNText style={{ fontSize: 16, fontWeight: '800', color: '#111827' }}>
-                      {formatMoney(displayTotal)}
+                      {formatMoney(totalPedido > 0 ? totalPedido : totalLocal)}
                     </RNText>
-                    {itemsExt.length > 0 && normalizeCOP(item.totalWA) > displayTotal && (
-                      <RNText style={{ fontSize: 10, color: '#7c3aed', fontWeight: '600' }}>
-                        Total WA: {formatMoney(normalizeCOP(item.totalWA))}
+                    {totalLocal > 0 && totalPedido > totalLocal && (
+                      <RNText style={{ fontSize: 10, color: '#059669', fontWeight: '700' }}>
+                        Cobrar este local: {formatMoney(totalLocal)}
                       </RNText>
                     )}
                   </>
@@ -3842,10 +3847,8 @@ showAlert({
   }) => {
     if (!cobrarVenta) return;
     try {
-      // Calcular el total real de la venta desde los productos si totalInput es 0 o null
-      const totalReal = (cobrarVenta.totalInput && cobrarVenta.totalInput > 0)
-        ? cobrarVenta.totalInput
-        : (cobrarVenta.ordenVentas || []).reduce((sum: number, p: any) => sum + (Number(p.precioTotal) || 0), 0);
+      // Calcular el total real de la venta desde los productos reales anotados
+      const totalReal = getVentaTotal(cobrarVenta);
 
       // FIX: Esperamos a que termine la petición en vez de enviarla en background sin control
       // Eliminamos updateVentaEstado para evitar la condición de carrera con updateVentaPago
