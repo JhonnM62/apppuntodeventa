@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { View, TouchableOpacity, ActivityIndicator, Image, RefreshControl, Platform, TextInput, FlatList, StyleSheet, Modal as RNModal, ScrollView, Text as RNText, KeyboardAvoidingView, Keyboard, useWindowDimensions } from 'react-native';
+import { View, TouchableOpacity, ActivityIndicator, Image, RefreshControl, Platform, TextInput, FlatList, StyleSheet, Modal as RNModal, ScrollView, Text as RNText, KeyboardAvoidingView, Keyboard, useWindowDimensions, BackHandler } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -538,6 +538,28 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       hideSub.remove();
     };
   }, []);
+
+  const handleBack = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      const editingSale = useCartStore.getState().editingSaleId;
+      if (editingSale) {
+        navigation.navigate('Main', { screen: 'Pedidos' } as any);
+      } else {
+        navigation.navigate('Main', { screen: 'Inicio' } as any);
+      }
+    }
+  }, [navigation]);
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [handleBack]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -2004,7 +2026,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           enabled={Platform.OS === 'ios'}
         >
           <View style={[styles.topBar, { backgroundColor: primaryColor }]}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <View style={styles.totalContainer}>

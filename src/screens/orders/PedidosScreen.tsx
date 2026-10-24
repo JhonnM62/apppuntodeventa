@@ -2992,7 +2992,7 @@ showAlert({
                                   }
                                   useCartStore.getState().setEditingSale(selectedVenta.IDventas, selectedVenta);
                                   closeModal();
-                                  navigation.navigate('Sales', { screen: 'NewSale' } as any);
+                                  navigation.navigate('Sales' as any);
                                 } catch (err) {
                                   console.error('[PedidosScreen] Error al continuar editando:', err);
                                   Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cargar el pedido al carrito' });
@@ -3657,7 +3657,7 @@ showAlert({
           }
           useCartStore.getState().setEditingSale(selectedVenta.IDventas, selectedVenta);
           closeModal();
-          navigation.navigate('Sales', { screen: 'NewSale' } as any);
+          navigation.navigate('Sales' as any);
         } catch (err) {
           console.error('[PedidosScreen] Error al volver al carrito:', err);
           Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cargar el pedido al carrito' });
@@ -3813,7 +3813,7 @@ showAlert({
                 style={styles.newSaleBtn}
                 onPress={() => {
                   useCartStore.getState().clearCart();
-                  navigation.navigate('Sales', { screen: 'NewSale' } as any);
+                  navigation.navigate('Sales' as any);
                 }}
               >
                 <Ionicons name="add" size={20} color="#fff" />
@@ -4135,7 +4135,7 @@ showAlert({
               {activeTab !== 'DOMIS' && !isFiltering && canCreateVenta && (
                 <TouchableOpacity
                   style={styles.emptyBtn}
-                  onPress={() => navigation.navigate('Sales', { screen: 'NewSale' } as any)}
+                  onPress={() => navigation.navigate('Sales' as any)}
                 >
                   <Ionicons name="add" size={20} color="#fff" />
                   <RNText style={styles.emptyBtnText}>Crear nueva venta</RNText>
