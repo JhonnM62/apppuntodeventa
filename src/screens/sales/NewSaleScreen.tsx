@@ -1108,6 +1108,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             efectivoRecibido: paymentData.efectivoRecibido || paymentData.totalInput || finalTotal,
             devueltas: paymentData.devueltas || 0,
             banco: paymentData.medioDePago === 'EFECTIVO' ? null : paymentData.banco,
+            valorDeTransferencia: paymentData.transferencia,
             totalInput: paymentData.totalInput || finalTotal,
             descuento: descuento,
             porcentajeDeDescuento: discountPercent.toString(),
@@ -1141,12 +1142,26 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         const finalMethod = payload.venta.medioDePago;
         const printStore = usePrinterStore.getState();
 
-        if (printStore.shouldPrintComanda(paymentData.estado) || printStore.shouldPrintFactura(paymentData.estado)) {
-          let cleanOrderId = editingVenta?.pedido || editingSaleId;
-          if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
-            cleanOrderId = cleanOrderId.substring(7);
+        const mesaNombre = selectedMesa?.nombre || selectedMesa?.IdMesas || (mesaValue !== 'V.R' && mesaValue !== 'CAJA' ? mesaValue : 'V.R');
+        let cleanOrderId = editingVenta?.pedido;
+        if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
+          cleanOrderId = cleanOrderId.substring(7);
+        }
+        if (cleanOrderId && mesaNombre) {
+          const partes = cleanOrderId.split('-');
+          if (partes.length >= 2) {
+            partes[0] = mesaNombre;
+            cleanOrderId = partes.join('-');
           }
+        }
+        if (!cleanOrderId || /^[a-z0-9]{25}$/i.test(cleanOrderId)) {
+          cleanOrderId = `${mesaNombre}-C-001`;
+        }
 
+        const mesaAnterior = editingVenta?.mesa || (editingVenta?.pedido ? editingVenta.pedido.split('-')[0] : '');
+        const mesaCambio = Boolean(mesaNombre && mesaAnterior && mesaNombre.toUpperCase() !== mesaAnterior.toUpperCase());
+
+        if (printStore.shouldPrintComanda(paymentData.estado) || printStore.shouldPrintFactura(paymentData.estado)) {
           let nuevosProductos: any[] = [];
           let productosAnteriores: any[] = [];
           
@@ -1230,7 +1245,22 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             porcentajeMermaPapa: getCachedConfiguracion()?.data?.porcentajeMermaPapa ?? getCachedConfiguracion()?.porcentajeMermaPapa ?? 10
           };
 
-          if (isEditing && editingVenta && yaEstuvoEnCocina) {
+          if (mesaCambio) {
+            // Si la mesa cambió (ej: de V.R a Mesa 6), cocina necesita la comanda completa con la nueva mesa
+            ticketData.forceComanda = true;
+            ticketData.suppressComanda = false;
+            ticketData.isAdicion = false;
+            ticketData.productos = payload.productos.map(item => ({
+              cantidad: item.cantidad,
+              nombre: item.nombre,
+              precioUnitario: item.precio,
+              subtotal: item.precioTotal,
+              modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
+              seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
+              gramosPapa: resolveGramosPapa(item),
+            }));
+            ticketData.productosAnteriores = [];
+          } else if (isEditing && editingVenta && yaEstuvoEnCocina) {
             if (nuevosProductos.length > 0) {
               ticketData.isAdicion = true;
               ticketData.forceComanda = true;
@@ -1299,7 +1329,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           }
         });
 
-        return { pedidoId: editingSaleId };
+        return { pedidoId: 'PROCESANDO...' };
       }
 
       const payload: SalePayload = {
@@ -1310,6 +1340,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           efectivoRecibido: paymentData.efectivoRecibido || paymentData.totalInput || finalTotal,
           devueltas: paymentData.devueltas || 0,
           banco: paymentData.medioDePago === 'EFECTIVO' ? null : paymentData.banco,
+          valorDeTransferencia: paymentData.transferencia,
           totalInput: paymentData.totalInput || finalTotal,
           descuento: descuento,
           porcentajeDeDescuento: discountPercent.toString(),
@@ -1476,6 +1507,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             efectivoRecibido: editingVenta?.efectivoRecibido || finalTotal,
             devueltas: editingVenta?.devueltas || 0,
             banco: editingVenta?.banco,
+            valorDeTransferencia: editingVenta?.valorDeTransferencia ? Number(editingVenta.valorDeTransferencia) : undefined,
             totalInput: finalTotal,
             descuento: descuento,
             porcentajeDeDescuento: discountPercent.toString(),
@@ -1502,10 +1534,21 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         import('../../services/sales').then(async ({ updateVentaCompleta }) => {
           try {
             // IMPRESIÓN INSTANTÁNEA ANTES DE GUARDAR EN BASE DE DATOS
-            const pedidoGenerado = editingVenta?.pedido || 'Editando...';
+            const mesaNombre = selectedMesa?.nombre || selectedMesa?.IdMesas || (selectedMesa?.IdMesas !== 'V.R' && selectedMesa?.IdMesas !== 'CAJA' ? selectedMesa?.IdMesas : 'V.R');
+            let cleanOrderId = editingVenta?.pedido;
+            if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
+              cleanOrderId = cleanOrderId.substring(7);
+            }
+            if (cleanOrderId && mesaNombre) {
+              const partes = cleanOrderId.split('-');
+              if (partes.length >= 2) {
+                partes[0] = mesaNombre;
+                cleanOrderId = partes.join('-');
+              }
+            }
+            const pedidoGenerado = cleanOrderId || 'Editando...';
             const printStore = usePrinterStore.getState();
             if (printStore.shouldPrintComanda(data.estado) || printStore.shouldPrintFactura(data.estado)) {
-              let cleanOrderId = pedidoGenerado;
               if (cleanOrderId && cleanOrderId.toLowerCase().startsWith('pedido-')) {
                 cleanOrderId = cleanOrderId.substring(7);
               }
@@ -1586,7 +1629,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           }
         });
 
-        return;
+        return { pedidoId: 'PROCESANDO...' };
       }
 
       const mesaValue = selectedMesa?.IdMesas || 'V.R';
@@ -2423,6 +2466,19 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         total={useCartStore.getState().getTotalPrice()}
         isLoading={isSubmitting}
         cliente={selectedCliente}
+        editingPedidoId={editingVenta?.pedido || undefined}
+        initialPaymentMethod={editingVenta?.medioDePago}
+        initialEfectivo={editingVenta?.efectivoRecibido ? Number(editingVenta.efectivoRecibido) : undefined}
+        initialTransferencia={
+          editingVenta?.valorDeTransferencia ? Number(editingVenta.valorDeTransferencia) :
+          (editingVenta?.transferencia ? Number(editingVenta.transferencia) :
+          (editingVenta?.medioDePago === 'EFECTIVO Y OTROS' && editingVenta?.totalInput && editingVenta?.efectivoRecibido ?
+            Math.max(0, Number(editingVenta.totalInput) - Number(editingVenta.efectivoRecibido)) : undefined))
+        }
+        initialBanco={editingVenta?.banco}
+        initialEstado={editingVenta?.estado}
+        initialPorcentajePropina={editingVenta?.porcentajePropina}
+        abonoPrevio={editingVenta?.abono ? Number(editingVenta.abono) : 0}
       />
 
       {renderClienteModal()}

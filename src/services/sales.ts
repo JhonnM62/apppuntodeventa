@@ -26,6 +26,8 @@ export interface SalePayload {
     efectivoRecibido: number;
     devueltas?: number;
     banco?: string;
+    valorDeTransferencia?: number;
+    transferencia?: number;
     totalInput: number;
     descuento?: number;
     porcentajeDeDescuento?: string;

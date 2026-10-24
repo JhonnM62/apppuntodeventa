@@ -53,6 +53,12 @@ interface PaymentModalProps {
   isLoading?: boolean;
   editingPedidoId?: string;
   cliente?: Cliente | null;
+  initialPaymentMethod?: PaymentMethod | string | null;
+  initialEfectivo?: number | null;
+  initialTransferencia?: number | null;
+  initialBanco?: string | null;
+  initialEstado?: OrderStatus | null;
+  initialPorcentajePropina?: string | null;
 }
 
 interface BankOption {
@@ -100,6 +106,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   editingPedidoId,
   cliente,
   abonoPrevio = 0,
+  initialPaymentMethod,
+  initialEfectivo,
+  initialTransferencia,
+  initialBanco,
+  initialEstado,
+  initialPorcentajePropina,
 }) => {
   const { height: windowHeight } = useWindowDimensions();
   const [method, setMethod] = useState<PaymentMethod | null>(null);
@@ -203,12 +215,37 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       }).catch(err => console.log('Error fetching config in PaymentModal', err));
 
       const isCobrarMode = !!onCobrar;
-      setMethod(isCobrarMode ? 'EFECTIVO' : null);
-      setSelectedBank(null); // Reset bank on open
-      setEfectivoInput('');
-      setTransferenciaInput('');
-      setAbonoInput('');
-      setSelectedEstado(isCobrarMode ? 'PAGADO' : 'EN_EL_CARRITO');
+      const validMethods: PaymentMethod[] = ['EFECTIVO', 'TRANSFERENCIA', 'TARJETA', 'EFECTIVO Y OTROS'];
+      const methodToSet = (initialPaymentMethod && validMethods.includes(initialPaymentMethod as PaymentMethod))
+        ? (initialPaymentMethod as PaymentMethod)
+        : (isCobrarMode ? 'EFECTIVO' : null);
+      setMethod(methodToSet);
+      setSelectedBank(initialBanco || null);
+
+      if (initialEfectivo !== undefined && initialEfectivo !== null && Number(initialEfectivo) > 0) {
+        setEfectivoInput(Number(initialEfectivo).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+      } else {
+        setEfectivoInput('');
+      }
+
+      if (initialTransferencia !== undefined && initialTransferencia !== null && Number(initialTransferencia) > 0) {
+        setTransferenciaInput(Number(initialTransferencia).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+      } else {
+        setTransferenciaInput('');
+      }
+
+      if (abonoPrevio && abonoPrevio > 0) {
+        setAbonoInput(abonoPrevio.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+      } else {
+        setAbonoInput('');
+      }
+
+      if (initialPorcentajePropina) {
+        const p = parseFloat(initialPorcentajePropina) / 100;
+        if (!isNaN(p)) setPropinaPercent(p);
+      }
+
+      setSelectedEstado(initialEstado || (isCobrarMode ? 'PAGADO' : 'EN_EL_CARRITO'));
       Animated.parallel([
         Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
         Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 65, friction: 11 }),
@@ -319,6 +356,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     let cleanOrderId = orderId;
     if (orderId && orderId.toLowerCase().startsWith('pedido-')) {
       cleanOrderId = orderId.substring(7); // Remueve "pedido-"
+    }
+    // Si cleanOrderId es un CUID/UUID bruto y tenemos un editingPedidoId legible, usamos ese
+    if (cleanOrderId && (/^[a-z0-9]{25}$/i.test(cleanOrderId) || /^[0-9a-f-]{36}$/i.test(cleanOrderId))) {
+      if (editingPedidoId && !/^[a-z0-9]{25}$/i.test(editingPedidoId)) {
+        cleanOrderId = editingPedidoId;
+      }
     }
 
     const itemsToPrint = (customCart && customCart.length > 0) ? customCart : cart;

@@ -53,6 +53,8 @@ type VentaItem = {
   efectivoRecibido?: number;
   devueltas?: number;
   banco?: string;
+  valorDeTransferencia?: number;
+  transferencia?: number;
   totalInput?: number;
   abono?: number;
   pedido?: string;
@@ -4404,7 +4406,7 @@ showAlert({
       setCobrarVenta(null);
       useCartStore.getState().clearCart();
       Toast.show({ type: 'success', text1: 'Cobro Exitoso', text2: 'Pedido cobrado correctamente', position: 'top' });
-      return { pedidoId: cobrarVenta.pedido || cobrarVenta.IDventas };
+      return { pedidoId: cobrarVenta.pedido || undefined };
     } catch (error) {
       console.error('Error al cobrar:', error);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cobrar el pedido', position: 'top' });
@@ -4420,7 +4422,7 @@ showAlert({
       setCobrarVenta(null);
       useCartStore.getState().clearCart();
       Toast.show({ type: 'success', text1: 'Actualizado', text2: 'El pedido fue actualizado', position: 'top' });
-      return { pedidoId: cobrarVenta.pedido || cobrarVenta.IDventas };
+      return { pedidoId: cobrarVenta.pedido || undefined };
     } catch (error) {
       console.error('Error al guardar:', error);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo actualizar el pedido', position: 'top' });
@@ -5011,7 +5013,18 @@ showAlert({
         onSave={handleSaveCobrar}
         onCobrar={handleCobrarConfirm}
         total={getVentaTotal(cobrarVenta)}
-        editingPedidoId={cobrarVenta?.pedido || cobrarVenta?.IDventas}
+        editingPedidoId={cobrarVenta?.pedido || undefined}
+        initialPaymentMethod={cobrarVenta?.medioDePago}
+        initialEfectivo={cobrarVenta?.efectivoRecibido ? Number(cobrarVenta.efectivoRecibido) : undefined}
+        initialTransferencia={
+          cobrarVenta?.valorDeTransferencia ? Number(cobrarVenta.valorDeTransferencia) :
+          (cobrarVenta?.transferencia ? Number(cobrarVenta.transferencia) :
+          (cobrarVenta?.medioDePago === 'EFECTIVO Y OTROS' && cobrarVenta?.totalInput && cobrarVenta?.efectivoRecibido ?
+            Math.max(0, Number(cobrarVenta.totalInput) - Number(cobrarVenta.efectivoRecibido)) : undefined))
+        }
+        initialBanco={cobrarVenta?.banco}
+        initialEstado={cobrarVenta?.estado as any}
+        initialPorcentajePropina={cobrarVenta?.porcentajePropina}
         abonoPrevio={Number(cobrarVenta?.abono) || 0}
       />
       
