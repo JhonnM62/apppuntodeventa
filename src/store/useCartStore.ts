@@ -237,10 +237,22 @@ const useCartStore = create<CartStore>((set, get) => ({
       for (const m of raw) {
         if (!m) continue;
         if (typeof m === 'string') {
-          const s = m.trim();
+          let s = m.trim();
+          if (s.startsWith('{')) {
+            try {
+              const inner = JSON.parse(s);
+              s = String(inner.name || inner.nombre || inner.Nombre || s).trim();
+            } catch (e) {}
+          }
           if (s) cleanList.push({ name: s, price: 0, quantity: 1 });
         } else if (typeof m === 'object') {
-          const name = String(m.name || m.nombre || m.Nombre || m.observacion || m.comentario || '').trim();
+          let name = String(m.name || m.nombre || m.Nombre || m.observacion || m.comentario || '').trim();
+          if (name.startsWith('{')) {
+            try {
+              const inner = JSON.parse(name);
+              name = String(inner.name || inner.nombre || inner.Nombre || name).trim();
+            } catch (e) {}
+          }
           if (name) {
             const price = Number(m.price ?? m.precio ?? m.Precio ?? 0);
             const quantity = Number(m.quantity ?? m.cantidad ?? 1);

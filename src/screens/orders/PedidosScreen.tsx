@@ -1712,12 +1712,42 @@ showAlert({
     return num;
   };
 
+  const isZeroPriceOrExternalProduct = (it: any): boolean => {
+    if (!it) return true;
+    const catalog = useProductStore.getState().productos || [];
+    const prodId = it.productoId || it.IDproductos || it.id;
+    const itName = (it.nombre || it.nombreProducto || '').toLowerCase().trim();
+
+    const match = catalog.find((p: any) => {
+      if (prodId && (p.IDproductos === prodId || p.id === prodId)) return true;
+      if (itName && p.nombre && p.nombre.toLowerCase().trim() === itName) return true;
+      return false;
+    });
+
+    if (match) {
+      const catalogPrice = Number(match.precioUnitario ?? match.Precio_Unitario ?? match.precio ?? 0);
+      if (catalogPrice <= 0) return true;
+      return false;
+    }
+
+    const uPrice = Number(it.precioUnitario ?? it.precio ?? 0);
+    const tPrice = Number(it.precioTotal ?? 0);
+    if (uPrice <= 0 && tPrice <= 0) return true;
+
+    return false;
+  };
+
   const buildProductosPayloadFromDomicilio = (dom: DomicilioWAItem) => {
     const rawItems = Array.isArray(dom.itemsMapeados) && dom.itemsMapeados.length > 0
       ? dom.itemsMapeados
       : [{ nombre: dom.detalleTextoWA || 'Domicilio WhatsApp', cantidad: 1, precioUnitario: dom.totalWA || 0, precioTotal: dom.totalWA || 0 }];
 
-    return rawItems.map((it) => {
+    const validItems = rawItems.filter((it) => !isZeroPriceOrExternalProduct(it));
+    const itemsToProcess = validItems.length > 0
+      ? validItems
+      : rawItems.filter((it) => Number(it.precioUnitario || it.precioTotal || 0) > 0);
+
+    return itemsToProcess.map((it) => {
       let unitPrice = it.precioUnitario || 0;
       let totPrice = it.precioTotal || 0;
       if (!unitPrice && !totPrice && it.nombre) {
@@ -1758,7 +1788,10 @@ showAlert({
 
       if (!ventaId) {
         const productosPayload = buildProductosPayloadFromDomicilio(dom);
-        const totalVenta = normalizeCOP(dom.totalWA) || normalizeCOP(dom.totalCalculado) || productosPayload.reduce((s, p) => s + (p.precioTotal || 0), 0);
+        const totalProductos = productosPayload.reduce((s, p) => s + (p.precioTotal || 0), 0);
+        const totalVenta = totalProductos > 0
+          ? totalProductos
+          : (normalizeCOP(dom.totalCalculado) || normalizeCOP(dom.totalWA) || 0);
 
         const newSale = await createSale({
           venta: {
@@ -1875,7 +1908,10 @@ showAlert({
 
     try {
       const productosPayload = buildProductosPayloadFromDomicilio(dom);
-      const totalVenta = normalizeCOP(dom.totalWA) || normalizeCOP(dom.totalCalculado) || productosPayload.reduce((s, p) => s + (p.precioTotal || 0), 0);
+      const totalProductos = productosPayload.reduce((s, p) => s + (p.precioTotal || 0), 0);
+      const totalVenta = totalProductos > 0
+        ? totalProductos
+        : (normalizeCOP(dom.totalCalculado) || normalizeCOP(dom.totalWA) || 0);
 
       const cleanPhone = dom.clienteTelefono ? dom.clienteTelefono.replace(/\D/g, '') : '';
       const mesaStr = cleanPhone ? `DOMICILIO WA ${cleanPhone}` : 'DOMICILIO WA';
@@ -1910,8 +1946,24 @@ showAlert({
   };
 
   const mapDomicilioToVenta = (dom: DomicilioWAItem): any => {
-    const itemsPropios = Array.isArray(dom.itemsMapeados) ? dom.itemsMapeados : [];
-    const itemsExt = Array.isArray(dom.itemsExternos) ? dom.itemsExternos : [];
+    const rawItemsPropios = Array.isArray(dom.itemsMapeados) ? dom.itemsMapeados : [];
+    const rawItemsExt = Array.isArray(dom.itemsExternos) ? dom.itemsExternos : [];
+
+    // Separar productos que en este negocio tienen precio 0 o no pertenecen al catálogo activo
+    const itemsPropios: any[] = [];
+    const itemsExt: any[] = [...rawItemsExt];
+
+    for (const it of rawItemsPropios) {
+      if (isZeroPriceOrExternalProduct(it)) {
+        itemsExt.push({
+          nombre: it.nombre,
+          cantidad: it.cantidad || 1,
+          observacion: it.comentarios ? `${it.comentarios}` : `No vendido en este negocio ($0 en catálogo)`,
+        });
+      } else {
+        itemsPropios.push(it);
+      }
+    }
 
     const ordenVentas: any[] = [
       ...itemsPropios.map((it, idx) => {
@@ -1981,7 +2033,13 @@ showAlert({
       }),
     ];
 
-    const totalVenta = normalizeCOP(dom.totalWA) || normalizeCOP(dom.totalCalculado) || 0;
+    const totalLocalCalculado = itemsPropios.reduce((sum, it) => {
+      let itPrice = it.precioTotal || (it.precioUnitario || 0) * (it.cantidad || 1);
+      return sum + normalizeCOP(itPrice);
+    }, 0);
+    const totalVenta = totalLocalCalculado > 0
+      ? totalLocalCalculado
+      : (normalizeCOP(dom.totalCalculado) || normalizeCOP(dom.totalWA) || 0);
 
     if (ordenVentas.length === 0 && dom.detalleTextoWA) {
       ordenVentas.push({
@@ -2015,6 +2073,7 @@ showAlert({
       notas: dom.detalleTextoWA || undefined,
       mensaje: `Chatbot WhatsApp (${dom.botNombre || 'IA'})`,
       ordenVentas,
+      itemsExternos: itemsExt,
       _isDomicilioWA: true,
       _rawDomicilio: dom,
     };
@@ -2057,8 +2116,23 @@ showAlert({
       borderColor = '#9ca3af';
     }
 
-    const itemsPropios = Array.isArray(item.itemsMapeados) ? item.itemsMapeados : [];
-    const itemsExt = Array.isArray(item.itemsExternos) ? item.itemsExternos : [];
+    const rawItemsPropios = Array.isArray(item.itemsMapeados) ? item.itemsMapeados : [];
+    const rawItemsExt = Array.isArray(item.itemsExternos) ? item.itemsExternos : [];
+
+    const itemsPropios: any[] = [];
+    const itemsExt: any[] = [...rawItemsExt];
+
+    for (const it of rawItemsPropios) {
+      if (isZeroPriceOrExternalProduct(it)) {
+        itemsExt.push({
+          nombre: it.nombre,
+          cantidad: it.cantidad || 1,
+          observacion: it.comentarios ? `${it.comentarios}` : `Precio $0 en catálogo local`,
+        });
+      } else {
+        itemsPropios.push(it);
+      }
+    }
 
     return (
       <View style={{ marginBottom: 12 }}>
@@ -2229,10 +2303,31 @@ showAlert({
           {/* Footer de la tarjeta con Total y Acciones */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTopWidth: 1, borderTopColor: '#f3f4f6' }}>
             <View>
-              <RNText style={{ fontSize: 10, fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase' }}>TOTAL A COBRAR</RNText>
-              <RNText style={{ fontSize: 16, fontWeight: '800', color: '#111827' }}>
-                {formatMoney(normalizeCOP(item.totalWA) || normalizeCOP(item.totalCalculado) || 0)}
-              </RNText>
+              {(() => {
+                const totalLocal = itemsPropios.reduce((sum, it) => {
+                  let itPrice = it.precioTotal || (it.precioUnitario || 0) * (it.cantidad || 1);
+                  return sum + normalizeCOP(itPrice);
+                }, 0);
+                const displayTotal = totalLocal > 0
+                  ? totalLocal
+                  : (normalizeCOP(item.totalCalculado) || normalizeCOP(item.totalWA) || 0);
+
+                return (
+                  <>
+                    <RNText style={{ fontSize: 10, fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase' }}>
+                      {itemsExt.length > 0 ? 'TOTAL ESTE LOCAL' : 'TOTAL A COBRAR'}
+                    </RNText>
+                    <RNText style={{ fontSize: 16, fontWeight: '800', color: '#111827' }}>
+                      {formatMoney(displayTotal)}
+                    </RNText>
+                    {itemsExt.length > 0 && normalizeCOP(item.totalWA) > displayTotal && (
+                      <RNText style={{ fontSize: 10, color: '#7c3aed', fontWeight: '600' }}>
+                        Total WA: {formatMoney(normalizeCOP(item.totalWA))}
+                      </RNText>
+                    )}
+                  </>
+                );
+              })()}
             </View>
 
 
@@ -2596,18 +2691,35 @@ showAlert({
                   let notas: any[] = [];
                   if (prod.comentarios) {
                     try {
-                      const parsed = JSON.parse(prod.comentarios);
+                      let parsed = typeof prod.comentarios === 'string' ? JSON.parse(prod.comentarios) : prod.comentarios;
+                      if (typeof parsed === 'string' && parsed.trim().startsWith('{')) {
+                        try { parsed = JSON.parse(parsed); } catch (e) {}
+                      }
                       if (Array.isArray(parsed)) {
                         notas = parsed;
-                      } else {
-                        notas = [{ name: String(prod.comentarios), price: 0 }];
+                      } else if (parsed && typeof parsed === 'object') {
+                        notas = [parsed];
+                      } else if (parsed) {
+                        notas = [{ name: String(parsed), price: 0 }];
                       }
                     } catch (e) {
                       if (typeof prod.comentarios === 'string' && prod.comentarios.trim().length > 0) {
-                        notas = [{ name: prod.comentarios.trim(), price: 0 }];
+                        let cStr = prod.comentarios.trim();
+                        if (cStr.startsWith('{')) {
+                          try {
+                            const inner = JSON.parse(cStr);
+                            notas = [inner];
+                          } catch (err) {
+                            notas = [{ name: cStr, price: 0 }];
+                          }
+                        } else {
+                          notas = [{ name: cStr, price: 0 }];
+                        }
                       }
                     }
                   }
+
+                  const isZeroCatalog = isZeroPriceOrExternalProduct(prod);
 
                   return (
                     <View key={prod.IDorderventas || prod.producto?.IDproductos || idx} style={{ marginBottom: 12 }}>
@@ -2631,12 +2743,25 @@ showAlert({
                               estado={(prod.cantidad && prod.cantidad > 1 && (prod.cantidadPreparada || 0) < prod.cantidad) ? 'PREPARANDO' : prod.estado} 
                             />
                           </View>
+                          {isZeroCatalog && (
+                            <View style={{ backgroundColor: '#fee2e2', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, alignSelf: 'flex-start', marginTop: 3, borderWidth: 1, borderColor: '#fca5a5' }}>
+                              <RNText style={{ fontSize: 10, color: '#b91c1c', fontWeight: 'bold' }}>
+                                ⚠️ Precio $0 en catálogo local (De otro comercio)
+                              </RNText>
+                            </View>
+                          )}
                           
                           {/* Notas/Modificadores con cantidades y precios */}
                           {notas.length > 0 && (
                             <View style={{ marginTop: 2, marginBottom: 2 }}>
                               {notas.map((nota, nIdx) => {
-                                const notaName = nota.name || nota.nombre || nota.Nombre || '';
+                                let notaName = nota.name || nota.nombre || nota.Nombre || '';
+                                if (typeof notaName === 'string' && notaName.trim().startsWith('{')) {
+                                  try {
+                                    const inner = JSON.parse(notaName);
+                                    notaName = inner.name || inner.nombre || inner.Nombre || notaName;
+                                  } catch (e) {}
+                                }
                                 const notaPrice = Number(nota.price ?? nota.precio ?? nota.Precio ?? 0);
                                 const notaQty = Number(nota.quantity ?? nota.cantidad ?? 1);
                                 const displayQty = notaQty > 1 ? `${notaQty}x ` : '';
@@ -2770,6 +2895,22 @@ showAlert({
                     </View>
                   );
                 })}
+
+                {(selectedVenta as any).itemsExternos && (selectedVenta as any).itemsExternos.length > 0 && (
+                  <View style={{ backgroundColor: '#faf5ff', padding: 12, borderRadius: 10, marginTop: 10, borderWidth: 1, borderColor: '#e9d5ff' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                      <Ionicons name="storefront-outline" size={16} color="#7c3aed" style={{ marginRight: 6 }} />
+                      <RNText style={{ fontSize: 12, fontWeight: 'bold', color: '#7c3aed' }}>
+                        Items de otro comercio / bot (No cobrados ni preparados aquí):
+                      </RNText>
+                    </View>
+                    {(selectedVenta as any).itemsExternos.map((ext: any, eIdx: number) => (
+                      <RNText key={eIdx} style={{ fontSize: 12, color: '#6b21a8', paddingVertical: 1 }}>
+                        • {ext.cantidad || 1}x {ext.nombre} {ext.observacion ? `(${ext.observacion})` : ''}
+                      </RNText>
+                    ))}
+                  </View>
+                )}
               </View>
 
               <View style={styles.modalSection}>
