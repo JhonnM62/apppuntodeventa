@@ -723,6 +723,48 @@ const PedidosScreen = () => {
     }
   }, []);
 
+  const storeCategorias = useProductStore((state) => state.categorias);
+  const isComidaLocal = useMemo(() => {
+    return (storeCategorias || []).some((c) =>
+      /hamburguesa|alitas|salchipapa|carne|perro|sandwich|sanduche|fundido|queso|parrilla|asado|costilla|platos|cocina/i.test(c || '')
+    );
+  }, [storeCategorias]);
+
+  const pedidoTieneComida = useCallback((dom: DomicilioWAItem): boolean => {
+    const FOOD_REGEX =
+      /\b(hamburguesa|hamburguesas|burger|burgers|alita|alitas|wings|perro|perros|hot\s*dog|hotdogs|choriperro|choriperros|chorizo|chorizos|salchipapa|salchipapas|sandwich|sandwiches|sanduche|sanduches|sánduche|sánduches|sándwich|sándwiches|carne|carnes|asado|asados|costilla|costillas|parrilla|porcion|porción|papas|papa\s*francesa|papas\s*francesas|francesa|rustica|rústica|desgranado|desgranados|patacon|patacón|patacones|arepa|arepas|taco|tacos|burrito|burritos|quesadilla|quesadillas|mazorca|mazorcas|pincho|pinchos|crispy|parcera|fogata|combo|pollo|pechuga|nugget|nuggets|fundido|fundidos)\b/i;
+
+    const checkName = (name?: string): boolean => {
+      if (!name || typeof name !== 'string') return false;
+      return FOOD_REGEX.test(name.trim());
+    };
+
+    if (Array.isArray(dom.itemsMapeados) && dom.itemsMapeados.length > 0) {
+      for (const it of dom.itemsMapeados as any[]) {
+        if (checkName(it.nombre || it.name)) return true;
+      }
+    }
+
+    if (Array.isArray(dom.itemsExternos) && dom.itemsExternos.length > 0) {
+      for (const it of dom.itemsExternos as any[]) {
+        if (checkName(it.nombre || it.name || it.observacion)) return true;
+      }
+    }
+
+    if (dom.detalleTextoWA && typeof dom.detalleTextoWA === 'string') {
+      if (FOOD_REGEX.test(dom.detalleTextoWA)) return true;
+    }
+
+    return false;
+  }, []);
+
+  const visibleDomicilios = useMemo(() => {
+    const list = Array.isArray(domicilios) ? domicilios : [];
+    if (!isComidaLocal) return list;
+    // Si este local es de comida, excluir pedidos que son SOLO granizados / bebidas (sin comida)
+    return list.filter((d) => pedidoTieneComida(d));
+  }, [domicilios, isComidaLocal, pedidoTieneComida]);
+
   const tabsWithCounts = useMemo(() => {
     const arraySeguro = Array.isArray(cachedVentas) ? cachedVentas : [];
     
@@ -731,7 +773,7 @@ const PedidosScreen = () => {
       if (tab.key === 'todos') {
         count = arraySeguro.length;
       } else if (tab.key === 'DOMIS') {
-        count = domicilios.filter(d => d.estado === 'RECIENTE').length;
+        count = visibleDomicilios.filter(d => d.estado === 'RECIENTE').length;
       } else {
         const tabUpper = tab.key.toUpperCase().replace(/_/g, ' ');
         count = arraySeguro.filter(v => {
@@ -741,10 +783,10 @@ const PedidosScreen = () => {
       }
       return { ...tab, count };
     });
-  }, [cachedVentas, domicilios]);
+  }, [cachedVentas, visibleDomicilios]);
 
   const domisSubTabsWithCounts = useMemo(() => {
-    const list = Array.isArray(domicilios) ? domicilios : [];
+    const list = visibleDomicilios;
     const isDomCobrado = (d: DomicilioWAItem) =>
       d.estado === 'COBRADO' || d.estado === 'PAGADO' || d.ventaRelacion?.estado === 'PAGADO';
 
@@ -764,7 +806,7 @@ const PedidosScreen = () => {
       { key: 'PAGADOS', label: 'Pagados', count: countPagados, color: '#22c55e' },
       { key: 'TODOS', label: 'Todos', count: countTodos, color: '#6b7280' },
     ];
-  }, [domicilios]);
+  }, [visibleDomicilios]);
 
   const fetchIdRef = useRef<number>(0);
 
@@ -884,6 +926,10 @@ const PedidosScreen = () => {
     SocketEvent.NUEVO_DOMICILIO,
     (nuevoDom) => {
       if (!nuevoDom) return;
+      // En locales de comida, si el pedido no tiene comida (solo granizados), ignorar
+      if (isComidaLocal && !pedidoTieneComida(nuevoDom)) {
+        return;
+      }
       soundService.playDeliveryAlert();
       Toast.show({
         type: 'info',
@@ -910,6 +956,9 @@ const PedidosScreen = () => {
     SocketEvent.DOMICILIO_TIMEOUT,
     (domTimeout) => {
       if (!domTimeout) return;
+      if (isComidaLocal && !pedidoTieneComida(domTimeout)) {
+        return;
+      }
       soundService.playDeliveryAlert();
       Toast.show({
         type: 'error',
@@ -2476,7 +2525,7 @@ showAlert({
 
   const flatListData = useMemo(() => {
     if (activeTab === 'DOMIS') {
-      let filteredDomis = domicilios;
+      let filteredDomis = visibleDomicilios;
 
       if (domisSubTab === 'NUEVOS') {
         filteredDomis = filteredDomis.filter(d => 
@@ -2531,7 +2580,7 @@ showAlert({
       result.push(...section.data);
     });
     return result;
-  }, [activeTab, domisSubTab, domicilios, filters.searchText, groupedVentas, groupDomisByDate]);
+  }, [activeTab, domisSubTab, visibleDomicilios, filters.searchText, groupedVentas, groupDomisByDate]);
 
   const keyExtractor = (item: any, index: number) => {
     if (item.isHeader) {

@@ -1713,9 +1713,22 @@ export default function ConfiguracionNegocioScreen({ navigation }: Props) {
               </TouchableOpacity>
             </View>
 
-            <Text style={{ fontSize: 12, color: '#6b7280', marginBottom: 12, lineHeight: 16 }}>
+            <Text style={{ fontSize: 12, color: '#6b7280', marginBottom: 10, lineHeight: 16 }}>
               Define qué producto de empaque (caja, tapa, desechable) usa cada categoría o plato al ingresar un domicilio por WhatsApp y si se cobra como ítem adicional o va incluido.
             </Text>
+
+            {/* Banner de Regla Estricta de Precios */}
+            <View style={{ backgroundColor: '#eff6ff', borderWidth: 1, borderColor: '#bfdbfe', borderRadius: 8, padding: 10, marginBottom: 12, flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name="shield-checkmark" size={20} color="#2563eb" style={{ marginRight: 8 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: '#1e40af' }}>
+                  Regla Estricta: Precios de Catálogo Protegidos
+                </Text>
+                <Text style={{ fontSize: 11, color: '#1e3a8a', marginTop: 2, lineHeight: 15 }}>
+                  El precio unitario de los productos de catálogo NUNCA se modifica ni se le infla el valor del desechable. Los empaques y desechables se agregan como ítems independientes según las reglas a continuación.
+                </Text>
+              </View>
+            </View>
 
             {reglasEmpaque.length === 0 ? (
               <View style={{ backgroundColor: '#f9fafb', borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 8, padding: 14, alignItems: 'center', marginVertical: 4 }}>

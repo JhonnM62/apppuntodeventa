@@ -272,6 +272,41 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   const [desatendidosCount, setDesatendidosCount] = useState(0);
   const [configNegocio, setConfigNegocio] = useState<any>(null);
 
+  const storeCategorias = useProductStore((state) => state.categorias);
+  const isComidaLocal = useMemo(() => {
+    return (storeCategorias || []).some((c) =>
+      /hamburguesa|alitas|salchipapa|carne|perro|sandwich|sanduche|fundido|queso|parrilla|asado|costilla|platos|cocina/i.test(c || '')
+    );
+  }, [storeCategorias]);
+
+  const pedidoTieneComida = useCallback((dom: DomicilioWAItem): boolean => {
+    const FOOD_REGEX =
+      /\b(hamburguesa|hamburguesas|burger|burgers|alita|alitas|wings|perro|perros|hot\s*dog|hotdogs|choriperro|choriperros|chorizo|chorizos|salchipapa|salchipapas|sandwich|sandwiches|sanduche|sanduches|sánduche|sánduches|sándwich|sándwiches|carne|carnes|asado|asados|costilla|costillas|parrilla|porcion|porción|papas|papa\s*francesa|papas\s*francesas|francesa|rustica|rústica|desgranado|desgranados|patacon|patacón|patacones|arepa|arepas|taco|tacos|burrito|burritos|quesadilla|quesadillas|mazorca|mazorcas|pincho|pinchos|crispy|parcera|fogata|combo|pollo|pechuga|nugget|nuggets|fundido|fundidos)\b/i;
+
+    const checkName = (name?: string): boolean => {
+      if (!name || typeof name !== 'string') return false;
+      return FOOD_REGEX.test(name.trim());
+    };
+
+    if (Array.isArray(dom.itemsMapeados) && dom.itemsMapeados.length > 0) {
+      for (const it of dom.itemsMapeados as any[]) {
+        if (checkName(it.nombre || it.name)) return true;
+      }
+    }
+
+    if (Array.isArray(dom.itemsExternos) && dom.itemsExternos.length > 0) {
+      for (const it of dom.itemsExternos as any[]) {
+        if (checkName(it.nombre || it.name || it.observacion)) return true;
+      }
+    }
+
+    if (dom.detalleTextoWA && typeof dom.detalleTextoWA === 'string') {
+      if (FOOD_REGEX.test(dom.detalleTextoWA)) return true;
+    }
+
+    return false;
+  }, []);
+
   const loadDomiciliosBloqueo = useCallback(async () => {
     try {
       const cfgRes = await getConfiguracion();
@@ -281,7 +316,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       if (cfg?.domisHabilitado && cfg?.domisBloqueoVentas) {
         const domis = await getDomicilios('RECIENTE');
         if (Array.isArray(domis)) {
-          setRecentDomis(domis);
+          const filtered = isComidaLocal ? domis.filter((d) => pedidoTieneComida(d)) : domis;
+          setRecentDomis(filtered);
         }
       } else {
         setRecentDomis([]);
@@ -291,7 +327,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     } catch (e) {
       console.error('Error loading domicilios bloqueo:', e);
     }
-  }, []);
+  }, [isComidaLocal, pedidoTieneComida]);
 
   // Carga inicial y al enfocar la pantalla (sin bucles de dependencias)
   useFocusEffect(
@@ -315,6 +351,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
       const now = Date.now();
       const overdues = recentDomis.filter((d) => {
         if (d.estado !== 'RECIENTE') return false;
+        if (isComidaLocal && !pedidoTieneComida(d)) return false;
         const created = new Date(d.timestampPedido || d.createdAt).getTime();
         return now - created >= timeoutMs;
       });
@@ -326,10 +363,11 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     const interval = setInterval(checkOverdues, 4000);
 
     return () => clearInterval(interval);
-  }, [configNegocio, recentDomis]);
+  }, [configNegocio, recentDomis, isComidaLocal, pedidoTieneComida]);
 
   useSocketEvent<DomicilioWAItem>(SocketEvent.NUEVO_DOMICILIO, (nuevoDom) => {
     if (!nuevoDom) return;
+    if (isComidaLocal && !pedidoTieneComida(nuevoDom)) return;
     if (configNegocio?.domisAlertaSonora) {
       soundService.playDeliveryAlert();
     }
@@ -339,7 +377,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   useSocketEvent<DomicilioWAItem>(SocketEvent.DOMICILIO_ACTUALIZADO, (domActualizado) => {
     if (!domActualizado) return;
     setRecentDomis((prev) => {
-      if (domActualizado.estado !== 'RECIENTE') {
+      if (domActualizado.estado !== 'RECIENTE' || (isComidaLocal && !pedidoTieneComida(domActualizado))) {
         return prev.filter((d) => d.IDdomicilio !== domActualizado.IDdomicilio);
       }
       return prev.map((d) => (d.IDdomicilio === domActualizado.IDdomicilio ? { ...d, ...domActualizado } : d));
@@ -348,6 +386,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
 
   useSocketEvent<DomicilioWAItem>(SocketEvent.DOMICILIO_TIMEOUT, (domTimeout) => {
     if (!domTimeout) return;
+    if (isComidaLocal && !pedidoTieneComida(domTimeout)) return;
     if (configNegocio?.domisAlertaSonora) {
       soundService.playDeliveryAlert();
     }
