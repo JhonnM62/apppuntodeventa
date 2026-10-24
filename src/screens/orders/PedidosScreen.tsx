@@ -185,49 +185,49 @@ const computeActiveMs = (
   cocinaInicioAt?: string | null,
   cocinaFinAt?: string | null
 ) => {
+  // 1. Si existe registroDeTiempo con duraciones registradas o múltiples estados
+  if (Array.isArray(registroDeTiempo) && registroDeTiempo.length > 0) {
+    let sumDurMs = 0;
+    for (let i = 1; i < registroDeTiempo.length; i++) {
+      const durStr = registroDeTiempo[i]?.duracion;
+      if (durStr && typeof durStr === 'string') {
+        const parts = durStr.split(':').map(Number);
+        if (parts.length === 4 && parts.every(n => !isNaN(n))) {
+          const [d, h, m, s] = parts;
+          sumDurMs += (((d * 24 + h) * 60 + m) * 60 + s) * 1000;
+        }
+      }
+    }
+    if (sumDurMs > 0) {
+      return sumDurMs;
+    }
+
+    if (registroDeTiempo.length >= 2) {
+      const firstTime = new Date(registroDeTiempo[0].fecha_hora).getTime();
+      const lastEntry = registroDeTiempo[registroDeTiempo.length - 1];
+      const lastTime = new Date(lastEntry.fecha_hora).getTime();
+      if (!isNaN(firstTime) && !isNaN(lastTime) && lastTime > firstTime) {
+        return lastTime - firstTime;
+      }
+    }
+
+    const firstTime = new Date(registroDeTiempo[0].fecha_hora).getTime();
+    if (!isNaN(firstTime) && endTime > firstTime) {
+      return Math.max(0, endTime - firstTime);
+    }
+  }
+
+  // 2. Si no hay registroDeTiempo detallado, calcular usando cocinaInicioAt / cocinaFinAt
   if (cocinaInicioAt) {
     const startMs = new Date(cocinaInicioAt).getTime();
     const endMs = cocinaFinAt ? new Date(cocinaFinAt).getTime() : endTime;
-    return Math.max(0, endMs - startMs);
-  }
-
-  if (!registroDeTiempo || registroDeTiempo.length === 0) return 0;
-  
-  let totalMs = 0;
-  let activeStart: number | null = null;
-  const activeStates = ['TOMADO', 'PREPARANDO', 'LISTO_PARA_ENTREGA', 'LISTO'];
-  const isModoRest = isModoRestaurante();
-
-  for (let i = 0; i < registroDeTiempo.length; i++) {
-    const entry = registroDeTiempo[i];
-    const time = new Date(entry.fecha_hora).getTime();
-    
-    // En modo Restaurante un PAGADO al inicio cuenta como cocina activa
-    const isPagarAlInicio = entry.estado === 'PAGADO' && i <= 2 && isModoRest;
-    const isActive = activeStates.includes(entry.estado) || isPagarAlInicio;
-
-    if (isActive) {
-      if (activeStart === null) {
-        activeStart = time;
-      }
-    } else if (
-      entry.estado === 'ENTREGADO' || 
-      entry.estado === 'CANCELADO' || 
-      entry.estado === 'ANULADO' || 
-      (!isModoRest && entry.estado === 'PAGADO')
-    ) {
-      if (activeStart !== null) {
-        totalMs += Math.max(0, time - activeStart);
-        activeStart = null;
-      }
+    const diff = endMs - startMs;
+    if (diff > 0) {
+      return diff;
     }
   }
-  
-  if (activeStart !== null) {
-    totalMs += Math.max(0, endTime - activeStart);
-  }
-  
-  return totalMs;
+
+  return 0;
 };
 
 const formatDurationStr = (diff: number, formatAsStopwatch: boolean = false) => {
@@ -429,6 +429,7 @@ const PreparationTimer = ({
 
 const RealtimeDurationTimer = React.memo(({ selectedVenta }: { selectedVenta: any }) => {
   const [realtimeDuration, setRealtimeDuration] = useState<string | null>(null);
+  const [timerStyle, setTimerStyle] = useState({ bg: '#f3f4f6', text: '#6b7280', icon: 'pause-circle-outline' as any });
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -474,6 +475,7 @@ const RealtimeDurationTimer = React.memo(({ selectedVenta }: { selectedVenta: an
         diff = computeActiveMs(selectedVenta.registroDeTiempo, Date.now(), selectedVenta.cocinaInicioAt, selectedVenta.cocinaFinAt);
       }
       setRealtimeDuration(formatDurationStr(diff, !isFinalizado));
+      setTimerStyle(getTimerStyle(diff, selectedVenta.estado || 'INICIADO', isEnCocinaActivo));
     };
 
     updateTimer();
@@ -487,18 +489,9 @@ const RealtimeDurationTimer = React.memo(({ selectedVenta }: { selectedVenta: an
   }, [selectedVenta?.IDventas, selectedVenta?.estado, selectedVenta?.cocinaInicioAt, selectedVenta?.cocinaFinAt, selectedVenta?.registroDeTiempo, selectedVenta?.fecha, selectedVenta?.fechaYHora]);
 
   if (!realtimeDuration) return null;
-  const isModoRest = isModoRestaurante();
-  const estUpper = (selectedVenta?.estado || '').toUpperCase();
-  const isFinalizado = estUpper === 'ENTREGADO' || 
-                       estUpper === 'CANCELADO' || 
-                       estUpper === 'ANULADO' || 
-                       selectedVenta?.cocinaFinAt != null ||
-                       (!isModoRest && estUpper === 'PAGADO');
-
-  const timerStyle = getTimerStyle(0, selectedVenta?.estado || 'INICIADO', !isFinalizado);
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: timerStyle.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16, marginTop: 4 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: timerStyle.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16, marginTop: 4, marginLeft: 8 }}>
       <Ionicons name={timerStyle.icon as any} size={14} color={timerStyle.text} style={{ marginRight: 4 }} />
       <RNText style={{ fontSize: 12, color: timerStyle.text, fontWeight: 'bold' }}>
         {realtimeDuration}
