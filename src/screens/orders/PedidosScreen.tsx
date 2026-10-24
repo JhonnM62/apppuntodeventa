@@ -151,6 +151,12 @@ export const getVentaTotal = (venta: VentaItem | null): number => {
   return 0;
 };
 
+const isModoRestaurante = (): boolean => {
+  const config = getCachedConfiguracion();
+  const modo = config?.data?.modoOperacion || config?.modoOperacion || 'GENERAL';
+  return String(modo).toUpperCase() === 'RESTAURANTE';
+};
+
 const computeActiveMs = (
   registroDeTiempo?: any[], 
   endTime: number = Date.now(),
@@ -168,19 +174,26 @@ const computeActiveMs = (
   let totalMs = 0;
   let activeStart: number | null = null;
   const activeStates = ['TOMADO', 'PREPARANDO', 'LISTO_PARA_ENTREGA', 'LISTO'];
+  const isModoRest = isModoRestaurante();
 
   for (let i = 0; i < registroDeTiempo.length; i++) {
     const entry = registroDeTiempo[i];
     const time = new Date(entry.fecha_hora).getTime();
     
-    const isPagarAlInicio = entry.estado === 'PAGADO' && i <= 2;
+    // En modo Restaurante un PAGADO al inicio cuenta como cocina activa
+    const isPagarAlInicio = entry.estado === 'PAGADO' && i <= 2 && isModoRest;
     const isActive = activeStates.includes(entry.estado) || isPagarAlInicio;
 
     if (isActive) {
       if (activeStart === null) {
         activeStart = time;
       }
-    } else if (entry.estado === 'ENTREGADO' || entry.estado === 'CANCELADO' || entry.estado === 'ANULADO') {
+    } else if (
+      entry.estado === 'ENTREGADO' || 
+      entry.estado === 'CANCELADO' || 
+      entry.estado === 'ANULADO' || 
+      (!isModoRest && entry.estado === 'PAGADO')
+    ) {
       if (activeStart !== null) {
         totalMs += Math.max(0, time - activeStart);
         activeStart = null;
@@ -237,7 +250,7 @@ export const getFechaContableActual = (horaCorteDiaStr?: string): string => {
 };
 
 const getTimerStyle = (diffMs: number, estado: string, isEnCocinaActivo: boolean = false) => {
-  if (!isEnCocinaActivo && (estado === 'ENTREGADO' || estado === 'CANCELADO' || estado === 'ANULADO')) {
+  if (!isEnCocinaActivo && (estado === 'ENTREGADO' || estado === 'CANCELADO' || estado === 'ANULADO' || estado === 'PAGADO')) {
     return { bg: '#f3f4f6', text: '#6b7280', icon: 'pause-circle-outline' as const };
   }
   if (estado === 'LISTO') {
@@ -258,21 +271,46 @@ const OrderTimerBadge = ({ venta }: { venta: any }) => {
   const [style, setStyle] = useState({ bg: '#f3f4f6', text: '#6b7280', icon: 'time-outline' as any });
 
   useEffect(() => {
-    const isEntregado = (venta.estado || '').toUpperCase() === 'ENTREGADO' || venta.cocinaFinAt != null;
-    const isEnCocinaActivo = (venta.estado || '').toUpperCase() === 'TOMADO' || 
-                            (venta.estado || '').toUpperCase() === 'PREPARANDO' || 
-                            ((venta.estado || '').toUpperCase() === 'PAGADO' && !venta.cocinaFinAt);
+    const estUpper = (venta.estado || '').toUpperCase();
+    const isModoRest = isModoRestaurante();
+    const vDate = (venta.fecha || venta.fechaYHora || '').substring(0, 10);
+    const fechaContable = getFechaContableActual();
+    const isHoy = !vDate || vDate === fechaContable;
+
+    // En modo General, PAGADO ya está finalizado.
+    const isFinalizado = estUpper === 'ENTREGADO' || 
+                         estUpper === 'CANCELADO' || 
+                         estUpper === 'ANULADO' || 
+                         venta.cocinaFinAt != null ||
+                         (!isModoRest && estUpper === 'PAGADO');
+
+    // Un cronómetro solo corre en vivo si es de hoy Y está en proceso activo en cocina
+    const isEnCocinaActivo = isHoy && !isFinalizado && (
+      estUpper === 'TOMADO' || 
+      estUpper === 'PREPARANDO' || 
+      (isModoRest && estUpper === 'PAGADO' && !venta.cocinaFinAt)
+    );
 
     const update = () => {
       let diff = 0;
-      if (isEntregado) {
-        const end = venta.cocinaFinAt ? new Date(venta.cocinaFinAt).getTime() : Date.now();
-        diff = computeActiveMs(venta.registroDeTiempo, end, venta.cocinaInicioAt, venta.cocinaFinAt);
+      if (isFinalizado || !isHoy) {
+        let endMs: number;
+        if (venta.cocinaFinAt) {
+          endMs = new Date(venta.cocinaFinAt).getTime();
+        } else if (venta.registroDeTiempo && venta.registroDeTiempo.length > 0) {
+          const lastRelevantEntry = [...venta.registroDeTiempo].reverse().find(
+            (e: any) => e.estado === estUpper || e.estado === 'ENTREGADO' || e.estado === 'PAGADO'
+          ) || venta.registroDeTiempo[venta.registroDeTiempo.length - 1];
+          endMs = new Date(lastRelevantEntry.fecha_hora).getTime();
+        } else {
+          endMs = venta.fechaYHora ? new Date(venta.fechaYHora).getTime() : Date.now();
+        }
+        diff = computeActiveMs(venta.registroDeTiempo, endMs, venta.cocinaInicioAt, venta.cocinaFinAt);
       } else {
         diff = computeActiveMs(venta.registroDeTiempo, Date.now(), venta.cocinaInicioAt, venta.cocinaFinAt);
       }
 
-      setDuration(formatDurationStr(diff, !isEntregado));
+      setDuration(formatDurationStr(diff, !isFinalizado));
       setStyle(getTimerStyle(diff, venta.estado || 'INICIADO', isEnCocinaActivo));
     };
 
@@ -284,7 +322,7 @@ const OrderTimerBadge = ({ venta }: { venta: any }) => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [venta.estado, venta.cocinaInicioAt, venta.cocinaFinAt, venta.registroDeTiempo]);
+  }, [venta.estado, venta.cocinaInicioAt, venta.cocinaFinAt, venta.registroDeTiempo, venta.fecha, venta.fechaYHora]);
 
   if (!duration) return null;
 
@@ -377,20 +415,43 @@ const RealtimeDurationTimer = React.memo(({ selectedVenta }: { selectedVenta: an
       return;
     }
 
-    const isEntregado = (selectedVenta.estado || '').toUpperCase() === 'ENTREGADO' || selectedVenta.cocinaFinAt != null;
-    const isEnCocinaActivo = (selectedVenta.estado || '').toUpperCase() === 'TOMADO' || 
-                            (selectedVenta.estado || '').toUpperCase() === 'PREPARANDO' || 
-                            ((selectedVenta.estado || '').toUpperCase() === 'PAGADO' && !selectedVenta.cocinaFinAt);
+    const estUpper = (selectedVenta.estado || '').toUpperCase();
+    const isModoRest = isModoRestaurante();
+    const vDate = (selectedVenta.fecha || selectedVenta.fechaYHora || '').substring(0, 10);
+    const fechaContable = getFechaContableActual();
+    const isHoy = !vDate || vDate === fechaContable;
+
+    const isFinalizado = estUpper === 'ENTREGADO' || 
+                         estUpper === 'CANCELADO' || 
+                         estUpper === 'ANULADO' || 
+                         selectedVenta.cocinaFinAt != null ||
+                         (!isModoRest && estUpper === 'PAGADO');
+
+    const isEnCocinaActivo = isHoy && !isFinalizado && (
+      estUpper === 'TOMADO' || 
+      estUpper === 'PREPARANDO' || 
+      (isModoRest && estUpper === 'PAGADO' && !selectedVenta.cocinaFinAt)
+    );
 
     const updateTimer = () => {
       let diff = 0;
-      if (isEntregado) {
-        const end = selectedVenta.cocinaFinAt ? new Date(selectedVenta.cocinaFinAt).getTime() : Date.now();
-        diff = computeActiveMs(selectedVenta.registroDeTiempo, end, selectedVenta.cocinaInicioAt, selectedVenta.cocinaFinAt);
+      if (isFinalizado || !isHoy) {
+        let endMs: number;
+        if (selectedVenta.cocinaFinAt) {
+          endMs = new Date(selectedVenta.cocinaFinAt).getTime();
+        } else if (selectedVenta.registroDeTiempo && selectedVenta.registroDeTiempo.length > 0) {
+          const lastRelevantEntry = [...selectedVenta.registroDeTiempo].reverse().find(
+            (e: any) => e.estado === estUpper || e.estado === 'ENTREGADO' || e.estado === 'PAGADO'
+          ) || selectedVenta.registroDeTiempo[selectedVenta.registroDeTiempo.length - 1];
+          endMs = new Date(lastRelevantEntry.fecha_hora).getTime();
+        } else {
+          endMs = selectedVenta.fechaYHora ? new Date(selectedVenta.fechaYHora).getTime() : Date.now();
+        }
+        diff = computeActiveMs(selectedVenta.registroDeTiempo, endMs, selectedVenta.cocinaInicioAt, selectedVenta.cocinaFinAt);
       } else {
         diff = computeActiveMs(selectedVenta.registroDeTiempo, Date.now(), selectedVenta.cocinaInicioAt, selectedVenta.cocinaFinAt);
       }
-      setRealtimeDuration(formatDurationStr(diff));
+      setRealtimeDuration(formatDurationStr(diff, !isFinalizado));
     };
 
     updateTimer();
@@ -401,38 +462,25 @@ const RealtimeDurationTimer = React.memo(({ selectedVenta }: { selectedVenta: an
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [selectedVenta?.IDventas, selectedVenta?.estado, selectedVenta?.cocinaInicioAt, selectedVenta?.cocinaFinAt, selectedVenta?.registroDeTiempo]);
+  }, [selectedVenta?.IDventas, selectedVenta?.estado, selectedVenta?.cocinaInicioAt, selectedVenta?.cocinaFinAt, selectedVenta?.registroDeTiempo, selectedVenta?.fecha, selectedVenta?.fechaYHora]);
 
   if (!realtimeDuration) return null;
+  const isModoRest = isModoRestaurante();
+  const estUpper = (selectedVenta?.estado || '').toUpperCase();
+  const isFinalizado = estUpper === 'ENTREGADO' || 
+                       estUpper === 'CANCELADO' || 
+                       estUpper === 'ANULADO' || 
+                       selectedVenta?.cocinaFinAt != null ||
+                       (!isModoRest && estUpper === 'PAGADO');
+
+  const timerStyle = getTimerStyle(0, selectedVenta?.estado || 'INICIADO', !isFinalizado);
+
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: (() => {
-      let diff = 0;
-      if (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') {
-        const lastEntry = selectedVenta.registroDeTiempo?.[selectedVenta.registroDeTiempo.length - 1];
-        diff = lastEntry ? computeActiveMs(selectedVenta.registroDeTiempo, new Date(lastEntry.fecha_hora).getTime()) : 0;
-      } else {
-        diff = computeActiveMs(selectedVenta.registroDeTiempo, Date.now());
-      }
-      return getTimerStyle(diff, selectedVenta.estado || 'INICIADO').bg;
-    })(), paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16, marginTop: 4 }}>
-      {(() => {
-        let diff = 0;
-        if (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO') {
-          const lastEntry = selectedVenta.registroDeTiempo?.[selectedVenta.registroDeTiempo.length - 1];
-          diff = lastEntry ? computeActiveMs(selectedVenta.registroDeTiempo, new Date(lastEntry.fecha_hora).getTime()) : 0;
-        } else {
-          diff = computeActiveMs(selectedVenta.registroDeTiempo, Date.now());
-        }
-        const style = getTimerStyle(diff, selectedVenta.estado || 'INICIADO');
-        return (
-          <>
-            <Ionicons name={style.icon as any} size={14} color={style.text} style={{ marginRight: 4 }} />
-            <RNText style={{ fontSize: 12, color: style.text, fontWeight: 'bold' }}>
-              {realtimeDuration}
-            </RNText>
-          </>
-        );
-      })()}
+    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: timerStyle.bg, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 16, marginTop: 4 }}>
+      <Ionicons name={timerStyle.icon as any} size={14} color={timerStyle.text} style={{ marginRight: 4 }} />
+      <RNText style={{ fontSize: 12, color: timerStyle.text, fontWeight: 'bold' }}>
+        {realtimeDuration}
+      </RNText>
     </View>
   );
 });
@@ -490,6 +538,8 @@ const DomicilioTimer = ({ timestamp, estado }: { timestamp: string; estado: stri
     </View>
   );
 };
+
+const isWeb = Platform.OS === 'web';
 
 const PedidosScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -875,7 +925,7 @@ const PedidosScreen = () => {
           const vDate = (v.fecha || v.fechaYHora || '').substring(0, 10);
           if (vDate && vDate !== fechaContable) return false;
           const est = (v.estado || '').toUpperCase();
-          const isActivoCocina = est === 'TOMADO' || est === 'PREPARANDO' || (est === 'PAGADO' && !v.cocinaFinAt);
+          const isActivoCocina = est === 'TOMADO' || est === 'PREPARANDO' || (isModoRestaurante() && est === 'PAGADO' && !v.cocinaFinAt);
           return isActivoCocina;
         }).length;
       } else if (tab.key === 'ENTREGADO') {
@@ -1210,7 +1260,7 @@ const PedidosScreen = () => {
           const vDate = (v.fecha || v.fechaYHora || '').substring(0, 10);
           if (vDate && vDate !== fechaContable && !filters.fechaDesde && !filters.fechaHasta) return false;
           const est = (v.estado || '').toUpperCase();
-          const isActivoCocina = est === 'TOMADO' || est === 'PREPARANDO' || (est === 'PAGADO' && !v.cocinaFinAt);
+          const isActivoCocina = est === 'TOMADO' || est === 'PREPARANDO' || (isModoRestaurante() && est === 'PAGADO' && !v.cocinaFinAt);
           return isActivoCocina;
         });
       } else if (activeTab === 'ENTREGADO') {
@@ -3673,13 +3723,15 @@ showAlert({
                         )}
                         {selectedVenta.estado === 'PAGADO' && (
                           <>
-                            <TouchableOpacity
-                              style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
-                              onPress={() => handleChangeEstado('ENTREGADO')}
-                            >
-                              <Ionicons name="paper-plane-outline" size={20} color="#fff" />
-                              <RNText style={styles.actionBtnText}>Marcar Entregado</RNText>
-                            </TouchableOpacity>
+                            {isModoRestaurante() && (
+                              <TouchableOpacity
+                                style={[styles.actionBtn, { backgroundColor: '#10b981' }]}
+                                onPress={() => handleChangeEstado('ENTREGADO')}
+                              >
+                                <Ionicons name="paper-plane-outline" size={20} color="#fff" />
+                                <RNText style={styles.actionBtnText}>Marcar Entregado</RNText>
+                              </TouchableOpacity>
+                            )}
                             <TouchableOpacity
                               style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
                               onPress={() => handleChangeEstado('DEUDOR')}
@@ -4373,62 +4425,62 @@ showAlert({
     }
   };
 
-
   return (
     <View style={styles.container}>
       <StatusBar style="dark" backgroundColor="#ffffff" translucent={false} />
       <SafeAreaView style={{ backgroundColor: '#ffffff' }} edges={['top']}>
-        <View style={styles.header}>
-          <View>
-            <RNText style={styles.headerTitle}>Pedidos</RNText>
-            <RNText style={styles.headerSubtitle}>
+        <View style={[styles.header, isWeb && styles.headerWeb]}>
+          <View style={isWeb ? styles.headerTitleGroupWeb : undefined}>
+            <RNText style={[styles.headerTitle, isWeb && styles.headerTitleWeb]}>Pedidos</RNText>
+            <RNText style={[styles.headerSubtitle, isWeb && styles.headerSubtitleWeb]}>
               {activeTab === 'DOMIS' ? flatListData.filter((it: any) => !it.isHeader).length : filteredVentas.length} registro{(activeTab === 'DOMIS' ? flatListData.filter((it: any) => !it.isHeader).length : filteredVentas.length) !== 1 ? 's' : ''}
             </RNText>
           </View>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             {Platform.OS === 'web' && (
               <TouchableOpacity
-                style={[styles.newSaleBtn, { backgroundColor: '#3b82f6', marginRight: 10 }]}
+                style={[styles.newSaleBtn, styles.refreshBtnWeb, { backgroundColor: '#3b82f6', marginRight: isWeb ? 8 : 10 }]}
                 onPress={onRefresh}
                 disabled={refreshing}
               >
                 {refreshing ? (
-                  <ActivityIndicator size="small" color="#fff" style={{ marginRight: 5 }} />
+                  <ActivityIndicator size="small" color="#fff" style={{ marginRight: 4 }} />
                 ) : (
-                  <Ionicons name="refresh" size={20} color="#fff" />
+                  <Ionicons name="refresh" size={isWeb ? 16 : 20} color="#fff" />
                 )}
-                <RNText style={styles.newSaleBtnText}>{refreshing ? 'Recargando...' : 'Recargar'}</RNText>
+                <RNText style={[styles.newSaleBtnText, isWeb && styles.newSaleBtnTextWeb]}>{refreshing ? 'Recargando...' : 'Recargar'}</RNText>
               </TouchableOpacity>
             )}
             {canCreateVenta && (
               <TouchableOpacity
-                style={styles.newSaleBtn}
+                style={[styles.newSaleBtn, isWeb && styles.newSaleBtnWeb]}
                 onPress={() => {
                   useCartStore.getState().clearCart();
                   navigation.navigate('Sales' as any);
                 }}
               >
-                <Ionicons name="add" size={20} color="#fff" />
-                <RNText style={styles.newSaleBtnText}>Nueva Venta</RNText>
+                <Ionicons name="add" size={isWeb ? 16 : 20} color="#fff" />
+                <RNText style={[styles.newSaleBtnText, isWeb && styles.newSaleBtnTextWeb]}>Nueva Venta</RNText>
               </TouchableOpacity>
             )}
           </View>
         </View>
       </SafeAreaView>
 
-      <View style={styles.tabsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContent}>
+      <View style={[styles.tabsContainer, isWeb && styles.tabsContainerWeb]}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.tabsContent, isWeb && styles.tabsContentWeb]}>
           {tabsWithCounts.map((tab) => (
             <TouchableOpacity
               key={tab.key}
               style={[
                 styles.tab, 
+                isWeb && styles.tabWeb,
                 activeTab === tab.key && { backgroundColor: tab.color },
                 { flexDirection: 'row', alignItems: 'center' }
               ]}
               onPress={() => setActiveTab(tab.key)}
             >
-              <RNText style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
+              <RNText style={[styles.tabText, isWeb && styles.tabTextWeb, activeTab === tab.key && styles.tabTextActive]}>
                 {tab.label}
               </RNText>
               
@@ -4437,17 +4489,17 @@ showAlert({
                 <View 
                   style={{
                     backgroundColor: activeTab === tab.key ? 'rgba(255,255,255,0.3)' : `${tab.color}20`,
-                    paddingHorizontal: 6,
-                    paddingVertical: 2,
+                    paddingHorizontal: isWeb ? 5 : 6,
+                    paddingVertical: isWeb ? 1 : 2,
                     borderRadius: 10,
-                    marginLeft: 6
+                    marginLeft: isWeb ? 4 : 6
                   }}
                 >
                   <RNText
                     style={{
                       color: activeTab === tab.key ? '#fff' : tab.color,
                       fontWeight: 'bold',
-                      fontSize: 10
+                      fontSize: isWeb ? 9 : 10
                     }}
                   >
                     {tab.count}
@@ -4461,11 +4513,11 @@ showAlert({
 
       {/* Sub-pestañas operativas de Domicilios (Píldoras compactas) */}
       {activeTab === 'DOMIS' && (
-        <View style={styles.domisSubTabsContainer}>
+        <View style={[styles.domisSubTabsContainer, isWeb && styles.domisSubTabsContainerWeb]}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.domisSubTabsContent}
+            contentContainerStyle={[styles.domisSubTabsContent, isWeb && styles.domisSubTabsContentWeb]}
           >
             {domisSubTabsWithCounts.map((subTab) => {
               const isActive = domisSubTab === subTab.key;
@@ -4474,6 +4526,7 @@ showAlert({
                   key={subTab.key}
                   style={[
                     styles.domisSubTabPill,
+                    isWeb && styles.domisSubTabPillWeb,
                     isActive && { backgroundColor: subTab.color, borderColor: subTab.color },
                   ]}
                   onPress={() => setDomisSubTab(subTab.key as any)}
@@ -4482,6 +4535,7 @@ showAlert({
                   <RNText
                     style={[
                       styles.domisSubTabText,
+                      isWeb && styles.domisSubTabTextWeb,
                       isActive && styles.domisSubTabTextActive,
                     ]}
                   >
@@ -4491,6 +4545,7 @@ showAlert({
                     <View
                       style={[
                         styles.domisSubTabBadge,
+                        isWeb && styles.domisSubTabBadgeWeb,
                         isActive
                           ? { backgroundColor: 'rgba(255,255,255,0.28)' }
                           : { backgroundColor: `${subTab.color}18` },
@@ -4499,6 +4554,7 @@ showAlert({
                       <RNText
                         style={[
                           styles.domisSubTabBadgeText,
+                          isWeb && styles.domisSubTabBadgeTextWeb,
                           { color: isActive ? '#ffffff' : subTab.color },
                         ]}
                       >
@@ -4515,11 +4571,12 @@ showAlert({
 
       {/* Sub-barra operativa para ENTREGADO: Alternar activos/despejados y despejar vista */}
       {activeTab === 'ENTREGADO' && (
-        <View style={styles.entregadosToolbar}>
-          <View style={styles.entregadosSegmentGroup}>
+        <View style={[styles.entregadosToolbar, isWeb && styles.entregadosToolbarWeb]}>
+          <View style={[styles.entregadosSegmentGroup, isWeb && styles.entregadosSegmentGroupWeb]}>
             <TouchableOpacity
               style={[
                 styles.entregadosSegmentBtn,
+                isWeb && styles.entregadosSegmentBtnWeb,
                 !showDespejados && styles.entregadosSegmentBtnActive,
               ]}
               onPress={() => setShowDespejados(false)}
@@ -4527,12 +4584,13 @@ showAlert({
             >
               <Ionicons
                 name="checkmark-done-circle-outline"
-                size={14}
+                size={isWeb ? 13 : 14}
                 color={!showDespejados ? '#ffffff' : '#059669'}
               />
               <RNText
                 style={[
                   styles.entregadosSegmentText,
+                  isWeb && styles.entregadosSegmentTextWeb,
                   !showDespejados && styles.entregadosSegmentTextActive,
                 ]}
               >
@@ -4541,12 +4599,14 @@ showAlert({
               <View
                 style={[
                   styles.entregadosBadgePill,
+                  isWeb && styles.entregadosBadgePillWeb,
                   !showDespejados ? { backgroundColor: 'rgba(255,255,255,0.28)' } : { backgroundColor: '#dcfce7' },
                 ]}
               >
                 <RNText
                   style={[
                     styles.entregadosBadgePillText,
+                    isWeb && styles.entregadosBadgePillTextWeb,
                     { color: !showDespejados ? '#ffffff' : '#059669' },
                   ]}
                 >
@@ -4563,6 +4623,7 @@ showAlert({
             <TouchableOpacity
               style={[
                 styles.entregadosSegmentBtn,
+                isWeb && styles.entregadosSegmentBtnWeb,
                 showDespejados && styles.entregadosSegmentBtnActiveDespejados,
               ]}
               onPress={() => setShowDespejados(true)}
@@ -4570,12 +4631,13 @@ showAlert({
             >
               <Ionicons
                 name="archive-outline"
-                size={14}
+                size={isWeb ? 13 : 14}
                 color={showDespejados ? '#ffffff' : '#64748b'}
               />
               <RNText
                 style={[
                   styles.entregadosSegmentText,
+                  isWeb && styles.entregadosSegmentTextWeb,
                   showDespejados && styles.entregadosSegmentTextActive,
                 ]}
               >
@@ -4584,12 +4646,14 @@ showAlert({
               <View
                 style={[
                   styles.entregadosBadgePill,
+                  isWeb && styles.entregadosBadgePillWeb,
                   showDespejados ? { backgroundColor: 'rgba(255,255,255,0.28)' } : { backgroundColor: '#f1f5f9' },
                 ]}
               >
                 <RNText
                   style={[
                     styles.entregadosBadgePillText,
+                    isWeb && styles.entregadosBadgePillTextWeb,
                     { color: showDespejados ? '#ffffff' : '#64748b' },
                   ]}
                 >
@@ -4604,40 +4668,40 @@ showAlert({
             </TouchableOpacity>
           </View>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: isWeb ? 4 : 6 }}>
             {!isSelectionMode && (
               <TouchableOpacity
-                style={styles.entregadosActionBtn}
+                style={[styles.entregadosActionBtn, isWeb && styles.entregadosActionBtnWeb]}
                 onPress={() => {
                   setIsSelectionMode(true);
                   setSelectedToDelete([]);
                 }}
                 activeOpacity={0.7}
               >
-                <Ionicons name="checkbox-outline" size={15} color="#475569" />
-                <RNText style={styles.entregadosActionBtnText}>Seleccionar</RNText>
+                <Ionicons name="checkbox-outline" size={isWeb ? 13 : 15} color="#475569" />
+                <RNText style={[styles.entregadosActionBtnText, isWeb && styles.entregadosActionBtnTextWeb]}>Seleccionar</RNText>
               </TouchableOpacity>
             )}
 
             {!showDespejados ? (
               <TouchableOpacity
-                style={[styles.entregadosActionBtn, styles.entregadosClearBtn]}
+                style={[styles.entregadosActionBtn, styles.entregadosClearBtn, isWeb && styles.entregadosActionBtnWeb]}
                 onPress={() => handleDespejarBulk()}
                 activeOpacity={0.7}
               >
-                <Ionicons name="eye-off-outline" size={15} color="#059669" />
-                <RNText style={[styles.entregadosActionBtnText, { color: '#059669', fontWeight: '700' }]}>
+                <Ionicons name="eye-off-outline" size={isWeb ? 13 : 15} color="#059669" />
+                <RNText style={[styles.entregadosActionBtnText, isWeb && styles.entregadosActionBtnTextWeb, { color: '#059669', fontWeight: '700' }]}>
                   Despejar Todo
                 </RNText>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                style={[styles.entregadosActionBtn, { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }]}
+                style={[styles.entregadosActionBtn, { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }, isWeb && styles.entregadosActionBtnWeb]}
                 onPress={() => handleRestaurarBulk()}
                 activeOpacity={0.7}
               >
-                <Ionicons name="refresh-outline" size={15} color="#2563eb" />
-                <RNText style={[styles.entregadosActionBtnText, { color: '#2563eb', fontWeight: '700' }]}>
+                <Ionicons name="refresh-outline" size={isWeb ? 13 : 15} color="#2563eb" />
+                <RNText style={[styles.entregadosActionBtnText, isWeb && styles.entregadosActionBtnTextWeb, { color: '#2563eb', fontWeight: '700' }]}>
                   Restaurar Todo
                 </RNText>
               </TouchableOpacity>
@@ -4646,33 +4710,33 @@ showAlert({
         </View>
       )}
 
-      <View style={styles.filterBar}>
-        <View style={styles.searchBarContainer}>
-          <Ionicons name="search" size={18} color="#6b7280" />
+      <View style={[styles.filterBar, isWeb && styles.filterBarWeb]}>
+        <View style={[styles.searchBarContainer, isWeb && styles.searchBarContainerWeb]}>
+          <Ionicons name="search" size={isWeb ? 15 : 18} color="#6b7280" />
           <TextInput
-            style={styles.searchBarInput}
+            style={[styles.searchBarInput, isWeb && styles.searchBarInputWeb]}
             placeholder="Buscar pedido, cliente..."
             placeholderTextColor="#9ca3af"
             value={filters.searchText}
             onChangeText={(text) => setFilters(prev => ({ ...prev, searchText: text }))}
           />
-          {isSearchingRemote && <ActivityIndicator size="small" color="#6366f1" style={{ marginLeft: 8 }} />}
+          {isSearchingRemote && <ActivityIndicator size="small" color="#6366f1" style={{ marginLeft: 6 }} />}
         </View>
         <TouchableOpacity
-          style={[styles.filterBtn, activeFiltersCount > 0 && styles.filterBtnActive]}
+          style={[styles.filterBtn, isWeb && styles.filterBtnWeb, activeFiltersCount > 0 && styles.filterBtnActive]}
           onPress={() => setFilterModalVisible(true)}
         >
-          <Ionicons name="options-outline" size={20} color={activeFiltersCount > 0 ? '#fff' : '#6b7280'} />
+          <Ionicons name="options-outline" size={isWeb ? 16 : 20} color={activeFiltersCount > 0 ? '#fff' : '#6b7280'} />
           {activeFiltersCount > 0 && (
-            <View style={styles.filterBadge}>
-              <RNText style={styles.filterBadgeText}>{activeFiltersCount}</RNText>
+            <View style={[styles.filterBadge, isWeb && styles.filterBadgeWeb]}>
+              <RNText style={[styles.filterBadgeText, isWeb && styles.filterBadgeTextWeb]}>{activeFiltersCount}</RNText>
             </View>
           )}
         </TouchableOpacity>
       </View>
 
       {isSelectionMode && (
-        <View style={styles.bulkActionContainer}>
+        <View style={[styles.bulkActionContainer, isWeb && styles.bulkActionContainerWeb]}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <TouchableOpacity onPress={() => { setIsSelectionMode(false); setSelectedToDelete([]); }}>
               <Ionicons name="close" size={24} color="#374151" />
@@ -4700,6 +4764,7 @@ showAlert({
               <TouchableOpacity 
                 style={[
                   styles.bulkDeleteBtn, 
+                  isWeb && styles.bulkDeleteBtnWeb,
                   { backgroundColor: showDespejados ? '#2563eb' : '#059669', marginRight: 8 }, 
                   selectedToDelete.length === 0 && { opacity: 0.5 }
                 ]}
@@ -4713,7 +4778,7 @@ showAlert({
               </TouchableOpacity>
             )}
             <TouchableOpacity 
-              style={[styles.bulkDeleteBtn, selectedToDelete.length === 0 && { opacity: 0.5 }]}
+              style={[styles.bulkDeleteBtn, isWeb && styles.bulkDeleteBtnWeb, selectedToDelete.length === 0 && { opacity: 0.5 }]}
               onPress={handleBulkDelete}
               disabled={selectedToDelete.length === 0}
             >
@@ -4725,10 +4790,10 @@ showAlert({
       )}
 
       {isFiltering && activeFiltersCount > 0 && (
-        <View style={styles.activeFiltersContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.activeFiltersContent}>
+        <View style={[styles.activeFiltersContainer, isWeb && styles.activeFiltersContainerWeb]}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.activeFiltersContent, isWeb && styles.activeFiltersContentWeb]}>
             {filters.searchText && (
-              <View style={styles.activeFilterChip}>
+              <View style={[styles.activeFilterChip, isWeb && styles.activeFilterChipWeb]}>
                 <RNText style={styles.activeFilterChipText}>"{filters.searchText}"</RNText>
                 <TouchableOpacity onPress={() => setFilters(prev => ({ ...prev, searchText: '' }))}>
                   <Ionicons name="close-circle" size={16} color="#6b7280" />
@@ -5185,6 +5250,154 @@ const styles = StyleSheet.create({
   entregadosClearBtn: {
     backgroundColor: '#ecfdf5',
     borderColor: '#a7f3d0',
+  },
+  // Web-optimized compact styles
+  headerWeb: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  headerTitleGroupWeb: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 8,
+  },
+  headerTitleWeb: {
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  headerSubtitleWeb: {
+    fontSize: 12,
+    marginTop: 0,
+  },
+  newSaleBtnWeb: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  refreshBtnWeb: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  newSaleBtnTextWeb: {
+    fontSize: 12,
+    marginLeft: 4,
+  },
+  tabsContainerWeb: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+  },
+  tabsContentWeb: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+  },
+  tabWeb: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    marginRight: 6,
+  },
+  tabTextWeb: {
+    fontSize: 11,
+  },
+  domisSubTabsContainerWeb: {
+    paddingVertical: 4,
+  },
+  domisSubTabsContentWeb: {
+    gap: 6,
+  },
+  domisSubTabPillWeb: {
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+  },
+  domisSubTabTextWeb: {
+    fontSize: 11,
+  },
+  domisSubTabBadgeWeb: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    marginLeft: 4,
+  },
+  domisSubTabBadgeTextWeb: {
+    fontSize: 9,
+  },
+  entregadosToolbarWeb: {
+    paddingVertical: 4,
+  },
+  entregadosSegmentGroupWeb: {
+    padding: 2,
+    borderRadius: 14,
+  },
+  entregadosSegmentBtnWeb: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  entregadosSegmentTextWeb: {
+    fontSize: 11,
+  },
+  entregadosBadgePillWeb: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+  },
+  entregadosBadgePillTextWeb: {
+    fontSize: 9,
+  },
+  entregadosActionBtnWeb: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  entregadosActionBtnTextWeb: {
+    fontSize: 11,
+  },
+  filterBarWeb: {
+    paddingVertical: 4,
+  },
+  searchBarContainerWeb: {
+    paddingHorizontal: 10,
+    marginRight: 8,
+    borderRadius: 8,
+  },
+  searchBarInputWeb: {
+    paddingVertical: 5,
+    paddingHorizontal: 6,
+    fontSize: 13,
+  },
+  filterBtnWeb: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+  },
+  filterBadgeWeb: {
+    minWidth: 16,
+    height: 16,
+    top: -3,
+    right: -3,
+  },
+  filterBadgeTextWeb: {
+    fontSize: 9,
+  },
+  bulkActionContainerWeb: {
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+  },
+  bulkDeleteBtnWeb: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  activeFiltersContainerWeb: {
+    borderBottomWidth: 1,
+  },
+  activeFiltersContentWeb: {
+    paddingVertical: 5,
+  },
+  activeFilterChipWeb: {
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+    borderRadius: 10,
   },
 });
 

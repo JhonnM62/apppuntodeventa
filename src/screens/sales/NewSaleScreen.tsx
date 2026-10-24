@@ -1564,7 +1564,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             setSelectedMesa(null);
 
             if (editingSaleId) {
-              navigation.navigate('Main', { screen: 'Pedidos', params: { tab: 'TOMADO' } });
+              const targetTab = data.estado === 'TOMADO' ? 'TOMADO' : (data.estado === 'PAGADO' ? 'PAGADO' : 'todos');
+              navigation.navigate('Main', { screen: 'Pedidos', params: { tab: targetTab } });
             }
             setTimeout(() => {
               Toast.show({

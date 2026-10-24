@@ -132,8 +132,9 @@ const HomeTabs = () => {
     ).length;
   });
 
-  const bottomPadding = Math.max(insets.bottom, 10);
-  const tabHeight = 60 + bottomPadding;
+  const isWeb = Platform.OS === 'web';
+  const bottomPadding = isWeb ? 0 : Math.max(insets.bottom, 10);
+  const tabHeight = isWeb ? 40 : 60 + bottomPadding;
 
   const canSeePedidos = 
     user?.rol === 'Admin app' || 
@@ -146,21 +147,24 @@ const HomeTabs = () => {
     <Tab.Navigator id="TabNav"
       screenOptions={({ route }) => ({
         headerShown: false,
+        tabBarLabelPosition: isWeb ? 'beside-icon' : 'below-icon',
         tabBarStyle: {
           backgroundColor: primaryColor || '#4CAF50',
           borderTopWidth: 0,
-          elevation: 10,
-          paddingTop: 8,
+          elevation: isWeb ? 2 : 10,
+          paddingTop: isWeb ? 0 : 8,
           paddingBottom: bottomPadding,
           height: tabHeight,
+          ...(isWeb ? { minHeight: 38, maxHeight: 42 } : {}),
         },
         tabBarLabelStyle: {
           fontWeight: 'bold',
-          fontSize: 11,
-          paddingBottom: 4,
+          fontSize: isWeb ? 11 : 11,
+          paddingBottom: isWeb ? 0 : 4,
+          marginLeft: isWeb ? 6 : 0,
         },
         tabBarActiveTintColor: '#FFF',
-        tabBarInactiveTintColor: 'rgba(255,255,255,0.5)',
+        tabBarInactiveTintColor: 'rgba(255,255,255,0.6)',
         tabBarIcon: ({ color, size, focused }) => {
           let iconName: any = 'home';
           if (route.name === 'Inicio') {
@@ -169,22 +173,23 @@ const HomeTabs = () => {
             iconName = focused ? 'receipt' : 'receipt-outline';
           }
           return (
-            <View>
-              <Ionicons name={iconName} size={24} color={color} style={{ marginBottom: -4 }} />
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Ionicons name={iconName} size={isWeb ? 18 : 24} color={color} style={{ marginBottom: isWeb ? 0 : -4 }} />
               {route.name === 'Pedidos' && pendingOrders > 0 && (
                 <View style={{
-                  position: 'absolute',
-                  right: -8,
-                  top: -2,
+                  position: isWeb ? 'relative' : 'absolute',
+                  right: isWeb ? undefined : -8,
+                  top: isWeb ? undefined : -2,
+                  marginLeft: isWeb ? 4 : 0,
                   backgroundColor: 'red',
                   borderRadius: 10,
-                  minWidth: 18,
-                  height: 18,
+                  minWidth: isWeb ? 16 : 18,
+                  height: isWeb ? 16 : 18,
                   justifyContent: 'center',
                   alignItems: 'center',
-                  paddingHorizontal: 4
+                  paddingHorizontal: isWeb ? 3 : 4
                 }}>
-                  <Text style={{ color: 'white', fontSize: 10, fontWeight: 'bold' }}>{pendingOrders}</Text>
+                  <Text style={{ color: 'white', fontSize: isWeb ? 9 : 10, fontWeight: 'bold' }}>{pendingOrders}</Text>
                 </View>
               )}
             </View>
