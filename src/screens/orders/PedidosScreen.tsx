@@ -1665,9 +1665,14 @@ showAlert({
             <TouchableOpacity 
               onPress={(e) => { 
                 e.stopPropagation(); 
-                if (item.ordenVentas && item.ordenVentas.length > 0) {
-                  useCartStore.getState().loadCartFromVenta(item.ordenVentas);
-                } else {
+                try {
+                  if (item.ordenVentas && item.ordenVentas.length > 0) {
+                    useCartStore.getState().loadCartFromVenta(item.ordenVentas);
+                  } else {
+                    useCartStore.getState().clearCart();
+                  }
+                } catch (err) {
+                  console.error('[PedidosScreen] Error al cargar carrito:', err);
                   useCartStore.getState().clearCart();
                 }
                 setCobrarVenta(item);
@@ -1686,9 +1691,14 @@ showAlert({
 
   const handleCobrarPedido = (venta: any) => {
     if (!venta) return;
-    if (venta.ordenVentas && venta.ordenVentas.length > 0) {
-      useCartStore.getState().loadCartFromVenta(venta.ordenVentas);
-    } else {
+    try {
+      if (venta.ordenVentas && venta.ordenVentas.length > 0) {
+        useCartStore.getState().loadCartFromVenta(venta.ordenVentas);
+      } else {
+        useCartStore.getState().clearCart();
+      }
+    } catch (err) {
+      console.error('[PedidosScreen] Error al cargar carrito para cobrar:', err);
       useCartStore.getState().clearCart();
     }
     setCobrarVenta(venta);
@@ -1919,13 +1929,22 @@ showAlert({
         if (itTot > 0 && itTot < 100) itTot = itTot * 1000;
         if (itUnit > 0 && itUnit < 100) itUnit = itUnit * 1000;
 
+        let parsedModifiersList: any[] = [];
         let parsedComentarios = undefined;
         if (it.comentarios) {
           try {
             const p = JSON.parse(it.comentarios);
-            parsedComentarios = JSON.stringify(Array.isArray(p) ? p : [p]);
+            if (Array.isArray(p)) {
+              parsedModifiersList = p.map((m: any) => typeof m === 'string' ? { name: m, price: 0, quantity: 1 } : { name: m.name || m.nombre || '', price: Number(m.price || m.precio || 0), quantity: Number(m.quantity || m.cantidad || 1) });
+            } else if (p && typeof p === 'object') {
+              parsedModifiersList = [{ name: p.name || p.nombre || p.observacion || p.comentario || '', price: Number(p.price || p.precio || 0), quantity: Number(p.quantity || p.cantidad || 1) }];
+            } else {
+              parsedModifiersList = [{ name: String(p), price: 0, quantity: 1 }];
+            }
+            parsedComentarios = JSON.stringify(parsedModifiersList);
           } catch (e) {
-            parsedComentarios = JSON.stringify([{ name: it.comentarios, price: 0 }]);
+            parsedModifiersList = [{ name: it.comentarios, price: 0, quantity: 1 }];
+            parsedComentarios = JSON.stringify(parsedModifiersList);
           }
         }
 
@@ -1941,20 +1960,25 @@ showAlert({
           estado: dom.estado === 'TOMADO' ? 'PREPARANDO' : (dom.estado === 'COBRADO' ? 'LISTO' : 'TOMADO'),
           cantidadPreparada: dom.estado === 'COBRADO' ? (it.cantidad || 1) : 0,
           comentarios: parsedComentarios,
+          modifiers: parsedModifiersList,
         };
       }),
-      ...itemsExt.map((ext, idx) => ({
-        IDorderventas: `dom-ext-${idx}`,
-        nombre: `[Externo] ${ext.nombre}`,
-        nombreProducto: `[Externo] ${ext.nombre}`,
-        cantidad: ext.cantidad || 1,
-        precio: 0,
-        precioTotal: 0,
-        estado: 'LISTO',
-        comentarios: ext.observacion
-          ? JSON.stringify([{ name: `Otro comercio: ${ext.observacion}`, price: 0 }])
-          : JSON.stringify([{ name: 'De otro comercio / bot', price: 0 }]),
-      })),
+      ...itemsExt.map((ext, idx) => {
+        const extMod = ext.observacion
+          ? [{ name: `Otro comercio: ${ext.observacion}`, price: 0, quantity: 1 }]
+          : [{ name: 'De otro comercio / bot', price: 0, quantity: 1 }];
+        return {
+          IDorderventas: `dom-ext-${idx}`,
+          nombre: `[Externo] ${ext.nombre}`,
+          nombreProducto: `[Externo] ${ext.nombre}`,
+          cantidad: ext.cantidad || 1,
+          precio: 0,
+          precioTotal: 0,
+          estado: 'LISTO',
+          comentarios: JSON.stringify(extMod),
+          modifiers: extMod,
+        };
+      }),
     ];
 
     const totalVenta = normalizeCOP(dom.totalWA) || normalizeCOP(dom.totalCalculado) || 0;
@@ -2960,14 +2984,19 @@ showAlert({
                             <TouchableOpacity
                               style={[styles.actionBtn, { backgroundColor: '#f59e0b' }]}
                               onPress={() => {
-                                if (selectedVenta.ordenVentas && selectedVenta.ordenVentas.length > 0) {
-                                  useCartStore.getState().loadCartFromVenta(selectedVenta.ordenVentas);
-                                } else {
-                                  useCartStore.getState().clearCart();
+                                try {
+                                  if (selectedVenta.ordenVentas && selectedVenta.ordenVentas.length > 0) {
+                                    useCartStore.getState().loadCartFromVenta(selectedVenta.ordenVentas);
+                                  } else {
+                                    useCartStore.getState().clearCart();
+                                  }
+                                  useCartStore.getState().setEditingSale(selectedVenta.IDventas, selectedVenta);
+                                  closeModal();
+                                  navigation.navigate('Sales', { screen: 'NewSale' } as any);
+                                } catch (err) {
+                                  console.error('[PedidosScreen] Error al continuar editando:', err);
+                                  Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cargar el pedido al carrito' });
                                 }
-                                useCartStore.getState().setEditingSale(selectedVenta.IDventas, selectedVenta);
-                                closeModal();
-                                navigation.navigate('Sales', { screen: 'NewSale' } as any);
                               }}
                             >
                               <Ionicons name="cart-outline" size={20} color="#fff" />
@@ -3620,15 +3649,19 @@ showAlert({
           }
         }
 
-        if (selectedVenta.ordenVentas && selectedVenta.ordenVentas.length > 0) {
-          useCartStore.getState().loadCartFromVenta(selectedVenta.ordenVentas);
-        } else {
-          useCartStore.getState().clearCart();
+        try {
+          if (selectedVenta.ordenVentas && selectedVenta.ordenVentas.length > 0) {
+            useCartStore.getState().loadCartFromVenta(selectedVenta.ordenVentas);
+          } else {
+            useCartStore.getState().clearCart();
+          }
+          useCartStore.getState().setEditingSale(selectedVenta.IDventas, selectedVenta);
+          closeModal();
+          navigation.navigate('Sales', { screen: 'NewSale' } as any);
+        } catch (err) {
+          console.error('[PedidosScreen] Error al volver al carrito:', err);
+          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cargar el pedido al carrito' });
         }
-
-        useCartStore.getState().setEditingSale(selectedVenta.IDventas, selectedVenta);
-        closeModal();
-        navigation.navigate('Sales', { screen: 'NewSale' } as any);
       },
       onCancel: () => {},
     });
@@ -3638,9 +3671,14 @@ showAlert({
     if (!selectedVenta) return;
     
     // Cargar los productos de esta orden al store temporalmente para que el PaymentModal los muestre bien
-    if (selectedVenta.ordenVentas && selectedVenta.ordenVentas.length > 0) {
-      useCartStore.getState().loadCartFromVenta(selectedVenta.ordenVentas);
-    } else {
+    try {
+      if (selectedVenta.ordenVentas && selectedVenta.ordenVentas.length > 0) {
+        useCartStore.getState().loadCartFromVenta(selectedVenta.ordenVentas);
+      } else {
+        useCartStore.getState().clearCart();
+      }
+    } catch (err) {
+      console.error('[PedidosScreen] Error cargando orden a cobrar:', err);
       useCartStore.getState().clearCart();
     }
     

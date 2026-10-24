@@ -414,7 +414,7 @@ export const generateTicketPayload = (data: TicketData, paperSize: 58 | 80): str
     }
 
     // Modificadores (Adicionales/Descuentos) - Sin papa
-    if (p.modifiers && p.modifiers.length > 0) {
+    if (Array.isArray(p.modifiers) && p.modifiers.length > 0) {
       p.modifiers.forEach(mod => {
         if (mod.name && mod.name.toLowerCase().includes('papa:')) {
           return;
@@ -586,7 +586,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
     }
     payload += ESC_CMD.TXT_NORMAL + ESC_CMD.TXT_BOLD_OFF;
 
-    if (p.modifiers && p.modifiers.length > 0) {
+    if (Array.isArray(p.modifiers) && p.modifiers.length > 0) {
       p.modifiers.forEach(mod => {
         // En versiones con soporte nativo de gramosPapa, omitimos el modificador de compatibilidad
         if (gPapa > 0 && mod.name && mod.name.toLowerCase().includes('papa:')) {
@@ -677,7 +677,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
         }
       }
 
-      if (p.modifiers && p.modifiers.length > 0) {
+      if (Array.isArray(p.modifiers) && p.modifiers.length > 0) {
         p.modifiers.forEach(mod => {
           if (gPapa > 0 && mod.name && mod.name.toLowerCase().includes('papa:')) {
             return;

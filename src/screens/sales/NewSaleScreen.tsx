@@ -127,7 +127,9 @@ const CartItemComponent = React.memo(({
   setModifiersModalVisible: (val: boolean) => void;
 }) => {
   const unitPrice = Number(item.precioUnitario || item.Precio_Unitario || 0);
-  const modifiersTotal = (item.modifiers || []).reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0);
+  const modifiersTotal = Array.isArray(item.modifiers)
+    ? item.modifiers.reduce((sum, mod) => sum + (Number(mod.price || 0) * (mod.quantity || 1)), 0)
+    : 0;
   const totalPrice = (unitPrice * item.quantity) + modifiersTotal;
 
   return (
@@ -159,7 +161,7 @@ const CartItemComponent = React.memo(({
           <RNText style={styles.cartItemUnitPriceCompact}>${unitPrice.toLocaleString()}</RNText>
         </View>
 
-        {item.modifiers && item.modifiers.length > 0 && (
+        {Array.isArray(item.modifiers) && item.modifiers.length > 0 && (
           <View style={styles.appliedModifiersContainerCompact}>
             {item.modifiers.map((mod, idx) => (
               <TouchableOpacity
