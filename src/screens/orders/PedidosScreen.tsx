@@ -7,7 +7,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { getSales, updateVentaEstado, updateVentaPago, deleteSale, deleteSalesBulk, getVentaById, updateOrderItemState, createSale } from '../../services/sales';
+import { getSales, updateVentaEstado, updateVentaPago, deleteSale, deleteSalesBulk, getVentaById, updateOrderItemState, createSale, despejarVenta, despejarSalesBulk } from '../../services/sales';
 import { getDomicilios, updateDomicilioEstado, vincularVentaDomicilio, deleteDomicilio, DomicilioWAItem } from '../../services/domicilios.service';
 import { emitirFacturaDian, eliminarFacturaDian } from '../../services/facturacion';
 import { useSocket, useSocketEvent, useSocketEmitter } from '../../hooks';
@@ -75,6 +75,10 @@ type VentaItem = {
   usuarioRelacion?: { nombre?: string; email?: string };
   registroDeTiempo?: any[];
   facturaElectronica?: any;
+  cocinaInicioAt?: string | null;
+  cocinaFinAt?: string | null;
+  despejadoAt?: string | null;
+  comandaImpresaAt?: string | null;
   _isDomicilioWA?: boolean;
   _rawDomicilio?: any;
 };
@@ -89,6 +93,7 @@ type OrderVenta = {
   estado?: string;
   cantidadPreparada?: number;
   preparadoAt?: string;
+  comandaImpresa?: boolean;
   createdAt?: string;
   comentarios?: string;
   salsa?: string;
@@ -146,7 +151,18 @@ export const getVentaTotal = (venta: VentaItem | null): number => {
   return 0;
 };
 
-const computeActiveMs = (registroDeTiempo: any[], endTime: number) => {
+const computeActiveMs = (
+  registroDeTiempo?: any[], 
+  endTime: number = Date.now(),
+  cocinaInicioAt?: string | null,
+  cocinaFinAt?: string | null
+) => {
+  if (cocinaInicioAt) {
+    const startMs = new Date(cocinaInicioAt).getTime();
+    const endMs = cocinaFinAt ? new Date(cocinaFinAt).getTime() : endTime;
+    return Math.max(0, endMs - startMs);
+  }
+
   if (!registroDeTiempo || registroDeTiempo.length === 0) return 0;
   
   let totalMs = 0;
@@ -157,11 +173,14 @@ const computeActiveMs = (registroDeTiempo: any[], endTime: number) => {
     const entry = registroDeTiempo[i];
     const time = new Date(entry.fecha_hora).getTime();
     
-    if (activeStates.includes(entry.estado)) {
+    const isPagarAlInicio = entry.estado === 'PAGADO' && i <= 2;
+    const isActive = activeStates.includes(entry.estado) || isPagarAlInicio;
+
+    if (isActive) {
       if (activeStart === null) {
         activeStart = time;
       }
-    } else {
+    } else if (entry.estado === 'ENTREGADO' || entry.estado === 'CANCELADO' || entry.estado === 'ANULADO') {
       if (activeStart !== null) {
         totalMs += Math.max(0, time - activeStart);
         activeStart = null;
@@ -197,9 +216,28 @@ const formatDurationStr = (diff: number, formatAsStopwatch: boolean = false) => 
   return durStr;
 };
 
+export const getFechaContableActual = (horaCorteDiaStr?: string): string => {
+  const config = getCachedConfiguracion();
+  const corteStr = horaCorteDiaStr || config?.horaCorteDia || config?.data?.horaCorteDia || '00:00';
+  const [corteHours, corteMinutes] = (corteStr || '00:00').split(':').map(Number);
+  
+  const now = new Date();
+  const colombiaTime = new Date(now.getTime() - (5 * 60 * 60 * 1000));
+  const currentMinutes = (colombiaTime.getUTCHours() * 60) + colombiaTime.getUTCMinutes();
+  const corteTotalMinutes = ((corteHours || 0) * 60) + (corteMinutes || 0);
 
-const getTimerStyle = (diffMs: number, estado: string) => {
-  if (estado === 'PAGADO' || estado === 'ENTREGADO' || estado === 'CANCELADO') {
+  if (currentMinutes < corteTotalMinutes) {
+    colombiaTime.setUTCDate(colombiaTime.getUTCDate() - 1);
+  }
+
+  const y = colombiaTime.getUTCFullYear();
+  const m = String(colombiaTime.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(colombiaTime.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+const getTimerStyle = (diffMs: number, estado: string, isEnCocinaActivo: boolean = false) => {
+  if (!isEnCocinaActivo && (estado === 'ENTREGADO' || estado === 'CANCELADO' || estado === 'ANULADO')) {
     return { bg: '#f3f4f6', text: '#6b7280', icon: 'pause-circle-outline' as const };
   }
   if (estado === 'LISTO') {
@@ -213,6 +251,51 @@ const getTimerStyle = (diffMs: number, estado: string) => {
   } else {
     return { bg: '#fee2e2', text: '#ef4444', icon: 'warning-outline' as const };
   }
+};
+
+const OrderTimerBadge = ({ venta }: { venta: any }) => {
+  const [duration, setDuration] = useState<string>('');
+  const [style, setStyle] = useState({ bg: '#f3f4f6', text: '#6b7280', icon: 'time-outline' as any });
+
+  useEffect(() => {
+    const isEntregado = (venta.estado || '').toUpperCase() === 'ENTREGADO' || venta.cocinaFinAt != null;
+    const isEnCocinaActivo = (venta.estado || '').toUpperCase() === 'TOMADO' || 
+                            (venta.estado || '').toUpperCase() === 'PREPARANDO' || 
+                            ((venta.estado || '').toUpperCase() === 'PAGADO' && !venta.cocinaFinAt);
+
+    const update = () => {
+      let diff = 0;
+      if (isEntregado) {
+        const end = venta.cocinaFinAt ? new Date(venta.cocinaFinAt).getTime() : Date.now();
+        diff = computeActiveMs(venta.registroDeTiempo, end, venta.cocinaInicioAt, venta.cocinaFinAt);
+      } else {
+        diff = computeActiveMs(venta.registroDeTiempo, Date.now(), venta.cocinaInicioAt, venta.cocinaFinAt);
+      }
+
+      setDuration(formatDurationStr(diff, !isEntregado));
+      setStyle(getTimerStyle(diff, venta.estado || 'INICIADO', isEnCocinaActivo));
+    };
+
+    update();
+    let interval: NodeJS.Timeout | null = null;
+    if (isEnCocinaActivo) {
+      interval = setInterval(update, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [venta.estado, venta.cocinaInicioAt, venta.cocinaFinAt, venta.registroDeTiempo]);
+
+  if (!duration) return null;
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: style.bg, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12 }}>
+      <Ionicons name={style.icon as any} size={11} color={style.text} />
+      <RNText style={{ fontSize: 11, color: style.text, fontWeight: '700', marginLeft: 3 }}>
+        {duration}
+      </RNText>
+    </View>
+  );
 };
 
 const PreparationTimer = ({ 
@@ -288,33 +371,37 @@ const RealtimeDurationTimer = React.memo(({ selectedVenta }: { selectedVenta: an
   const [realtimeDuration, setRealtimeDuration] = useState<string | null>(null);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (selectedVenta && selectedVenta.estado !== 'PAGADO' && selectedVenta.estado !== 'ENTREGADO') {
-      const updateTimer = () => {
-        if (!selectedVenta.registroDeTiempo || selectedVenta.registroDeTiempo.length === 0) return;
-        const diff = computeActiveMs(selectedVenta.registroDeTiempo, Date.now());
-        setRealtimeDuration(formatDurationStr(diff));
-      };
-      
-      updateTimer();
-      interval = setInterval(updateTimer, 1000);
-    } else if (selectedVenta && (selectedVenta.estado === 'PAGADO' || selectedVenta.estado === 'ENTREGADO')) {
-      if (selectedVenta.registroDeTiempo && selectedVenta.registroDeTiempo.length > 0) {
-        const lastEntry = selectedVenta.registroDeTiempo[selectedVenta.registroDeTiempo.length - 1];
-        const end = new Date(lastEntry.fecha_hora).getTime();
-        const diff = computeActiveMs(selectedVenta.registroDeTiempo, end);
-        setRealtimeDuration(formatDurationStr(diff));
-      } else {
-        setRealtimeDuration(null);
-      }
-    } else {
+    let interval: NodeJS.Timeout | null = null;
+    if (!selectedVenta) {
       setRealtimeDuration(null);
+      return;
+    }
+
+    const isEntregado = (selectedVenta.estado || '').toUpperCase() === 'ENTREGADO' || selectedVenta.cocinaFinAt != null;
+    const isEnCocinaActivo = (selectedVenta.estado || '').toUpperCase() === 'TOMADO' || 
+                            (selectedVenta.estado || '').toUpperCase() === 'PREPARANDO' || 
+                            ((selectedVenta.estado || '').toUpperCase() === 'PAGADO' && !selectedVenta.cocinaFinAt);
+
+    const updateTimer = () => {
+      let diff = 0;
+      if (isEntregado) {
+        const end = selectedVenta.cocinaFinAt ? new Date(selectedVenta.cocinaFinAt).getTime() : Date.now();
+        diff = computeActiveMs(selectedVenta.registroDeTiempo, end, selectedVenta.cocinaInicioAt, selectedVenta.cocinaFinAt);
+      } else {
+        diff = computeActiveMs(selectedVenta.registroDeTiempo, Date.now(), selectedVenta.cocinaInicioAt, selectedVenta.cocinaFinAt);
+      }
+      setRealtimeDuration(formatDurationStr(diff));
+    };
+
+    updateTimer();
+    if (isEnCocinaActivo) {
+      interval = setInterval(updateTimer, 1000);
     }
 
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [selectedVenta]);
+  }, [selectedVenta?.IDventas, selectedVenta?.estado, selectedVenta?.cocinaInicioAt, selectedVenta?.cocinaFinAt, selectedVenta?.registroDeTiempo]);
 
   if (!realtimeDuration) return null;
   return (
@@ -420,6 +507,7 @@ const PedidosScreen = () => {
   const [loadingDomicilios, setLoadingDomicilios] = useState(false);
   const [domisSubTab, setDomisSubTab] = useState<'NUEVOS' | 'TOMADOS' | 'PAGADOS' | 'TODOS'>('NUEVOS');
   const [selectedToDelete, setSelectedToDelete] = useState<string[]>([]);
+  const [showDespejados, setShowDespejados] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState<{show: boolean, type: 'desde' | 'hasta'}>({show: false, type: 'desde'});
   const [selectedVenta, setSelectedVenta] = useState<VentaItem | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -767,6 +855,7 @@ const PedidosScreen = () => {
 
   const tabsWithCounts = useMemo(() => {
     const arraySeguro = Array.isArray(cachedVentas) ? cachedVentas : [];
+    const fechaContable = getFechaContableActual();
     
     return TABS.map(tab => {
       let count = 0;
@@ -774,6 +863,30 @@ const PedidosScreen = () => {
         count = arraySeguro.length;
       } else if (tab.key === 'DOMIS') {
         count = visibleDomicilios.filter(d => d.estado === 'RECIENTE').length;
+      } else if (tab.key === 'PAGADO') {
+        // En PAGADO se dejan todos sin filtro de fecha por defecto
+        count = arraySeguro.filter(v => {
+          const est = (v.estado || '').toUpperCase();
+          return est === 'PAGADO' || (!!v.medioDePago && v.medioDePago !== 'PENDIENTE' && est !== 'CANCELADO' && est !== 'ANULADO');
+        }).length;
+      } else if (tab.key === 'TOMADO') {
+        // Pestaña operativa TOMADO: jornada actual y pedidos activos en cocina (incluyendo pagados al inicio aún sin entregar)
+        count = arraySeguro.filter(v => {
+          const vDate = (v.fecha || v.fechaYHora || '').substring(0, 10);
+          if (vDate && vDate !== fechaContable) return false;
+          const est = (v.estado || '').toUpperCase();
+          const isActivoCocina = est === 'TOMADO' || est === 'PREPARANDO' || (est === 'PAGADO' && !v.cocinaFinAt);
+          return isActivoCocina;
+        }).length;
+      } else if (tab.key === 'ENTREGADO') {
+        // Pestaña operativa ENTREGADO: jornada actual y pedidos entregados activos (no despejados)
+        count = arraySeguro.filter(v => {
+          const vDate = (v.fecha || v.fechaYHora || '').substring(0, 10);
+          if (vDate && vDate !== fechaContable) return false;
+          const est = (v.estado || '').toUpperCase();
+          const isEntregado = est === 'ENTREGADO' || v.cocinaFinAt != null;
+          return isEntregado && !v.despejadoAt;
+        }).length;
       } else {
         const tabUpper = tab.key.toUpperCase().replace(/_/g, ' ');
         count = arraySeguro.filter(v => {
@@ -911,6 +1024,17 @@ const PedidosScreen = () => {
         if (selectedVenta?.IDventas === data.ventaId) closeModal();
       } else if (data.action === 'bulkDelete' && data.ventaIds) {
         data.ventaIds.forEach((id) => removeVenta(id));
+      } else if (data.action === 'update' && data.venta) {
+        updateVenta(data.venta.IDventas, data.venta);
+        setSelectedVenta((prev) =>
+          prev && prev.IDventas === data.venta.IDventas
+            ? { ...prev, ...data.venta }
+            : prev
+        );
+      } else if (data.action === 'despejarBulk' && (data as any).ventaIds) {
+        const ids: string[] = (data as any).ventaIds;
+        const despAt = (data as any).despejadoAt;
+        ids.forEach((id) => updateVenta(id, { despejadoAt: despAt }));
       } else if (data.action === 'restore' && data.venta) {
         // Venta restaurada desde papelera: vuelve a aparecer en la lista
         addVenta(data.venta);
@@ -1073,11 +1197,39 @@ const PedidosScreen = () => {
     let filtered = Array.isArray(ventas) ? [...ventas] : [];
 
     if (activeTab !== 'todos') {
-      const tabUpper = activeTab.toUpperCase().replace(/_/g, ' ');
-      filtered = filtered.filter(v => {
-        const estadoUpper = (v.estado || '').toUpperCase().replace(/_/g, ' ');
-        return estadoUpper === tabUpper;
-      });
+      const fechaContable = getFechaContableActual();
+      if (activeTab === 'PAGADO') {
+        // Pestaña PAGADO: Se deja tal cual (sin filtro de fecha por defecto)
+        filtered = filtered.filter(v => {
+          const est = (v.estado || '').toUpperCase();
+          return est === 'PAGADO' || (!!v.medioDePago && v.medioDePago !== 'PENDIENTE' && est !== 'CANCELADO' && est !== 'ANULADO');
+        });
+      } else if (activeTab === 'TOMADO') {
+        // Pestaña TOMADO: solo pedidos activos en preparación de la jornada actual
+        filtered = filtered.filter(v => {
+          const vDate = (v.fecha || v.fechaYHora || '').substring(0, 10);
+          if (vDate && vDate !== fechaContable && !filters.fechaDesde && !filters.fechaHasta) return false;
+          const est = (v.estado || '').toUpperCase();
+          const isActivoCocina = est === 'TOMADO' || est === 'PREPARANDO' || (est === 'PAGADO' && !v.cocinaFinAt);
+          return isActivoCocina;
+        });
+      } else if (activeTab === 'ENTREGADO') {
+        // Pestaña ENTREGADO: pedidos entregados de la jornada actual (despejados según toggle)
+        filtered = filtered.filter(v => {
+          const vDate = (v.fecha || v.fechaYHora || '').substring(0, 10);
+          if (vDate && vDate !== fechaContable && !filters.fechaDesde && !filters.fechaHasta) return false;
+          const est = (v.estado || '').toUpperCase();
+          const isEntregado = est === 'ENTREGADO' || v.cocinaFinAt != null;
+          if (!isEntregado) return false;
+          return showDespejados ? !!v.despejadoAt : !v.despejadoAt;
+        });
+      } else {
+        const tabUpper = activeTab.toUpperCase().replace(/_/g, ' ');
+        filtered = filtered.filter(v => {
+          const estadoUpper = (v.estado || '').toUpperCase().replace(/_/g, ' ');
+          return estadoUpper === tabUpper;
+        });
+      }
     }
 
     if (filters.searchText) {
@@ -1207,7 +1359,7 @@ const PedidosScreen = () => {
     }
 
     return filtered;
-  }, [activeTab, filters]);
+  }, [activeTab, filters, showDespejados]);
 
   const groupByDate = useCallback((ventas: VentaItem[]): SectionData[] => {
     const grupos: { [key: string]: VentaItem[] } = {};
@@ -1441,6 +1593,136 @@ showAlert({
     });
   };
 
+  const handleDespejarSingle = async (venta: VentaItem) => {
+    if (!venta?.IDventas) return;
+    const isDespejado = !!venta.despejadoAt;
+
+    if (!isDespejado) {
+      const isUnpaid = (!venta.medioDePago || venta.medioDePago === 'PENDIENTE') && venta.estado !== 'PAGADO';
+      const promptConfirm = () => {
+        showAlert({
+          type: 'confirm',
+          title: isUnpaid ? 'Pedido pendiente de cobro' : 'Despejar pedido',
+          message: isUnpaid
+            ? `El pedido #${venta.pedido || ''} aún no tiene registro de cobro. ¿Deseas despejarlo de la vista de entregados de todas formas? (Permanecerá en el sistema y en la pestaña de cobros).`
+            : `¿Deseas despejar el pedido #${venta.pedido || ''} de la vista de entregados? Podrás consultarlo en la pestaña de Despejados o en Pagados.`,
+          confirmText: 'Despejar',
+          onConfirm: async () => {
+            try {
+              await despejarVenta(venta.IDventas, true);
+              const nowIso = new Date().toISOString();
+              updateVenta(venta.IDventas, { despejadoAt: nowIso });
+              Toast.show({ type: 'success', text1: 'Vista despejada', text2: `Pedido #${venta.pedido || ''} despejado` });
+            } catch (err: any) {
+              console.error('[PedidosScreen] Error al despejar venta:', err);
+              Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo despejar el pedido' });
+            }
+          },
+          onCancel: () => {},
+        });
+      };
+
+      if (isUnpaid) {
+        promptConfirm();
+      } else {
+        try {
+          await despejarVenta(venta.IDventas, true);
+          const nowIso = new Date().toISOString();
+          updateVenta(venta.IDventas, { despejadoAt: nowIso });
+          Toast.show({ type: 'success', text1: 'Vista despejada', text2: `Pedido #${venta.pedido || ''} despejado` });
+        } catch (err: any) {
+          console.error('[PedidosScreen] Error al despejar venta:', err);
+          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo despejar el pedido' });
+        }
+      }
+    } else {
+      // Restaurar a la vista activa
+      try {
+        await despejarVenta(venta.IDventas, false);
+        updateVenta(venta.IDventas, { despejadoAt: null });
+        Toast.show({ type: 'success', text1: 'Pedido restaurado', text2: `Pedido #${venta.pedido || ''} visible en entregados` });
+      } catch (err: any) {
+        console.error('[PedidosScreen] Error al restaurar venta:', err);
+        Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo restaurar el pedido' });
+      }
+    }
+  };
+
+  const handleDespejarBulk = (explicitIds?: string[]) => {
+    const ids = explicitIds && explicitIds.length > 0 
+      ? explicitIds 
+      : filteredVentas.filter(v => !v.despejadoAt).map(v => v.IDventas);
+
+    if (ids.length === 0) {
+      Toast.show({ type: 'info', text1: 'Sin pedidos', text2: 'No hay pedidos activos para despejar en esta vista' });
+      return;
+    }
+
+    const unpaidCount = filteredVentas.filter(v => ids.includes(v.IDventas) && (!v.medioDePago || v.medioDePago === 'PENDIENTE') && v.estado !== 'PAGADO').length;
+
+    const message = unpaidCount > 0
+      ? `Hay ${unpaidCount} pedido(s) que aún no han sido cobrados. ¿Estás seguro de despejar los ${ids.length} pedidos entregados de la vista?`
+      : `¿Deseas despejar los ${ids.length} pedidos entregados de la pantalla? La vista quedará limpia para la jornada actual.`;
+
+    showAlert({
+      type: 'confirm',
+      title: 'Despejar pedidos entregados',
+      message,
+      confirmText: 'Despejar',
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          await despejarSalesBulk(ids, true);
+          const nowIso = new Date().toISOString();
+          ids.forEach(id => updateVenta(id, { despejadoAt: nowIso }));
+          setSelectedToDelete([]);
+          setIsSelectionMode(false);
+          Toast.show({ type: 'success', text1: 'Vista despejada', text2: `${ids.length} pedido(s) despejados` });
+        } catch (err) {
+          console.error('[PedidosScreen] Error al despejar en lote:', err);
+          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudieron despejar los pedidos' });
+        } finally {
+          setLoading(false);
+        }
+      },
+      onCancel: () => {},
+    });
+  };
+
+  const handleRestaurarBulk = (explicitIds?: string[]) => {
+    const ids = explicitIds && explicitIds.length > 0 
+      ? explicitIds 
+      : filteredVentas.filter(v => !!v.despejadoAt).map(v => v.IDventas);
+
+    if (ids.length === 0) {
+      Toast.show({ type: 'info', text1: 'Sin pedidos', text2: 'No hay pedidos despejados para restaurar' });
+      return;
+    }
+
+    showAlert({
+      type: 'confirm',
+      title: 'Restaurar pedidos a la vista',
+      message: `¿Deseas restaurar ${ids.length} pedido(s) a la vista de entregados activos?`,
+      confirmText: 'Restaurar',
+      onConfirm: async () => {
+        setLoading(true);
+        try {
+          await despejarSalesBulk(ids, false);
+          ids.forEach(id => updateVenta(id, { despejadoAt: null }));
+          setSelectedToDelete([]);
+          setIsSelectionMode(false);
+          Toast.show({ type: 'success', text1: 'Pedidos restaurados', text2: `${ids.length} pedido(s) visibles nuevamente` });
+        } catch (err) {
+          console.error('[PedidosScreen] Error al restaurar en lote:', err);
+          Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudieron restaurar los pedidos' });
+        } finally {
+          setLoading(false);
+        }
+      },
+      onCancel: () => {},
+    });
+  };
+
   const toggleSelection = (id: string) => {
     setSelectedToDelete(prev => 
       prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
@@ -1615,23 +1897,41 @@ showAlert({
           activeOpacity={0.7}
         >
           <View style={styles.cardHeader}>
-            <View style={[styles.cardTitleRow, { flex: 1, marginRight: 8, alignItems: 'flex-start' }]}>
-              <Ionicons name="receipt-outline" size={18} color="#374151" style={{ marginTop: 2 }} />
-              <RNText style={[styles.cardTitle, { flexShrink: 1 }]}>{item.pedido || 'Sin pedido'}</RNText>
+            <View style={[styles.cardTitleRow, { flex: 1, marginRight: 8, alignItems: 'center', flexWrap: 'wrap', gap: 6 }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <Ionicons name="receipt-outline" size={18} color="#374151" style={{ marginRight: 4 }} />
+                <RNText style={[styles.cardTitle, { flexShrink: 1 }]}>{item.pedido || 'Sin pedido'}</RNText>
+              </View>
+              <OrderTimerBadge venta={item} />
+              {((item.medioDePago && item.medioDePago !== 'PENDIENTE') || item.estado === 'PAGADO') ? (
+                <View style={{ backgroundColor: '#ecfdf5', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="checkmark-circle-outline" size={11} color="#059669" />
+                  <RNText style={{ fontSize: 10, color: '#059669', fontWeight: 'bold', marginLeft: 3 }}>
+                    {item.medioDePago ? `PAGADO (${item.medioDePago})` : 'PAGADO'}
+                  </RNText>
+                </View>
+              ) : (
+                <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="time-outline" size={11} color="#d97706" />
+                  <RNText style={{ fontSize: 10, color: '#d97706', fontWeight: 'bold', marginLeft: 3 }}>
+                    PENDIENTE COBRO
+                  </RNText>
+                </View>
+              )}
               {hasNotes(item) && (
-                <View style={{ marginLeft: 8, backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                  <RNText style={{ fontSize: 12 }}>🏷️</RNText>
+                <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="pricetag-outline" size={11} color="#d97706" />
                   <RNText style={{ fontSize: 10, color: '#d97706', fontWeight: 'bold', marginLeft: 4 }}>NOTAS</RNText>
                 </View>
               )}
               {item.mensaje?.includes('Auto-Cuadre IA') && (
-                <View style={{ marginLeft: 8, backgroundColor: '#ede9fe', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                  <RNText style={{ fontSize: 12 }}>🤖</RNText>
+                <View style={{ backgroundColor: '#ede9fe', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="sparkles-outline" size={11} color="#6d28d9" />
                   <RNText style={{ fontSize: 10, color: '#6d28d9', fontWeight: 'bold', marginLeft: 4 }}>IA</RNText>
                 </View>
               )}
               {(item.mesa?.startsWith('DOMICILIO WA') || (item.costoDelDomicilio && item.costoDelDomicilio > 0)) ? (
-                <View style={{ marginLeft: 8, backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
                   <RNText style={{ fontSize: 10, color: '#b45309', fontWeight: 'bold' }}>DOMIS</RNText>
                 </View>
               ) : null}
@@ -1742,6 +2042,28 @@ showAlert({
             >
               <Ionicons name="cash-outline" size={18} color="#16a34a" />
             </TouchableOpacity>
+            {activeTab === 'ENTREGADO' && (
+              <TouchableOpacity 
+                onPress={(e) => { 
+                  e.stopPropagation(); 
+                  handleDespejarSingle(item); 
+                }}
+                style={{ 
+                  padding: 6, 
+                  backgroundColor: item.despejadoAt ? '#eff6ff' : '#f1f5f9', 
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: item.despejadoAt ? '#bfdbfe' : '#e2e8f0',
+                }}
+                accessibilityLabel={item.despejadoAt ? "Restaurar pedido a la vista" : "Despejar pedido de la vista"}
+              >
+                <Ionicons 
+                  name={item.despejadoAt ? "refresh-outline" : "eye-off-outline"} 
+                  size={18} 
+                  color={item.despejadoAt ? "#2563eb" : "#64748b"} 
+                />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
         </TouchableOpacity>
@@ -3859,7 +4181,15 @@ showAlert({
         updateVentaEstado(selectedVenta.IDventas, newEstado).catch(e => console.error(e));
         
         let updatedOrdenVentas = selectedVenta.ordenVentas;
-        if (['ENTREGADO', 'LISTO_PARA_ENTREGA', 'PAGADO'].includes(newEstado)) {
+        const nowIso = new Date().toISOString();
+        const extraUpdates: Partial<VentaItem> = {};
+        if (newEstado === 'ENTREGADO') {
+          extraUpdates.cocinaFinAt = nowIso;
+        } else if (newEstado === 'TOMADO' && !selectedVenta.cocinaInicioAt) {
+          extraUpdates.cocinaInicioAt = nowIso;
+        }
+
+        if (['ENTREGADO', 'LISTO_PARA_ENTREGA'].includes(newEstado) || (newEstado === 'PAGADO' && (selectedVenta.cocinaFinAt || selectedVenta.estado === 'ENTREGADO'))) {
           updatedOrdenVentas = updatedOrdenVentas?.map(ov => ({
             ...ov,
             estado: 'LISTO',
@@ -3867,8 +4197,8 @@ showAlert({
           }));
         }
 
-        const updatedVenta = { ...selectedVenta, estado: newEstado, ordenVentas: updatedOrdenVentas };
-        updateVenta(selectedVenta.IDventas, { estado: newEstado, ordenVentas: updatedOrdenVentas });
+        const updatedVenta = { ...selectedVenta, estado: newEstado, ordenVentas: updatedOrdenVentas, ...extraUpdates };
+        updateVenta(selectedVenta.IDventas, updatedVenta);
         emitOrdenActualizada({
           ventaId: selectedVenta.IDventas,
           IDventas: selectedVenta.IDventas,
@@ -4183,6 +4513,139 @@ showAlert({
         </View>
       )}
 
+      {/* Sub-barra operativa para ENTREGADO: Alternar activos/despejados y despejar vista */}
+      {activeTab === 'ENTREGADO' && (
+        <View style={styles.entregadosToolbar}>
+          <View style={styles.entregadosSegmentGroup}>
+            <TouchableOpacity
+              style={[
+                styles.entregadosSegmentBtn,
+                !showDespejados && styles.entregadosSegmentBtnActive,
+              ]}
+              onPress={() => setShowDespejados(false)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="checkmark-done-circle-outline"
+                size={14}
+                color={!showDespejados ? '#ffffff' : '#059669'}
+              />
+              <RNText
+                style={[
+                  styles.entregadosSegmentText,
+                  !showDespejados && styles.entregadosSegmentTextActive,
+                ]}
+              >
+                Activos
+              </RNText>
+              <View
+                style={[
+                  styles.entregadosBadgePill,
+                  !showDespejados ? { backgroundColor: 'rgba(255,255,255,0.28)' } : { backgroundColor: '#dcfce7' },
+                ]}
+              >
+                <RNText
+                  style={[
+                    styles.entregadosBadgePillText,
+                    { color: !showDespejados ? '#ffffff' : '#059669' },
+                  ]}
+                >
+                  {(Array.isArray(cachedVentas) ? cachedVentas : []).filter(v => {
+                    const vDate = (v.fecha || v.fechaYHora || '').substring(0, 10);
+                    if (vDate && vDate !== getFechaContableActual()) return false;
+                    const est = (v.estado || '').toUpperCase();
+                    return (est === 'ENTREGADO' || v.cocinaFinAt != null) && !v.despejadoAt;
+                  }).length}
+                </RNText>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.entregadosSegmentBtn,
+                showDespejados && styles.entregadosSegmentBtnActiveDespejados,
+              ]}
+              onPress={() => setShowDespejados(true)}
+              activeOpacity={0.7}
+            >
+              <Ionicons
+                name="archive-outline"
+                size={14}
+                color={showDespejados ? '#ffffff' : '#64748b'}
+              />
+              <RNText
+                style={[
+                  styles.entregadosSegmentText,
+                  showDespejados && styles.entregadosSegmentTextActive,
+                ]}
+              >
+                Despejados
+              </RNText>
+              <View
+                style={[
+                  styles.entregadosBadgePill,
+                  showDespejados ? { backgroundColor: 'rgba(255,255,255,0.28)' } : { backgroundColor: '#f1f5f9' },
+                ]}
+              >
+                <RNText
+                  style={[
+                    styles.entregadosBadgePillText,
+                    { color: showDespejados ? '#ffffff' : '#64748b' },
+                  ]}
+                >
+                  {(Array.isArray(cachedVentas) ? cachedVentas : []).filter(v => {
+                    const vDate = (v.fecha || v.fechaYHora || '').substring(0, 10);
+                    if (vDate && vDate !== getFechaContableActual()) return false;
+                    const est = (v.estado || '').toUpperCase();
+                    return (est === 'ENTREGADO' || v.cocinaFinAt != null) && !!v.despejadoAt;
+                  }).length}
+                </RNText>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            {!isSelectionMode && (
+              <TouchableOpacity
+                style={styles.entregadosActionBtn}
+                onPress={() => {
+                  setIsSelectionMode(true);
+                  setSelectedToDelete([]);
+                }}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="checkbox-outline" size={15} color="#475569" />
+                <RNText style={styles.entregadosActionBtnText}>Seleccionar</RNText>
+              </TouchableOpacity>
+            )}
+
+            {!showDespejados ? (
+              <TouchableOpacity
+                style={[styles.entregadosActionBtn, styles.entregadosClearBtn]}
+                onPress={() => handleDespejarBulk()}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="eye-off-outline" size={15} color="#059669" />
+                <RNText style={[styles.entregadosActionBtnText, { color: '#059669', fontWeight: '700' }]}>
+                  Despejar Todo
+                </RNText>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                style={[styles.entregadosActionBtn, { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }]}
+                onPress={() => handleRestaurarBulk()}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="refresh-outline" size={15} color="#2563eb" />
+                <RNText style={[styles.entregadosActionBtnText, { color: '#2563eb', fontWeight: '700' }]}>
+                  Restaurar Todo
+                </RNText>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      )}
+
       <View style={styles.filterBar}>
         <View style={styles.searchBarContainer}>
           <Ionicons name="search" size={18} color="#6b7280" />
@@ -4233,6 +4696,22 @@ showAlert({
                 {selectedToDelete.length === filteredVentas.length ? 'Ninguno' : 'Todos'}
               </RNText>
             </TouchableOpacity>
+            {activeTab === 'ENTREGADO' && (
+              <TouchableOpacity 
+                style={[
+                  styles.bulkDeleteBtn, 
+                  { backgroundColor: showDespejados ? '#2563eb' : '#059669', marginRight: 8 }, 
+                  selectedToDelete.length === 0 && { opacity: 0.5 }
+                ]}
+                onPress={() => showDespejados ? handleRestaurarBulk(selectedToDelete) : handleDespejarBulk(selectedToDelete)}
+                disabled={selectedToDelete.length === 0}
+              >
+                <Ionicons name={showDespejados ? "refresh-outline" : "eye-off-outline"} size={16} color="#fff" />
+                <RNText style={{ color: '#fff', fontWeight: '700', marginLeft: 4, fontSize: 13 }}>
+                  {showDespejados ? 'Restaurar' : 'Despejar'}
+                </RNText>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity 
               style={[styles.bulkDeleteBtn, selectedToDelete.length === 0 && { opacity: 0.5 }]}
               onPress={handleBulkDelete}
@@ -4635,6 +5114,78 @@ const styles = StyleSheet.create({
   clearFiltersBtnText: { color: '#ef4444', fontWeight: '600', fontSize: 14, marginLeft: 6 },
   applyFiltersBtn: { backgroundColor: '#4CAF50', paddingVertical: 12, paddingHorizontal: 20, borderRadius: 12 },
   applyFiltersBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  entregadosToolbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  entregadosSegmentGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f1f5f9',
+    borderRadius: 20,
+    padding: 3,
+    gap: 2,
+  },
+  entregadosSegmentBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 16,
+    gap: 4,
+  },
+  entregadosSegmentBtnActive: {
+    backgroundColor: '#059669',
+  },
+  entregadosSegmentBtnActiveDespejados: {
+    backgroundColor: '#475569',
+  },
+  entregadosSegmentText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  entregadosSegmentTextActive: {
+    color: '#ffffff',
+  },
+  entregadosBadgePill: {
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: 10,
+    marginLeft: 2,
+  },
+  entregadosBadgePillText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  entregadosActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    gap: 4,
+  },
+  entregadosActionBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  entregadosClearBtn: {
+    backgroundColor: '#ecfdf5',
+    borderColor: '#a7f3d0',
+  },
 });
 
 export default PedidosScreen;

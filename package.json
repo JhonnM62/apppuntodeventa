@@ -1,6 +1,6 @@
 {
   "name": "qhubomor-pos-app",
-  "version": "1.0.339",
+  "version": "1.0.340",
   "main": "index.js",
   "scripts": {
     "start": "expo start --dev-client",

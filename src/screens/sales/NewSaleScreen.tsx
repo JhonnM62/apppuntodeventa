@@ -1150,13 +1150,19 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           let nuevosProductos: any[] = [];
           let productosAnteriores: any[] = [];
           
+          let yaEstuvoEnCocina = false;
           if (isEditing && editingVenta) {
-             const isFromCarrito = editingVenta.estado === 'EN_EL_CARRITO';
+             yaEstuvoEnCocina = Boolean(
+               editingVenta.cocinaInicioAt || 
+               editingVenta.comandaImpresaAt || 
+               (Array.isArray(editingVenta.registroDeTiempo) && editingVenta.registroDeTiempo.some((r: any) => ['TOMADO', 'PAGADO', 'ENTREGADO', 'LISTO_PARA_ENTREGA'].includes((r.estado || '').toUpperCase()))) ||
+               (editingVenta.estado && editingVenta.estado !== 'EN_EL_CARRITO')
+             );
              const originalQtyMap: Record<string, number> = {};
              const preparadaQtyMap: Record<string, number> = {};
              editingVenta.ordenVentas?.forEach((ov: any) => {
                const id = ov.producto?.IDproductos || ov.productoId || ov.IDorderventas;
-               originalQtyMap[id] = isFromCarrito ? 0 : ((originalQtyMap[id] || 0) + (ov.cantidad || 1));
+               originalQtyMap[id] = !yaEstuvoEnCocina ? 0 : ((originalQtyMap[id] || 0) + (ov.cantidad || 1));
                preparadaQtyMap[id] = (preparadaQtyMap[id] || 0) + (ov.cantidadPreparada || 0);
              });
 
@@ -1203,7 +1209,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
              }));
           }
 
-          const ticketData = {
+          const ticketData: any = {
             orderId: cleanOrderId,
             fecha: new Date().toLocaleString('es-CO'),
             cliente: selectedCliente?.nombre || editingVenta?.cliente,
@@ -1223,6 +1229,18 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             vendedor: useAuthStore.getState().user?.nombre || 'Caja',
             porcentajeMermaPapa: getCachedConfiguracion()?.data?.porcentajeMermaPapa ?? getCachedConfiguracion()?.porcentajeMermaPapa ?? 10
           };
+
+          if (isEditing && editingVenta && yaEstuvoEnCocina) {
+            if (nuevosProductos.length > 0) {
+              ticketData.isAdicion = true;
+              ticketData.forceComanda = true;
+            } else {
+              ticketData.suppressComanda = true;
+            }
+          } else if (!isEditing && paymentData.estado === 'PAGADO') {
+            ticketData.forceComanda = true;
+          }
+
           printStore.printTicket(ticketData);
         }
 
@@ -1357,6 +1375,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                 gramosPapa: resolveGramosPapa(item),
               })),
               estado: payload.venta.estado,
+              forceComanda: payload.venta.estado === 'PAGADO',
               metodoPago: finalMethod,
               efectivoRecibido: payload.venta.efectivoRecibido,
               devueltas: payload.venta.devueltas,
@@ -1367,6 +1386,12 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               porcentajeMermaPapa: getCachedConfiguracion()?.data?.porcentajeMermaPapa ?? getCachedConfiguracion()?.porcentajeMermaPapa ?? 10
             };
             printStore.printTicket(ticketData);
+
+            if (ventaCreada?.IDventas) {
+              import('../../services/sales').then(({ marcarComandaImpresa }) => {
+                marcarComandaImpresa(ventaCreada.IDventas).catch(() => {});
+              });
+            }
           }
 
           // Emitir Sockets

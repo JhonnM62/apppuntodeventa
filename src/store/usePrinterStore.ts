@@ -206,7 +206,13 @@ const usePrinterStore = create<PrinterState>()(
       // ─────────────────────────────────────────────────────────────────
       printTicket: async (ticketData: any) => {
         const state = get();
-        const printComanda = state.shouldPrintComanda(ticketData.estado);
+        let printComanda = state.shouldPrintComanda(ticketData.estado);
+        if (ticketData.forceComanda || (ticketData.isAdicion && ticketData.productos?.length > 0)) {
+          printComanda = true;
+        }
+        if (ticketData.suppressComanda) {
+          printComanda = false;
+        }
         const printFactura = state.shouldPrintFactura(ticketData.estado);
 
         if (!printComanda && !printFactura) return;

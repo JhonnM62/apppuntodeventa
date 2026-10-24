@@ -169,3 +169,15 @@ export const emptyTrashSales = async () => {
 export const updateOrderItemState = async (ventaId: string, orderVentaId: string, estado: string, cantidadPreparada?: number) => {
   return await api.patch(`/ventas/${ventaId}/producto/${orderVentaId}/estado`, { estado, cantidadPreparada });
 };
+
+export const despejarVenta = async (ventaId: string, despejar: boolean = true) => {
+  return await api.patch(`/ventas/${ventaId}/despejar`, { despejar });
+};
+
+export const despejarSalesBulk = async (ids: string[], despejar: boolean = true) => {
+  return await api.patch(`/ventas/despejar-bulk`, { ids, despejar });
+};
+
+export const marcarComandaImpresa = async (ventaId: string) => {
+  return await api.patch(`/ventas/${ventaId}/marcar-comanda`);
+};

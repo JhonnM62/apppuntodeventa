@@ -38,6 +38,7 @@ export interface TicketData {
   direccion?: string;
   productos: TicketProduct[];
   productosAnteriores?: TicketProduct[];
+  isAdicion?: boolean;
   total: number;
   efectivoRecibido?: number;
   devueltas?: number;
@@ -511,14 +512,24 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
 
   let payload = '';
 
+  const isAdicion = Boolean(data.isAdicion || (data.productosAnteriores && data.productosAnteriores.length > 0));
+
   // HEADER (TICKET DE PREPARACIÓN)
   payload += ESC_CMD.ALIGN_CT;
   payload += ESC_CMD.TXT_2HEIGHT;
   payload += ESC_CMD.TXT_BOLD_ON;
-  if (data.seccionNombre) {
-    payload += cleanText(`NUEVA ORDEN: ${data.seccionNombre.toUpperCase()}`) + '\n';
+  if (isAdicion) {
+    if (data.seccionNombre) {
+      payload += cleanText(`ADICION: ${data.seccionNombre.toUpperCase()}`) + '\n';
+    } else {
+      payload += cleanText('ADICION AL PEDIDO (COCINA)') + '\n';
+    }
   } else {
-    payload += cleanText('NUEVA ORDEN (COCINA)') + '\n';
+    if (data.seccionNombre) {
+      payload += cleanText(`NUEVA ORDEN: ${data.seccionNombre.toUpperCase()}`) + '\n';
+    } else {
+      payload += cleanText('NUEVA ORDEN (COCINA)') + '\n';
+    }
   }
   payload += ESC_CMD.TXT_NORMAL;
   payload += ESC_CMD.TXT_BOLD_OFF;
@@ -645,7 +656,7 @@ export const generateComandaPayload = (data: TicketData, paperSize: 58 | 80): st
     payload += separator + '\n';
     payload += ESC_CMD.ALIGN_CT;
     payload += ESC_CMD.TXT_BOLD_ON;
-    payload += 'ANTERIORES / ENTREGADOS\n';
+    payload += cleanText('YA EN COCINA (EN MARCHA)') + '\n';
     payload += ESC_CMD.TXT_BOLD_OFF;
     payload += ESC_CMD.ALIGN_LT;
     payload += separator + '\n';
