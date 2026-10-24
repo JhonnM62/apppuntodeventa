@@ -430,6 +430,10 @@ const PedidosScreen = () => {
   const [remoteSearchResults, setRemoteSearchResults] = useState<VentaItem[] | null>(null);
   const [isSearchingRemote, setIsSearchingRemote] = useState(false);
 
+  // --- Mutex / In-flight locks para evitar duplicación al tomar domicilios ---
+  const takingDomicilioIdsRef = useRef<Set<string>>(new Set());
+  const [takingDomicilioIds, setTakingDomicilioIds] = useState<Record<string, boolean>>({});
+
   // --- Scroll & Floating Buttons ---
   const listRef = useRef<any>(null);
   const { handleScroll: handleScrollBase } = useScrollDirection();
@@ -1786,12 +1790,37 @@ showAlert({
   };
 
   const handleTomarDomicilio = async (dom: DomicilioWAItem) => {
+    if (!dom || !dom.IDdomicilio) return;
+
+    if (takingDomicilioIdsRef.current.has(dom.IDdomicilio)) {
+      console.log(`[Pedidos] Domicilio ${dom.IDdomicilio} ya se está tomando, ignorando click duplicado.`);
+      return;
+    }
+
+    takingDomicilioIdsRef.current.add(dom.IDdomicilio);
+    setTakingDomicilioIds(prev => ({ ...prev, [dom.IDdomicilio]: true }));
+
     try {
       let ventaId = dom.ventaId;
       let ventaCreadaObj: any = null;
 
+      // Buscar si ya existe una venta registrada en Zustand para este domicilio
+      if (!ventaId) {
+        const currentVentas = useSalesStore.getState().ventas || [];
+        const existingVenta = currentVentas.find(v => 
+          (v.pedido && dom.orderIdWA && (v.pedido === `#${dom.orderIdWA}` || v.pedido === dom.orderIdWA || v.pedido.includes(dom.orderIdWA))) ||
+          (v.domiciliosWA && Array.isArray(v.domiciliosWA) && v.domiciliosWA.some((d: any) => d.IDdomicilio === dom.IDdomicilio))
+        );
+        if (existingVenta) {
+          ventaId = existingVenta.IDventas;
+          ventaCreadaObj = existingVenta;
+          console.log(`[Pedidos] Venta existente reutilizada (${ventaId}) para domicilio ${dom.IDdomicilio}`);
+        }
+      }
+
       const cleanPhone = dom.clienteTelefono ? dom.clienteTelefono.replace(/\D/g, '') : '';
       const mesaStr = cleanPhone ? `DOMICILIO WA ${cleanPhone}` : 'DOMICILIO WA';
+      const deterministicTemporalId = `tomar-dom-${dom.IDdomicilio}`;
 
       if (!ventaId) {
         const productosPayload = buildProductosPayloadFromDomicilio(dom);
@@ -1801,7 +1830,9 @@ showAlert({
           : (normalizeCOP(dom.totalCalculado) || normalizeCOP(dom.totalWA) || 0);
 
         const newSale = await createSale({
+          temporalId: deterministicTemporalId,
           venta: {
+            temporalId: deterministicTemporalId,
             mesa: mesaStr,
             estado: 'TOMADO',
             cliente: dom.clienteNombre || (cleanPhone ? `Cliente WA (${cleanPhone})` : 'Cliente WhatsApp'),
@@ -1822,6 +1853,8 @@ showAlert({
           await vincularVentaDomicilio(dom.IDdomicilio, ventaId, 'TOMADO');
           addVenta(ventaCreadaObj);
         }
+      } else {
+        await vincularVentaDomicilio(dom.IDdomicilio, ventaId, 'TOMADO').catch(() => {});
       }
 
       await updateDomicilioEstado(dom.IDdomicilio, 'TOMADO');
@@ -1857,6 +1890,13 @@ showAlert({
     } catch (e: any) {
       console.error('Error al tomar domicilio:', e);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo tomar el pedido' });
+    } finally {
+      takingDomicilioIdsRef.current.delete(dom.IDdomicilio);
+      setTakingDomicilioIds(prev => {
+        const next = { ...prev };
+        delete next[dom.IDdomicilio];
+        return next;
+      });
     }
   };
 
@@ -2349,16 +2389,36 @@ showAlert({
                     <RNText style={{ fontSize: 12, color: '#ef4444', fontWeight: '600' }}>Rechazar</RNText>
                   </TouchableOpacity>
 
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleTomarDomicilio(item);
-                    }}
-                    style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#3b82f6', paddingVertical: 7, paddingHorizontal: 12, borderRadius: 8 }}
-                  >
-                    <Ionicons name="hand-right-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
-                    <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>Tomar</RNText>
-                  </TouchableOpacity>
+                  {(() => {
+                    const isTakingThisDom = !!takingDomicilioIds[item.IDdomicilio];
+                    return (
+                      <TouchableOpacity
+                        disabled={isTakingThisDom}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleTomarDomicilio(item);
+                        }}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          backgroundColor: isTakingThisDom ? '#93c5fd' : '#3b82f6',
+                          paddingVertical: 7,
+                          paddingHorizontal: 12,
+                          borderRadius: 8,
+                          opacity: isTakingThisDom ? 0.7 : 1,
+                        }}
+                      >
+                        {isTakingThisDom ? (
+                          <ActivityIndicator size="small" color="#fff" style={{ marginRight: 4 }} />
+                        ) : (
+                          <Ionicons name="hand-right-outline" size={14} color="#fff" style={{ marginRight: 4 }} />
+                        )}
+                        <RNText style={{ fontSize: 12, color: '#fff', fontWeight: 'bold' }}>
+                          {isTakingThisDom ? 'Tomando...' : 'Tomar'}
+                        </RNText>
+                      </TouchableOpacity>
+                    );
+                  })()}
                 </>
               )}
 
@@ -3010,18 +3070,27 @@ showAlert({
                         </TouchableOpacity>
 
                         {/* Pasar de estado */}
-                        {selectedVenta._rawDomicilio?.estado === 'RECIENTE' && (
-                          <TouchableOpacity
-                            style={[styles.actionBtn, { backgroundColor: '#3b82f6' }]}
-                            onPress={() => {
-                              handleTomarDomicilio(selectedVenta._rawDomicilio);
-                              setSelectedVenta((prev: any) => ({ ...prev, estado: 'TOMADO', _rawDomicilio: { ...prev._rawDomicilio, estado: 'TOMADO' } }));
-                            }}
-                          >
-                            <Ionicons name="hand-right-outline" size={20} color="#fff" />
-                            <RNText style={styles.actionBtnText}>Pasar a Tomado</RNText>
-                          </TouchableOpacity>
-                        )}
+                        {selectedVenta._rawDomicilio?.estado === 'RECIENTE' && (() => {
+                          const rawDomId = selectedVenta._rawDomicilio?.IDdomicilio;
+                          const isTakingModal = !!(rawDomId && takingDomicilioIds[rawDomId]);
+                          return (
+                            <TouchableOpacity
+                              disabled={isTakingModal}
+                              style={[styles.actionBtn, { backgroundColor: isTakingModal ? '#93c5fd' : '#3b82f6', opacity: isTakingModal ? 0.7 : 1 }]}
+                              onPress={async () => {
+                                await handleTomarDomicilio(selectedVenta._rawDomicilio);
+                                setSelectedVenta((prev: any) => ({ ...prev, estado: 'TOMADO', _rawDomicilio: { ...prev._rawDomicilio, estado: 'TOMADO' } }));
+                              }}
+                            >
+                              {isTakingModal ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                              ) : (
+                                <Ionicons name="hand-right-outline" size={20} color="#fff" />
+                              )}
+                              <RNText style={styles.actionBtnText}>{isTakingModal ? 'Tomando...' : 'Pasar a Tomado'}</RNText>
+                            </TouchableOpacity>
+                          );
+                        })()}
 
                         {selectedVenta._rawDomicilio?.estado === 'TOMADO' && (
                           <>

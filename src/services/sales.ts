@@ -18,6 +18,7 @@ export interface SaleProduct {
 }
 
 export interface SalePayload {
+  temporalId?: string;
   venta: {
     mesa: string;
     estado: string;
