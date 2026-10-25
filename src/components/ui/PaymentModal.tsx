@@ -247,7 +247,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
       const cfg = getCachedConfiguracion()?.data || getCachedConfiguracion();
       const esModoRest = String(cfg?.modoOperacion || '').toUpperCase() === 'RESTAURANTE';
-      const defaultEstado: OrderStatus = initialEstado || (esModoRest ? 'TOMADO' : (isCobrarMode ? 'PAGADO' : 'EN_EL_CARRITO'));
+      const defaultEstado: OrderStatus = (initialEstado && (isCobrarMode ? initialEstado !== 'TOMADO' && initialEstado !== 'EN_EL_CARRITO' : true))
+        ? initialEstado
+        : (isCobrarMode ? 'PAGADO' : (esModoRest ? 'TOMADO' : 'EN_EL_CARRITO'));
       setSelectedEstado(defaultEstado);
       Animated.parallel([
         Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
@@ -943,11 +945,16 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         <View style={styles.headerMethodActions}>
           <TouchableOpacity
             style={styles.backButton}
-            onPress={() => setMethod(null)}
+            onPress={() => {
+              setMethod(null);
+              if (onCobrar) {
+                setSelectedEstado('PAGADO');
+              }
+            }}
             accessibilityRole="button"
             accessibilityLabel="Volver"
           >
-            <Ionicons name="arrow-back" size={22} color="#374151" />
+            <Ionicons name="arrow-back" size={20} color="#374151" />
             <RNText style={styles.backText}>Volver</RNText>
           </TouchableOpacity>
           
@@ -955,11 +962,28 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <TouchableOpacity
               style={[
                 styles.quickStatusBtnSmall,
+                selectedEstado === 'PAGADO' && styles.quickStatusBtnActivePagado
+              ]}
+              onPress={() => setSelectedEstado('PAGADO')}
+              accessibilityRole="button"
+              accessibilityLabel="Marcar Pagado"
+            >
+              <Ionicons name="checkmark-circle" size={14} color={selectedEstado === 'PAGADO' ? '#fff' : '#22c55e'} />
+              <RNText style={[styles.quickStatusTextSmall, selectedEstado === 'PAGADO' && styles.quickStatusTextActive]}>
+                PAGADO
+              </RNText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.quickStatusBtnSmall,
                 selectedEstado === 'TOMADO' && styles.quickStatusBtnActiveTomado
               ]}
               onPress={() => toggleEstado('TOMADO')}
+              accessibilityRole="button"
+              accessibilityLabel="Marcar Tomado"
             >
-              <Ionicons name="hand-left" size={16} color={selectedEstado === 'TOMADO' ? '#fff' : '#3b82f6'} />
+              <Ionicons name="hand-left" size={14} color={selectedEstado === 'TOMADO' ? '#fff' : '#3b82f6'} />
               <RNText style={[styles.quickStatusTextSmall, selectedEstado === 'TOMADO' && styles.quickStatusTextActive]}>
                 TOMADO
               </RNText>
@@ -971,8 +995,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 selectedEstado === 'ENTREGADO' && styles.quickStatusBtnActiveEntregado
               ]}
               onPress={() => toggleEstado('ENTREGADO')}
+              accessibilityRole="button"
+              accessibilityLabel="Marcar Entregado"
             >
-              <Ionicons name="paper-plane" size={16} color={selectedEstado === 'ENTREGADO' ? '#fff' : '#10b981'} />
+              <Ionicons name="paper-plane" size={14} color={selectedEstado === 'ENTREGADO' ? '#fff' : '#10b981'} />
               <RNText style={[styles.quickStatusTextSmall, selectedEstado === 'ENTREGADO' && styles.quickStatusTextActive]}>
                 ENTREGADO
               </RNText>
@@ -1161,9 +1187,9 @@ const styles = StyleSheet.create({
   backButton: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, backgroundColor: '#f3f4f6', borderRadius: 12, alignSelf: 'flex-start' },
   backText: { fontSize: 15, fontWeight: '600', color: '#374151', marginLeft: 6 },
   headerMethodActions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, marginTop: 8 },
-  quickStatusGridSmall: { flexDirection: 'row', gap: 8 },
-  quickStatusBtnSmall: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, backgroundColor: '#f9fafb', borderWidth: 1.5, borderColor: '#e5e7eb' },
-  quickStatusTextSmall: { fontSize: 11, fontWeight: '700', color: '#374151', marginLeft: 6, letterSpacing: 0.5 },
+  quickStatusGridSmall: { flexDirection: 'row', gap: 6 },
+  quickStatusBtnSmall: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 8, borderRadius: 10, backgroundColor: '#f9fafb', borderWidth: 1.5, borderColor: '#e5e7eb' },
+  quickStatusTextSmall: { fontSize: 10.5, fontWeight: '700', color: '#374151', marginLeft: 4, letterSpacing: 0.3 },
   selectedMethodContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 20, paddingVertical: 12, backgroundColor: '#f9fafb', borderRadius: 14 },
   selectedMethodIcon: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   selectedMethod: { fontSize: 20, fontWeight: '800', color: '#111827', letterSpacing: 0.5 },
@@ -1229,6 +1255,7 @@ const styles = StyleSheet.create({
   quickStatusContainer: { marginBottom: 20 },
   quickStatusGrid: { flexDirection: 'row', gap: 12 },
   quickStatusBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 16, backgroundColor: '#f9fafb', borderWidth: 2, borderColor: 'transparent' },
+  quickStatusBtnActivePagado: { backgroundColor: '#22c55e', borderColor: '#22c55e' },
   quickStatusBtnActiveTomado: { backgroundColor: '#3b82f6', borderColor: '#3b82f6' },
   quickStatusBtnActiveEntregado: { backgroundColor: '#10b981', borderColor: '#10b981' },
   quickStatusText: { fontSize: 13, fontWeight: '700', color: '#374151', marginLeft: 8, letterSpacing: 0.5 },

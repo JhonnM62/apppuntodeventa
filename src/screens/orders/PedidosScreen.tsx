@@ -5104,7 +5104,7 @@ showAlert({
             Math.max(0, Number(cobrarVenta.totalInput) - Number(cobrarVenta.efectivoRecibido)) : undefined))
         }
         initialBanco={cobrarVenta?.banco}
-        initialEstado={cobrarVenta?.estado as any}
+        initialEstado="PAGADO"
         initialPorcentajePropina={cobrarVenta?.porcentajePropina}
         abonoPrevio={Number(cobrarVenta?.abono) || 0}
       />
