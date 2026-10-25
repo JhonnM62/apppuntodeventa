@@ -2205,59 +2205,6 @@ showAlert({
             )}
           </View>
 
-          {/* Fila de Contacto y Entrega si existe teléfono o dirección */}
-          {(item.direccion || getCleanPhoneNumber(item)) ? (
-            <View style={styles.cardDeliveryBox}>
-              {getCleanPhoneNumber(item) ? (
-                <View style={styles.cardDeliveryPhoneLine}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 6 }}>
-                    <Ionicons name="call-outline" size={13} color="#059669" style={{ marginRight: 5 }} />
-                    <RNText style={styles.cardDeliveryPhoneText} selectable={true}>
-                      {getCleanPhoneNumber(item)}
-                    </RNText>
-                  </View>
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleCopyToClipboard(getCleanPhoneNumber(item)!, 'Teléfono copiado');
-                    }}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    style={styles.cardMiniCopyBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel="Copiar teléfono"
-                  >
-                    <Ionicons name="copy-outline" size={12} color="#059669" />
-                    <RNText style={styles.cardMiniCopyTextPhone}>Copiar</RNText>
-                  </TouchableOpacity>
-                </View>
-              ) : null}
-
-              {item.direccion ? (
-                <View style={[styles.cardDeliveryAddressLine, getCleanPhoneNumber(item) ? { borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 6, marginTop: 4 } : null]}>
-                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', flex: 1, marginRight: 6 }}>
-                    <Ionicons name="location-outline" size={14} color="#0284c7" style={{ marginTop: 2, marginRight: 5 }} />
-                    <RNText style={styles.cardDeliveryAddressText} selectable={true}>
-                      {item.direccion}
-                    </RNText>
-                  </View>
-                  <TouchableOpacity
-                    onPress={(e) => {
-                      e.stopPropagation();
-                      handleCopyToClipboard(item.direccion, 'Dirección copiada');
-                    }}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    style={styles.cardMiniCopyBtn}
-                    accessibilityRole="button"
-                    accessibilityLabel="Copiar dirección"
-                  >
-                    <Ionicons name="copy-outline" size={12} color="#0284c7" />
-                    <RNText style={styles.cardMiniCopyTextAddress}>Copiar</RNText>
-                  </TouchableOpacity>
-                </View>
-              ) : null}
-            </View>
-          ) : null}
-
           {/* Fila 4: Vista previa de productos con chips estilizados */}
           {productos.length > 0 && (
             <View style={styles.productsPreview}>
