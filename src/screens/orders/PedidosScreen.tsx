@@ -4916,7 +4916,7 @@ showAlert({
             </TouchableOpacity>
           </View>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: isWeb ? 4 : 6 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: isWeb ? 4 : 5 }}>
             {!isSelectionMode && (
               <TouchableOpacity
                 style={[styles.entregadosActionBtn, isWeb && styles.entregadosActionBtnWeb]}
@@ -4925,9 +4925,13 @@ showAlert({
                   setSelectedToDelete([]);
                 }}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Seleccionar pedidos"
               >
-                <Ionicons name="checkbox-outline" size={isWeb ? 13 : 15} color="#475569" />
-                <RNText style={[styles.entregadosActionBtnText, isWeb && styles.entregadosActionBtnTextWeb]}>Seleccionar</RNText>
+                <Ionicons name="checkbox-outline" size={isWeb ? 13 : 13} color="#475569" />
+                <RNText style={[styles.entregadosActionBtnText, isWeb && styles.entregadosActionBtnTextWeb]}>
+                  {isWeb ? 'Seleccionar' : 'Elegir'}
+                </RNText>
               </TouchableOpacity>
             )}
 
@@ -4936,10 +4940,12 @@ showAlert({
                 style={[styles.entregadosActionBtn, styles.entregadosClearBtn, isWeb && styles.entregadosActionBtnWeb]}
                 onPress={() => handleDespejarBulk()}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Despejar todo"
               >
-                <Ionicons name="eye-off-outline" size={isWeb ? 13 : 15} color="#059669" />
+                <Ionicons name="eye-off-outline" size={isWeb ? 13 : 13} color="#059669" />
                 <RNText style={[styles.entregadosActionBtnText, isWeb && styles.entregadosActionBtnTextWeb, { color: '#059669', fontWeight: '700' }]}>
-                  Despejar Todo
+                  Despejar
                 </RNText>
               </TouchableOpacity>
             ) : (
@@ -4947,10 +4953,12 @@ showAlert({
                 style={[styles.entregadosActionBtn, { backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }, isWeb && styles.entregadosActionBtnWeb]}
                 onPress={() => handleRestaurarBulk()}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel="Restaurar todo"
               >
-                <Ionicons name="refresh-outline" size={isWeb ? 13 : 15} color="#2563eb" />
+                <Ionicons name="refresh-outline" size={isWeb ? 13 : 13} color="#2563eb" />
                 <RNText style={[styles.entregadosActionBtnText, isWeb && styles.entregadosActionBtnTextWeb, { color: '#2563eb', fontWeight: '700' }]}>
-                  Restaurar Todo
+                  Restaurar
                 </RNText>
               </TouchableOpacity>
             )}
@@ -5756,29 +5764,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
-    flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   entregadosSegmentGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f1f5f9',
-    borderRadius: 20,
-    padding: 3,
+    borderRadius: 14,
+    padding: 2,
     gap: 2,
   },
   entregadosSegmentBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 16,
-    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3.5,
+    borderRadius: 12,
+    gap: 3,
   },
   entregadosSegmentBtnActive: {
     backgroundColor: '#059669',
@@ -5787,8 +5794,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#475569',
   },
   entregadosSegmentText: {
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '700',
     color: '#475569',
   },
   entregadosSegmentTextActive: {
@@ -5797,26 +5804,26 @@ const styles = StyleSheet.create({
   entregadosBadgePill: {
     paddingHorizontal: 5,
     paddingVertical: 1,
-    borderRadius: 10,
+    borderRadius: 8,
     marginLeft: 2,
   },
   entregadosBadgePillText: {
     fontSize: 10,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   entregadosActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
+    paddingHorizontal: 7,
+    paddingVertical: 3.5,
+    borderRadius: 8,
     backgroundColor: '#f8fafc',
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    gap: 4,
+    gap: 3,
   },
   entregadosActionBtnText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#475569',
   },
