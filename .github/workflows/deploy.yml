@@ -32,10 +32,10 @@ jobs:
           script: |
             set -e
             
-            # 0. Limpiar imagenes viejas del proyecto y caché de construcción
+            # 0. Limpiar imagenes colgadas (conservando caché activa de BuildKit de los últimos 7 días)
             echo "Limpiando espacio en disco de imagenes viejas..."
             docker image prune -f || true
-            docker builder prune -f || true
+            docker builder prune -f --filter "until=168h" || true
             
             # 1. Crear directorio del proyecto si no existe
             mkdir -p /root/frontend-qhubomor
@@ -44,45 +44,42 @@ jobs:
             # 2. Clonar el repositorio o actualizarlo si ya existe
             if [ ! -d ".git" ]; then
               echo "Clonando repositorio por primera vez..."
-              # Reemplaza 'JhonnM62/frontend-repo' por el nombre real de tu repositorio en GitHub
               git clone https://${{ secrets.TOKEN_REACTNATIVEQHUBOMOR }}@github.com/JhonnM62/apppuntodeventa.git .
             else
               echo "Actualizando repositorio existente..."
-              # Asegúrate de colocar la ruta correcta de tu repositorio en GitHub
               git remote set-url origin https://${{ secrets.TOKEN_REACTNATIVEQHUBOMOR }}@github.com/JhonnM62/apppuntodeventa.git
               git fetch --all
               git reset --hard origin/main
               git clean -fd
             fi
             
-            # 3. Inyectar las variables de entorno desde los secretos de GitHub
-            echo "${{ secrets.ENV_FILE_CONTENT }}" > .env
+            # 3. Guardar las variables de entorno del cliente principal
+            printf '%s\n' "${{ secrets.ENV_FILE_CONTENT }}" > /root/frontend-qhubomor/.env.main
             
-            # 4. Construir la nueva imagen de Docker
-            echo "Construyendo imagen Docker para web..."
-            docker build -t qhubomor-frontend .
+            # 4. Construir la imagen de Docker UNA SOLA VEZ con BuildKit (compartida por todos los clientes)
+            echo "Construyendo imagen Docker para web (con caché de capas y Metro)..."
+            DOCKER_BUILDKIT=1 docker build -t qhubomor-frontend .
             
             # 5. Detener y eliminar el contenedor anterior si existe
             echo "Deteniendo contenedor anterior..."
             docker stop qhubomor-frontend-app || true
             docker rm qhubomor-frontend-app || true
             
-            # 6. Levantar el nuevo contenedor en el puerto 8062
-            echo "Levantando nuevo contenedor..."
+            # 6. Levantar el contenedor principal en el puerto 8062
+            echo "Levantando nuevo contenedor principal..."
             docker run -d \
               --name qhubomor-frontend-app \
               -p 8062:80 \
               --restart unless-stopped \
+              --env-file /root/frontend-qhubomor/.env.main \
               qhubomor-frontend
             
-            echo "¡Despliegue del Frontend completado exitosamente!"
+            echo "¡Despliegue del Frontend principal completado exitosamente!"
 
             # =========================================================
             # FÁBRICA DE NUEVOS FRONTENDS WEB
-            # Importante: cada cliente requiere su propia imagen porque
-            # la URL del backend queda "quemada" en el build de Expo/React.
-            # Para agregar un cliente: copia la llamada de abajo y cambia
-            # los parámetros (CLIENT_ID, PUERTO, DOMINIO, API_URL, SECRETO).
+            # Reutiliza la imagen qhubomor-frontend construida arriba e
+            # inyecta las variables del cliente al iniciar el contenedor.
             # =========================================================
             deploy_new_client_web() {
               CLIENT_ID=$1
@@ -93,32 +90,26 @@ jobs:
 
               echo "🚀 Desplegando Frontend para: $CLIENT_ID en $DOMAIN:$PORT"
 
-              # Crear .env con la URL del backend de este cliente
-              # ENV_EXTRA puede incluir variables adicionales del frontend
+              # Crear archivo .env exclusivo para este cliente
               printf '%s\n' "$ENV_EXTRA" > /root/frontend-qhubomor/.env.$CLIENT_ID
               echo "EXPO_PUBLIC_API_URL=$API_URL" >> /root/frontend-qhubomor/.env.$CLIENT_ID
               echo "EXPO_PUBLIC_APP_VARIANT=$CLIENT_ID" >> /root/frontend-qhubomor/.env.$CLIENT_ID
-
-              # Copiar el .env al directorio raíz para que Docker lo tome en el build
-              cp /root/frontend-qhubomor/.env.$CLIENT_ID /root/frontend-qhubomor/.env
-
-              # Compilar imagen única para este cliente (con su API URL)
-              echo "Compilando imagen para $CLIENT_ID..."
-              cd /root/frontend-qhubomor
-              docker build -t frontend-$CLIENT_ID .
 
               # Detener y eliminar contenedor anterior de este cliente
               docker stop frontend-$CLIENT_ID || true
               docker rm frontend-$CLIENT_ID || true
 
-              # Levantar el nuevo contenedor
+              # Levantar el nuevo contenedor reutilizando la imagen ya compilada
               docker run -d \
                 --name frontend-$CLIENT_ID \
                 -p $PORT:80 \
                 --restart unless-stopped \
-                frontend-$CLIENT_ID
+                --env-file /root/frontend-qhubomor/.env.$CLIENT_ID \
+                -e EXPO_PUBLIC_API_URL="$API_URL" \
+                -e EXPO_PUBLIC_APP_VARIANT="$CLIENT_ID" \
+                qhubomor-frontend
 
-              # Configurar subdominio + certificado SSL automáticamente usando el script de n8n
+              # Configurar subdominio + certificado SSL automáticamente
               DOMAIN=$DOMAIN PORT=$PORT EMAIL=jonnymejia62@gmail.com \
                 bash /root/frontend-qhubomor/scripts/setup-nginx.sh
 
@@ -127,8 +118,6 @@ jobs:
 
             # ----------------------------------------------------------
             # LISTA DE CLIENTES ACTIVOS
-            # Para agregar uno nuevo: copia la línea de abajo,
-            # cambia los valores y crea el secreto en GitHub.
             # ----------------------------------------------------------
             deploy_new_client_web \
               "restaurante2" \
@@ -142,4 +131,3 @@ jobs:
               "app-fogata.autosystemprojects.site" \
               "https://api-fogata.autosystemprojects.site/api/v1" \
               "${{ secrets.ENV_FRONTEND_FOGATA }}"
-

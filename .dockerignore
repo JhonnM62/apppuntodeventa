@@ -4,6 +4,10 @@ dist
 web-build
 .expo
 
+# Environment files (injected at runtime per client container)
+.env
+.env.*
+
 # Git and CI
 .git
 .github

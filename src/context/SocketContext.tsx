@@ -39,8 +39,9 @@ import useAuthStore from '../store/useAuthStore';
 import { useProductStore } from '../store/useProductStore';
 import { setPrinterSocket } from '../store/usePrinterStore';
 import Toast from 'react-native-toast-message';
+import { API_URL } from '../constants/app.config';
 
-const SOCKET_URL = process.env.EXPO_PUBLIC_API_URL?.replace('/api/v1', '') || 'http://localhost:3000';
+const SOCKET_URL = API_URL.replace(/\/api\/v1\/?$/, '');
 const NAMESPACE = '/pos';
 
 interface SocketContextValue {

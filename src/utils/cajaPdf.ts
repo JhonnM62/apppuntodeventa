@@ -470,7 +470,8 @@ export const generateAndShareCajaPDF = async (resumen: any, modoOperacion: 'GENE
       const wConfig = resW.data || resW;
       if (wConfig?.enabled) {
         Toast.show({ type: 'info', text1: 'WhatsApp', text2: 'Enviando reporte...' });
-        const baseUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/api\/v1\/?$/, '') || 'http://192.168.1.100:3000';
+        const { API_URL } = await import('../constants/app.config');
+        const baseUrl = API_URL.replace(/\/api\/v1\/?$/, '');
         const caption = `*REPORTE DE CAJA*\nFecha: ${parseLocal(resumen.caja.fechaDeCierre)?.toLocaleDateString() || new Date().toLocaleDateString()}\nEfectivo en Caja: ${formatMoney(resumen.caja.efectivoDeCierre)}\nVentas Totales: ${formatMoney(resumen.resumen?.totalVentas)}`;
         await uploadAndSendCajaWhatsapp(uri, fileName, caption, baseUrl);
         Toast.show({ type: 'success', text1: 'WhatsApp', text2: 'Reporte enviado con éxito' });

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Switch, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useSettingsStore } from '../../store/useSettingsStore';
-import { ArrowLeft, Check, Volume2 } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 const PREDEFINED_COLORS = [
@@ -28,7 +28,7 @@ export default function ConfiguracionAvanzadaScreen() {
       {/* Header */}
       <View style={{ backgroundColor: primaryColor }} className="px-4 py-4 flex-row items-center justify-between shadow-sm z-10">
         <TouchableOpacity onPress={() => navigation.goBack()} className="p-2 -ml-2 rounded-full">
-          <ArrowLeft size={24} color="white" />
+          <Feather name="arrow-left" size={24} color="white" />
         </TouchableOpacity>
         <Text className="text-xl font-bold text-white">Configuración Avanzada</Text>
         <View className="w-10" />
@@ -41,7 +41,7 @@ export default function ConfiguracionAvanzadaScreen() {
         {/* Sección: Audio y Sonido */}
         <View style={{ backgroundColor: '#fff', padding: 20, borderRadius: 16, marginBottom: 24 }}>
           <View className="flex-row items-center mb-1">
-            <Volume2 size={20} color="#1f2937" style={{ marginRight: 8 }} />
+            <Feather name="volume-2" size={20} color="#1f2937" style={{ marginRight: 8 }} />
             <Text className="text-lg font-bold text-gray-800">Audio y Sonidos</Text>
           </View>
           
@@ -93,7 +93,7 @@ export default function ConfiguracionAvanzadaScreen() {
                   style={{ backgroundColor: color }}
                   className={`w-14 h-14 rounded-full items-center justify-center shadow-sm ${isSelected ? 'border-4 border-white' : ''}`}
                 >
-                  {isSelected && <Check size={24} color="white" />}
+                  {isSelected && <Feather name="check" size={24} color="white" />}
                 </TouchableOpacity>
               );
             })}

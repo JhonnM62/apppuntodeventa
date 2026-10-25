@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { WifiOff, RefreshCw } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { useSyncStore } from '../../store/useSyncStore';
 import { SyncManager } from '../../services/SyncManager';
 
@@ -35,7 +35,7 @@ export default function OfflineBanner() {
       <View className="py-2 px-4 flex-row items-center justify-center">
         {!isConnected ? (
           <>
-            <WifiOff size={16} color="white" />
+            <Feather name="wifi-off" size={16} color="white" />
             <Text className="text-white text-xs font-bold ml-2">
               SIN CONEXIÓN {queueSize > 0 ? `(Esperando para sincronizar ${queueSize} elementos)` : ''}
             </Text>
@@ -44,7 +44,7 @@ export default function OfflineBanner() {
           <Text className="text-white text-xs font-bold ml-2">Sincronizando con el servidor...</Text>
         ) : isStuck ? (
           <>
-            <RefreshCw size={16} color="white" />
+            <Feather name="refresh-cw" size={16} color="white" />
             <Text className="text-white text-xs font-bold ml-2">
               Toca para sincronizar {queueSize} venta(s) pendiente(s)
             </Text>
