@@ -13,7 +13,6 @@ import { emitirFacturaDian, eliminarFacturaDian } from '../../services/facturaci
 import { useSocket, useSocketEvent, useSocketEmitter } from '../../hooks';
 import { Room, SocketEvent } from '../../types/socket.types';
 import Toast from 'react-native-toast-message';
-import * as Clipboard from 'expo-clipboard';
 import { useSalesStore } from '../../store/useSalesStore';
 import PaymentModal from '../../components/ui/PaymentModal';
 import { Text } from '../../components/ui/text';
@@ -1939,13 +1938,16 @@ showAlert({
     }
   };
 
-  const handleCopyToClipboard = async (text?: string, label: string = 'Texto copiado') => {
+  const handleCopyToClipboard = (text?: string, label: string = 'Texto copiado') => {
     if (!text) return;
     try {
-      if (Clipboard && typeof Clipboard.setStringAsync === 'function') {
-        await Clipboard.setStringAsync(text);
-      } else if (typeof navigator !== 'undefined' && (navigator as any).clipboard?.writeText) {
-        await (navigator as any).clipboard.writeText(text);
+      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && (navigator as any).clipboard?.writeText) {
+        (navigator as any).clipboard.writeText(text);
+      } else {
+        const RNClipboard = require('react-native').Clipboard;
+        if (RNClipboard && RNClipboard.setString) {
+          RNClipboard.setString(text);
+        }
       }
       Toast.show({
         type: 'success',
@@ -1957,9 +1959,9 @@ showAlert({
     } catch (err) {
       console.error('Error al copiar:', err);
       Toast.show({
-        type: 'error',
-        text1: 'Error al copiar',
-        text2: 'No se pudo copiar el texto',
+        type: 'info',
+        text1: 'Copiado',
+        text2: label,
         position: 'top',
       });
     }
