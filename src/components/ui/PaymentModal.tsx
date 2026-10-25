@@ -224,37 +224,17 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       setMethod(methodToSet);
       setSelectedBank(initialBanco || null);
 
-      // Calcular montos sugeridos o guardados para efectivo y transferencia
-      const initialEfNum = (initialEfectivo !== undefined && initialEfectivo !== null && Number(initialEfectivo) > 0)
-        ? Number(initialEfectivo)
-        : 0;
+      // Dejar monto en efectivo en limpio (0) al abrir para que el cajero ingrese directamente con cuánto le pagan sin tener que borrar
       const initialTrNum = (initialTransferencia !== undefined && initialTransferencia !== null && Number(initialTransferencia) > 0)
         ? Number(initialTransferencia)
         : 0;
 
-      let efVal = initialEfNum;
       let trVal = initialTrNum;
-
-      if (methodToSet === 'EFECTIVO') {
-        efVal = initialEfNum > 0 ? initialEfNum : actualTotal;
-      } else if (methodToSet === 'TRANSFERENCIA') {
+      if (methodToSet === 'TRANSFERENCIA') {
         trVal = initialTrNum > 0 ? initialTrNum : actualTotal;
-      } else if (methodToSet === 'EFECTIVO Y OTROS') {
-        if (efVal > 0 && trVal === 0 && efVal < actualTotal) {
-          trVal = actualTotal - efVal;
-        } else if (trVal > 0 && efVal === 0 && trVal < actualTotal) {
-          efVal = actualTotal - trVal;
-        } else if (efVal === 0 && trVal === 0) {
-          efVal = Math.round(actualTotal / 2);
-          trVal = actualTotal - efVal;
-        }
       }
 
-      if (efVal > 0) {
-        setEfectivoInput(efVal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
-      } else {
-        setEfectivoInput('');
-      }
+      setEfectivoInput('');
 
       if (trVal > 0) {
         setTransferenciaInput(trVal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
@@ -524,7 +504,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
     try {
       const finalMethod = method;
-      const finalEfectivo = method === 'EFECTIVO' || method === 'EFECTIVO Y OTROS' ? efectivoAmount : undefined;
+      const finalEfectivo = method === 'EFECTIVO'
+        ? (efectivoAmount > 0 ? efectivoAmount : actualTotal)
+        : (method === 'EFECTIVO Y OTROS' ? efectivoAmount : undefined);
       const finalDevueltas = method === 'EFECTIVO' ? devueltas : undefined;
 
       const abonoTotal = (abonoPrevio || 0) + (selectedEstado === 'RESERVA' ? abonoAmount : 0);
@@ -601,6 +583,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               ]}
               onPress={() => {
                 setMethod(key);
+                if (key === 'EFECTIVO') {
+                  setEfectivoInput('');
+                }
                 if ((key === 'TRANSFERENCIA' || key === 'EFECTIVO Y OTROS') && !selectedBank) {
                   setSelectedBank('NEQUI');
                 }

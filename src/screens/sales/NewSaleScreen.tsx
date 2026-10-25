@@ -1179,7 +1179,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             cantidad: item.quantity,
             precio: Number(item.precioUnitario || item.Precio_Unitario || 0),
             precioTotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
-            estado: paymentData.estado,
+            estado: paymentData.estado === 'ENTREGADO' ? 'LISTO' : 'PREPARANDO',
             imagenUrl: item.imagenUrl || item.image,
             comentarios: item.modifiers?.length ? JSON.stringify(item.modifiers) : undefined,
             seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
@@ -1369,7 +1369,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                 IDventas: editingSaleId,
                 ordenVentas: payload.productos
               },
-              productos: payload.productos 
+              productos: ventaActualizada?.ordenVentas || payload.productos 
             });
 
             // Sincronizar DomicilioWA si la venta proviene de un domicilio
@@ -1512,7 +1512,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               ...ventaCreada, // Esto inyecta IDventas, fechaYHora, fecha, etc.
               pedido: pedidoGenerado
             },
-            productos: payload.productos,
+            productos: ventaCreada?.ordenVentas || payload.productos,
             ventaId: ventaCreada?.IDventas || pedidoGenerado,
           };
           emitNuevaOrden(ordenData);
@@ -1603,7 +1603,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             cantidad: item.quantity,
             precio: Number(item.precioUnitario || item.Precio_Unitario || 0),
             precioTotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
-            estado: data.estado,
+            estado: data.estado === 'ENTREGADO' ? 'LISTO' : 'PREPARANDO',
             imagenUrl: item.imagenUrl || item.image,
             comentarios: item.modifiers?.length ? JSON.stringify(item.modifiers) : undefined,
             seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
@@ -1738,7 +1738,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                 IDventas: editingSaleId,
                 ordenVentas: payload.productos
               },
-              productos: payload.productos
+              productos: ventaActualizada?.ordenVentas || payload.productos
             });
 
             
@@ -1872,7 +1872,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                   ...ventaCreada,
                   pedido: pedidoGenerado
                 },
-                productos: payload.productos,
+                productos: ventaCreada?.ordenVentas || payload.productos,
                 ventaId: ventaCreada?.IDventas || pedidoGenerado,
               };
               emitNuevaOrden(ordenData);

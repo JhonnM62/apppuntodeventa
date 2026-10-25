@@ -52,7 +52,13 @@ export const useGlobalSalesSync = () => {
     console.log('[GlobalSalesSync] Orden recibida:', JSON.stringify(data)?.slice(0, 100));
     if (data) {
       if (data.ventaId && data.venta) {
-        const ventaConProductos = { ...data.venta, ordenVentas: data.productos };
+        const hasRealOrdenVentas =
+          Array.isArray(data.venta.ordenVentas) &&
+          data.venta.ordenVentas.length > 0 &&
+          data.venta.ordenVentas[0]?.IDorderventas;
+        const ventaConProductos = hasRealOrdenVentas
+          ? data.venta
+          : { ...data.venta, ordenVentas: data.venta.ordenVentas || data.productos };
         addVenta(ventaConProductos);
       } else if (data.IDventas) {
         addVenta(data);

@@ -156,13 +156,35 @@ export const getVentaTotal = (venta: VentaItem | null): number => {
 let lastKnownConfig: any = null;
 
 export const setPedidosScreenConfig = (cfg: any) => {
-  if (cfg) lastKnownConfig = cfg?.data || cfg;
+  if (cfg) lastKnownConfig = cfg?.data?.data || cfg?.data || cfg;
 };
 
 const isModoRestaurante = (): boolean => {
-  const config = lastKnownConfig || getCachedConfiguracion()?.data || getCachedConfiguracion();
+  const raw = lastKnownConfig || getCachedConfiguracion();
+  const config = raw?.data?.data || raw?.data || raw;
   const modo = config?.modoOperacion || 'GENERAL';
   return String(modo).toUpperCase() === 'RESTAURANTE';
+};
+
+const hasPassedKitchenInLog = (registroDeTiempo?: any[]): boolean => {
+  if (!Array.isArray(registroDeTiempo)) return false;
+  for (let i = registroDeTiempo.length - 1; i >= 0; i--) {
+    const st = String(registroDeTiempo[i]?.estado || '').toUpperCase();
+    if (st === 'TOMADO' || st === 'PREPARANDO') return false;
+    if (st === 'LISTO_PARA_ENTREGA' || st === 'ENTREGADO') return true;
+  }
+  return false;
+};
+
+const isVentaActivaEnTomado = (v: VentaItem): boolean => {
+  if (!v || v.despejadoAt) return false;
+  const est = (v.estado || '').toUpperCase();
+  if (est === 'TOMADO' || est === 'PREPARANDO') return true;
+  if (isModoRestaurante() && est === 'PAGADO' && !v.cocinaFinAt) {
+    if (hasPassedKitchenInLog(v.registroDeTiempo)) return false;
+    return true;
+  }
+  return false;
 };
 
 export const extractVentaFecha = (v: any): string => {
@@ -304,14 +326,11 @@ const OrderTimerBadge = ({ venta }: { venta: any }) => {
                          estUpper === 'CANCELADO' || 
                          estUpper === 'ANULADO' || 
                          venta.cocinaFinAt != null ||
+                         hasPassedKitchenInLog(venta.registroDeTiempo) ||
                          (!isModoRest && estUpper === 'PAGADO');
 
     // Un cronómetro solo corre en vivo si es de hoy Y está en proceso activo en cocina
-    const isEnCocinaActivo = isHoy && !isFinalizado && (
-      estUpper === 'TOMADO' || 
-      estUpper === 'PREPARANDO' || 
-      (isModoRest && estUpper === 'PAGADO' && !venta.cocinaFinAt)
-    );
+    const isEnCocinaActivo = isHoy && !isFinalizado && isVentaActivaEnTomado(venta);
 
     const update = () => {
       let diff = 0;
@@ -420,7 +439,14 @@ const PreparationTimer = ({
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginLeft: 8 }}>
       {(() => {
-        const style = getTimerStyle(estado === 'LISTO' && preparadoAt ? computeActiveMs(registroDeTiempo, new Date(preparadoAt).getTime()) : computeActiveMs(registroDeTiempo, Date.now()), estado || 'INICIADO');
+        const isReady = estado === 'LISTO';
+        const style = getTimerStyle(
+          isReady && preparadoAt
+            ? computeActiveMs(registroDeTiempo, new Date(preparadoAt).getTime())
+            : computeActiveMs(registroDeTiempo, Date.now()),
+          isReady ? 'LISTO' : 'PREPARANDO',
+          !isReady
+        );
         return (
           <>
             <Ionicons name={style.icon as any} size={14} color={style.text} style={{ marginRight: 4 }} />
@@ -965,11 +991,9 @@ const PedidosScreen = () => {
           return est === 'PAGADO' || (!!v.medioDePago && v.medioDePago !== 'PENDIENTE' && est !== 'CANCELADO' && est !== 'ANULADO');
         }).length;
       } else if (tab.key === 'TOMADO') {
-        // Pestaña operativa TOMADO: solo pedidos realmente en TOMADO o PREPARANDO de la jornada actual
+        // Pestaña operativa TOMADO: pedidos en TOMADO, PREPARANDO o PAGADO aún activos en cocina de la jornada actual
         count = arraySeguro.filter(v => {
-          const est = (v.estado || '').toUpperCase();
-          const isTomado = est === 'TOMADO' || est === 'PREPARANDO';
-          if (!isTomado) return false;
+          if (!isVentaActivaEnTomado(v)) return false;
           const vDate = extractVentaFecha(v);
           if (vDate && vDate !== fechaContable) return false;
           return true;
@@ -992,7 +1016,7 @@ const PedidosScreen = () => {
       }
       return { ...tab, count };
     });
-  }, [cachedVentas, visibleDomicilios]);
+  }, [cachedVentas, visibleDomicilios, configNegocio]);
 
   const domisSubTabsWithCounts = useMemo(() => {
     const list = visibleDomicilios;
@@ -1168,7 +1192,10 @@ const PedidosScreen = () => {
     if (!data) return;
     const v = data.venta || (data.IDventas ? data : null);
     if (v) {
-      const vConProductos = data.productos ? { ...v, ordenVentas: data.productos } : v;
+      const hasRealOrdenVentas = Array.isArray(v.ordenVentas) && v.ordenVentas.length > 0 && v.ordenVentas[0]?.IDorderventas;
+      const vConProductos = hasRealOrdenVentas
+        ? v
+        : (data.productos ? { ...v, ordenVentas: data.productos } : v);
       addVenta(vConProductos);
     }
   });
@@ -1177,7 +1204,10 @@ const PedidosScreen = () => {
     if (!data) return;
     const v = data.venta || (data.IDventas ? data : null);
     if (v) {
-      const vConProductos = data.productos ? { ...v, ordenVentas: data.productos } : v;
+      const hasRealOrdenVentas = Array.isArray(v.ordenVentas) && v.ordenVentas.length > 0 && v.ordenVentas[0]?.IDorderventas;
+      const vConProductos = hasRealOrdenVentas
+        ? v
+        : (data.productos ? { ...v, ordenVentas: data.productos } : v);
       addVenta(vConProductos);
     }
   });
@@ -1187,7 +1217,10 @@ const PedidosScreen = () => {
     const v = data.venta || (data.IDventas ? data : null);
     const id = data.ventaId || data.IDventas || v?.IDventas;
     if (id && v) {
-      const vConProductos = data.productos ? { ...v, ordenVentas: data.productos } : v;
+      const hasRealOrdenVentas = Array.isArray(v.ordenVentas) && v.ordenVentas.length > 0 && v.ordenVentas[0]?.IDorderventas;
+      const vConProductos = hasRealOrdenVentas
+        ? v
+        : (data.productos ? { ...v, ordenVentas: data.productos } : v);
       updateVenta(id, vConProductos);
       setSelectedVenta((prev) =>
         prev && prev.IDventas === id ? { ...prev, ...vConProductos } : prev
@@ -1360,11 +1393,9 @@ const PedidosScreen = () => {
           return est === 'PAGADO' || (!!v.medioDePago && v.medioDePago !== 'PENDIENTE' && est !== 'CANCELADO' && est !== 'ANULADO');
         });
       } else if (activeTab === 'TOMADO') {
-        // Pestaña TOMADO: solo pedidos en TOMADO o PREPARANDO de la jornada actual (o según filtro de fecha explícito)
+        // Pestaña TOMADO: pedidos en TOMADO, PREPARANDO o PAGADO aún activos en cocina de la jornada actual (o según filtro de fecha explícito)
         filtered = filtered.filter(v => {
-          const est = (v.estado || '').toUpperCase();
-          const isTomado = est === 'TOMADO' || est === 'PREPARANDO';
-          if (!isTomado) return false;
+          if (!isVentaActivaEnTomado(v)) return false;
           const vDate = extractVentaFecha(v);
           if (vDate && vDate !== fechaContable && !filters.fechaDesde && !filters.fechaHasta) {
             return false;
@@ -1517,7 +1548,7 @@ const PedidosScreen = () => {
     }
 
     return filtered;
-  }, [activeTab, filters, showDespejados]);
+  }, [activeTab, filters, showDespejados, configNegocio]);
 
   const groupByDate = useCallback((ventas: VentaItem[]): SectionData[] => {
     const grupos: { [key: string]: VentaItem[] } = {};
@@ -4536,6 +4567,10 @@ showAlert({
         } else if (newEstado === 'TOMADO' && !selectedVenta.cocinaInicioAt) {
           extraUpdates.cocinaInicioAt = nowIso;
         }
+        extraUpdates.registroDeTiempo = [
+          ...(Array.isArray(selectedVenta.registroDeTiempo) ? selectedVenta.registroDeTiempo : []),
+          { fecha_hora: nowIso, estado: newEstado, duracion: '00:00:00:00' },
+        ];
 
         if (['ENTREGADO', 'LISTO_PARA_ENTREGA'].includes(newEstado) || (newEstado === 'PAGADO' && (selectedVenta.cocinaFinAt || selectedVenta.estado === 'ENTREGADO'))) {
           updatedOrdenVentas = updatedOrdenVentas?.map(ov => ({
@@ -4678,6 +4713,10 @@ showAlert({
       });
 
       // Actualizamos UI localmente de forma opcional (el socket confirmará después)
+      const nowCobroIso = new Date().toISOString();
+      const yaEstabaListoOEntregado =
+        ['ENTREGADO', 'LISTO_PARA_ENTREGA'].includes((cobrarVenta.estado || '').toUpperCase()) ||
+        hasPassedKitchenInLog(cobrarVenta.registroDeTiempo);
       const updatedVenta = {
         ...cobrarVenta,
         estado: 'PAGADO',
@@ -4690,6 +4729,11 @@ showAlert({
         porcentajePropina: paymentData.porcentajePropina,
         descuento: paymentData.descuento,
         totalInput: paymentData.totalInput ?? totalReal,
+        cocinaFinAt: cobrarVenta.cocinaFinAt || (yaEstabaListoOEntregado ? nowCobroIso : null),
+        registroDeTiempo: [
+          ...(Array.isArray(cobrarVenta.registroDeTiempo) ? cobrarVenta.registroDeTiempo : []),
+          { fecha_hora: nowCobroIso, estado: 'PAGADO', duracion: '00:00:00:00' },
+        ],
       };
 
       // Actualizamos la tienda local inmediatamente para que desaparezca de TOMADO y pase a PAGADO
@@ -5324,7 +5368,7 @@ showAlert({
         onSave={handleSaveCobrar}
         onCobrar={handleCobrarConfirm}
         total={getVentaTotal(cobrarVenta)}
-        editingPedidoId={cobrarVenta?.pedido || undefined}
+        editingPedidoId={cobrarVenta?.pedido || cobrarVenta?.IDventas || undefined}
         initialPaymentMethod={cobrarVenta?.medioDePago}
         initialEfectivo={
           cobrarVenta?.efectivoRecibido && Number(cobrarVenta.efectivoRecibido) > 0
