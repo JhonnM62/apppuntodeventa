@@ -349,9 +349,18 @@ const OrderTimerBadge = ({ venta }: { venta: any }) => {
   if (!duration) return null;
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: style.bg, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12 }}>
-      <Ionicons name={style.icon as any} size={11} color={style.text} />
-      <RNText style={{ fontSize: 11, color: style.text, fontWeight: '700', marginLeft: 3 }}>
+    <View style={{
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: style.bg,
+      paddingHorizontal: 8,
+      paddingVertical: 3,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: style.text + '25',
+    }}>
+      <Ionicons name={style.icon as any} size={12} color={style.text} />
+      <RNText style={{ fontSize: 11, color: style.text, fontWeight: '700', marginLeft: 4 }}>
         {duration}
       </RNText>
     </View>
@@ -1912,6 +1921,23 @@ showAlert({
     }
   };
 
+  const formatTimeOnly = (dateStr?: string) => {
+    if (!dateStr) return '';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '';
+      let hours = d.getHours();
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      const hoursStr = String(hours).padStart(2, '0');
+      return `${hoursStr}:${minutes} ${ampm}`;
+    } catch {
+      return '';
+    }
+  };
+
   const formatMoney = (amount?: number) => {
     if (amount == null) return '$0';
     let val = Number(amount) || 0;
@@ -2023,48 +2049,36 @@ showAlert({
           }}
           activeOpacity={0.7}
         >
+          {/* Fila 1: Cabecera con Título a la izquierda y Estado + Acciones a la derecha */}
           <View style={styles.cardHeader}>
-            <View style={[styles.cardTitleRow, { flex: 1, marginRight: 8, alignItems: 'center', flexWrap: 'wrap', gap: 6 }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Ionicons name="receipt-outline" size={18} color="#374151" style={{ marginRight: 4 }} />
-                <RNText style={[styles.cardTitle, { flexShrink: 1 }]}>{item.pedido || 'Sin pedido'}</RNText>
+            <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 10 }}>
+              <View style={[
+                styles.cardTypeIconContainer,
+                item.mesa?.startsWith('DOMICILIO WA') || (item.costoDelDomicilio && item.costoDelDomicilio > 0)
+                  ? { backgroundColor: '#e0f2fe' }
+                  : (item.mesa?.startsWith('Mesa') || (item.mesa && item.mesa !== 'V.R') ? { backgroundColor: '#ede9fe' } : { backgroundColor: '#f1f5f9' })
+              ]}>
+                <Ionicons
+                  name={
+                    item.mesa?.startsWith('DOMICILIO WA') || (item.costoDelDomicilio && item.costoDelDomicilio > 0)
+                      ? 'bicycle-outline'
+                      : (item.mesa?.startsWith('Mesa') || (item.mesa && item.mesa !== 'V.R') ? 'restaurant-outline' : 'receipt-outline')
+                  }
+                  size={16}
+                  color={
+                    item.mesa?.startsWith('DOMICILIO WA') || (item.costoDelDomicilio && item.costoDelDomicilio > 0)
+                      ? '#0284c7'
+                      : (item.mesa?.startsWith('Mesa') || (item.mesa && item.mesa !== 'V.R') ? '#6d28d9' : '#475569')
+                  }
+                />
               </View>
-              <OrderTimerBadge venta={item} />
-              {((item.medioDePago && item.medioDePago !== 'PENDIENTE') || item.estado === 'PAGADO') ? (
-                <View style={{ backgroundColor: '#ecfdf5', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name="checkmark-circle-outline" size={11} color="#059669" />
-                  <RNText style={{ fontSize: 10, color: '#059669', fontWeight: 'bold', marginLeft: 3 }}>
-                    {item.medioDePago ? `PAGADO (${item.medioDePago})` : 'PAGADO'}
-                  </RNText>
-                </View>
-              ) : (
-                <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name="time-outline" size={11} color="#d97706" />
-                  <RNText style={{ fontSize: 10, color: '#d97706', fontWeight: 'bold', marginLeft: 3 }}>
-                    PENDIENTE COBRO
-                  </RNText>
-                </View>
-              )}
-              {hasNotes(item) && (
-                <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name="pricetag-outline" size={11} color="#d97706" />
-                  <RNText style={{ fontSize: 10, color: '#d97706', fontWeight: 'bold', marginLeft: 4 }}>NOTAS</RNText>
-                </View>
-              )}
-              {item.mensaje?.includes('Auto-Cuadre IA') && (
-                <View style={{ backgroundColor: '#ede9fe', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
-                  <Ionicons name="sparkles-outline" size={11} color="#6d28d9" />
-                  <RNText style={{ fontSize: 10, color: '#6d28d9', fontWeight: 'bold', marginLeft: 4 }}>IA</RNText>
-                </View>
-              )}
-              {(item.mesa?.startsWith('DOMICILIO WA') || (item.costoDelDomicilio && item.costoDelDomicilio > 0)) ? (
-                <View style={{ backgroundColor: '#fef3c7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
-                  <RNText style={{ fontSize: 10, color: '#b45309', fontWeight: 'bold' }}>DOMIS</RNText>
-                </View>
-              ) : null}
+              <RNText style={styles.cardTitle} numberOfLines={1}>
+                {item.pedido || 'Sin pedido'}
+              </RNText>
             </View>
+
             <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
-              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.estado) + '20', flexDirection: 'row', alignItems: 'center' }]}>
+              <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.estado) + '18' }]}>
                 {item.estado === 'EN_EL_CARRITO' && (
                   <Ionicons name="lock-closed" size={10} color={getStatusColor(item.estado)} style={{ marginRight: 4 }} />
                 )}
@@ -2072,83 +2086,128 @@ showAlert({
                   {item.estado === 'EN_EL_CARRITO' ? 'EDITANDO' : (item.estado?.replace(/_/g, ' ') || 'SIN ESTADO')}
                 </RNText>
               </View>
+
               {isAdminApp && !isSelectionMode && (
                 <TouchableOpacity 
-                  style={{ marginLeft: 12 }} 
+                  style={{ marginLeft: 10, padding: 4 }} 
                   onPress={(e) => {
                     e.stopPropagation();
                     handleDeleteSingle(item);
                   }}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                  <Ionicons name="trash-outline" size={17} color="#ef4444" />
                 </TouchableOpacity>
               )}
             </View>
           </View>
 
-        <View style={styles.cardInfo}>
-          <View style={styles.infoRow}>
-            <Ionicons name="time-outline" size={14} color="#6b7280" />
-            <RNText style={styles.infoText}>{formatDateTime(item.fechaYHora)}</RNText>
-          </View>
-          <View style={styles.infoRow}>
-            <MaterialCommunityIcons name="counter" size={14} color="#6b7280" />
-            <RNText style={styles.infoText}>{totalItems} item{totalItems !== 1 ? 's' : ''}</RNText>
-          </View>
-          {item.cliente && (
-            <View style={styles.infoRow}>
-              <Ionicons name="person-outline" size={14} color="#6b7280" />
-              <RNText style={styles.infoText}>{item.cliente}</RNText>
-            </View>
-          )}
-          {item.medioDePago && item.medioDePago !== 'PENDIENTE' && (
-            <View style={styles.infoRow}>
-              <Ionicons name="wallet-outline" size={14} color="#6b7280" />
-              <RNText style={styles.infoText}>{item.medioDePago}</RNText>
-            </View>
-          )}
-        </View>
+          {/* Fila 2: Badges operativos ordenados con buen espaciado (Timer, Pago, Notas, Domis, IA) */}
+          <View style={styles.cardBadgesRow}>
+            <OrderTimerBadge venta={item} />
 
-        {productos.length > 0 && (
-          <View style={styles.productsPreview}>
-            {productos.slice(0, 3).map((prod, idx) => {
-              const nombre = prod.nombreProducto || prod.nombre || '';
-              const label = `${prod.cantidad}x ${nombre}`;
-              return (
-                <View key={prod.IDorderventas || prod.producto?.IDproductos || idx} style={styles.productChip}>
-                  <RNText style={styles.productChipText}>
-                    {label}
-                  </RNText>
-                </View>
-              );
-            })}
-            {productos.length > 3 && (
-              <View style={styles.moreProductsChip}>
-                <RNText style={styles.moreProductsText}>+{productos.length - 3}</RNText>
+            {((item.medioDePago && item.medioDePago !== 'PENDIENTE') || item.estado === 'PAGADO') ? (
+              <View style={styles.paymentBadgeSuccess}>
+                <Ionicons name="checkmark-circle-outline" size={12} color="#059669" />
+                <RNText style={styles.paymentBadgeSuccessText}>
+                  {item.medioDePago ? `PAGADO (${item.medioDePago})` : 'PAGADO'}
+                </RNText>
+              </View>
+            ) : (
+              <View style={styles.paymentBadgePending}>
+                <Ionicons name="time-outline" size={12} color="#d97706" />
+                <RNText style={styles.paymentBadgePendingText}>
+                  PENDIENTE COBRO
+                </RNText>
+              </View>
+            )}
+
+            {hasNotes(item) && (
+              <View style={styles.notesBadge}>
+                <Ionicons name="document-text-outline" size={12} color="#b45309" />
+                <RNText style={styles.notesBadgeText}>NOTAS</RNText>
+              </View>
+            )}
+
+            {(item.mesa?.startsWith('DOMICILIO WA') || (item.costoDelDomicilio && item.costoDelDomicilio > 0)) ? (
+              <View style={styles.domiBadge}>
+                <Ionicons name="bicycle-outline" size={12} color="#0284c7" />
+                <RNText style={styles.domiBadgeText}>DOMI</RNText>
+              </View>
+            ) : null}
+
+            {item.mensaje?.includes('Auto-Cuadre IA') && (
+              <View style={styles.iaBadge}>
+                <Ionicons name="sparkles-outline" size={12} color="#7c3aed" />
+                <RNText style={styles.iaBadgeText}>IA</RNText>
               </View>
             )}
           </View>
-        )}
 
-        <View style={styles.cardFooter}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <RNText style={styles.totalLabel}>TOTAL</RNText>
-            <RNText style={styles.totalAmount}>{formatMoney(getVentaTotal(item))}</RNText>
+          {/* Fila 3: Información clave (Hora, Items, Cliente) */}
+          <View style={styles.cardInfo}>
+            <View style={styles.infoRow}>
+              <Ionicons name="time-outline" size={13} color="#94a3b8" />
+              <RNText style={styles.infoText}>
+                {formatTimeOnly(item.fechaYHora) || formatDateTime(item.fechaYHora)}
+              </RNText>
+            </View>
+
+            <View style={styles.infoRow}>
+              <MaterialCommunityIcons name="counter" size={14} color="#94a3b8" />
+              <RNText style={styles.infoText}>{totalItems} item{totalItems !== 1 ? 's' : ''}</RNText>
+            </View>
+
+            {item.cliente && (
+              <View style={[styles.infoRow, { maxWidth: 160 }]}>
+                <Ionicons name="person-outline" size={13} color="#94a3b8" />
+                <RNText style={styles.infoText} numberOfLines={1}>{item.cliente}</RNText>
+              </View>
+            )}
           </View>
-          
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <TouchableOpacity 
-              onPress={(e) => { e.stopPropagation(); handleManualPrint(item, 'comanda'); }}
-              style={{ padding: 6, backgroundColor: '#fef3c7', borderRadius: 8 }}
-            >
-              <Ionicons name="restaurant-outline" size={18} color="#d97706" />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={(e) => { e.stopPropagation(); handleManualPrint(item, 'factura'); }}
-              style={{ padding: 6, backgroundColor: '#e0f2fe', borderRadius: 8 }}
-            >
-              <Ionicons name="receipt-outline" size={18} color="#0369a1" />
-            </TouchableOpacity>
+
+          {/* Fila 4: Vista previa de productos con chips estilizados */}
+          {productos.length > 0 && (
+            <View style={styles.productsPreview}>
+              {productos.slice(0, 3).map((prod, idx) => {
+                const nombre = prod.nombreProducto || prod.nombre || '';
+                return (
+                  <View key={prod.IDorderventas || prod.producto?.IDproductos || idx} style={styles.productChip}>
+                    <RNText style={styles.productChipQty}>{prod.cantidad}x</RNText>
+                    <RNText style={styles.productChipName} numberOfLines={1}>{nombre}</RNText>
+                  </View>
+                );
+              })}
+              {productos.length > 3 && (
+                <View style={styles.moreProductsChip}>
+                  <RNText style={styles.moreProductsText}>+{productos.length - 3} más</RNText>
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Fila 5: Pie de tarjeta (Total a la izquierda, Botones de acción a la derecha) */}
+          <View style={styles.cardFooter}>
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
+              <RNText style={styles.totalLabel}>TOTAL</RNText>
+              <RNText style={styles.totalAmount}>{formatMoney(getVentaTotal(item))}</RNText>
+            </View>
+            
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <TouchableOpacity 
+                onPress={(e) => { e.stopPropagation(); handleManualPrint(item, 'comanda'); }}
+                style={styles.cardActionBtnComanda}
+                accessibilityLabel="Imprimir Comanda"
+              >
+                <Ionicons name="restaurant-outline" size={18} color="#d97706" />
+              </TouchableOpacity>
+              <TouchableOpacity 
+                onPress={(e) => { e.stopPropagation(); handleManualPrint(item, 'factura'); }}
+                style={styles.cardActionBtnFactura}
+                accessibilityLabel="Imprimir Factura"
+              >
+                <Ionicons name="receipt-outline" size={18} color="#0284c7" />
+              </TouchableOpacity>
             <TouchableOpacity 
               onPress={(e) => { 
                 e.stopPropagation(); 
@@ -5097,7 +5156,11 @@ showAlert({
         total={getVentaTotal(cobrarVenta)}
         editingPedidoId={cobrarVenta?.pedido || undefined}
         initialPaymentMethod={cobrarVenta?.medioDePago}
-        initialEfectivo={cobrarVenta?.efectivoRecibido ? Number(cobrarVenta.efectivoRecibido) : undefined}
+        initialEfectivo={
+          cobrarVenta?.efectivoRecibido && Number(cobrarVenta.efectivoRecibido) > 0
+            ? Number(cobrarVenta.efectivoRecibido)
+            : (cobrarVenta?.medioDePago === 'EFECTIVO' && cobrarVenta?.totalInput ? Number(cobrarVenta.totalInput) : undefined)
+        }
         initialTransferencia={
           cobrarVenta?.valorDeTransferencia ? Number(cobrarVenta.valorDeTransferencia) :
           (cobrarVenta?.transferencia ? Number(cobrarVenta.transferencia) :
@@ -5203,23 +5266,237 @@ const styles = StyleSheet.create({
   sectionHeaderText: { fontSize: 14, fontWeight: '700', color: '#374151', marginLeft: 8, textTransform: 'capitalize' },
   sectionHeaderRight: { flexDirection: 'row', alignItems: 'center' },
   sectionHeaderCount: { fontSize: 12, color: '#6b7280' },
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 16, flex: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  cardTitleRow: { flexDirection: 'row', alignItems: 'center' },
-  cardTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginLeft: 8 },
-  statusBadge: { paddingVertical: 4, paddingHorizontal: 10, borderRadius: 12 },
-  statusText: { fontSize: 11, fontWeight: '700' },
-  cardInfo: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
-  infoRow: { flexDirection: 'row', alignItems: 'center', marginRight: 16 },
-  infoText: { fontSize: 13, color: '#6b7280', marginLeft: 4 },
-  productsPreview: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 12 },
-  productChip: { backgroundColor: '#f3f4f6', paddingVertical: 4, paddingHorizontal: 10, borderRadius: 8, marginRight: 6, marginBottom: 6 },
-  productChipText: { fontSize: 12, color: '#374151' },
-  moreProductsChip: { backgroundColor: '#e5e7eb', paddingVertical: 4, paddingHorizontal: 8, borderRadius: 8, marginBottom: 6 },
-  moreProductsText: { fontSize: 12, color: '#6b7280', fontWeight: '600' },
-  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
-  totalLabel: { fontSize: 12, fontWeight: '600', color: '#6b7280' },
-  totalAmount: { fontSize: 18, fontWeight: '800', color: '#111827', marginLeft: 8 },
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  cardTypeIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  cardTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0f172a',
+    flexShrink: 1,
+  },
+  statusBadge: {
+    paddingVertical: 4,
+    paddingHorizontal: 9,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  cardBadgesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 10,
+  },
+  paymentBadgeSuccess: {
+    backgroundColor: '#ecfdf5',
+    borderColor: '#a7f3d0',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  paymentBadgeSuccessText: {
+    fontSize: 10.5,
+    color: '#059669',
+    fontWeight: '700',
+  },
+  paymentBadgePending: {
+    backgroundColor: '#fffbeb',
+    borderColor: '#fde68a',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  paymentBadgePendingText: {
+    fontSize: 10.5,
+    color: '#d97706',
+    fontWeight: '700',
+  },
+  notesBadge: {
+    backgroundColor: '#fef3c7',
+    borderColor: '#fde68a',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  notesBadgeText: {
+    fontSize: 10.5,
+    color: '#b45309',
+    fontWeight: '700',
+  },
+  domiBadge: {
+    backgroundColor: '#e0f2fe',
+    borderColor: '#bae6fd',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  domiBadgeText: {
+    fontSize: 10.5,
+    color: '#0284c7',
+    fontWeight: '700',
+  },
+  iaBadge: {
+    backgroundColor: '#f5f3ff',
+    borderColor: '#ddd6fe',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  iaBadgeText: {
+    fontSize: 10.5,
+    color: '#7c3aed',
+    fontWeight: '700',
+  },
+  cardInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 14,
+    marginBottom: 10,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  infoText: {
+    fontSize: 12,
+    color: '#64748b',
+    fontWeight: '500',
+  },
+  productsPreview: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 12,
+  },
+  productChip: {
+    backgroundColor: '#f8fafc',
+    borderColor: '#e2e8f0',
+    borderWidth: 1,
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  productChipQty: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0f172a',
+    marginRight: 4,
+  },
+  productChipName: {
+    fontSize: 12,
+    color: '#475569',
+    maxWidth: 160,
+  },
+  moreProductsChip: {
+    backgroundColor: '#f1f5f9',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  moreProductsText: {
+    fontSize: 11,
+    color: '#64748b',
+    fontWeight: '600',
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  totalLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#94a3b8',
+    letterSpacing: 0.5,
+  },
+  totalAmount: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0f172a',
+  },
+  cardActionBtnComanda: {
+    width: 36,
+    height: 36,
+    backgroundColor: '#fef3c7',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardActionBtnFactura: {
+    width: 36,
+    height: 36,
+    backgroundColor: '#e0f2fe',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cardActionBtnCobrar: {
+    width: 36,
+    height: 36,
+    backgroundColor: '#dcfce7',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   timelineScroll: { paddingVertical: 10, paddingRight: 20 },
   timelineNodeRow: { flexDirection: 'row', alignItems: 'center' },
   timelineNodeBox: { alignItems: 'center', width: 80 },

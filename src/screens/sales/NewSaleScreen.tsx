@@ -2527,7 +2527,11 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         cliente={selectedCliente}
         editingPedidoId={editingVenta?.pedido || undefined}
         initialPaymentMethod={editingVenta?.medioDePago}
-        initialEfectivo={editingVenta?.efectivoRecibido ? Number(editingVenta.efectivoRecibido) : undefined}
+        initialEfectivo={
+          editingVenta?.efectivoRecibido && Number(editingVenta.efectivoRecibido) > 0
+            ? Number(editingVenta.efectivoRecibido)
+            : (editingVenta?.medioDePago === 'EFECTIVO' && editingVenta?.totalInput ? Number(editingVenta.totalInput) : undefined)
+        }
         initialTransferencia={
           editingVenta?.valorDeTransferencia ? Number(editingVenta.valorDeTransferencia) :
           (editingVenta?.transferencia ? Number(editingVenta.transferencia) :

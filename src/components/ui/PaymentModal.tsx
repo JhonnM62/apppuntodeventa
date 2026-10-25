@@ -216,20 +216,48 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
       const isCobrarMode = !!onCobrar;
       const validMethods: PaymentMethod[] = ['EFECTIVO', 'TRANSFERENCIA', 'TARJETA', 'EFECTIVO Y OTROS'];
-      const methodToSet = (initialPaymentMethod && validMethods.includes(initialPaymentMethod as PaymentMethod))
-        ? (initialPaymentMethod as PaymentMethod)
+      const rawInitialMethod = String(initialPaymentMethod || '').toUpperCase().trim();
+      const matchedMethod = validMethods.find(m => m === rawInitialMethod);
+      const methodToSet: PaymentMethod | null = matchedMethod
+        ? matchedMethod
         : (isCobrarMode ? 'EFECTIVO' : null);
       setMethod(methodToSet);
       setSelectedBank(initialBanco || null);
 
-      if (initialEfectivo !== undefined && initialEfectivo !== null && Number(initialEfectivo) > 0) {
-        setEfectivoInput(Number(initialEfectivo).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+      // Calcular montos sugeridos o guardados para efectivo y transferencia
+      const initialEfNum = (initialEfectivo !== undefined && initialEfectivo !== null && Number(initialEfectivo) > 0)
+        ? Number(initialEfectivo)
+        : 0;
+      const initialTrNum = (initialTransferencia !== undefined && initialTransferencia !== null && Number(initialTransferencia) > 0)
+        ? Number(initialTransferencia)
+        : 0;
+
+      let efVal = initialEfNum;
+      let trVal = initialTrNum;
+
+      if (methodToSet === 'EFECTIVO') {
+        efVal = initialEfNum > 0 ? initialEfNum : actualTotal;
+      } else if (methodToSet === 'TRANSFERENCIA') {
+        trVal = initialTrNum > 0 ? initialTrNum : actualTotal;
+      } else if (methodToSet === 'EFECTIVO Y OTROS') {
+        if (efVal > 0 && trVal === 0 && efVal < actualTotal) {
+          trVal = actualTotal - efVal;
+        } else if (trVal > 0 && efVal === 0 && trVal < actualTotal) {
+          efVal = actualTotal - trVal;
+        } else if (efVal === 0 && trVal === 0) {
+          efVal = Math.round(actualTotal / 2);
+          trVal = actualTotal - efVal;
+        }
+      }
+
+      if (efVal > 0) {
+        setEfectivoInput(efVal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
       } else {
         setEfectivoInput('');
       }
 
-      if (initialTransferencia !== undefined && initialTransferencia !== null && Number(initialTransferencia) > 0) {
-        setTransferenciaInput(Number(initialTransferencia).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
+      if (trVal > 0) {
+        setTransferenciaInput(trVal.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "."));
       } else {
         setTransferenciaInput('');
       }
@@ -247,9 +275,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
       const cfg = getCachedConfiguracion()?.data || getCachedConfiguracion();
       const esModoRest = String(cfg?.modoOperacion || '').toUpperCase() === 'RESTAURANTE';
-      const defaultEstado: OrderStatus = (initialEstado && (isCobrarMode ? initialEstado !== 'TOMADO' && initialEstado !== 'EN_EL_CARRITO' : true))
-        ? initialEstado
-        : (isCobrarMode ? 'PAGADO' : (esModoRest ? 'TOMADO' : 'EN_EL_CARRITO'));
+      const defaultEstado: OrderStatus = isCobrarMode
+        ? 'PAGADO'
+        : (initialEstado || (esModoRest ? 'TOMADO' : 'EN_EL_CARRITO'));
       setSelectedEstado(defaultEstado);
       Animated.parallel([
         Animated.timing(fadeAnim, { toValue: 1, duration: 200, useNativeDriver: true }),
@@ -959,21 +987,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           </TouchableOpacity>
           
           <View style={styles.quickStatusGridSmall}>
-            <TouchableOpacity
-              style={[
-                styles.quickStatusBtnSmall,
-                selectedEstado === 'PAGADO' && styles.quickStatusBtnActivePagado
-              ]}
-              onPress={() => setSelectedEstado('PAGADO')}
-              accessibilityRole="button"
-              accessibilityLabel="Marcar Pagado"
-            >
-              <Ionicons name="checkmark-circle" size={14} color={selectedEstado === 'PAGADO' ? '#fff' : '#22c55e'} />
-              <RNText style={[styles.quickStatusTextSmall, selectedEstado === 'PAGADO' && styles.quickStatusTextActive]}>
-                PAGADO
-              </RNText>
-            </TouchableOpacity>
-
             <TouchableOpacity
               style={[
                 styles.quickStatusBtnSmall,
