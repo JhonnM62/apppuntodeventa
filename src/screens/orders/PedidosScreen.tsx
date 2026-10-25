@@ -2376,6 +2376,8 @@ showAlert({
       ? validItems
       : rawItems.filter((it) => Number(it.precioUnitario || it.precioTotal || 0) > 0);
 
+    const catalog = useProductStore.getState().productos || [];
+
     return itemsToProcess.map((it) => {
       let unitPrice = it.precioUnitario || 0;
       let totPrice = it.precioTotal || 0;
@@ -2392,12 +2394,19 @@ showAlert({
       if (totPrice === 0 && unitPrice > 0) totPrice = unitPrice * (it.cantidad || 1);
       if (unitPrice === 0 && totPrice > 0) unitPrice = Math.round(totPrice / (it.cantidad || 1));
 
+      const itNameNorm = (it.nombre || '').trim().toLowerCase();
+      const matchedCatalogProd = catalog.find((p: any) =>
+        (it.productoId && (p.IDproductos === it.productoId || p.id === it.productoId)) ||
+        (itNameNorm && p.nombre && p.nombre.trim().toLowerCase() === itNameNorm)
+      );
+      const resolvedProductoId = matchedCatalogProd?.IDproductos || ((it.productoId && it.productoId.trim() !== '') ? it.productoId : undefined);
+
       return {
-        productoId: (it.productoId && it.productoId.trim() !== '') ? it.productoId : undefined,
-        nombre: it.nombre,
-        nombreProducto: it.nombre,
-        categoria: 'DOMICILIOS',
-        categoriaProducto: 'DOMICILIOS',
+        productoId: resolvedProductoId,
+        nombre: matchedCatalogProd?.nombre || it.nombre,
+        nombreProducto: matchedCatalogProd?.nombre || it.nombre,
+        categoria: matchedCatalogProd?.categoriaNombre || matchedCatalogProd?.categoria || 'DOMICILIOS',
+        categoriaProducto: matchedCatalogProd?.categoriaNombre || matchedCatalogProd?.categoria || 'DOMICILIOS',
         cantidad: it.cantidad || 1,
         precio: unitPrice,
         precioTotal: totPrice,
@@ -2475,8 +2484,17 @@ showAlert({
         await vincularVentaDomicilio(dom.IDdomicilio, ventaId, 'TOMADO').catch(() => {});
       }
 
+      const nowAtendidoIso = new Date().toISOString();
       await updateDomicilioEstado(dom.IDdomicilio, 'TOMADO');
-      setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, estado: 'TOMADO', ventaId: ventaId || d.ventaId, atendidoAt: new Date().toISOString() } : d));
+      setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, estado: 'TOMADO', ventaId: ventaId || d.ventaId, atendidoAt: nowAtendidoIso } : d));
+
+      if (ventaId) {
+        updateVenta(ventaId, {
+          comandaImpresa: true,
+          comandaImpresaAt: nowAtendidoIso,
+          cocinaInicioAt: ventaCreadaObj?.cocinaInicioAt || nowAtendidoIso,
+        } as any);
+      }
 
       // Auto-imprimir comanda con datos completos del cliente al pasar a TOMADO
       const printStore = usePrinterStore.getState();
@@ -2630,6 +2648,9 @@ showAlert({
       }
     }
 
+    const catalog = useProductStore.getState().productos || [];
+    const isDomComandeado = Boolean(dom.estado === 'TOMADO' || dom.estado === 'COBRADO' || dom.estado === 'PAGADO' || dom.atendidoAt);
+
     const ordenVentas: any[] = [
       ...itemsPropios.map((it, idx) => {
         let itUnit = it.precioUnitario || (it.precioTotal ? it.precioTotal / (it.cantidad || 1) : 0);
@@ -2665,17 +2686,27 @@ showAlert({
           }
         }
 
+        const itNameNorm = (it.nombre || '').trim().toLowerCase();
+        const matchedCatalogProd = catalog.find((p: any) =>
+          (it.productoId && (p.IDproductos === it.productoId || p.id === it.productoId)) ||
+          (itNameNorm && p.nombre && p.nombre.trim().toLowerCase() === itNameNorm)
+        );
+        const resolvedProductoId = matchedCatalogProd?.IDproductos || ((it.productoId && String(it.productoId).trim() !== '') ? it.productoId : undefined);
+        const resolvedNombre = matchedCatalogProd?.nombre || it.nombre;
+
         return {
           IDorderventas: `dom-item-${idx}`,
-          productoId: it.productoId,
-          producto: it.productoId ? { IDproductos: it.productoId, nombre: it.nombre, precioUnitario: itUnit } : undefined,
-          nombre: it.nombre,
-          nombreProducto: it.nombre,
+          productoId: resolvedProductoId,
+          IDproductos: resolvedProductoId,
+          producto: resolvedProductoId ? { IDproductos: resolvedProductoId, nombre: resolvedNombre, precioUnitario: itUnit } : undefined,
+          nombre: resolvedNombre,
+          nombreProducto: resolvedNombre,
           cantidad: it.cantidad || 1,
           precio: itUnit,
           precioTotal: itTot,
           estado: dom.estado === 'TOMADO' ? 'PREPARANDO' : (dom.estado === 'COBRADO' ? 'LISTO' : 'TOMADO'),
           cantidadPreparada: dom.estado === 'COBRADO' ? (it.cantidad || 1) : 0,
+          comandaImpresa: isDomComandeado,
           comentarios: parsedComentarios,
           modifiers: parsedModifiersList,
         };
@@ -2739,6 +2770,11 @@ showAlert({
       mensaje: `Chatbot WhatsApp (${dom.botNombre || 'IA'})`,
       ordenVentas,
       itemsExternos: itemsExt,
+      ...(isDomComandeado ? {
+        comandaImpresa: true,
+        comandaImpresaAt: dom.atendidoAt || dom.timestampPedido,
+        cocinaInicioAt: dom.atendidoAt,
+      } : {}),
       _isDomicilioWA: true,
       _rawDomicilio: dom,
     };
@@ -4545,6 +4581,19 @@ showAlert({
       confirmText: 'Sí, Editar',
       cancelText: 'Cancelar',
       onConfirm: async () => {
+        const yaEstabaComandeado = Boolean(
+          selectedVenta._isDomicilioWA ||
+          (selectedVenta as any).comandaImpresa ||
+          selectedVenta.comandaImpresaAt ||
+          selectedVenta.cocinaInicioAt ||
+          (selectedVenta.estado && selectedVenta.estado !== 'EN_EL_CARRITO')
+        );
+        const preservedTimestamps = yaEstabaComandeado ? {
+          comandaImpresa: true,
+          comandaImpresaAt: selectedVenta.comandaImpresaAt || selectedVenta.cocinaInicioAt || selectedVenta.fechaYHora || new Date().toISOString(),
+          cocinaInicioAt: selectedVenta.cocinaInicioAt || selectedVenta.comandaImpresaAt || selectedVenta.fechaYHora || new Date().toISOString(),
+        } : {};
+
         if (!selectedVenta._isDomicilioWA) {
           await handleChangeEstado('EN_EL_CARRITO');
         } else {
@@ -4561,7 +4610,10 @@ showAlert({
           } else {
             useCartStore.getState().clearCart();
           }
-          useCartStore.getState().setEditingSale(selectedVenta.IDventas, selectedVenta);
+          useCartStore.getState().setEditingSale(selectedVenta.IDventas, {
+            ...selectedVenta,
+            ...preservedTimestamps,
+          });
           closeModal();
           navigation.navigate('Sales' as any);
         } catch (err) {
@@ -4662,7 +4714,8 @@ showAlert({
       setCobrarVenta(null);
       useCartStore.getState().clearCart();
       Toast.show({ type: 'success', text1: 'Cobro Exitoso', text2: 'Pedido cobrado correctamente', position: 'top' });
-      return { pedidoId: cobrarVenta.pedido || undefined };
+      // Retornamos pedidoId para que PaymentModal evalúe solo factura con suppressComanda=true (nunca comanda de cocina)
+      return { pedidoId: cobrarVenta.pedido || cobrarVenta.IDventas || undefined };
     } catch (error) {
       console.error('Error al cobrar:', error);
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo cobrar el pedido', position: 'top' });

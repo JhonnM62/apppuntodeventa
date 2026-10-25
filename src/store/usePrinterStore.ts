@@ -218,7 +218,7 @@ const usePrinterStore = create<PrinterState>()(
         if (ticketData.forceComanda || (ticketData.isAdicion && ticketData.productos?.length > 0)) {
           printComanda = true;
         }
-        if (ticketData.suppressComanda) {
+        if (ticketData.suppressComanda === true || Boolean(ticketData.suppressComanda)) {
           printComanda = false;
         }
         const printFactura = state.shouldPrintFactura(ticketData.estado);
@@ -285,13 +285,13 @@ const usePrinterStore = create<PrinterState>()(
           return;
         }
 
-        if (printComanda) {
+        if (printComanda && !ticketData.suppressComanda) {
           const safeComandaData = enrichTicketDataWithPapaFallback(ticketData);
           await get().printTicketConSecciones(safeComandaData);
         }
 
         if (printFactura) {
-          if (printComanda) {
+          if (printComanda && !ticketData.suppressComanda) {
             await new Promise((r) => setTimeout(r, 1500));
           }
           await get().printSmart(cleanTicketDataForFactura(ticketData), 'factura');
@@ -302,6 +302,9 @@ const usePrinterStore = create<PrinterState>()(
       // printTicketConSecciones — divide la comanda y la imprime por sección
       // ─────────────────────────────────────────────────────────────────
       printTicketConSecciones: async (ticketData: any) => {
+        if (!ticketData || ticketData.suppressComanda) {
+          return;
+        }
         const seccionesState = useSeccionesStore.getState();
         let secciones = seccionesState.getSeccionesActivas();
         const pausaMs = (seccionesState.pausaEntreTickets ?? 2) * 1000;

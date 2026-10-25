@@ -39,6 +39,8 @@ export interface TicketData {
   productos: TicketProduct[];
   productosAnteriores?: TicketProduct[];
   isAdicion?: boolean;
+  forceComanda?: boolean;
+  suppressComanda?: boolean;
   total: number;
   efectivoRecibido?: number;
   devueltas?: number;

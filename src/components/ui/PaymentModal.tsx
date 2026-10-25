@@ -380,7 +380,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     cambio?: number,
     customCart?: any[]
   ) => {
-    const printComanda = shouldPrintComanda(estado);
+    const isCobro = Boolean(onCobrar || editingPedidoId);
+    let printComanda = !isCobro && shouldPrintComanda(estado);
     const printFactura = shouldPrintFactura(estado);
     
     if (!printComanda && !printFactura) return;
@@ -436,6 +437,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     const ticketData = printComanda
       ? enrichTicketDataWithPapaFallback(rawTicketData)
       : cleanTicketDataForFactura(rawTicketData);
+    rawTicketData.suppressComanda = isCobro; // Bloquea 100% cocina al cobrar
+    ticketData.suppressComanda = isCobro;
 
     try {
       await usePrinterStore.getState().printTicket(ticketData);

@@ -734,15 +734,15 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
   }, []);
 
   useEffect(() => {
-    if (editingVenta && mesas.length > 0 && !selectedMesa) {
-      if (editingVenta.mesa && editingVenta.mesa !== 'V.R') {
-        const foundMesa = mesas.find(m => m.IdMesas === editingVenta.mesa || m.nombre === editingVenta.mesa);
-        if (foundMesa) {
+    if (editingVenta && editingVenta.mesa && editingVenta.mesa !== 'V.R') {
+      const foundMesa = mesas.find(m => m.IdMesas === editingVenta.mesa || m.nombre === editingVenta.mesa);
+      if (foundMesa) {
+        if (!selectedMesa || (selectedMesa.IdMesas === editingVenta.mesa && selectedMesa.nombre === editingVenta.mesa && foundMesa.nombre !== editingVenta.mesa)) {
           setSelectedMesa(foundMesa);
-        } else {
-          // Fallback en caso de que la mesa no se encuentre en la lista
-          setSelectedMesa({ IdMesas: editingVenta.mesa, nombre: editingVenta.mesa });
         }
+      } else if (!selectedMesa) {
+        // Fallback en caso de que la mesa no se encuentre en la lista (ej. DOMICILIO WA o lista vacía)
+        setSelectedMesa({ IdMesas: editingVenta.mesa, nombre: editingVenta.mesa });
       }
     }
   }, [editingVenta, mesas, selectedMesa]);
@@ -1212,7 +1212,16 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         }
 
         const mesaAnterior = editingVenta?.mesa || (editingVenta?.pedido ? editingVenta.pedido.split('-')[0] : '');
-        const mesaCambio = Boolean(mesaNombre && mesaAnterior && mesaNombre.toUpperCase() !== mesaAnterior.toUpperCase());
+        const mesaAnteriorNorm = String(mesaAnterior || '').trim().toUpperCase();
+        const selectedIdNorm = String(selectedMesa?.IdMesas || '').trim().toUpperCase();
+        const selectedNombreNorm = String(selectedMesa?.nombre || '').trim().toUpperCase();
+        const mesaNombreNorm = String(mesaNombre || '').trim().toUpperCase();
+        const isSameMesa =
+          !mesaAnteriorNorm ||
+          mesaNombreNorm === mesaAnteriorNorm ||
+          (selectedIdNorm && selectedIdNorm === mesaAnteriorNorm) ||
+          (selectedNombreNorm && selectedNombreNorm === mesaAnteriorNorm);
+        const mesaCambio = !isSameMesa;
 
         if (printStore.shouldPrintComanda(paymentData.estado) || printStore.shouldPrintFactura(paymentData.estado)) {
           let nuevosProductos: any[] = [];
@@ -1221,22 +1230,41 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           let yaEstuvoEnCocina = false;
           if (isEditing && editingVenta) {
              yaEstuvoEnCocina = Boolean(
+               editingVenta.comandaImpresa ||
                editingVenta.cocinaInicioAt || 
                editingVenta.comandaImpresaAt || 
-               (Array.isArray(editingVenta.registroDeTiempo) && editingVenta.registroDeTiempo.some((r: any) => ['TOMADO', 'PAGADO', 'ENTREGADO', 'LISTO_PARA_ENTREGA'].includes((r.estado || '').toUpperCase()))) ||
+               editingVenta._isDomicilioWA ||
+               (Array.isArray(editingVenta.ordenVentas) && editingVenta.ordenVentas.some((ov: any) => ov.comandaImpresa)) ||
+               (Array.isArray(editingVenta.registroDeTiempo) && editingVenta.registroDeTiempo.some((r: any) => ['TOMADO', 'PREPARANDO', 'PAGADO', 'ENTREGADO', 'LISTO_PARA_ENTREGA'].includes((r.estado || '').toUpperCase()))) ||
                (editingVenta.estado && editingVenta.estado !== 'EN_EL_CARRITO')
              );
-             const originalQtyMap: Record<string, number> = {};
-             const preparadaQtyMap: Record<string, number> = {};
-             editingVenta.ordenVentas?.forEach((ov: any) => {
-               const id = ov.producto?.IDproductos || ov.productoId || ov.IDorderventas;
-               originalQtyMap[id] = !yaEstuvoEnCocina ? 0 : ((originalQtyMap[id] || 0) + (ov.cantidad || 1));
-               preparadaQtyMap[id] = (preparadaQtyMap[id] || 0) + (ov.cantidadPreparada || 0);
-             });
+
+             const normalizeName = (name?: string) => (name || '').trim().toLowerCase();
+             const originalEntries = (editingVenta.ordenVentas || []).map((ov: any) => ({
+               id: String(ov.producto?.IDproductos || ov.productoId || ov.IDproductos || ov.IDorderventas || '').trim(),
+               normName: normalizeName(ov.nombre || ov.nombreProducto || ov.producto?.nombre),
+               qty: !yaEstuvoEnCocina ? 0 : (Number(ov.cantidad) || 1),
+               prep: Number(ov.cantidadPreparada) || 0,
+             }));
 
              payload.productos.forEach(item => {
-               const id = item.productoId;
-               const originalQty = originalQtyMap[id as string] || 0;
+               const id = String(item.productoId || '').trim();
+               const normName = normalizeName(item.nombre || item.nombreProducto);
+
+               let originalQty = 0;
+               let preparadaQty = 0;
+
+               originalEntries.forEach((entry: any) => {
+                 const matchById = Boolean(id && entry.id && id === entry.id);
+                 const matchByName = Boolean(normName && entry.normName && normName === entry.normName);
+                 if (matchById || matchByName) {
+                   originalQty += entry.qty;
+                   preparadaQty += entry.prep;
+                   entry.qty = 0;
+                   entry.prep = 0;
+                 }
+               });
+
                const newQty = item.cantidad - originalQty;
 
                if (newQty > 0) {
@@ -1259,7 +1287,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                    precioUnitario: item.precio,
                    subtotal: item.precio * prevQty,
                    modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
-                   cantidadPreparada: preparadaQtyMap[id as string] || 0,
+                   cantidadPreparada: preparadaQty,
                    seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
                    gramosPapa: resolveGramosPapa(item),
                  });
@@ -1298,8 +1326,12 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             porcentajeMermaPapa: getCachedConfiguracion()?.data?.porcentajeMermaPapa ?? getCachedConfiguracion()?.porcentajeMermaPapa ?? 10
           };
 
-          if (mesaCambio) {
-            // Si la mesa cambió (ej: de V.R a Mesa 6), cocina necesita la comanda completa con la nueva mesa
+          if (nuevosProductos.length === 0) {
+            ticketData.suppressComanda = true;
+            ticketData.forceComanda = false;
+            ticketData.isAdicion = false;
+          } else if (mesaCambio) {
+            // Si la mesa cambió y hay productos por comandar, cocina necesita la comanda completa con la nueva mesa
             ticketData.forceComanda = true;
             ticketData.suppressComanda = false;
             ticketData.isAdicion = false;
@@ -1314,14 +1346,9 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             }));
             ticketData.productosAnteriores = [];
           } else if (isEditing && editingVenta && yaEstuvoEnCocina) {
-            if (nuevosProductos.length > 0) {
-              ticketData.isAdicion = true;
-              ticketData.forceComanda = true;
-            } else {
-              ticketData.suppressComanda = true;
-            }
-          } else if (!isEditing && paymentData.estado === 'PAGADO') {
+            ticketData.isAdicion = true;
             ticketData.forceComanda = true;
+            ticketData.suppressComanda = false;
           }
 
           printStore.printTicket(ticketData);
@@ -1459,7 +1486,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                 gramosPapa: resolveGramosPapa(item),
               })),
               estado: payload.venta.estado,
-              forceComanda: payload.venta.estado === 'PAGADO',
+              forceComanda: !isEditing && payload.venta.estado === 'PAGADO',
               metodoPago: finalMethod,
               efectivoRecibido: payload.venta.efectivoRecibido,
               devueltas: payload.venta.devueltas,
@@ -1606,7 +1633,72 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                 cleanOrderId = cleanOrderId.substring(7);
               }
 
-              const ticketData = {
+              const yaEstuvoEnCocina = Boolean(
+                editingVenta?.comandaImpresa ||
+                editingVenta?.cocinaInicioAt ||
+                editingVenta?.comandaImpresaAt ||
+                editingVenta?._isDomicilioWA ||
+                (Array.isArray(editingVenta?.ordenVentas) && editingVenta.ordenVentas.some((ov: any) => ov.comandaImpresa)) ||
+                (Array.isArray(editingVenta?.registroDeTiempo) && editingVenta.registroDeTiempo.some((r: any) => ['TOMADO', 'PREPARANDO', 'PAGADO', 'ENTREGADO', 'LISTO_PARA_ENTREGA'].includes((r.estado || '').toUpperCase()))) ||
+                (editingVenta?.estado && editingVenta.estado !== 'EN_EL_CARRITO')
+              );
+
+              const normalizeName = (name?: string) => (name || '').trim().toLowerCase();
+              const originalEntries = (editingVenta?.ordenVentas || []).map((ov: any) => ({
+                id: String(ov.producto?.IDproductos || ov.productoId || ov.IDproductos || ov.IDorderventas || '').trim(),
+                normName: normalizeName(ov.nombre || ov.nombreProducto || ov.producto?.nombre),
+                qty: !yaEstuvoEnCocina ? 0 : (Number(ov.cantidad) || 1),
+                prep: Number(ov.cantidadPreparada) || 0,
+              }));
+
+              const nuevosProductos: any[] = [];
+              const productosAnteriores: any[] = [];
+
+              payload.productos.forEach(item => {
+                const id = String(item.productoId || '').trim();
+                const normName = normalizeName(item.nombre || item.nombreProducto);
+                let originalQty = 0;
+                let preparadaQty = 0;
+
+                originalEntries.forEach((entry: any) => {
+                  const matchById = Boolean(id && entry.id && id === entry.id);
+                  const matchByName = Boolean(normName && entry.normName && normName === entry.normName);
+                  if (matchById || matchByName) {
+                    originalQty += entry.qty;
+                    preparadaQty += entry.prep;
+                    entry.qty = 0;
+                    entry.prep = 0;
+                  }
+                });
+
+                const newQty = item.cantidad - originalQty;
+                if (newQty > 0) {
+                  nuevosProductos.push({
+                    cantidad: newQty,
+                    nombre: item.nombre,
+                    precioUnitario: item.precio,
+                    subtotal: item.precio * newQty,
+                    modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
+                    seccionCocinaId: item.seccionCocinaId || null,
+                    gramosPapa: resolveGramosPapa(item),
+                  });
+                }
+                if (originalQty > 0) {
+                  const prevQty = Math.min(originalQty, item.cantidad);
+                  productosAnteriores.push({
+                    cantidad: prevQty,
+                    nombre: item.nombre,
+                    precioUnitario: item.precio,
+                    subtotal: item.precio * prevQty,
+                    modifiers: item.comentarios ? JSON.parse(item.comentarios) : undefined,
+                    cantidadPreparada: preparadaQty,
+                    seccionCocinaId: item.seccionCocinaId || null,
+                    gramosPapa: resolveGramosPapa(item),
+                  });
+                }
+              });
+
+              const ticketData: any = {
                 orderId: cleanOrderId,
                 fecha: new Date().toLocaleString('es-CO'),
                 cliente: selectedCliente?.nombre || editingVenta?.cliente,
@@ -1614,15 +1706,11 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                 total: finalTotal,
                 totalGlobal: recalcularTotal,
                 descuento: descuento,
-                productos: cart.map(item => ({
-                  cantidad: item.quantity,
-                  nombre: item.nombre,
-                  precioUnitario: Number(item.precioUnitario || item.Precio_Unitario || 0),
-                  subtotal: (Number(item.precioUnitario || item.Precio_Unitario || 0) * item.quantity) + (item.modifiers?.reduce((sum, mod) => sum + (Number(mod.price) * (mod.quantity || 1)), 0) || 0),
-                  modifiers: item.modifiers,
-                  seccionCocinaId: item.seccionCocinaId || item.categoriaSeccionCocinaId || (item as any).producto?.seccionCocinaId || (item as any).producto?.categoria?.seccionCocinaId || (item as any).producto?.categoriaRelacion?.seccionCocinaId || (item as any).producto?.categoriaSeccionCocinaId || null,
-                  gramosPapa: resolveGramosPapa(item),
-                })),
+                productos: nuevosProductos,
+                productosAnteriores: productosAnteriores,
+                suppressComanda: nuevosProductos.length === 0,
+                forceComanda: yaEstuvoEnCocina && nuevosProductos.length > 0,
+                isAdicion: yaEstuvoEnCocina && nuevosProductos.length > 0,
                 estado: data.estado,
                 metodoPago: data.medioDePago || editingVenta?.medioDePago || 'PENDIENTE',
                 efectivoRecibido: editingVenta?.efectivoRecibido || finalTotal,
