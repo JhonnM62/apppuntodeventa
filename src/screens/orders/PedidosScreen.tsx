@@ -1017,6 +1017,28 @@ const PedidosScreen = () => {
     ];
   }, [visibleDomicilios]);
 
+  const entregadosActivosCount = useMemo(() => {
+    if (!Array.isArray(cachedVentas)) return 0;
+    const fechaHoy = getFechaContableActual();
+    return cachedVentas.filter(v => {
+      const vDate = extractVentaFecha(v);
+      if (vDate && vDate !== fechaHoy) return false;
+      const est = (v.estado || '').toUpperCase();
+      return est === 'ENTREGADO' && !v.despejadoAt;
+    }).length;
+  }, [cachedVentas]);
+
+  const entregadosDespejadosCount = useMemo(() => {
+    if (!Array.isArray(cachedVentas)) return 0;
+    const fechaHoy = getFechaContableActual();
+    return cachedVentas.filter(v => {
+      const vDate = extractVentaFecha(v);
+      if (vDate && vDate !== fechaHoy) return false;
+      const est = (v.estado || '').toUpperCase();
+      return est === 'ENTREGADO' && !!v.despejadoAt;
+    }).length;
+  }, [cachedVentas]);
+
   const fetchIdRef = useRef<number>(0);
 
   const fetchVentas = useCallback(async (force = false, pageNumber = 1, isLoadMore = false) => {
@@ -4829,10 +4851,12 @@ showAlert({
               ]}
               onPress={() => setShowDespejados(false)}
               activeOpacity={0.7}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: !showDespejados }}
             >
               <Ionicons
-                name="checkmark-done-circle-outline"
-                size={isWeb ? 13 : 14}
+                name="checkmark-circle-outline"
+                size={isWeb ? 13 : 13}
                 color={!showDespejados ? '#ffffff' : '#059669'}
               />
               <RNText
@@ -4858,12 +4882,7 @@ showAlert({
                     { color: !showDespejados ? '#ffffff' : '#059669' },
                   ]}
                 >
-                  {(Array.isArray(cachedVentas) ? cachedVentas : []).filter(v => {
-                    const vDate = extractVentaFecha(v);
-                    if (vDate && vDate !== getFechaContableActual()) return false;
-                    const est = (v.estado || '').toUpperCase();
-                    return est === 'ENTREGADO' && !v.despejadoAt;
-                  }).length}
+                  {entregadosActivosCount}
                 </RNText>
               </View>
             </TouchableOpacity>
@@ -4876,10 +4895,12 @@ showAlert({
               ]}
               onPress={() => setShowDespejados(true)}
               activeOpacity={0.7}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: showDespejados }}
             >
               <Ionicons
                 name="archive-outline"
-                size={isWeb ? 13 : 14}
+                size={isWeb ? 13 : 13}
                 color={showDespejados ? '#ffffff' : '#64748b'}
               />
               <RNText
@@ -4905,18 +4926,13 @@ showAlert({
                     { color: showDespejados ? '#ffffff' : '#64748b' },
                   ]}
                 >
-                  {(Array.isArray(cachedVentas) ? cachedVentas : []).filter(v => {
-                    const vDate = extractVentaFecha(v);
-                    if (vDate && vDate !== getFechaContableActual()) return false;
-                    const est = (v.estado || '').toUpperCase();
-                    return est === 'ENTREGADO' && !!v.despejadoAt;
-                  }).length}
+                  {entregadosDespejadosCount}
                 </RNText>
               </View>
             </TouchableOpacity>
           </View>
 
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: isWeb ? 4 : 5 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: isWeb ? 4 : 4 }}>
             {!isSelectionMode && (
               <TouchableOpacity
                 style={[styles.entregadosActionBtn, isWeb && styles.entregadosActionBtnWeb]}
@@ -4928,7 +4944,7 @@ showAlert({
                 accessibilityRole="button"
                 accessibilityLabel="Seleccionar pedidos"
               >
-                <Ionicons name="checkbox-outline" size={isWeb ? 13 : 13} color="#475569" />
+                <Ionicons name="checkbox-outline" size={13} color="#475569" />
                 <RNText style={[styles.entregadosActionBtnText, isWeb && styles.entregadosActionBtnTextWeb]}>
                   {isWeb ? 'Seleccionar' : 'Elegir'}
                 </RNText>
@@ -4943,7 +4959,7 @@ showAlert({
                 accessibilityRole="button"
                 accessibilityLabel="Despejar todo"
               >
-                <Ionicons name="eye-off-outline" size={isWeb ? 13 : 13} color="#059669" />
+                <Ionicons name="eye-off-outline" size={13} color="#059669" />
                 <RNText style={[styles.entregadosActionBtnText, isWeb && styles.entregadosActionBtnTextWeb, { color: '#059669', fontWeight: '700' }]}>
                   Despejar
                 </RNText>
@@ -4956,7 +4972,7 @@ showAlert({
                 accessibilityRole="button"
                 accessibilityLabel="Restaurar todo"
               >
-                <Ionicons name="refresh-outline" size={isWeb ? 13 : 13} color="#2563eb" />
+                <Ionicons name="refresh-outline" size={13} color="#2563eb" />
                 <RNText style={[styles.entregadosActionBtnText, isWeb && styles.entregadosActionBtnTextWeb, { color: '#2563eb', fontWeight: '700' }]}>
                   Restaurar
                 </RNText>
@@ -5764,27 +5780,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 2.5,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
-    gap: 6,
+    gap: 4,
   },
   entregadosSegmentGroup: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f1f5f9',
-    borderRadius: 14,
+    borderRadius: 8,
     padding: 2,
     gap: 2,
   },
   entregadosSegmentBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3.5,
-    borderRadius: 12,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
     gap: 3,
   },
   entregadosSegmentBtnActive: {
@@ -5802,9 +5818,9 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   entregadosBadgePill: {
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 0.5,
+    borderRadius: 6,
     marginLeft: 2,
   },
   entregadosBadgePillText: {
@@ -5814,9 +5830,9 @@ const styles = StyleSheet.create({
   entregadosActionBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 7,
-    paddingVertical: 3.5,
-    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2.5,
+    borderRadius: 6,
     backgroundColor: '#f8fafc',
     borderWidth: 1,
     borderColor: '#e2e8f0',
@@ -5916,31 +5932,32 @@ const styles = StyleSheet.create({
     fontSize: 9,
   },
   entregadosToolbarWeb: {
-    paddingVertical: 4,
+    paddingVertical: 3,
+    paddingHorizontal: 12,
   },
   entregadosSegmentGroupWeb: {
     padding: 2,
-    borderRadius: 14,
+    borderRadius: 8,
   },
   entregadosSegmentBtnWeb: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 12,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
   },
   entregadosSegmentTextWeb: {
     fontSize: 11,
   },
   entregadosBadgePillWeb: {
     paddingHorizontal: 4,
-    paddingVertical: 1,
+    paddingVertical: 0.5,
   },
   entregadosBadgePillTextWeb: {
     fontSize: 9,
   },
   entregadosActionBtnWeb: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 2.5,
+    borderRadius: 6,
   },
   entregadosActionBtnTextWeb: {
     fontSize: 11,
