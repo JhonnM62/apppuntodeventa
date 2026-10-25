@@ -13,6 +13,7 @@ import { emitirFacturaDian, eliminarFacturaDian } from '../../services/facturaci
 import { useSocket, useSocketEvent, useSocketEmitter } from '../../hooks';
 import { Room, SocketEvent } from '../../types/socket.types';
 import Toast from 'react-native-toast-message';
+import * as Clipboard from 'expo-clipboard';
 import { useSalesStore } from '../../store/useSalesStore';
 import PaymentModal from '../../components/ui/PaymentModal';
 import { Text } from '../../components/ui/text';
@@ -1938,6 +1939,42 @@ showAlert({
     }
   };
 
+  const handleCopyToClipboard = async (text?: string, label: string = 'Texto copiado') => {
+    if (!text) return;
+    try {
+      if (Clipboard && typeof Clipboard.setStringAsync === 'function') {
+        await Clipboard.setStringAsync(text);
+      } else if (typeof navigator !== 'undefined' && (navigator as any).clipboard?.writeText) {
+        await (navigator as any).clipboard.writeText(text);
+      }
+      Toast.show({
+        type: 'success',
+        text1: 'Copiado al portapapeles',
+        text2: label,
+        position: 'top',
+        visibilityTime: 1800,
+      });
+    } catch (err) {
+      console.error('Error al copiar:', err);
+      Toast.show({
+        type: 'error',
+        text1: 'Error al copiar',
+        text2: 'No se pudo copiar el texto',
+        position: 'top',
+      });
+    }
+  };
+
+  const getCleanPhoneNumber = (venta: any): string | null => {
+    if (!venta) return null;
+    if (venta.numeroTelefono) return String(venta.numeroTelefono);
+    if (venta.clienteRelacion?.whatsapp) return String(venta.clienteRelacion.whatsapp);
+    if (venta._rawDomicilio?.clienteTelefono) return String(venta._rawDomicilio.clienteTelefono);
+    const raw = `${venta.pedido || ''} ${venta.mesa || ''}`;
+    const match = raw.match(/WA\s*([0-9]{10,12})/i) || raw.match(/([0-9]{10,12})/);
+    return match ? match[1] : null;
+  };
+
   const formatMoney = (amount?: number) => {
     if (amount == null) return '$0';
     let val = Number(amount) || 0;
@@ -2054,25 +2091,25 @@ showAlert({
             <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 10 }}>
               <View style={[
                 styles.cardTypeIconContainer,
-                item.mesa?.startsWith('DOMICILIO WA') || (item.costoDelDomicilio && item.costoDelDomicilio > 0)
+                item.mesa?.startsWith('DOMICILIO WA') || item.direccion || (item.costoDelDomicilio && item.costoDelDomicilio > 0)
                   ? { backgroundColor: '#e0f2fe' }
-                  : (item.mesa?.startsWith('Mesa') || (item.mesa && item.mesa !== 'V.R') ? { backgroundColor: '#ede9fe' } : { backgroundColor: '#f1f5f9' })
+                  : { backgroundColor: '#f1f5f9' }
               ]}>
                 <Ionicons
                   name={
-                    item.mesa?.startsWith('DOMICILIO WA') || (item.costoDelDomicilio && item.costoDelDomicilio > 0)
+                    item.mesa?.startsWith('DOMICILIO WA') || item.direccion || (item.costoDelDomicilio && item.costoDelDomicilio > 0)
                       ? 'bicycle-outline'
-                      : (item.mesa?.startsWith('Mesa') || (item.mesa && item.mesa !== 'V.R') ? 'restaurant-outline' : 'receipt-outline')
+                      : 'receipt-outline'
                   }
                   size={16}
                   color={
-                    item.mesa?.startsWith('DOMICILIO WA') || (item.costoDelDomicilio && item.costoDelDomicilio > 0)
+                    item.mesa?.startsWith('DOMICILIO WA') || item.direccion || (item.costoDelDomicilio && item.costoDelDomicilio > 0)
                       ? '#0284c7'
-                      : (item.mesa?.startsWith('Mesa') || (item.mesa && item.mesa !== 'V.R') ? '#6d28d9' : '#475569')
+                      : '#475569'
                   }
                 />
               </View>
-              <RNText style={styles.cardTitle} numberOfLines={1}>
+              <RNText style={styles.cardTitle} numberOfLines={2}>
                 {item.pedido || 'Sin pedido'}
               </RNText>
             </View>
@@ -2144,27 +2181,80 @@ showAlert({
             )}
           </View>
 
-          {/* Fila 3: Información clave (Hora, Items, Cliente) */}
+          {/* Fila 3: Información clave (Fecha y Hora, Items, Cliente) */}
           <View style={styles.cardInfo}>
             <View style={styles.infoRow}>
-              <Ionicons name="time-outline" size={13} color="#94a3b8" />
+              <Ionicons name="calendar-outline" size={13} color="#64748b" />
               <RNText style={styles.infoText}>
-                {formatTimeOnly(item.fechaYHora) || formatDateTime(item.fechaYHora)}
+                {formatDateTime(item.fechaYHora)}
               </RNText>
             </View>
 
             <View style={styles.infoRow}>
-              <MaterialCommunityIcons name="counter" size={14} color="#94a3b8" />
+              <MaterialCommunityIcons name="counter" size={14} color="#64748b" />
               <RNText style={styles.infoText}>{totalItems} item{totalItems !== 1 ? 's' : ''}</RNText>
             </View>
 
             {item.cliente && (
               <View style={[styles.infoRow, { maxWidth: 160 }]}>
-                <Ionicons name="person-outline" size={13} color="#94a3b8" />
+                <Ionicons name="person-outline" size={13} color="#64748b" />
                 <RNText style={styles.infoText} numberOfLines={1}>{item.cliente}</RNText>
               </View>
             )}
           </View>
+
+          {/* Fila de Contacto y Entrega si existe teléfono o dirección */}
+          {(item.direccion || getCleanPhoneNumber(item)) ? (
+            <View style={styles.cardDeliveryBox}>
+              {getCleanPhoneNumber(item) ? (
+                <View style={styles.cardDeliveryPhoneLine}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 6 }}>
+                    <Ionicons name="call-outline" size={13} color="#059669" style={{ marginRight: 5 }} />
+                    <RNText style={styles.cardDeliveryPhoneText} selectable={true}>
+                      {getCleanPhoneNumber(item)}
+                    </RNText>
+                  </View>
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleCopyToClipboard(getCleanPhoneNumber(item)!, 'Teléfono copiado');
+                    }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={styles.cardMiniCopyBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Copiar teléfono"
+                  >
+                    <Ionicons name="copy-outline" size={12} color="#059669" />
+                    <RNText style={styles.cardMiniCopyTextPhone}>Copiar</RNText>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
+
+              {item.direccion ? (
+                <View style={[styles.cardDeliveryAddressLine, getCleanPhoneNumber(item) ? { borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 6, marginTop: 4 } : null]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'flex-start', flex: 1, marginRight: 6 }}>
+                    <Ionicons name="location-outline" size={14} color="#0284c7" style={{ marginTop: 2, marginRight: 5 }} />
+                    <RNText style={styles.cardDeliveryAddressText} selectable={true}>
+                      {item.direccion}
+                    </RNText>
+                  </View>
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      handleCopyToClipboard(item.direccion, 'Dirección copiada');
+                    }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={styles.cardMiniCopyBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Copiar dirección"
+                  >
+                    <Ionicons name="copy-outline" size={12} color="#0284c7" />
+                    <RNText style={styles.cardMiniCopyTextAddress}>Copiar</RNText>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
+            </View>
+          ) : null}
 
           {/* Fila 4: Vista previa de productos con chips estilizados */}
           {productos.length > 0 && (
@@ -2810,11 +2900,26 @@ showAlert({
             </View>
 
             {item.direccion ? (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                <Ionicons name="location" size={15} color="#ef4444" style={{ marginRight: 6 }} />
-                <RNText style={{ fontSize: 12, color: '#374151', fontWeight: '500', flex: 1 }}>
-                  {item.direccion}
-                </RNText>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginTop: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'flex-start', flex: 1, marginRight: 6 }}>
+                  <Ionicons name="location" size={15} color="#ef4444" style={{ marginRight: 6, marginTop: 2 }} />
+                  <RNText style={{ fontSize: 12, color: '#374151', fontWeight: '500', flex: 1 }} selectable={true}>
+                    {item.direccion}
+                  </RNText>
+                </View>
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    handleCopyToClipboard(item.direccion, 'Dirección copiada');
+                  }}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#e0f2fe', paddingHorizontal: 7, paddingVertical: 3, borderRadius: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Copiar dirección"
+                >
+                  <Ionicons name="copy-outline" size={12} color="#0284c7" />
+                  <RNText style={{ fontSize: 10, fontWeight: '700', color: '#0284c7', marginLeft: 3 }}>Copiar</RNText>
+                </TouchableOpacity>
               </View>
             ) : null}
 
@@ -3221,7 +3326,7 @@ showAlert({
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 }}>
-                <RNText style={[styles.modalTitle, { flexShrink: 1 }]} numberOfLines={1} ellipsizeMode="tail">{selectedVenta.pedido}</RNText>
+                <RNText style={[styles.modalTitle, { flexShrink: 1 }]} numberOfLines={2}>{selectedVenta.pedido}</RNText>
                 <RealtimeDurationTimer selectedVenta={selectedVenta} />
               </View>
               <TouchableOpacity onPress={closeModal} style={[styles.closeBtn, { flexShrink: 0 }]}>
@@ -3247,21 +3352,60 @@ showAlert({
                 {selectedVenta.cliente && (
                   <View style={styles.detailRow}>
                     <RNText style={styles.detailLabel}>Cliente:</RNText>
-                    <RNText style={styles.detailValue}>{selectedVenta.cliente}</RNText>
+                    <RNText style={styles.detailValue} selectable={true}>{selectedVenta.cliente}</RNText>
                   </View>
                 )}
-                {selectedVenta.direccion && (
+                {getCleanPhoneNumber(selectedVenta) ? (
                   <View style={styles.detailRow}>
-                    <RNText style={styles.detailLabel}>Dirección:</RNText>
-                    <RNText style={styles.detailValue}>{selectedVenta.direccion}</RNText>
+                    <RNText style={styles.detailLabel}>Teléfono / WA:</RNText>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <RNText style={styles.detailValue} selectable={true}>{getCleanPhoneNumber(selectedVenta)}</RNText>
+                      <TouchableOpacity
+                        style={styles.detailSmallCopyBtn}
+                        onPress={() => handleCopyToClipboard(getCleanPhoneNumber(selectedVenta)!, 'Teléfono copiado')}
+                        accessibilityRole="button"
+                        accessibilityLabel="Copiar teléfono"
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                      >
+                        <Ionicons name="copy-outline" size={14} color="#0284c7" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                )}
-                {selectedVenta.mesa && (
+                ) : null}
+                {selectedVenta.direccion ? (
+                  <View style={styles.detailAddressCard}>
+                    <View style={styles.detailAddressHeader}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Ionicons name="location" size={16} color="#0284c7" />
+                        <RNText style={styles.detailAddressLabel}>DIRECCIÓN DE ENTREGA</RNText>
+                      </View>
+                      <TouchableOpacity
+                        style={styles.detailCopyBtn}
+                        onPress={() => handleCopyToClipboard(selectedVenta.direccion, 'Dirección copiada')}
+                        accessibilityRole="button"
+                        accessibilityLabel="Copiar dirección"
+                      >
+                        <Ionicons name="copy-outline" size={13} color="#0284c7" />
+                        <RNText style={styles.detailCopyBtnText}>Copiar</RNText>
+                      </TouchableOpacity>
+                    </View>
+                    <RNText style={styles.detailAddressValue} selectable={true}>
+                      {selectedVenta.direccion}
+                    </RNText>
+                  </View>
+                ) : null}
+                {selectedVenta.costoDelDomicilio && Number(selectedVenta.costoDelDomicilio) > 0 ? (
+                  <View style={styles.detailRow}>
+                    <RNText style={styles.detailLabel}>Costo Domicilio:</RNText>
+                    <RNText style={styles.detailValue}>{formatMoney(Number(selectedVenta.costoDelDomicilio))}</RNText>
+                  </View>
+                ) : null}
+                {selectedVenta.mesa && !/^[a-z0-9]{25}$/i.test(selectedVenta.mesa) && !selectedVenta.mesa.startsWith('DOMICILIO WA') ? (
                   <View style={styles.detailRow}>
                     <RNText style={styles.detailLabel}>Mesa:</RNText>
                     <RNText style={styles.detailValue}>{selectedVenta.mesa}</RNText>
                   </View>
-                )}
+                ) : null}
                 {selectedVenta.medioDePago && (
                   <View style={styles.detailRow}>
                     <RNText style={styles.detailLabel}>Medio de Pago:</RNText>
@@ -5496,6 +5640,102 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  cardDeliveryBox: {
+    backgroundColor: '#f8fafc',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    padding: 8,
+    marginBottom: 10,
+    gap: 6,
+  },
+  cardDeliveryPhoneLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cardDeliveryPhoneText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0f172a',
+  },
+  cardDeliveryAddressLine: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+  },
+  cardDeliveryAddressText: {
+    fontSize: 12,
+    color: '#334155',
+    lineHeight: 17,
+    flex: 1,
+  },
+  cardMiniCopyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f1f5f9',
+    borderWidth: 1,
+    borderColor: '#cbd5e1',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 6,
+    gap: 3,
+  },
+  cardMiniCopyTextPhone: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  cardMiniCopyTextAddress: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#0284c7',
+  },
+  detailAddressCard: {
+    backgroundColor: '#f0f9ff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#bae6fd',
+    padding: 12,
+    marginVertical: 6,
+  },
+  detailAddressHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  detailAddressLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#0284c7',
+    letterSpacing: 0.5,
+  },
+  detailAddressValue: {
+    fontSize: 14,
+    color: '#0f172a',
+    lineHeight: 20,
+    fontWeight: '500',
+  },
+  detailCopyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#e0f2fe',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 4,
+  },
+  detailCopyBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#0284c7',
+  },
+  detailSmallCopyBtn: {
+    padding: 4,
+    borderRadius: 6,
+    backgroundColor: '#e0f2fe',
   },
   timelineScroll: { paddingVertical: 10, paddingRight: 20 },
   timelineNodeRow: { flexDirection: 'row', alignItems: 'center' },
