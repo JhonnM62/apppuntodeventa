@@ -621,6 +621,7 @@ const PedidosScreen = () => {
   const [printPreviewVisible, setPrintPreviewVisible] = useState(false);
   const [printPreviewType, setPrintPreviewType] = useState<'comanda' | 'factura' | null>(null);
   const [printPreviewData, setPrintPreviewData] = useState<any>(null);
+  const isPrintingManualRef = useRef(false);
 
 
 
@@ -714,6 +715,10 @@ const PedidosScreen = () => {
   };
 
   const handleManualPrint = async (venta: any, type: 'comanda' | 'factura') => {
+    if (isPrintingManualRef.current) return;
+    isPrintingManualRef.current = true;
+    setTimeout(() => { isPrintingManualRef.current = false; }, 2000);
+
     const rawTicket = mapVentaToTicketData(venta);
     const ticketData = type === 'comanda'
       ? enrichTicketDataWithPapaFallback(rawTicket)
@@ -951,16 +956,13 @@ const PedidosScreen = () => {
           return est === 'PAGADO' || (!!v.medioDePago && v.medioDePago !== 'PENDIENTE' && est !== 'CANCELADO' && est !== 'ANULADO');
         }).length;
       } else if (tab.key === 'TOMADO') {
-        // Pestaña operativa TOMADO: jornada actual y pedidos activos en cocina (incluyendo pagados al inicio aún sin entregar en modo restaurante)
+        // Pestaña operativa TOMADO: solo pedidos realmente en TOMADO o PREPARANDO de la jornada actual
         count = arraySeguro.filter(v => {
           const est = (v.estado || '').toUpperCase();
-          const isActivoCocina = est === 'TOMADO' || est === 'PREPARANDO' || (isModoRestaurante() && est === 'PAGADO' && !v.cocinaFinAt);
-          if (!isActivoCocina) return false;
+          const isTomado = est === 'TOMADO' || est === 'PREPARANDO';
+          if (!isTomado) return false;
           const vDate = extractVentaFecha(v);
-          if (vDate && vDate !== fechaContable) {
-            const diffHours = (Date.now() - new Date(v.fechaYHora || v.fecha || Date.now()).getTime()) / 3600000;
-            if (diffHours > 24) return false;
-          }
+          if (vDate && vDate !== fechaContable) return false;
           return true;
         }).length;
       } else if (tab.key === 'ENTREGADO') {
@@ -1327,15 +1329,14 @@ const PedidosScreen = () => {
           return est === 'PAGADO' || (!!v.medioDePago && v.medioDePago !== 'PENDIENTE' && est !== 'CANCELADO' && est !== 'ANULADO');
         });
       } else if (activeTab === 'TOMADO') {
-        // Pestaña TOMADO: solo pedidos activos en preparación de la jornada actual (incluyendo pagados al inicio aún sin entregar en modo restaurante)
+        // Pestaña TOMADO: solo pedidos en TOMADO o PREPARANDO de la jornada actual (o según filtro de fecha explícito)
         filtered = filtered.filter(v => {
           const est = (v.estado || '').toUpperCase();
-          const isActivoCocina = est === 'TOMADO' || est === 'PREPARANDO' || (isModoRestaurante() && est === 'PAGADO' && !v.cocinaFinAt);
-          if (!isActivoCocina) return false;
+          const isTomado = est === 'TOMADO' || est === 'PREPARANDO';
+          if (!isTomado) return false;
           const vDate = extractVentaFecha(v);
           if (vDate && vDate !== fechaContable && !filters.fechaDesde && !filters.fechaHasta) {
-            const diffHours = (Date.now() - new Date(v.fechaYHora || v.fecha || Date.now()).getTime()) / 3600000;
-            if (diffHours > 24) return false;
+            return false;
           }
           return true;
         });

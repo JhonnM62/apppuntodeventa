@@ -100,10 +100,13 @@ export default function PrintPreviewModal({
   }, [timeLeft, visible, isPrinting]);
 
   const handlePrint = async () => {
-    if (!type || !enrichedTicketData) return;
+    if (!type || !enrichedTicketData || isPrinting) return;
     setIsPrinting(true);
-    await printManual(enrichedTicketData, type);
-    onClose();
+    try {
+      await printManual(enrichedTicketData, type);
+    } finally {
+      onClose();
+    }
   };
 
   const getTitle = () => {
@@ -187,7 +190,7 @@ export default function PrintPreviewModal({
             {/* Footer */}
             {!isPrinting && (
               <View className="px-5 pb-5 pt-2 border-t border-gray-100">
-                <Button onPress={handlePrint} className="w-full bg-indigo-600" style={{ backgroundColor: COLORS.primary }}>
+                <Button onPress={handlePrint} disabled={isPrinting} className="w-full bg-indigo-600" style={{ backgroundColor: COLORS.primary }}>
                   Imprimir Ahora
                 </Button>
                 <Pressable onPress={onClose} className="mt-3 py-3">

@@ -29,6 +29,14 @@ export const setPrinterSocket = (socket: any, negocioId: string) => {
   _negocioId = negocioId;
 };
 
+let _isPrintingManualRunning = false;
+
+const getDestinoKey = (cfg: any) => {
+  if (!cfg || cfg === 'principal') return 'principal';
+  if (cfg === 'remota') return 'remota';
+  return cfg.inner_mac_address || cfg.name || 'custom';
+};
+
 const generateUUID = () =>
   'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
@@ -238,7 +246,10 @@ const usePrinterStore = create<PrinterState>()(
               webTickets.push({ data: safeComandaData, type: 'comanda' });
             } else {
               const grupos = splitComandaPorSeccion(safeComandaData.productos ?? [], secciones, true);
-              if (grupos.length === 0) {
+              const destinos = grupos.map((g) => getDestinoKey(seccionesState.getImpresoraDeSeccion(g.seccion.IDseccion)));
+              const hayMultiplesImpresoras = new Set(destinos).size > 1;
+
+              if (grupos.length === 0 || !hayMultiplesImpresoras) {
                 webTickets.push({ data: safeComandaData, type: 'comanda' });
               } else {
                 grupos.forEach((g) => {
@@ -323,7 +334,15 @@ const usePrinterStore = create<PrinterState>()(
           return;
         }
 
+        const destinos = grupos.map((g) => getDestinoKey(seccionesState.getImpresoraDeSeccion(g.seccion.IDseccion)));
+        const hayMultiplesImpresoras = new Set(destinos).size > 1;
+
         if (Platform.OS === 'web' && state.webPrintMode !== 'remote') {
+          if (!hayMultiplesImpresoras) {
+            executeWebPrintBatch([{ data: safeTicketData, type: 'comanda' }], state.paperSize);
+            return;
+          }
+
           const ticketsParaImprimir = grupos.map((g) => ({
             data: enrichTicketDataWithPapaFallback({
               ...safeTicketData,
@@ -338,7 +357,28 @@ const usePrinterStore = create<PrinterState>()(
           return;
         }
 
-        // Imprimir un ticket por sección en orden
+        // Si NO hay múltiples impresoras físicas (todas van a 'principal' o a la misma impresora),
+        // imprimir un ÚNICO ticket con todos los productos para evitar imprimir 2 veces en el mismo rollo.
+        if (!hayMultiplesImpresoras) {
+          const primerCfg = seccionesState.getImpresoraDeSeccion(grupos[0]?.seccion?.IDseccion || '__general__');
+          if (primerCfg === 'remota') {
+            await get().printRemote(safeTicketData, 'comanda');
+          } else if (primerCfg === 'principal' || !primerCfg) {
+            await get().printSmart(safeTicketData, 'comanda');
+          } else {
+            const printer = primerCfg as any;
+            try {
+              await executePrint(safeTicketData, state.paperSize, printer.inner_mac_address, 'comanda');
+              set({ isConnected: true });
+            } catch (err: any) {
+              set({ isConnected: false });
+              await get().printSmart(safeTicketData, 'comanda');
+            }
+          }
+          return;
+        }
+
+        // Imprimir un ticket por sección en orden a su respectiva impresora
         for (let i = 0; i < grupos.length; i++) {
           const { seccion, productos } = grupos[i];
           console.log(`[DEBUG-PRINTER] printTicketConSecciones - Imprimiendo grupo ${i+1}/${grupos.length} para sección: ${seccion.IDseccion}`);
@@ -384,6 +424,13 @@ const usePrinterStore = create<PrinterState>()(
       // printManual — impresión manual desde vista previa
       // ─────────────────────────────────────────────────────────────────
       printManual: async (ticketData: any, type: 'comanda' | 'factura') => {
+        if (_isPrintingManualRunning) {
+          console.log('[DEBUG-PRINTER] printManual ignorado por debounce');
+          return false;
+        }
+        _isPrintingManualRunning = true;
+        setTimeout(() => { _isPrintingManualRunning = false; }, 1500);
+
         if (type === 'comanda') {
           const safeTicketData = enrichTicketDataWithPapaFallback(ticketData);
           await get().printTicketConSecciones(safeTicketData);
