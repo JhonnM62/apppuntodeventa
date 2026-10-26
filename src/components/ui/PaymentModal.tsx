@@ -439,17 +439,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       const estadoActual = selectedEstado;
       const pedidoIdActual = editingPedidoId;
       const abonoTotal = (abonoPrevio || 0) + (selectedEstado === 'RESERVA' ? abonoAmount : 0);
+      const isPaidState = estadoActual === 'PAGADO' || initialEstado === 'PAGADO';
+      const effectiveMethod = isPaidState ? method : 'PENDIENTE';
+
       const result = await onSave({ 
         estado: estadoActual, 
         pedidoId: pedidoIdActual, 
-        medioDePago: method,
+        medioDePago: effectiveMethod,
         abono: abonoTotal > 0 ? abonoTotal : undefined
       });
       const finalOrderId = (result && 'pedidoId' in result) ? result.pedidoId : pedidoIdActual;
       
       // Intentar impresión automática en segundo plano
       if (finalOrderId && finalOrderId !== 'PROCESANDO...' && !finalOrderId.startsWith('PROCESANDO')) {
-        attemptAutoPrint(estadoActual, finalOrderId, method || undefined, undefined, undefined, currentCartSnapshot).catch(err => {
+        attemptAutoPrint(estadoActual, finalOrderId, effectiveMethod || undefined, undefined, undefined, currentCartSnapshot).catch(err => {
           console.log('Error en auto-print:', err);
         });
       }

@@ -1809,7 +1809,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         venta: {
           mesa: mesaValue,
           estado: data.estado,
-          medioDePago: data.medioDePago || 'PENDIENTE',
+          medioDePago: data.estado === 'PAGADO' ? (data.medioDePago || 'EFECTIVO') : 'PENDIENTE',
           efectivoRecibido: 0,
           devueltas: 0,
           banco: null,

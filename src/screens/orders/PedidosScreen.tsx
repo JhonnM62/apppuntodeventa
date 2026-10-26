@@ -207,46 +207,31 @@ const computeActiveMs = (
   cocinaInicioAt?: string | null,
   cocinaFinAt?: string | null
 ) => {
-  // 1. Si existe registroDeTiempo con duraciones registradas o múltiples estados
-  if (Array.isArray(registroDeTiempo) && registroDeTiempo.length > 0) {
-    let sumDurMs = 0;
-    for (let i = 1; i < registroDeTiempo.length; i++) {
-      const durStr = registroDeTiempo[i]?.duracion;
-      if (durStr && typeof durStr === 'string') {
-        const parts = durStr.split(':').map(Number);
-        if (parts.length === 4 && parts.every(n => !isNaN(n))) {
-          const [d, h, m, s] = parts;
-          sumDurMs += (((d * 24 + h) * 60 + m) * 60 + s) * 1000;
-        }
-      }
-    }
-    if (sumDurMs > 0) {
-      return sumDurMs;
-    }
-
-    if (registroDeTiempo.length >= 2) {
-      const firstTime = new Date(registroDeTiempo[0].fecha_hora).getTime();
-      const lastEntry = registroDeTiempo[registroDeTiempo.length - 1];
-      const lastTime = new Date(lastEntry.fecha_hora).getTime();
-      if (!isNaN(firstTime) && !isNaN(lastTime) && lastTime > firstTime) {
-        return lastTime - firstTime;
-      }
-    }
-
-    const firstTime = new Date(registroDeTiempo[0].fecha_hora).getTime();
-    if (!isNaN(firstTime) && endTime > firstTime) {
-      return Math.max(0, endTime - firstTime);
-    }
+  // 1. Determinar el inicio de la preparación (cocina o creación)
+  let startMs: number | null = null;
+  if (cocinaInicioAt) {
+    const parsed = new Date(cocinaInicioAt).getTime();
+    if (!isNaN(parsed)) startMs = parsed;
   }
 
-  // 2. Si no hay registroDeTiempo detallado, calcular usando cocinaInicioAt / cocinaFinAt
-  if (cocinaInicioAt) {
-    const startMs = new Date(cocinaInicioAt).getTime();
-    const endMs = cocinaFinAt ? new Date(cocinaFinAt).getTime() : endTime;
-    const diff = endMs - startMs;
-    if (diff > 0) {
-      return diff;
-    }
+  if (startMs === null && Array.isArray(registroDeTiempo) && registroDeTiempo.length > 0) {
+    // Buscar el momento en que entró a cocina o se tomó el pedido
+    const kitchenEntry = registroDeTiempo.find(
+      (e: any) => e.estado === 'TOMADO' || e.estado === 'PREPARANDO' || e.estado === 'PAGADO'
+    ) || registroDeTiempo[0];
+    const parsed = new Date(kitchenEntry.fecha_hora).getTime();
+    if (!isNaN(parsed)) startMs = parsed;
+  }
+
+  // 2. Determinar el fin de la preparación
+  let endMs = endTime;
+  if (cocinaFinAt) {
+    const parsed = new Date(cocinaFinAt).getTime();
+    if (!isNaN(parsed)) endMs = parsed;
+  }
+
+  if (startMs !== null && endMs >= startMs) {
+    return endMs - startMs;
   }
 
   return 0;
@@ -1390,7 +1375,7 @@ const PedidosScreen = () => {
         // Pestaña PAGADO: Se deja tal cual (sin filtro de fecha por defecto)
         filtered = filtered.filter(v => {
           const est = (v.estado || '').toUpperCase();
-          return est === 'PAGADO' || (!!v.medioDePago && v.medioDePago !== 'PENDIENTE' && est !== 'CANCELADO' && est !== 'ANULADO');
+          return est === 'PAGADO';
         });
       } else if (activeTab === 'TOMADO') {
         // Pestaña TOMADO: pedidos en TOMADO, PREPARANDO o PAGADO aún activos en cocina de la jornada actual (o según filtro de fecha explícito)
@@ -2198,11 +2183,11 @@ showAlert({
           <View style={styles.cardBadgesRow}>
             <OrderTimerBadge venta={item} />
 
-            {((item.medioDePago && item.medioDePago !== 'PENDIENTE') || item.estado === 'PAGADO') ? (
+            {item.estado === 'PAGADO' ? (
               <View style={styles.paymentBadgeSuccess}>
                 <Ionicons name="checkmark-circle-outline" size={12} color="#059669" />
                 <RNText style={styles.paymentBadgeSuccessText}>
-                  {item.medioDePago ? `PAGADO (${item.medioDePago})` : 'PAGADO'}
+                  {item.medioDePago && item.medioDePago !== 'PENDIENTE' ? `PAGADO (${item.medioDePago})` : 'PAGADO'}
                 </RNText>
               </View>
             ) : (
@@ -2458,6 +2443,16 @@ showAlert({
     takingDomicilioIdsRef.current.add(dom.IDdomicilio);
     setTakingDomicilioIds(prev => ({ ...prev, [dom.IDdomicilio]: true }));
 
+    // 🚀 UI OPTIMISTA INMEDIATA (0 ms de espera para el usuario)
+    const nowAtendidoIso = new Date().toISOString();
+    const prevDomEstado = dom.estado;
+    setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, estado: 'TOMADO', atendidoAt: nowAtendidoIso } : d));
+    if (activeTab === 'DOMIS') {
+      setDomisSubTab('TOMADOS');
+    } else {
+      setActiveTab('TOMADO');
+    }
+
     try {
       let ventaId = dom.ventaId;
       let ventaCreadaObj: any = null;
@@ -2508,15 +2503,14 @@ showAlert({
         ventaCreadaObj = (newSale as any)?.data || newSale;
         if (ventaCreadaObj && ventaCreadaObj.IDventas) {
           ventaId = ventaCreadaObj.IDventas;
-          await vincularVentaDomicilio(dom.IDdomicilio, ventaId, 'TOMADO');
           addVenta(ventaCreadaObj);
+          // Vincular en segundo plano asíncrono (el backend también lo auto-vincula)
+          vincularVentaDomicilio(dom.IDdomicilio, ventaId, 'TOMADO').catch(() => {});
         }
       } else {
-        await vincularVentaDomicilio(dom.IDdomicilio, ventaId, 'TOMADO').catch(() => {});
+        vincularVentaDomicilio(dom.IDdomicilio, ventaId, 'TOMADO').catch(() => {});
       }
 
-      const nowAtendidoIso = new Date().toISOString();
-      await updateDomicilioEstado(dom.IDdomicilio, 'TOMADO');
       setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, estado: 'TOMADO', ventaId: ventaId || d.ventaId, atendidoAt: nowAtendidoIso } : d));
 
       if (ventaId) {
@@ -2527,7 +2521,7 @@ showAlert({
         } as any);
       }
 
-      // Auto-imprimir comanda con datos completos del cliente al pasar a TOMADO
+      // 🖨️ Auto-imprimir comanda de inmediato sin esperar otras llamadas de red
       const printStore = usePrinterStore.getState();
       if (ventaCreadaObj && (printStore.shouldPrintComanda('TOMADO') || printStore.shouldPrintFactura('TOMADO'))) {
         const ticketData = mapVentaToTicketData({
@@ -2547,15 +2541,10 @@ showAlert({
         text1: 'Pedido Tomado',
         text2: `En preparación en TOMADO (#${ventaCreadaObj?.pedido || dom.orderIdWA || dom.IDdomicilio.slice(-6)})`
       });
-
-      // Si estamos en la pestaña DOMIS, mantener el flujo cambiando a la subpestaña TOMADOS; si no, ir al tab TOMADO
-      if (activeTab === 'DOMIS') {
-        setDomisSubTab('TOMADOS');
-      } else {
-        setActiveTab('TOMADO');
-      }
     } catch (e: any) {
       console.error('Error al tomar domicilio:', e);
+      // Revertir optimismo en caso de error
+      setDomicilios(prev => prev.map(d => d.IDdomicilio === dom.IDdomicilio ? { ...d, estado: prevDomEstado } : d));
       Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo tomar el pedido' });
     } finally {
       takingDomicilioIdsRef.current.delete(dom.IDdomicilio);
