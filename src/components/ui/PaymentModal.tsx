@@ -298,9 +298,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const getDisplayCompras = () => {
     if (!cliente) return '0';
+    if (cliente.contador !== undefined && cliente.contador !== null) {
+      return String(cliente.contador);
+    }
     const total = parseInt(cliente.compras || '0', 10) || 0;
     if (total === 0) return '0';
-    return ((total - 1) % 10) + 1;
+    return String(((total - 1) % 10) + 1);
   };
 
   const handleEfectivoChange = (text: string) => {
@@ -1080,20 +1083,74 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             keyboardShouldPersistTaps="handled"
           >
           {cliente && (
-            <View style={styles.clientInfoContainer}>
-              <View style={styles.clientInfoLeft}>
-                <View style={styles.clientIconContainer}>
-                  <Ionicons name="person" size={20} color="#6366f1" />
+            <View style={{ marginHorizontal: 20, marginTop: 12 }}>
+              <View style={[styles.clientInfoContainer, { marginHorizontal: 0, marginTop: 0 }]}>
+                <View style={styles.clientInfoLeft}>
+                  <View style={styles.clientIconContainer}>
+                    <Ionicons name="person" size={20} color="#6366f1" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <RNText style={styles.clientInfoLabel}>CLIENTE SELECCIONADO</RNText>
+                    <RNText style={styles.clientInfoName} numberOfLines={1}>{cliente.nombre}</RNText>
+                    <RNText style={{ fontSize: 11, color: '#4b5563', marginTop: 1 }}>
+                      {cliente.cedula ? `CC: ${cliente.cedula} ` : ''}· Código #{cliente.IDcliente}
+                    </RNText>
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <RNText style={styles.clientInfoLabel}>CLIENTE SELECCIONADO</RNText>
-                  <RNText style={styles.clientInfoName} numberOfLines={1}>{cliente.nombre}</RNText>
+                <View style={[
+                  styles.clientPurchasesBadge,
+                  (cliente.contador || 0) >= 10 && { backgroundColor: '#fef3c7', borderColor: '#fde68a' },
+                  (cliente.contador || 0) >= 5 && (cliente.contador || 0) < 10 && { backgroundColor: '#dbeafe', borderColor: '#bfdbfe' },
+                ]}>
+                  <Ionicons
+                    name={(cliente.contador || 0) >= 10 ? "trophy" : (cliente.contador || 0) >= 5 ? "star" : "gift"}
+                    size={14}
+                    color={(cliente.contador || 0) >= 10 ? "#d97706" : (cliente.contador || 0) >= 5 ? "#2563eb" : "#10b981"}
+                  />
+                  <RNText style={[
+                    styles.clientPurchasesText,
+                    (cliente.contador || 0) >= 10 && { color: '#b45309' },
+                    (cliente.contador || 0) >= 5 && (cliente.contador || 0) < 10 && { color: '#1d4ed8' },
+                  ]}>
+                    {getDisplayCompras()}/10 COMPRAS
+                  </RNText>
                 </View>
               </View>
-              <View style={styles.clientPurchasesBadge}>
-                <Ionicons name="gift" size={14} color="#10b981" />
-                <RNText style={styles.clientPurchasesText}>{getDisplayCompras()}/10 COMPRAS</RNText>
-              </View>
+
+              {/* Banner de Recompensa de Fidelidad */}
+              {(cliente.contador || 0) >= 10 ? (
+                <View style={styles.loyaltyBannerGold}>
+                  <Ionicons name="trophy" size={20} color="#d97706" />
+                  <View style={{ flex: 1, marginLeft: 8 }}>
+                    <RNText style={styles.loyaltyTitleGold}>¡GRANIZADO GRATIS DISPONIBLE!</RNText>
+                    <RNText style={styles.loyaltySubGold}>Ciclo de 10 compras completado</RNText>
+                  </View>
+                  <View style={styles.loyaltyTagGold}>
+                    <RNText style={styles.loyaltyTagTextGold}>Premio 10/10</RNText>
+                  </View>
+                </View>
+              ) : (cliente.contador || 0) >= 5 ? (
+                <View style={styles.loyaltyBannerBlue}>
+                  <Ionicons name="star" size={20} color="#2563eb" />
+                  <View style={{ flex: 1, marginLeft: 8 }}>
+                    <RNText style={styles.loyaltyTitleBlue}>¡15% DE DESCUENTO DISPONIBLE!</RNText>
+                    <RNText style={styles.loyaltySubBlue}>Hito de 5 compras alcanzado</RNText>
+                  </View>
+                  <TouchableOpacity
+                    activeOpacity={0.8}
+                    onPress={() => setDiscountPercent(0.15)}
+                    style={[
+                      styles.loyaltyApplyBtnBlue,
+                      discountPercent === 0.15 && { backgroundColor: '#1d4ed8' },
+                    ]}
+                  >
+                    <Ionicons name={discountPercent === 0.15 ? "checkmark-circle" : "pricetag"} size={14} color="#fff" />
+                    <RNText style={styles.loyaltyApplyBtnTextBlue}>
+                      {discountPercent === 0.15 ? 'Aplicado' : 'Aplicar 15%'}
+                    </RNText>
+                  </TouchableOpacity>
+                </View>
+              ) : null}
             </View>
           )}
 
@@ -1287,6 +1344,16 @@ const styles = StyleSheet.create({
   clientInfoName: { fontSize: 14, fontWeight: '700', color: '#312e81' },
   clientPurchasesBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#d1fae5', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: '#a7f3d0' },
   clientPurchasesText: { fontSize: 12, fontWeight: '800', color: '#059669', marginLeft: 4 },
+  loyaltyBannerGold: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fef3c7', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: '#fde68a', marginTop: 6 },
+  loyaltyTitleGold: { fontSize: 11, fontWeight: '800', color: '#92400e' },
+  loyaltySubGold: { fontSize: 10, color: '#b45309' },
+  loyaltyTagGold: { backgroundColor: '#d97706', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  loyaltyTagTextGold: { fontSize: 10, fontWeight: '800', color: '#fff' },
+  loyaltyBannerBlue: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#eff6ff', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: '#bfdbfe', marginTop: 6 },
+  loyaltyTitleBlue: { fontSize: 11, fontWeight: '800', color: '#1e40af' },
+  loyaltySubBlue: { fontSize: 10, color: '#3b82f6' },
+  loyaltyApplyBtnBlue: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#2563eb', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+  loyaltyApplyBtnTextBlue: { fontSize: 11, fontWeight: '800', color: '#fff' },
 });
 
 export default PaymentModal;

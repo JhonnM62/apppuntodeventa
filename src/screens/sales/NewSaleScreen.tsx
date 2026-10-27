@@ -2017,11 +2017,11 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
               <Ionicons name="search" size={18} color="#9ca3af" />
               <TextInput
                 style={styles.searchInput}
-                placeholder="Buscar por ID (Ej: 1234), Nombre..."
+                placeholder="Buscar por Cédula, Código (#4821) o Nombre..."
                 placeholderTextColor="#9ca3af"
                 value={clienteSearchQuery}
                 onChangeText={handleClienteSearch}
-                keyboardType="numeric"
+                keyboardType="default"
                 autoFocus
               />
               {clienteSearchQuery.length > 0 && (
@@ -2043,30 +2043,45 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
                   <Text style={[styles.mesaOptionText, !selectedCliente && styles.mesaOptionTextActive]}>Consumidor Final (Ninguno)</Text>
                 </TouchableOpacity>
                 
-                {clientesDb.map((cliente) => (
-                  <TouchableOpacity
-                    key={cliente.IDcliente}
-                    style={[styles.mesaOption, selectedCliente?.IDcliente === cliente.IDcliente && styles.mesaOptionActive]}
-                    onPress={() => { setSelectedCliente(cliente); setClienteModalVisible(false); }}
-                  >
-                    <Ionicons name="person" size={20} color={selectedCliente?.IDcliente === cliente.IDcliente ? '#fff' : '#6b7280'} />
-                    <View style={{ flex: 1, marginLeft: 8 }}>
-                      <RNText style={[styles.mesaOptionText, { marginLeft: 0 }, selectedCliente?.IDcliente === cliente.IDcliente && styles.mesaOptionTextActive]}>
-                        {cliente.nombre || 'Sin nombre'}
-                      </RNText>
-                      {(cliente.cedula || cliente.whatsapp) && (
-                        <RNText style={{ fontSize: 10, color: selectedCliente?.IDcliente === cliente.IDcliente ? '#d1fae5' : '#9ca3af' }}>
-                          {cliente.cedula ? `CC: ${cliente.cedula} ` : ''}{cliente.whatsapp ? `Tel: ${cliente.whatsapp}` : ''}
+                {clientesDb.map((cliente) => {
+                  const contadorVal = cliente.contador || 0;
+                  const isHito10 = contadorVal >= 10;
+                  const isHito5 = contadorVal >= 5 && contadorVal < 10;
+                  const isSelected = selectedCliente?.IDcliente === cliente.IDcliente;
+
+                  let badgeBg = '#4CAF50';
+                  let badgeText = `${contadorVal}/10`;
+                  if (isHito10) {
+                    badgeBg = '#d97706';
+                    badgeText = `${contadorVal}/10 ★`;
+                  } else if (isHito5) {
+                    badgeBg = '#2563eb';
+                    badgeText = `${contadorVal}/10 ★`;
+                  }
+
+                  return (
+                    <TouchableOpacity
+                      key={cliente.IDcliente}
+                      style={[styles.mesaOption, isSelected && styles.mesaOptionActive]}
+                      onPress={() => { setSelectedCliente(cliente); setClienteModalVisible(false); }}
+                    >
+                      <Ionicons name="person" size={20} color={isSelected ? '#fff' : '#6b7280'} />
+                      <View style={{ flex: 1, marginLeft: 8 }}>
+                        <RNText style={[styles.mesaOptionText, { marginLeft: 0 }, isSelected && styles.mesaOptionTextActive]}>
+                          {cliente.nombre || 'Sin nombre'}
                         </RNText>
-                      )}
-                    </View>
-                    <View style={{ backgroundColor: selectedCliente?.IDcliente === cliente.IDcliente ? '#fff' : '#4CAF50', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 10 }}>
-                      <Text style={{ fontSize: 10, fontWeight: 'bold', color: selectedCliente?.IDcliente === cliente.IDcliente ? '#4CAF50' : '#fff' }}>
-                        {cliente.contador || 0}/10
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
+                        <RNText style={{ fontSize: 10, color: isSelected ? '#d1fae5' : '#9ca3af' }}>
+                          {cliente.cedula ? `CC: ${cliente.cedula} · ` : ''}Código: #{cliente.IDcliente} {cliente.whatsapp ? `· Tel: ${cliente.whatsapp}` : ''}
+                        </RNText>
+                      </View>
+                      <View style={{ backgroundColor: isSelected ? '#fff' : badgeBg, paddingHorizontal: 7, paddingVertical: 2.5, borderRadius: 10 }}>
+                        <Text style={{ fontSize: 10, fontWeight: 'bold', color: isSelected ? badgeBg : '#fff' }}>
+                          {badgeText}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
 
                 {clienteSearchQuery.length > 0 && clientesDb.length === 0 && (
                   <TouchableOpacity
