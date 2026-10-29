@@ -83,8 +83,9 @@ export default function ClienteFormScreen({ route, navigation }: any) {
         payload.IDcliente = Number(data.IDcliente);
       }
 
-      if (data.cedula && !isNaN(Number(data.cedula))) {
-        payload.cedula = Number(data.cedula);
+      if (data.cedula !== undefined) {
+        const trimmed = String(data.cedula || '').trim();
+        payload.cedula = trimmed && !isNaN(Number(trimmed)) ? Number(trimmed) : null;
       }
 
       if (data.compras && !isNaN(Number(data.compras))) {
@@ -107,8 +108,9 @@ export default function ClienteFormScreen({ route, navigation }: any) {
         Toast.show({ type: 'success', text1: 'Cliente creado' });
       }
       navigation.goBack();
-    } catch (error) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'No se pudo guardar el cliente' });
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || 'No se pudo guardar el cliente';
+      Toast.show({ type: 'error', text1: 'Error', text2: msg });
     } finally {
       setSaving(false);
     }
