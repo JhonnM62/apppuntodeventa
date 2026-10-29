@@ -2482,6 +2482,12 @@ showAlert({
           ? totalProductos
           : (normalizeCOP(dom.totalCalculado) || normalizeCOP(dom.totalWA) || 0);
 
+        let domClienteId: number | undefined = (dom as any).clienteId ? Number((dom as any).clienteId) : undefined;
+        if (!domClienteId && dom.origen && dom.origen.includes('cliente:')) {
+          const m = dom.origen.match(/cliente:(\d+)/);
+          if (m) domClienteId = Number(m[1]);
+        }
+
         const newSale = await createSale({
           temporalId: deterministicTemporalId,
           venta: {
@@ -2489,6 +2495,7 @@ showAlert({
             mesa: mesaStr,
             estado: 'TOMADO',
             cliente: dom.clienteNombre || (cleanPhone ? `Cliente WA (${cleanPhone})` : 'Cliente WhatsApp'),
+            clienteId: domClienteId,
             direccion: dom.direccion || undefined,
             numeroTelefono: cleanPhone ? (parseInt(cleanPhone.slice(-9), 10) || undefined) : undefined,
             medioDePago: dom.metodoPagoWA || 'PENDIENTE',
@@ -2925,6 +2932,37 @@ showAlert({
                 </TouchableOpacity>
               )}
             </View>
+
+            {/* Banner de Fidelidad y Beneficios Solicitados */}
+            {(() => {
+              const txt = (item.detalleTextoWA || '') + ' ' + (item.origen || '');
+              const tieneDescuento15 = /15%_DESCUENTO|15%\s*descuento/i.test(txt);
+              const tieneGranizadoGratis = /GRANIZADO_GRATIS|PREMIO FIDELIDAD|granizado gratis/i.test(txt);
+              const mCliente = item.origen && item.origen.match(/cliente:(\d+)/);
+              const clienteCod = (item as any).clienteId || (mCliente ? mCliente[1] : null);
+
+              if (!tieneDescuento15 && !tieneGranizadoGratis && !clienteCod) return null;
+
+              return (
+                <View style={{ marginTop: 4, padding: 6, backgroundColor: '#fdf4ff', borderRadius: 8, borderWidth: 1, borderColor: '#f0abfc' }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <RNText style={{ fontSize: 11, fontWeight: '700', color: '#86198f' }}>
+                      🏷️ Tarjeta Fidelidad {clienteCod ? `(Cliente #${clienteCod})` : ''}
+                    </RNText>
+                  </View>
+                  {tieneGranizadoGratis && (
+                    <RNText style={{ fontSize: 11, fontWeight: '800', color: '#c026d3', marginTop: 2 }}>
+                      🎁 SOLICITÓ GRANIZADO GRATIS 10/10 (Validar antes de despachar)
+                    </RNText>
+                  )}
+                  {tieneDescuento15 && (
+                    <RNText style={{ fontSize: 11, fontWeight: '800', color: '#9333ea', marginTop: 2 }}>
+                      🎉 SOLICITÓ 15% DCTO EN GRANIZADOS (Validar antes de despachar)
+                    </RNText>
+                  )}
+                </View>
+              );
+            })()}
 
             {item.direccion ? (
               <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginTop: 4 }}>

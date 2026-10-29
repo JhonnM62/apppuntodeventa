@@ -51,9 +51,39 @@ const useCartStore = create<CartStore>((set, get) => ({
   originalCartIds: [],
   setDiscountPercent: (percent: number) => set({ discountPercent: percent }),
   getDiscountAmount: () => {
-    const subtotal = get().getTotalPrice();
-    const exactDiscount = subtotal * get().discountPercent;
-    // Redondear hacia abajo al múltiplo de 1000 más cercano (ej. 3600 -> 3000)
+    const percent = get().discountPercent;
+    if (!percent || percent <= 0) return 0;
+
+    // El descuento del 15% aplica ÚNICAMENTE sobre los granizados (no sobre comida, gaseosas ni desechables)
+    const granizadosSubtotal = get().cart.reduce((sum, item) => {
+      const cat = String(item.categoriaNombre || item.categoria || item.categoriaProducto || '').toLowerCase();
+      const nom = String(item.nombre || item.nombreProducto || '').toLowerCase();
+
+      const isDesechable = /tapa|caja|vaso|empaque|desechable|bolsa|envase|cubierto/i.test(cat + ' ' + nom);
+      if (isDesechable) return sum;
+
+      const isGranizado = /granizado/i.test(cat) || /granizado/i.test(nom);
+      if (!isGranizado) return sum;
+
+      let unitPrice = Number(item.precioUnitario || item.Precio_Unitario);
+      if (isNaN(unitPrice)) unitPrice = 0;
+      let qty = Number(item.quantity);
+      if (isNaN(qty)) qty = 1;
+
+      let itemTotal = unitPrice * qty;
+      if (Array.isArray(item.modifiers)) {
+        const modTotal = item.modifiers.reduce((mSum, mod) => {
+          const mPrice = Number(mod.price) || 0;
+          const mQty = Number(mod.quantity) || 1;
+          return mSum + mPrice * mQty;
+        }, 0);
+        itemTotal += modTotal;
+      }
+      return sum + itemTotal;
+    }, 0);
+
+    const exactDiscount = granizadosSubtotal * percent;
+    // Redondear hacia abajo al múltiplo de 1000 más cercano (ej. 15450 -> 15000)
     return Math.floor(exactDiscount / 1000) * 1000;
   },
   getFinalTotalPrice: () => {
