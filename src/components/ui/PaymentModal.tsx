@@ -306,6 +306,38 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     return String(((total - 1) % 10) + 1);
   };
 
+  // Helper para identificar si un producto es empaque o desechable (regla idéntica al backend)
+  const esDesechableOEmpaque = (nombre?: string | null) => {
+    const text = (nombre || '').toLowerCase();
+    return /tapa|caja|vaso|empaque|desechable|bolsa|envase|cubierto/i.test(text);
+  };
+
+  // Sellos calculados en tiempo real según los productos cargados en carrito
+  const sellosEstaCompra = cart.reduce((sum, item) => {
+    const unitPrice = Number(item.precioUnitario || item.Precio_Unitario || 0);
+    if (unitPrice <= 0) return sum;
+    if (esDesechableOEmpaque(item.nombre)) return sum;
+    return sum + (Number(item.quantity) || 1);
+  }, 0);
+
+  const currentContador = cliente?.contador !== undefined && cliente?.contador !== null
+    ? Number(cliente.contador)
+    : (parseInt(cliente?.compras || '0', 10) % 10);
+
+  // Proyección del ciclo de sellos con la compra actual
+  let proyContador = currentContador;
+  if (proyContador >= 10) {
+    proyContador = 0;
+  }
+  const sumaProy = proyContador + sellosEstaCompra;
+  if (proyContador < 5 && sumaProy > 5) {
+    proyContador = 5;
+  } else if (sumaProy > 10) {
+    proyContador = 10;
+  } else {
+    proyContador = sumaProy;
+  }
+
   const handleEfectivoChange = (text: string) => {
     const value = parseMoney(text);
     if (!value) {
@@ -875,7 +907,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 {item.notaPersonalizada ? (
                   <View style={{ paddingLeft: 36, marginTop: 2 }}>
                     <RNText style={{ fontSize: 10, color: '#9ca3af', fontStyle: 'italic' }} numberOfLines={2}>
-                      ✏️ {item.notaPersonalizada}
+                      Nota: {item.notaPersonalizada}
                     </RNText>
                   </View>
                 ) : null}
@@ -1084,37 +1116,76 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           >
           {cliente && (
             <View style={{ marginHorizontal: 20, marginTop: 12 }}>
-              <View style={[styles.clientInfoContainer, { marginHorizontal: 0, marginTop: 0 }]}>
-                <View style={styles.clientInfoLeft}>
-                  <View style={styles.clientIconContainer}>
-                    <Ionicons name="person" size={20} color="#6366f1" />
+              <View style={[styles.clientInfoContainer, { marginHorizontal: 0, marginTop: 0, flexDirection: 'column', alignItems: 'stretch' }]}>
+                {/* Fila superior: Información del cliente y badge de sellos */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <View style={styles.clientInfoLeft}>
+                    <View style={styles.clientIconContainer}>
+                      <Ionicons name="person" size={20} color="#6366f1" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <RNText style={styles.clientInfoLabel}>CLIENTE SELECCIONADO</RNText>
+                      <RNText style={styles.clientInfoName} numberOfLines={1}>{cliente.nombre}</RNText>
+                      <RNText style={{ fontSize: 11, color: '#4b5563', marginTop: 1 }}>
+                        {cliente.cedula ? `CC: ${cliente.cedula} ` : ''}· Código #{cliente.IDcliente}
+                      </RNText>
+                    </View>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <RNText style={styles.clientInfoLabel}>CLIENTE SELECCIONADO</RNText>
-                    <RNText style={styles.clientInfoName} numberOfLines={1}>{cliente.nombre}</RNText>
-                    <RNText style={{ fontSize: 11, color: '#4b5563', marginTop: 1 }}>
-                      {cliente.cedula ? `CC: ${cliente.cedula} ` : ''}· Código #{cliente.IDcliente}
+                  <View style={[
+                    styles.clientPurchasesBadge,
+                    proyContador >= 10 && { backgroundColor: '#fef3c7', borderColor: '#fde68a' },
+                    proyContador >= 5 && proyContador < 10 && { backgroundColor: '#dbeafe', borderColor: '#bfdbfe' },
+                  ]}>
+                    <Ionicons
+                      name={proyContador >= 10 ? "trophy" : proyContador >= 5 ? "star" : "gift"}
+                      size={14}
+                      color={proyContador >= 10 ? "#d97706" : proyContador >= 5 ? "#2563eb" : "#10b981"}
+                    />
+                    <RNText style={[
+                      styles.clientPurchasesText,
+                      proyContador >= 10 && { color: '#b45309' },
+                      proyContador >= 5 && proyContador < 10 && { color: '#1d4ed8' },
+                    ]}>
+                      {sellosEstaCompra > 0
+                        ? `${currentContador}/10 → ${proyContador}/10 (+${sellosEstaCompra})`
+                        : `${getDisplayCompras()}/10 COMPRAS`}
                     </RNText>
                   </View>
                 </View>
-                <View style={[
-                  styles.clientPurchasesBadge,
-                  (cliente.contador || 0) >= 10 && { backgroundColor: '#fef3c7', borderColor: '#fde68a' },
-                  (cliente.contador || 0) >= 5 && (cliente.contador || 0) < 10 && { backgroundColor: '#dbeafe', borderColor: '#bfdbfe' },
-                ]}>
-                  <Ionicons
-                    name={(cliente.contador || 0) >= 10 ? "trophy" : (cliente.contador || 0) >= 5 ? "star" : "gift"}
-                    size={14}
-                    color={(cliente.contador || 0) >= 10 ? "#d97706" : (cliente.contador || 0) >= 5 ? "#2563eb" : "#10b981"}
-                  />
-                  <RNText style={[
-                    styles.clientPurchasesText,
-                    (cliente.contador || 0) >= 10 && { color: '#b45309' },
-                    (cliente.contador || 0) >= 5 && (cliente.contador || 0) < 10 && { color: '#1d4ed8' },
-                  ]}>
-                    {getDisplayCompras()}/10 COMPRAS
-                  </RNText>
-                </View>
+
+                {/* Fila inferior: Proyección en tiempo real de sellos asignados con lo que está comprando */}
+                {sellosEstaCompra > 0 && (
+                  <View style={{
+                    marginTop: 8,
+                    paddingTop: 8,
+                    borderTopWidth: 1,
+                    borderTopColor: '#c7d2fe',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                  }}>
+                    <Ionicons
+                      name="sparkles"
+                      size={14}
+                      color={proyContador >= 10 ? "#d97706" : proyContador >= 5 ? "#2563eb" : "#059669"}
+                    />
+                    <RNText style={{ fontSize: 11, color: '#374151', flex: 1, lineHeight: 15 }}>
+                      {proyContador >= 10 ? (
+                        <RNText>
+                          ¡Con esta compra <RNText style={{ fontWeight: '800', color: '#b45309' }}>completa 10/10</RNText> y se le asignará su <RNText style={{ fontWeight: '800', color: '#b45309' }}>Granizado Gratis</RNText>!
+                        </RNText>
+                      ) : proyContador >= 5 && currentContador < 5 ? (
+                        <RNText>
+                          ¡Con esta compra <RNText style={{ fontWeight: '800', color: '#1d4ed8' }}>alcanza 5/10</RNText> y desbloquea el <RNText style={{ fontWeight: '800', color: '#1d4ed8' }}>15% de Descuento</RNText>! (Faltan {10 - proyContador} para Granizado)
+                        </RNText>
+                      ) : (
+                        <RNText>
+                          Suma <RNText style={{ fontWeight: '800', color: '#059669' }}>+{sellosEstaCompra} {sellosEstaCompra === 1 ? 'sello' : 'sellos'}</RNText> en tiempo real. Quedará en <RNText style={{ fontWeight: '800', color: '#111827' }}>{proyContador}/10</RNText> {proyContador < 5 ? `(faltan ${5 - proyContador} para 15% desc. y ${10 - proyContador} para Granizado Gratis)` : `(faltan ${10 - proyContador} para Granizado Gratis)`}.
+                        </RNText>
+                      )}
+                    </RNText>
+                  </View>
+                )}
               </View>
 
               {/* Banner de Recompensa de Fidelidad */}
@@ -1222,6 +1293,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   </>
                 )}
               </TouchableOpacity>
+            )}
+            {cliente && sellosEstaCompra > 0 && !!onCobrar && (
+              <View style={{ alignItems: 'center', marginTop: 8 }}>
+                <RNText style={{ fontSize: 11, color: '#059669', fontWeight: '700' }}>
+                  Al cobrar se confirmarán y asignarán +{sellosEstaCompra} {sellosEstaCompra === 1 ? 'sello' : 'sellos'} al cliente
+                </RNText>
+              </View>
             )}
           </View>
         </Animated.View>

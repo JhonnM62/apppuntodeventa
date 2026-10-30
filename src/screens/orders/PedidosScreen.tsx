@@ -10,6 +10,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { getSales, updateVentaEstado, updateVentaPago, deleteSale, deleteSalesBulk, getVentaById, updateOrderItemState, createSale, despejarVenta, despejarSalesBulk } from '../../services/sales';
 import { getDomicilios, updateDomicilioEstado, vincularVentaDomicilio, deleteDomicilio, DomicilioWAItem } from '../../services/domicilios.service';
 import { emitirFacturaDian, eliminarFacturaDian } from '../../services/facturacion';
+import { Cliente, getClientes, getClienteById, createCliente } from '../../services/clientes.service';
 import { useSocket, useSocketEvent, useSocketEmitter } from '../../hooks';
 import { Room, SocketEvent } from '../../types/socket.types';
 import Toast from 'react-native-toast-message';
@@ -72,6 +73,7 @@ type VentaItem = {
   notas?: string;
   numeroTelefono?: number;
   mensaje?: string;
+  clienteId?: number | null;
   cliente?: string;
   ordenVentas?: OrderVenta[];
   usuarioRelacion?: { nombre?: string; email?: string };
@@ -600,6 +602,8 @@ const PedidosScreen = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [paymentModalVisible, setPaymentModalVisible] = useState(false);
   const [cobrarVenta, setCobrarVenta] = useState<VentaItem | null>(null);
+  const [cobrarCliente, setCobrarCliente] = useState<Cliente | null>(null);
+  const [resolvingCliente, setResolvingCliente] = useState(false);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [isFiltering, setIsFiltering] = useState(false);
   const [remoteSearchResults, setRemoteSearchResults] = useState<VentaItem[] | null>(null);
@@ -2350,6 +2354,7 @@ showAlert({
                   useCartStore.getState().clearCart();
                 }
                 setCobrarVenta(item);
+                resolverClienteParaCobro(item);
                 setPaymentModalVisible(true);
               }}
               style={{ padding: 6, backgroundColor: '#dcfce7', borderRadius: 8 }}
@@ -2385,6 +2390,136 @@ showAlert({
     );
   };
 
+  const resolverClienteParaCobro = useCallback(async (item: VentaItem | any) => {
+    if (!item) {
+      setCobrarCliente(null);
+      return null;
+    }
+
+    setResolvingCliente(true);
+    try {
+      // 1. Si ya viene con clienteId numérico directo
+      const rawCid = item.clienteId ?? (item.cliente && !isNaN(Number(item.cliente)) ? Number(item.cliente) : null);
+      if (rawCid && !isNaN(Number(rawCid)) && Number(rawCid) > 0) {
+        try {
+          const c = await getClienteById(Number(rawCid));
+          if (c && c.IDcliente) {
+            setCobrarCliente(c);
+            return c;
+          }
+        } catch (e) {}
+      }
+
+      // 1b. Si en cliente, notas o pedido viene un código explícito con formato '#706980' o similar
+      const idMatch = String(item.cliente || '').match(/#(\d+)/) || 
+                      String(item.pedido || '').match(/#(\d+)/) ||
+                      String(item.mensaje || '').match(/#(\d+)/);
+      if (idMatch && idMatch[1]) {
+        try {
+          const c = await getClienteById(Number(idMatch[1]));
+          if (c && c.IDcliente) {
+            setCobrarCliente(c);
+            item.clienteId = c.IDcliente;
+            return c;
+          }
+        } catch (e) {}
+      }
+
+      // 2. Extraer teléfono de todas las fuentes posibles de la orden o domicilio
+      const dom = item._rawDomicilio || (domicilios || []).find((d: any) => 
+        (d.ventaId && d.ventaId === item.IDventas) ||
+        (d.orderIdWA && item.pedido && item.pedido.includes(d.orderIdWA))
+      );
+
+      let cleanPhone = '';
+      if (dom?.clienteTelefono) {
+        cleanPhone = String(dom.clienteTelefono).replace(/\D/g, '');
+      } else if (item.numeroTelefono) {
+        cleanPhone = String(item.numeroTelefono).replace(/\D/g, '');
+      }
+      
+      if (!cleanPhone && item.mesa && typeof item.mesa === 'string') {
+        const match = item.mesa.match(/57\d{10}|\d{10}/);
+        if (match) cleanPhone = match[0];
+      }
+
+      if (!cleanPhone && item.pedido && typeof item.pedido === 'string') {
+        const match = item.pedido.match(/57\d{10}|\d{10}/);
+        if (match) cleanPhone = match[0];
+      }
+
+      // 3. Buscar cliente por teléfono si se encontró
+      if (cleanPhone && cleanPhone.length >= 7) {
+        try {
+          const phoneQuery = cleanPhone.slice(-10);
+          const searchRes = await getClientes(1, 10, phoneQuery);
+          const clientesList = searchRes?.data || [];
+          const match = clientesList.find((c: any) => 
+            (c.whatsapp && c.whatsapp.includes(phoneQuery)) ||
+            (c.cedula && String(c.cedula) === cleanPhone)
+          );
+          if (match) {
+            setCobrarCliente(match);
+            item.clienteId = match.IDcliente;
+            return match;
+          }
+        } catch (e) {}
+      }
+
+      // 4. Buscar cliente por nombre si no es genérico
+      const nombreCliente = (dom?.clienteNombre || item.cliente || '').replace(/#\d+/g, '').trim();
+      const esGenerico = !nombreCliente || /^(cliente|mostrador|mesa|domicilio|wa)/i.test(nombreCliente);
+      if (!esGenerico) {
+        try {
+          const searchRes = await getClientes(1, 5, nombreCliente);
+          const clientesList = searchRes?.data || [];
+          const match = clientesList.find((c: any) => 
+            c.nombre && c.nombre.trim().toLowerCase() === nombreCliente.toLowerCase()
+          );
+          if (match) {
+            setCobrarCliente(match);
+            item.clienteId = match.IDcliente;
+            return match;
+          }
+        } catch (e) {}
+      }
+
+      // 5. Si es un Domicilio con teléfono/nombre y no estaba en la base de datos, crearlo automáticamente
+      if ((cleanPhone && cleanPhone.length >= 7) || (!esGenerico && nombreCliente)) {
+        try {
+          const nuevoNombre = !esGenerico && nombreCliente ? nombreCliente : `Cliente WA (${cleanPhone.slice(-10)})`;
+          const nuevo = await createCliente({
+            nombre: nuevoNombre,
+            whatsapp: cleanPhone ? cleanPhone.slice(-10) : undefined,
+            contador: 0,
+            compras: '0',
+            isActive: true,
+          });
+          if (nuevo && nuevo.IDcliente) {
+            setCobrarCliente(nuevo);
+            item.clienteId = nuevo.IDcliente;
+            return nuevo;
+          }
+        } catch (e) {}
+      }
+    } catch (err) {
+      console.error('[PedidosScreen] Error al resolver cliente para cobro:', err);
+    } finally {
+      setResolvingCliente(false);
+    }
+
+    setCobrarCliente(null);
+    return null;
+  }, [domicilios]);
+
+  useEffect(() => {
+    if (cobrarVenta && paymentModalVisible) {
+      resolverClienteParaCobro(cobrarVenta);
+    } else if (!paymentModalVisible) {
+      setCobrarCliente(null);
+    }
+  }, [cobrarVenta, paymentModalVisible, resolverClienteParaCobro]);
+
   const handleCobrarPedido = (venta: any) => {
     if (!venta) return;
     try {
@@ -2398,6 +2533,7 @@ showAlert({
       useCartStore.getState().clearCart();
     }
     setCobrarVenta(venta);
+    resolverClienteParaCobro(venta);
     setPaymentModalVisible(true);
   };
 
@@ -4725,6 +4861,7 @@ showAlert({
     
     closeModal();
     setCobrarVenta(selectedVenta);
+    resolverClienteParaCobro(selectedVenta);
     setPaymentModalVisible(true);
   };
 
@@ -4745,6 +4882,11 @@ showAlert({
       // Calcular el total real de la venta desde los productos reales anotados
       const totalReal = getVentaTotal(cobrarVenta);
 
+      const finalClienteId = cobrarCliente?.IDcliente 
+        ? Number(cobrarCliente.IDcliente) 
+        : (cobrarVenta.clienteId ? Number(cobrarVenta.clienteId) : undefined);
+      const finalClienteNombre = cobrarCliente?.nombre || cobrarVenta.cliente || undefined;
+
       // FIX: Esperamos a que termine la petición en vez de enviarla en background sin control
       // Eliminamos updateVentaEstado para evitar la condición de carrera con updateVentaPago
       await updateVentaPago(cobrarVenta.IDventas, {
@@ -4758,6 +4900,8 @@ showAlert({
         porcentajePropina: paymentData.porcentajePropina,
         descuento: paymentData.descuento,
         totalInput: paymentData.totalInput ?? totalReal,
+        clienteId: finalClienteId,
+        cliente: finalClienteNombre,
       });
 
       // Actualizamos UI localmente de forma opcional (el socket confirmará después)
@@ -4777,6 +4921,8 @@ showAlert({
         porcentajePropina: paymentData.porcentajePropina,
         descuento: paymentData.descuento,
         totalInput: paymentData.totalInput ?? totalReal,
+        clienteId: finalClienteId ?? cobrarVenta.clienteId,
+        cliente: finalClienteNombre ?? cobrarVenta.cliente,
         cocinaFinAt: cobrarVenta.cocinaFinAt || (yaEstabaListoOEntregado ? nowCobroIso : null),
         registroDeTiempo: [
           ...(Array.isArray(cobrarVenta.registroDeTiempo) ? cobrarVenta.registroDeTiempo : []),
@@ -4804,6 +4950,7 @@ showAlert({
       closeModal();
       setPaymentModalVisible(false);
       setCobrarVenta(null);
+      setCobrarCliente(null);
       useCartStore.getState().clearCart();
       Toast.show({ type: 'success', text1: 'Cobro Exitoso', text2: 'Pedido cobrado correctamente', position: 'top' });
       // Retornamos pedidoId para que PaymentModal evalúe solo factura con suppressComanda=true (nunca comanda de cocina)
@@ -4821,6 +4968,7 @@ showAlert({
       closeModal();
       setPaymentModalVisible(false);
       setCobrarVenta(null);
+      setCobrarCliente(null);
       useCartStore.getState().clearCart();
       Toast.show({ type: 'success', text1: 'Actualizado', text2: 'El pedido fue actualizado', position: 'top' });
       return { pedidoId: cobrarVenta.pedido || undefined };
@@ -5412,9 +5560,11 @@ showAlert({
         onClose={() => {
           setPaymentModalVisible(false);
           setCobrarVenta(null);
+          setCobrarCliente(null);
         }}
         onSave={handleSaveCobrar}
         onCobrar={handleCobrarConfirm}
+        cliente={cobrarCliente}
         total={getVentaTotal(cobrarVenta)}
         editingPedidoId={cobrarVenta?.pedido || cobrarVenta?.IDventas || undefined}
         initialPaymentMethod={cobrarVenta?.medioDePago}
