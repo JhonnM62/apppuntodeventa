@@ -952,12 +952,63 @@ const PedidosScreen = () => {
     return false;
   }, []);
 
+  const normalizeCOP = (val?: any): number => {
+    if (val == null) return 0;
+    const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.]/g, '')) || 0;
+    if (num > 0 && num < 100) return num * 1000;
+    return num;
+  };
+
+  const isZeroPriceOrExternalProduct = useCallback((it: any): boolean => {
+    if (!it) return true;
+    const catalog = useProductStore.getState().productos || [];
+    const prodId = it.productoId || it.IDproductos || it.id;
+    const itName = (it.nombre || it.nombreProducto || '').toLowerCase().trim();
+
+    const match = catalog.find((p: any) => {
+      if (prodId && (p.IDproductos === prodId || p.id === prodId)) return true;
+      if (itName && p.nombre && p.nombre.toLowerCase().trim() === itName) return true;
+      return false;
+    });
+
+    if (match) {
+      const catalogPrice = Number(match.precioUnitario ?? match.Precio_Unitario ?? match.precio ?? 0);
+      if (catalogPrice <= 0) return true;
+      return false;
+    }
+
+    // Si hay catálogo cargado y el producto no coincide con ningún producto del catálogo:
+    // NO es un producto propio de este negocio -> es externo
+    if (catalog.length > 0) {
+      return true;
+    }
+
+    const uPrice = Number(it.precioUnitario ?? it.precio ?? 0);
+    const tPrice = Number(it.precioTotal ?? 0);
+    if (uPrice <= 0 && tPrice <= 0) return true;
+
+    return false;
+  }, []);
+
   const visibleDomicilios = useMemo(() => {
     const list = Array.isArray(domicilios) ? domicilios : [];
-    if (!isComidaLocal) return list;
-    // Si este local es de comida, excluir pedidos que son SOLO granizados / bebidas (sin comida)
-    return list.filter((d) => pedidoTieneComida(d));
-  }, [domicilios, isComidaLocal, pedidoTieneComida]);
+    if (isComidaLocal) {
+      // Si este local es de comida, excluir pedidos que son SOLO granizados / bebidas (sin comida)
+      return list.filter((d) => pedidoTieneComida(d));
+    }
+    // Si este local es de granizados, excluir pedidos que son SOLO comida rápida / otro comercio (sin granizados/items propios)
+    return list.filter((d) => {
+      const rawItems = Array.isArray(d.itemsMapeados) ? d.itemsMapeados : [];
+      const validItems = rawItems.filter((it) => !isZeroPriceOrExternalProduct(it));
+      if (validItems.length > 0) return true;
+
+      // Si no tiene productos propios y tiene items externos o es comida, ocultar en local de granizados
+      const hasExt = Array.isArray(d.itemsExternos) && d.itemsExternos.length > 0;
+      if (hasExt || pedidoTieneComida(d)) return false;
+
+      return true;
+    });
+  }, [domicilios, isComidaLocal, pedidoTieneComida, isZeroPriceOrExternalProduct]);
 
   const tabsWithCounts = useMemo(() => {
     const arraySeguro = Array.isArray(cachedVentas) ? cachedVentas : [];
@@ -2350,47 +2401,15 @@ showAlert({
     setPaymentModalVisible(true);
   };
 
-  const normalizeCOP = (val?: any): number => {
-    if (val == null) return 0;
-    const num = typeof val === 'number' ? val : parseFloat(String(val).replace(/[^0-9.]/g, '')) || 0;
-    if (num > 0 && num < 100) return num * 1000;
-    return num;
-  };
 
-  const isZeroPriceOrExternalProduct = (it: any): boolean => {
-    if (!it) return true;
-    const catalog = useProductStore.getState().productos || [];
-    const prodId = it.productoId || it.IDproductos || it.id;
-    const itName = (it.nombre || it.nombreProducto || '').toLowerCase().trim();
-
-    const match = catalog.find((p: any) => {
-      if (prodId && (p.IDproductos === prodId || p.id === prodId)) return true;
-      if (itName && p.nombre && p.nombre.toLowerCase().trim() === itName) return true;
-      return false;
-    });
-
-    if (match) {
-      const catalogPrice = Number(match.precioUnitario ?? match.Precio_Unitario ?? match.precio ?? 0);
-      if (catalogPrice <= 0) return true;
-      return false;
-    }
-
-    const uPrice = Number(it.precioUnitario ?? it.precio ?? 0);
-    const tPrice = Number(it.precioTotal ?? 0);
-    if (uPrice <= 0 && tPrice <= 0) return true;
-
-    return false;
-  };
 
   const buildProductosPayloadFromDomicilio = (dom: DomicilioWAItem) => {
     const rawItems = Array.isArray(dom.itemsMapeados) && dom.itemsMapeados.length > 0
       ? dom.itemsMapeados
-      : [{ nombre: dom.detalleTextoWA || 'Domicilio WhatsApp', cantidad: 1, precioUnitario: dom.totalWA || 0, precioTotal: dom.totalWA || 0 }];
+      : [];
 
     const validItems = rawItems.filter((it) => !isZeroPriceOrExternalProduct(it));
-    const itemsToProcess = validItems.length > 0
-      ? validItems
-      : rawItems.filter((it) => Number(it.precioUnitario || it.precioTotal || 0) > 0);
+    const itemsToProcess = validItems;
 
     const catalog = useProductStore.getState().productos || [];
 
@@ -2478,9 +2497,7 @@ showAlert({
       if (!ventaId) {
         const productosPayload = buildProductosPayloadFromDomicilio(dom);
         const totalProductos = productosPayload.reduce((s, p) => s + (p.precioTotal || 0), 0);
-        const totalVenta = totalProductos > 0
-          ? totalProductos
-          : (normalizeCOP(dom.totalCalculado) || normalizeCOP(dom.totalWA) || 0);
+        const totalVenta = totalProductos;
 
         let domClienteId: number | undefined = (dom as any).clienteId ? Number((dom as any).clienteId) : undefined;
         if (!domClienteId && dom.origen && dom.origen.includes('cliente:')) {
@@ -2760,11 +2777,9 @@ showAlert({
       let itPrice = it.precioTotal || (it.precioUnitario || 0) * (it.cantidad || 1);
       return sum + normalizeCOP(itPrice);
     }, 0);
-    const totalVenta = totalLocalCalculado > 0
-      ? totalLocalCalculado
-      : (normalizeCOP(dom.totalCalculado) || normalizeCOP(dom.totalWA) || 0);
+    const totalVenta = totalLocalCalculado;
 
-    if (ordenVentas.length === 0 && dom.detalleTextoWA) {
+    if (ordenVentas.length === 0 && dom.detalleTextoWA && itemsExt.length === 0) {
       ordenVentas.push({
         IDorderventas: 'dom-raw-1',
         nombre: dom.detalleTextoWA,
@@ -3084,17 +3099,23 @@ showAlert({
                   return sum + normalizeCOP(itPrice);
                 }, 0);
 
+                const esSoloExterno = itemsPropios.length === 0 && itemsExt.length > 0;
                 return (
                   <>
                     <RNText style={{ fontSize: 10, fontWeight: 'bold', color: '#6b7280', textTransform: 'uppercase' }}>
-                      TOTAL PEDIDO
+                      {esSoloExterno ? 'COBRAR ESTE LOCAL' : (totalLocal > 0 && totalPedido > totalLocal ? 'TOTAL ESTE LOCAL' : 'TOTAL PEDIDO')}
                     </RNText>
-                    <RNText style={{ fontSize: 16, fontWeight: '800', color: '#111827' }}>
-                      {formatMoney(totalPedido > 0 ? totalPedido : totalLocal)}
+                    <RNText style={{ fontSize: 16, fontWeight: '800', color: esSoloExterno ? '#9ca3af' : '#111827' }}>
+                      {formatMoney(esSoloExterno ? 0 : (totalLocal > 0 ? totalLocal : totalPedido))}
                     </RNText>
                     {totalLocal > 0 && totalPedido > totalLocal && (
                       <RNText style={{ fontSize: 10, color: '#059669', fontWeight: '700' }}>
-                        Cobrar este local: {formatMoney(totalLocal)}
+                        Total global cliente: {formatMoney(totalPedido)}
+                      </RNText>
+                    )}
+                    {esSoloExterno && (
+                      <RNText style={{ fontSize: 10, color: '#7c3aed', fontWeight: '700' }}>
+                        Pedido de otro comercio ({formatMoney(totalPedido)})
                       </RNText>
                     )}
                   </>
