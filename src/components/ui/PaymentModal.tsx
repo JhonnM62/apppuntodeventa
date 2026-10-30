@@ -1109,9 +1109,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           </View>
 
           <ScrollView 
-            style={{ flexShrink: 1 }} 
-            contentContainerStyle={{ paddingBottom: 20 }}
-            showsVerticalScrollIndicator={false} 
+            style={{ flexGrow: 0, flexShrink: 1 }} 
+            contentContainerStyle={{ paddingBottom: 24 }}
+            showsVerticalScrollIndicator={Platform.OS === 'web'} 
             keyboardShouldPersistTaps="handled"
           >
           {cliente && (
@@ -1251,56 +1251,62 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           </ScrollView>
 
           <View style={styles.footer}>
-            <TouchableOpacity
-              onPress={handleClose}
-              style={styles.cancelButton}
-              disabled={finalIsLoading}
-              accessibilityRole="button"
-            >
-              <Ionicons name="close-circle-outline" size={20} color="#6b7280" />
-              <RNText style={styles.cancelButtonText}>Cancelar</RNText>
-            </TouchableOpacity>
-            {!isPagado ? (
-              <TouchableOpacity
-                onPress={handleSaveOnly}
-                style={styles.saveButton}
-                disabled={finalIsLoading}
-                accessibilityRole="button"
-              >
-                {finalIsLoading ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <Ionicons name="save-outline" size={20} color="#fff" />
-                )}
-                <RNText style={styles.saveButtonText}>{finalIsLoading ? 'Guardando...' : 'GUARDAR'}</RNText>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={handleConfirmCobrar}
-                style={styles.confirmButton}
-                disabled={!method || finalIsLoading}
-                accessibilityRole="button"
-              >
-                {finalIsLoading ? (
-                  <>
-                    <ActivityIndicator color="#fff" size="small" />
-                    <RNText style={styles.confirmButtonText}>Procesando...</RNText>
-                  </>
-                ) : (
-                  <>
-                    <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
-                    <RNText style={styles.confirmButtonText}>COBRAR</RNText>
-                  </>
-                )}
-              </TouchableOpacity>
-            )}
-            {cliente && sellosEstaCompra > 0 && !!onCobrar && (
-              <View style={{ alignItems: 'center', marginTop: 8 }}>
-                <RNText style={{ fontSize: 11, color: '#059669', fontWeight: '700' }}>
+            {cliente && sellosEstaCompra > 0 && isPagado && !!onCobrar && (
+              <View style={styles.footerSellosBadge}>
+                <Ionicons name="sparkles" size={14} color="#059669" />
+                <RNText style={styles.footerSellosText}>
                   Al cobrar se confirmarán y asignarán +{sellosEstaCompra} {sellosEstaCompra === 1 ? 'sello' : 'sellos'} al cliente
                 </RNText>
               </View>
             )}
+            <View style={styles.footerButtonsRow}>
+              <TouchableOpacity
+                onPress={handleClose}
+                style={styles.cancelButton}
+                disabled={finalIsLoading}
+                accessibilityRole="button"
+              >
+                <Ionicons name="close-circle-outline" size={20} color="#6b7280" />
+                <RNText style={styles.cancelButtonText}>Cancelar</RNText>
+              </TouchableOpacity>
+              {!isPagado ? (
+                <TouchableOpacity
+                  onPress={handleSaveOnly}
+                  style={styles.saveButton}
+                  disabled={finalIsLoading}
+                  accessibilityRole="button"
+                >
+                  {finalIsLoading ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <Ionicons name="save-outline" size={20} color="#fff" />
+                  )}
+                  <RNText style={styles.saveButtonText}>{finalIsLoading ? 'Guardando...' : 'GUARDAR'}</RNText>
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={handleConfirmCobrar}
+                  style={[
+                    styles.confirmButton,
+                    (!method || finalIsLoading) && { opacity: 0.6 }
+                  ]}
+                  disabled={!method || finalIsLoading}
+                  accessibilityRole="button"
+                >
+                  {finalIsLoading ? (
+                    <>
+                      <ActivityIndicator color="#fff" size="small" />
+                      <RNText style={styles.confirmButtonText}>Procesando...</RNText>
+                    </>
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
+                      <RNText style={styles.confirmButtonText}>COBRAR</RNText>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </Animated.View>
       </KeyboardAvoidingView>
@@ -1309,11 +1315,32 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: { flex: 1, justifyContent: 'flex-end' },
+  modalOverlay: { 
+    flex: 1, 
+    justifyContent: 'flex-end',
+    alignItems: Platform.OS === 'web' ? 'center' : undefined,
+  },
   overlayBg: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.5)' },
-  modalContent: { backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28 },
+  modalContent: { 
+    backgroundColor: 'white', 
+    borderTopLeftRadius: 28, 
+    borderTopRightRadius: 28,
+    width: '100%',
+    maxWidth: Platform.OS === 'web' ? 680 : undefined,
+    alignSelf: 'center',
+    overflow: 'hidden',
+  },
   handle: { width: 40, height: 4, backgroundColor: '#d1d5db', borderRadius: 2, alignSelf: 'center', marginTop: 12 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f3f4f6' },
+  header: { 
+    flexShrink: 0,
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    paddingHorizontal: 20, 
+    paddingVertical: 16, 
+    borderBottomWidth: 1, 
+    borderBottomColor: '#f3f4f6' 
+  },
   headerLeft: { flexDirection: 'row', alignItems: 'center' },
   title: { fontSize: 20, fontWeight: '800', color: '#111827', letterSpacing: 0.5, marginLeft: 10 },
   closeBtn: { padding: 6, borderRadius: 12, backgroundColor: '#f3f4f6' },
@@ -1383,13 +1410,97 @@ const styles = StyleSheet.create({
   pendingText: { fontSize: 15, fontWeight: '800', color: '#d97706', marginLeft: 8 },
   completeBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0fdf4', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1.5, borderColor: '#86efac' },
   completeText: { fontSize: 15, fontWeight: '800', color: '#16a34a', marginLeft: 8 },
-  footer: { flexDirection: 'row', paddingHorizontal: 20, paddingTop: 16, paddingBottom: Platform.OS === 'ios' ? 34 : 24, gap: 12, borderTopWidth: 1, borderTopColor: '#f3f4f6' },
-  cancelButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14, backgroundColor: '#f3f4f6', borderWidth: 1.5, borderColor: '#e5e7eb' },
-  cancelButtonText: { fontSize: 16, fontWeight: '700', color: '#6b7280', marginLeft: 8 },
-  confirmButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14, backgroundColor: '#22c55e' },
-  confirmButtonText: { fontSize: 16, fontWeight: '700', color: '#fff', marginLeft: 8 },
-  saveButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 14, borderRadius: 14, backgroundColor: '#3b82f6' },
-  saveButtonText: { fontSize: 16, fontWeight: '700', color: '#fff', marginLeft: 8 },
+  footer: { 
+    flexShrink: 0,
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 20, 
+    paddingTop: 12, 
+    paddingBottom: Platform.OS === 'ios' ? 34 : (Platform.OS === 'web' ? 16 : 24), 
+    borderTopWidth: 1, 
+    borderTopColor: '#f3f4f6' 
+  },
+  footerSellosBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ecfdf5',
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#a7f3d0',
+    marginBottom: 10,
+    gap: 6,
+  },
+  footerSellosText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#059669',
+    textAlign: 'center',
+  },
+  footerButtonsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    width: '100%',
+  },
+  cancelButton: { 
+    flex: 1, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    paddingVertical: 14, 
+    borderRadius: 14, 
+    backgroundColor: '#f3f4f6', 
+    borderWidth: 1.5, 
+    borderColor: '#e5e7eb',
+    minHeight: 48,
+  },
+  cancelButtonText: { 
+    fontSize: 15, 
+    fontWeight: '700', 
+    color: '#6b7280', 
+    marginLeft: 8 
+  },
+  confirmButton: { 
+    flex: 1.2, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    paddingVertical: 14, 
+    borderRadius: 14, 
+    backgroundColor: '#22c55e',
+    minHeight: 48,
+    shadowColor: '#22c55e',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  confirmButtonText: { 
+    fontSize: 16, 
+    fontWeight: '800', 
+    color: '#fff', 
+    marginLeft: 8,
+    letterSpacing: 0.5,
+  },
+  saveButton: { 
+    flex: 1.2, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    paddingVertical: 14, 
+    borderRadius: 14, 
+    backgroundColor: '#3b82f6',
+    minHeight: 48,
+  },
+  saveButtonText: { 
+    fontSize: 16, 
+    fontWeight: '800', 
+    color: '#fff', 
+    marginLeft: 8,
+    letterSpacing: 0.5,
+  },
   quickStatusContainerMain: { paddingHorizontal: 20, paddingTop: 16, marginBottom: 8 },
   quickStatusContainer: { marginBottom: 20 },
   quickStatusGrid: { flexDirection: 'row', gap: 12 },
@@ -1420,7 +1531,7 @@ const styles = StyleSheet.create({
   clientIconContainer: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#e0e7ff', justifyContent: 'center', alignItems: 'center', marginRight: 10 },
   clientInfoLabel: { fontSize: 10, fontWeight: '800', color: '#6366f1', letterSpacing: 1 },
   clientInfoName: { fontSize: 14, fontWeight: '700', color: '#312e81' },
-  clientPurchasesBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#d1fae5', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: '#a7f3d0' },
+  clientPurchasesBadge: { flexShrink: 0, flexDirection: 'row', alignItems: 'center', backgroundColor: '#d1fae5', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: '#a7f3d0' },
   clientPurchasesText: { fontSize: 12, fontWeight: '800', color: '#059669', marginLeft: 4 },
   loyaltyBannerGold: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fef3c7', padding: 10, borderRadius: 12, borderWidth: 1, borderColor: '#fde68a', marginTop: 6 },
   loyaltyTitleGold: { fontSize: 11, fontWeight: '800', color: '#92400e' },
