@@ -1793,11 +1793,11 @@ const InventarioScreen = ({ navigation }: any) => {
             </RNText>
 
             <RNText style={{ fontSize: 11, color: '#6b7280', fontWeight: 'bold', marginTop: 2 }}>
-                Stock previo: {item.cantInsumos !== undefined
+                Stock previo: {item.cantInsumos !== undefined && item.cantInsumos !== null
                   ? (isEntrada
                     ? (isIngresado ? item.cantInsumos - (Number(item.cantidad) || 0) : item.cantInsumos)
                     : item.cantInsumos + (Number(item.cantidad) || 0))
-                  : getInsumoStock(item.nombreDelAlimento)}
+                  : '—'}
             </RNText>
             <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4, flexWrap: 'wrap' }}>
                 <RNText style={{ fontSize: 12.5, color: isEntrada ? '#f59e0b' : '#ef4444', fontWeight: 'bold' }}>
@@ -1805,11 +1805,11 @@ const InventarioScreen = ({ navigation }: any) => {
                 </RNText>
                 <RNText style={{ fontSize: 11, color: '#6b7280', marginLeft: 6 }}>
                   • <RNText style={{ color: '#3b82f6', fontWeight: '600' }}>Stock {(!isEntrada || isIngresado) ? 'Final' : 'Proy'}: {
-                    item.cantInsumos !== undefined 
+                    item.cantInsumos !== undefined && item.cantInsumos !== null
                       ? (!isEntrada || isIngresado 
                           ? item.cantInsumos 
                           : item.cantInsumos + (Number(item.cantidad) || 0)) 
-                      : (getInsumoStock(item.nombreDelAlimento) + (isEntrada ? (Number(item.cantidad) || 0) : -(Number(item.cantidad) || 0)))
+                      : '—'
                   }</RNText>
                 </RNText>
               </View>
@@ -3413,6 +3413,12 @@ const InventarioScreen = ({ navigation }: any) => {
                       <RNText style={{ fontSize: 13, color: '#6b7280' }}>Cantidad Retirada:</RNText>
                       <RNText style={{ fontSize: 14, fontWeight: '700', color: '#ef4444' }}>{selectedOrdenItem.cantidad} und</RNText>
                     </View>
+                    {selectedOrdenItem.cantInsumos !== undefined && selectedOrdenItem.cantInsumos !== null && (
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <RNText style={{ fontSize: 13, color: '#6b7280' }}>Stock en ese Momento:</RNText>
+                        <RNText style={{ fontSize: 14, fontWeight: '600', color: '#374151' }}>{selectedOrdenItem.cantInsumos} und</RNText>
+                      </View>
+                    )}
                     <View style={{ height: 1, backgroundColor: '#e5e7eb', marginVertical: 8 }} />
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <RNText style={{ fontSize: 14, fontWeight: '700', color: '#111827' }}>Stock Actual del Insumo:</RNText>
