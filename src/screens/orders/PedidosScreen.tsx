@@ -3948,29 +3948,37 @@ showAlert({
                     </RNText>
                   </View>
                   
-                  {selectedVenta.abono && Number(selectedVenta.abono) > 0 ? (
-                    <>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-                        <RNText style={[styles.totalSectionLabel, { color: '#059669' }]}>ABONO</RNText>
-                        <RNText style={[styles.totalSectionAmount, { color: '#059669' }]}>
-                          -{formatMoney(Number(selectedVenta.abono))}
-                        </RNText>
-                      </View>
+                  {(() => {
+                    const subtotalProductos = getVentaTotal(selectedVenta);
+                    const descuentoVal = Number(selectedVenta.descuento) || 0;
+                    const propinaVal = Number(selectedVenta.propina) || 0;
+                    const abonoVal = Number(selectedVenta.abono) || 0;
+                    const totalNetoAPagar = Math.max(0, subtotalProductos - descuentoVal + propinaVal - abonoVal);
+
+                    return selectedVenta.abono && abonoVal > 0 ? (
+                      <>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                          <RNText style={[styles.totalSectionLabel, { color: '#059669' }]}>ABONO</RNText>
+                          <RNText style={[styles.totalSectionAmount, { color: '#059669' }]}>
+                            -{formatMoney(abonoVal)}
+                          </RNText>
+                        </View>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 8 }}>
+                          <RNText style={styles.totalSectionLabel}>TOTAL A PAGAR</RNText>
+                          <RNText style={styles.totalSectionAmount}>
+                            {formatMoney(totalNetoAPagar)}
+                          </RNText>
+                        </View>
+                      </>
+                    ) : (
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 8 }}>
                         <RNText style={styles.totalSectionLabel}>TOTAL A PAGAR</RNText>
                         <RNText style={styles.totalSectionAmount}>
-                          {formatMoney(getVentaTotal(selectedVenta) - Number(selectedVenta.abono))}
+                          {formatMoney(totalNetoAPagar)}
                         </RNText>
                       </View>
-                    </>
-                  ) : (
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 8 }}>
-                      <RNText style={styles.totalSectionLabel}>TOTAL A PAGAR</RNText>
-                      <RNText style={styles.totalSectionAmount}>
-                        {formatMoney(getVentaTotal(selectedVenta))}
-                      </RNText>
-                    </View>
-                  )}
+                    );
+                  })()}
                 </View>
               </View>
 

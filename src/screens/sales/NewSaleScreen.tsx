@@ -1124,6 +1124,7 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
     propina?: number;
     porcentajePropina?: string;
     totalInput?: number;
+    descuento?: number;
     abono?: number;
   }) => {
     if (isSubmitting) return; // FIX: Prevent double submission
@@ -1148,8 +1149,11 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         return sum + (p * c) + modSum;
       }, 0);
       const exactDiscount = recalcularTotal * (discountPercent || 0);
-      const descuento = Math.floor(exactDiscount / 1000) * 1000;
-      const finalTotal = recalcularTotal - descuento;
+      const descuento = (discountPercent >= 1) ? recalcularTotal : Math.round(exactDiscount);
+      const finalTotal = Math.max(0, recalcularTotal - descuento);
+      const effectiveTotalInput = paymentData.totalInput !== undefined ? paymentData.totalInput : finalTotal;
+      const effectiveEfectivo = paymentData.efectivoRecibido !== undefined ? paymentData.efectivoRecibido : effectiveTotalInput;
+      const effectiveDescuento = paymentData.descuento !== undefined ? paymentData.descuento : descuento;
       const mesaValue = selectedMesa?.IdMesas || 'V.R';
 
       if (isEditing && editingSaleId) {
@@ -1158,12 +1162,12 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
             mesa: mesaValue,
             estado: paymentData.estado,
             medioDePago: paymentData.medioDePago,
-            efectivoRecibido: paymentData.efectivoRecibido || paymentData.totalInput || finalTotal,
+            efectivoRecibido: effectiveEfectivo,
             devueltas: paymentData.devueltas || 0,
             banco: paymentData.medioDePago === 'EFECTIVO' ? null : paymentData.banco,
             valorDeTransferencia: paymentData.transferencia,
-            totalInput: paymentData.totalInput || finalTotal,
-            descuento: descuento,
+            totalInput: effectiveTotalInput,
+            descuento: effectiveDescuento,
             porcentajeDeDescuento: discountPercent.toString(),
             propina: paymentData.propina,
             porcentajePropina: paymentData.porcentajePropina,
@@ -1417,12 +1421,12 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
           mesa: mesaValue,
           estado: paymentData.estado,
           medioDePago: paymentData.medioDePago,
-          efectivoRecibido: paymentData.efectivoRecibido || paymentData.totalInput || finalTotal,
+          efectivoRecibido: effectiveEfectivo,
           devueltas: paymentData.devueltas || 0,
           banco: paymentData.medioDePago === 'EFECTIVO' ? null : paymentData.banco,
           valorDeTransferencia: paymentData.transferencia,
-          totalInput: paymentData.totalInput || finalTotal,
-          descuento: descuento,
+          totalInput: effectiveTotalInput,
+          descuento: effectiveDescuento,
           porcentajeDeDescuento: discountPercent.toString(),
           propina: paymentData.propina,
           porcentajePropina: paymentData.porcentajePropina,
@@ -1575,8 +1579,8 @@ const NewSaleScreen = ({ navigation, route }: Props) => {
         return sum + (p * c) + modSum;
       }, 0);
       const exactDiscount = recalcularTotal * (discountPercent || 0);
-      const descuento = Math.floor(exactDiscount / 1000) * 1000;
-      const finalTotal = recalcularTotal - descuento;
+      const descuento = (discountPercent >= 1) ? recalcularTotal : Math.round(exactDiscount);
+      const finalTotal = Math.max(0, recalcularTotal - descuento);
       
       if (isEditing && editingSaleId) {
         const payload: SalePayload = {

@@ -1310,7 +1310,6 @@ const styles = StyleSheet.create({
   modalOverlay: { 
     flex: 1, 
     justifyContent: 'flex-end',
-    alignItems: Platform.OS === 'web' ? 'center' : undefined,
   },
   overlayBg: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0, 0, 0, 0.5)' },
   modalContent: { 
@@ -1318,8 +1317,6 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 28, 
     borderTopRightRadius: 28,
     width: '100%',
-    maxWidth: Platform.OS === 'web' ? 680 : undefined,
-    alignSelf: 'center',
     overflow: 'hidden',
   },
   handle: { width: 40, height: 4, backgroundColor: '#d1d5db', borderRadius: 2, alignSelf: 'center', marginTop: 12 },
