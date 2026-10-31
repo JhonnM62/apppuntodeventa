@@ -178,6 +178,20 @@ const hasPassedKitchenInLog = (registroDeTiempo?: any[]): boolean => {
   return false;
 };
 
+export const isVentaPagada = (v: VentaItem | any): boolean => {
+  if (!v) return false;
+  const est = (v.estado || '').toUpperCase();
+  if (est === 'PAGADO' || est === 'COBRADO') return true;
+  const medio = (v.medioDePago || '').toUpperCase().replace(/_/g, ' ').trim();
+  if (medio && !['PENDIENTE', 'NO ASIGNADO', 'SIN MEDIO', 'NO_ASIGNADO', 'SIN_MEDIO'].includes(medio)) return true;
+  if (Number(v.efectivoRecibido || 0) > 0 || Number(v.valorDeTransferencia || 0) > 0 || Number(v.transferencia || 0) > 0) return true;
+  if (Array.isArray(v.registroDeTiempo) && v.registroDeTiempo.some((r: any) => {
+    const regEst = (r?.estado || '').toUpperCase();
+    return regEst === 'PAGADO' || regEst === 'COBRADO';
+  })) return true;
+  return false;
+};
+
 const isVentaActivaEnTomado = (v: VentaItem): boolean => {
   if (!v || v.despejadoAt) return false;
   const est = (v.estado || '').toUpperCase();
@@ -1028,7 +1042,7 @@ const PedidosScreen = () => {
         // En PAGADO se dejan todos sin filtro de fecha por defecto
         count = arraySeguro.filter(v => {
           const est = (v.estado || '').toUpperCase();
-          return est === 'PAGADO' || (!!v.medioDePago && v.medioDePago !== 'PENDIENTE' && est !== 'CANCELADO' && est !== 'ANULADO');
+          return isVentaPagada(v) && est !== 'CANCELADO' && est !== 'ANULADO';
         }).length;
       } else if (tab.key === 'TOMADO') {
         // Pestaña operativa TOMADO: pedidos en TOMADO, PREPARANDO o PAGADO aún activos en cocina de la jornada actual
@@ -1061,7 +1075,7 @@ const PedidosScreen = () => {
   const domisSubTabsWithCounts = useMemo(() => {
     const list = visibleDomicilios;
     const isDomCobrado = (d: DomicilioWAItem) =>
-      d.estado === 'COBRADO' || d.estado === 'PAGADO' || d.ventaRelacion?.estado === 'PAGADO';
+      d.estado === 'COBRADO' || d.estado === 'PAGADO' || isVentaPagada(d.ventaRelacion);
 
     const countNuevos = list.filter(d => d.estado === 'RECIENTE' && d.ventaRelacion?.estado !== 'PAGADO').length;
     const countTomados = list.filter(d => 
@@ -1430,7 +1444,7 @@ const PedidosScreen = () => {
         // Pestaña PAGADO: Se deja tal cual (sin filtro de fecha por defecto)
         filtered = filtered.filter(v => {
           const est = (v.estado || '').toUpperCase();
-          return est === 'PAGADO';
+          return isVentaPagada(v) && est !== 'CANCELADO' && est !== 'ANULADO';
         });
       } else if (activeTab === 'TOMADO') {
         // Pestaña TOMADO: pedidos en TOMADO, PREPARANDO o PAGADO aún activos en cocina de la jornada actual (o según filtro de fecha explícito)
@@ -1827,7 +1841,7 @@ showAlert({
     const isDespejado = !!venta.despejadoAt;
 
     if (!isDespejado) {
-      const isUnpaid = (!venta.medioDePago || venta.medioDePago === 'PENDIENTE') && venta.estado !== 'PAGADO';
+      const isUnpaid = !isVentaPagada(venta);
       const promptConfirm = () => {
         showAlert({
           type: 'confirm',
@@ -1887,7 +1901,7 @@ showAlert({
       return;
     }
 
-    const unpaidCount = filteredVentas.filter(v => ids.includes(v.IDventas) && (!v.medioDePago || v.medioDePago === 'PENDIENTE') && v.estado !== 'PAGADO').length;
+    const unpaidCount = filteredVentas.filter(v => ids.includes(v.IDventas) && !isVentaPagada(v)).length;
 
     const message = unpaidCount > 0
       ? `Hay ${unpaidCount} pedido(s) que aún no han sido cobrados. ¿Estás seguro de despejar los ${ids.length} pedidos entregados de la vista?`
@@ -2238,11 +2252,13 @@ showAlert({
           <View style={styles.cardBadgesRow}>
             <OrderTimerBadge venta={item} />
 
-            {item.estado === 'PAGADO' ? (
+            {isVentaPagada(item) ? (
               <View style={styles.paymentBadgeSuccess}>
                 <Ionicons name="checkmark-circle-outline" size={12} color="#059669" />
                 <RNText style={styles.paymentBadgeSuccessText}>
-                  {item.medioDePago && item.medioDePago !== 'PENDIENTE' ? `PAGADO (${item.medioDePago})` : 'PAGADO'}
+                  {item.medioDePago && !['PENDIENTE', 'NO ASIGNADO', 'SIN MEDIO', 'NO_ASIGNADO', 'SIN_MEDIO'].includes((item.medioDePago || '').toUpperCase().trim())
+                    ? `PAGADO (${item.medioDePago})`
+                    : 'PAGADO'}
                 </RNText>
               </View>
             ) : (
@@ -2340,27 +2356,30 @@ showAlert({
               >
                 <Ionicons name="receipt-outline" size={18} color="#0284c7" />
               </TouchableOpacity>
-            <TouchableOpacity 
-              onPress={(e) => { 
-                e.stopPropagation(); 
-                try {
-                  if (item.ordenVentas && item.ordenVentas.length > 0) {
-                    useCartStore.getState().loadCartFromVenta(item.ordenVentas);
-                  } else {
+            {!isVentaPagada(item) && (
+              <TouchableOpacity 
+                onPress={(e) => { 
+                  e.stopPropagation(); 
+                  try {
+                    if (item.ordenVentas && item.ordenVentas.length > 0) {
+                      useCartStore.getState().loadCartFromVenta(item.ordenVentas);
+                    } else {
+                      useCartStore.getState().clearCart();
+                    }
+                  } catch (err) {
+                    console.error('[PedidosScreen] Error al cargar carrito:', err);
                     useCartStore.getState().clearCart();
                   }
-                } catch (err) {
-                  console.error('[PedidosScreen] Error al cargar carrito:', err);
-                  useCartStore.getState().clearCart();
-                }
-                setCobrarVenta(item);
-                resolverClienteParaCobro(item);
-                setPaymentModalVisible(true);
-              }}
-              style={{ padding: 6, backgroundColor: '#dcfce7', borderRadius: 8 }}
-            >
-              <Ionicons name="cash-outline" size={18} color="#16a34a" />
-            </TouchableOpacity>
+                  setCobrarVenta(item);
+                  resolverClienteParaCobro(item);
+                  setPaymentModalVisible(true);
+                }}
+                style={{ padding: 6, backgroundColor: '#dcfce7', borderRadius: 8 }}
+                accessibilityLabel="Cobrar Pedido"
+              >
+                <Ionicons name="cash-outline" size={18} color="#16a34a" />
+              </TouchableOpacity>
+            )}
             {activeTab === 'ENTREGADO' && (
               <TouchableOpacity 
                 onPress={(e) => { 
@@ -2962,7 +2981,7 @@ showAlert({
     const cleanPhone = (item.clienteTelefono || '').replace(/\D/g, '');
     const waUrl = cleanPhone ? `https://wa.me/${cleanPhone}` : null;
     const ventaEstado = item.ventaRelacion?.estado;
-    const isCobrado = item.estado === 'COBRADO' || item.estado === 'PAGADO' || ventaEstado === 'PAGADO';
+    const isCobrado = item.estado === 'COBRADO' || item.estado === 'PAGADO' || isVentaPagada(item.ventaRelacion);
     const isCancelado = item.estado === 'CANCELADO' || ventaEstado === 'CANCELADO';
     const isTomado = (item.estado === 'TOMADO' || ventaEstado === 'TOMADO') && !isCobrado && !isCancelado;
     const isReciente = item.estado === 'RECIENTE' && !isCobrado && !isCancelado;
@@ -3364,18 +3383,17 @@ showAlert({
 
       if (domisSubTab === 'NUEVOS') {
         filteredDomis = filteredDomis.filter(d => 
-          d.estado === 'RECIENTE' && d.ventaRelacion?.estado !== 'PAGADO'
+          d.estado === 'RECIENTE' && !isVentaPagada(d.ventaRelacion)
         );
       } else if (domisSubTab === 'TOMADOS') {
         filteredDomis = filteredDomis.filter(d => 
           (d.estado === 'TOMADO' || d.ventaRelacion?.estado === 'TOMADO') &&
-          !(d.estado === 'COBRADO' || d.estado === 'PAGADO' || d.ventaRelacion?.estado === 'PAGADO') &&
+          !(d.estado === 'COBRADO' || d.estado === 'PAGADO' || isVentaPagada(d.ventaRelacion)) &&
           d.estado !== 'CANCELADO' && d.ventaRelacion?.estado !== 'CANCELADO'
         );
       } else if (domisSubTab === 'PAGADOS') {
         filteredDomis = filteredDomis.filter(d => 
-          d.estado === 'COBRADO' || d.estado === 'PAGADO' ||
-          (d.ventaRelacion && d.ventaRelacion.estado === 'PAGADO')
+          d.estado === 'COBRADO' || d.estado === 'PAGADO' || isVentaPagada(d.ventaRelacion)
         );
       }
 
@@ -4180,7 +4198,9 @@ showAlert({
                               onPress={handleOpenCobrar}
                             >
                               <Ionicons name="cash-outline" size={20} color="#fff" />
-                              <RNText style={styles.actionBtnText}>Cobrar</RNText>
+                              <RNText style={styles.actionBtnText}>
+                                {isVentaPagada(selectedVenta) ? 'Ver / Modificar Pago' : 'Cobrar'}
+                              </RNText>
                             </TouchableOpacity>
                             <TouchableOpacity
                               style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
@@ -4212,7 +4232,9 @@ showAlert({
                               onPress={handleOpenCobrar}
                             >
                               <Ionicons name="cash-outline" size={20} color="#fff" />
-                              <RNText style={styles.actionBtnText}>Cobrar</RNText>
+                              <RNText style={styles.actionBtnText}>
+                                {isVentaPagada(selectedVenta) ? 'Ver / Modificar Pago' : 'Cobrar'}
+                              </RNText>
                             </TouchableOpacity>
                             <TouchableOpacity
                               style={[styles.actionBtn, { backgroundColor: '#ef4444' }]}
@@ -4262,7 +4284,9 @@ showAlert({
                               onPress={handleOpenCobrar}
                             >
                               <Ionicons name="cash-outline" size={20} color="#fff" />
-                              <RNText style={styles.actionBtnText}>Cobrar / Pago</RNText>
+                              <RNText style={styles.actionBtnText}>
+                                {isVentaPagada(selectedVenta) ? 'Ver / Modificar Pago' : 'Cobrar / Pago'}
+                              </RNText>
                             </TouchableOpacity>
                           </>
                         )}
@@ -4287,7 +4311,9 @@ showAlert({
                               onPress={handleOpenCobrar}
                             >
                               <Ionicons name="cash-outline" size={20} color="#fff" />
-                              <RNText style={styles.actionBtnText}>Cobrar / Pago</RNText>
+                              <RNText style={styles.actionBtnText}>
+                                {isVentaPagada(selectedVenta) ? 'Ver / Modificar Pago' : 'Cobrar / Pago'}
+                              </RNText>
                             </TouchableOpacity>
                           </>
                         )}
@@ -4887,10 +4913,15 @@ showAlert({
         : (cobrarVenta.clienteId ? Number(cobrarVenta.clienteId) : undefined);
       const finalClienteNombre = cobrarCliente?.nombre || cobrarVenta.cliente || undefined;
 
+      const yaEstabaListoOEntregado =
+        ['ENTREGADO', 'LISTO_PARA_ENTREGA'].includes((cobrarVenta.estado || '').toUpperCase()) ||
+        hasPassedKitchenInLog(cobrarVenta.registroDeTiempo);
+      const targetEstado = (cobrarVenta.estado === 'ENTREGADO' || yaEstabaListoOEntregado) ? 'ENTREGADO' : (paymentData.estado || 'PAGADO');
+
       // FIX: Esperamos a que termine la petición en vez de enviarla en background sin control
       // Eliminamos updateVentaEstado para evitar la condición de carrera con updateVentaPago
       await updateVentaPago(cobrarVenta.IDventas, {
-        estado: 'PAGADO',
+        estado: targetEstado,
         medioDePago: paymentData.medioDePago,
         efectivoRecibido: paymentData.efectivoRecibido,
         devueltas: paymentData.devueltas,
@@ -4906,12 +4937,9 @@ showAlert({
 
       // Actualizamos UI localmente de forma opcional (el socket confirmará después)
       const nowCobroIso = new Date().toISOString();
-      const yaEstabaListoOEntregado =
-        ['ENTREGADO', 'LISTO_PARA_ENTREGA'].includes((cobrarVenta.estado || '').toUpperCase()) ||
-        hasPassedKitchenInLog(cobrarVenta.registroDeTiempo);
       const updatedVenta = {
         ...cobrarVenta,
-        estado: 'PAGADO',
+        estado: targetEstado,
         medioDePago: paymentData.medioDePago,
         efectivoRecibido: paymentData.efectivoRecibido,
         devueltas: paymentData.devueltas,
@@ -5580,7 +5608,7 @@ showAlert({
             Math.max(0, Number(cobrarVenta.totalInput) - Number(cobrarVenta.efectivoRecibido)) : undefined))
         }
         initialBanco={cobrarVenta?.banco}
-        initialEstado="PAGADO"
+        initialEstado={(cobrarVenta?.estado as any) || 'PAGADO'}
         initialPorcentajePropina={cobrarVenta?.porcentajePropina}
         abonoPrevio={Number(cobrarVenta?.abono) || 0}
       />
