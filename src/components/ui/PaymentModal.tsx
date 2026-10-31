@@ -1251,14 +1251,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           </ScrollView>
 
           <View style={styles.footer}>
-            {cliente && sellosEstaCompra > 0 && isPagado && !!onCobrar && (
-              <View style={styles.footerSellosBadge}>
-                <Ionicons name="sparkles" size={14} color="#059669" />
-                <RNText style={styles.footerSellosText}>
-                  Al cobrar se confirmarán y asignarán +{sellosEstaCompra} {sellosEstaCompra === 1 ? 'sello' : 'sellos'} al cliente
-                </RNText>
-              </View>
-            )}
             <View style={styles.footerButtonsRow}>
               <TouchableOpacity
                 onPress={handleClose}
@@ -1414,29 +1406,10 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     backgroundColor: '#ffffff',
     paddingHorizontal: 20, 
-    paddingTop: 12, 
+    paddingTop: 16, 
     paddingBottom: Platform.OS === 'ios' ? 34 : (Platform.OS === 'web' ? 16 : 24), 
     borderTopWidth: 1, 
     borderTopColor: '#f3f4f6' 
-  },
-  footerSellosBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#ecfdf5',
-    paddingVertical: 7,
-    paddingHorizontal: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#a7f3d0',
-    marginBottom: 10,
-    gap: 6,
-  },
-  footerSellosText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#059669',
-    textAlign: 'center',
   },
   footerButtonsRow: {
     flexDirection: 'row',
